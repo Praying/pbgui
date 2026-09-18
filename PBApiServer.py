@@ -102,6 +102,7 @@ from api.vps_manager import (
     shutdown as vps_manager_shutdown,
     startup as vps_manager_startup,
 )
+from api.vast import startup as vast_startup, shutdown as vast_shutdown
 from api.services import router as services_router
 from api.live import router as live_router, shutdown as live_shutdown
 from api.v7_instances import router as v7_router
@@ -320,6 +321,7 @@ async def _restart_block_state() -> tuple[bool, str]:
     from api.db_tools import restart_block_reason as db_tools_restart_block_reason
     from api.dashboard import restart_block_reason as dashboard_restart_block_reason
     from api.pareto_explorer import restart_block_reason as pareto_restart_block_reason
+    from vast_guard_migration import restart_block_reason as vast_guard_restart_block_reason
 
     local_reasons = [
         reason
@@ -329,6 +331,7 @@ async def _restart_block_state() -> tuple[bool, str]:
             cluster_restart_block_reason(),
             coin_data_restart_block_reason(),
             pareto_restart_block_reason(),
+            vast_guard_restart_block_reason(),
             profit_sweep_restart_block_reason(),
             ai_restart_block_reason(),
             credential_migration_restart_block_reason(Path(PBGDIR)),
@@ -890,6 +893,7 @@ async def _lifespan(app: FastAPI):
         coin_data_startup()
         ohlcv_preload_startup()
         vps_manager_startup()
+        vast_startup()
         market_data_startup()
         strategy_explorer_v8_startup()
         profit_sweep_startup()
@@ -920,6 +924,7 @@ async def _lifespan(app: FastAPI):
             ("market-data", market_data_shutdown),
             ("profit-sweep", profit_sweep_shutdown),
             ("vps-manager", vps_manager_shutdown),
+            ("vast-input", vast_shutdown),
             ("cluster", cluster_shutdown),
             ("db-tools", db_tools_shutdown),
             ("backtest-v7", bt7_shutdown),

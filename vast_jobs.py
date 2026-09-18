@@ -22,11 +22,17 @@ from secure_files import atomic_write_private_text, ensure_private_directory, re
 from vast_credentials import VastCredentialStore
 from vast_provider import VastClient, VastError, number, positive_id
 
+from vast_exchanges import SUPPORTED_EXCHANGES
+
 SERVICE = "Vast"
 PROJECT = Path(__file__).resolve().parent
-IMAGE = "ghcr.io/msei99/pbgui-pb8-worker@sha256:ea52a9ea51f1945b5c3c5133246fd125ee7793faa288754b21e095b95e138743"
+IMAGE = "ghcr.io/msei99/pbgui-pb8-worker@sha256:b6f61c54b546640f5f00e386c10a27380e0ed8715788bcc8c4b597eedff58dbc"
 # Existing immutable rental intents must remain recoverable after a wrapper update.
-SUPPORTED_RENTAL_IMAGES = (IMAGE, "ghcr.io/msei99/pbgui-pb8-worker@sha256:0d827eb097a9d26c9088421097b4a9f0eacf660f08613871c48946ddf71a0a88")
+SUPPORTED_RENTAL_IMAGES = (
+    IMAGE,
+    "ghcr.io/msei99/pbgui-pb8-worker@sha256:ea52a9ea51f1945b5c3c5133246fd125ee7793faa288754b21e095b95e138743",
+    "ghcr.io/msei99/pbgui-pb8-worker@sha256:0d827eb097a9d26c9088421097b4a9f0eacf660f08613871c48946ddf71a0a88",
+)
 REVISION = "ee2b7d49fd53ef790a66a28e2c85f2a6c8faebe8"
 from vast_config_validation import METRICS, validate_cloud_config
 
@@ -67,9 +73,16 @@ def native_job_config(source: dict, iterations: int, workers: int, use_adg: bool
         raise VastError("Cloud configuration is invalid: " + "; ".join(item['path'] + ": " + item['message'] for item in errors), 422)
     config = copy.deepcopy(source)
     live, bt, opt = config["live"], config["backtest"], config["optimize"]
+    if bt.get("suite_enabled"):
+        from vast_scenarios import flatten_overrides
+        for scenario in bt.get("scenarios", []):
+            if scenario.get("overrides"):
+                # PB8's GPU preflight expects dotted paths before suite materialization.
+                scenario["overrides"] = flatten_overrides(scenario["overrides"])
+
     if live.get("strategy_kind") not in ("trailing_martingale", "ema_anchor"):
         raise VastError("This image supports trailing_martingale and ema_anchor", 422)
-    if config.get("coin_overrides") or opt.get("enable_overrides") or bt.get("coin_sources") or bt.get("market_settings_sources"):
+    if config.get("coin_overrides") or opt.get("enable_overrides") or bt.get("market_settings_sources"):
         raise VastError("Cloud export does not yet support coin or optimizer overrides", 422)
     if bt.get("btc_collateral_cap") or (opt.get("gpu", {}).get("successive_halving") or {}).get("enabled"):
         raise VastError("Cloud jobs currently require no BTC collateral and no successive halving", 422)
@@ -183,7 +196,7 @@ class JobStore:
             parts = Path(path).parts if isinstance(path, str) else ()
             if len(parts) > 1 and parts[0] == 'ohlcv':
                 exchange = parts[1]
-                if exchange in ('binance', 'bybit') and exchange not in result:
+                if exchange in SUPPORTED_EXCHANGES and exchange not in result:
                     result.append(exchange)
         return result
 
@@ -220,9 +233,28 @@ class JobStore:
             return self.update(identifier, status="failed",
                                error="Input preparation interrupted by process shutdown. Requeue to prepare again.")
 
+    def create_preparation(self, name: str, iterations: int, workers: int, use_adg: bool,
+                           *, requeue_from: str | None = None) -> dict:
+        """Persist a pending input snapshot before its slower file work starts."""
+        ensure_private_directory(self.root)
+        ensure_private_directory(self.root / "jobs")
+        identifier = uuid.uuid4().hex
+        directory = ensure_private_directory(self.root / "jobs" / identifier)
+        state = {"id": identifier, "config_name": config_name(name), "status": "preparing", "rental_state": "none",
+                 "iterations": iterations, "workers": workers, "auto_cpu_workers": True, "created_at": time.time(), "generation": 0,
+                 "preparation_owner": {"pid": os.getpid(), "created_at": psutil.Process().create_time()},
+                 "exact_completed": 0, "gpu_candidates": 0, "error": None,
+                 "input_progress": {"stage": "selecting", "files_completed": 0, "files_total": 0,
+                                    "bytes_completed": 0, "bytes_total": 0}}
+        if requeue_from is not None:
+            state['requeue_from'] = job_id(requeue_from)
+        write_json(directory / "state.json", state)
+        write_json(directory / "control.json", {"stop": False, "cleanup": False})
+        return state
+
     def prepare(self, name: str, source: dict, source_sha256: str, market_root: Path,
                 mapping_root: Path, results_root: Path, iterations: int, workers: int, use_adg: bool,
-                *, requeue_from: str | None = None) -> dict:
+                *, requeue_from: str | None = None, identifier: str | None = None) -> dict:
         """Freeze a config/data bundle locally before requesting any paid resource."""
         from pb8_config import save_prepared_pb8_config
         from setup.vast_gpu_benchmark.prepare import select_shards
@@ -233,22 +265,21 @@ class JobStore:
             shards = select_shards(config, market_root, mapping_root)
         except (ValueError, OSError) as exc:
             raise VastError("Market data export failed: " + str(exc), 422) from None
-        if sum(p.stat().st_size for p, _ in shards) > 10 * 1024**3:
+        total_bytes = sum(p.stat().st_size for p, _ in shards)
+        if total_bytes > 10 * 1024**3:
             raise VastError("This cloud profile supports input bundles up to 10 GB", 422)
-        ensure_private_directory(self.root)
-        ensure_private_directory(self.root / "jobs")
-        identifier = uuid.uuid4().hex
+        if identifier is None:
+            identifier = self.create_preparation(name, iterations, workers, use_adg, requeue_from=requeue_from)['id']
+        else:
+            identifier = job_id(identifier)
+            if self.read(identifier).get('status') != 'preparing':
+                raise VastError('Cloud job is no longer awaiting input preparation', 409)
         config["backtest"]["ohlcv_source_dir"] = "/work/pbgui/jobs/" + identifier + "/input/ohlcv"
-        directory = ensure_private_directory(self.root / "jobs" / identifier)
-        state = {"id": identifier, "config_name": config_name(name), "status": "preparing", "rental_state": "none",
-                 "iterations": iterations, "workers": workers, "auto_cpu_workers": True, "created_at": time.time(), "generation": 0,
-                 "preparation_owner": {"pid": os.getpid(), "created_at": psutil.Process().create_time()},
-                 "exact_completed": 0, "gpu_candidates": 0, "error": None,
-                 "exchanges": list(config["backtest"].get("exchanges", []))}
-        if requeue_from is not None:
-            state['requeue_from'] = job_id(requeue_from)
-        write_json(directory / "state.json", state)
-        write_json(directory / "control.json", {"stop": False, "cleanup": False})
+        directory = self.directory(identifier)
+        self.update(identifier, exchanges=sorted({relative.parts[0] for _, relative in shards}), input_progress={
+            "stage": "copying", "files_completed": 0, "files_total": len(shards),
+            "bytes_completed": 0, "bytes_total": total_bytes,
+        })
         try:
             folder = ensure_private_directory(directory / "input")
             save_prepared_pb8_config(config, folder / "optimize.json")
@@ -257,7 +288,9 @@ class JobStore:
             validation_plan = build_validation_plan(source)
             manifest = {"schema_version": 1, "pb8_revision": REVISION, "config_sha256": digest(folder / "optimize.json"),
                         "source_config_sha256": source_sha256, "sweep_plan": sweep, "validation_plan": validation_plan, "files": []}
-            for original, relative in shards:
+            copied_bytes = 0
+            last_progress_update = time.monotonic()
+            for index, (original, relative) in enumerate(shards, start=1):
                 destination = folder / "ohlcv" / relative
                 ensure_private_directory(destination.parent)
                 before = original.stat()
@@ -268,7 +301,18 @@ class JobStore:
                 if (before.st_ino, before.st_size, before.st_mtime_ns) != (after.st_ino, after.st_size, after.st_mtime_ns):
                     raise VastError("Market data changed during preparation; prepare the job again", 409)
                 manifest["files"].append({"path": str(Path("ohlcv") / relative), "bytes": after.st_size, "sha256": digest(destination)})
+                copied_bytes += after.st_size
+                if index == len(shards) or time.monotonic() - last_progress_update >= 0.25:
+                    self.update(identifier, input_progress={
+                        "stage": "copying", "files_completed": index, "files_total": len(shards),
+                        "bytes_completed": copied_bytes, "bytes_total": total_bytes,
+                    })
+                    last_progress_update = time.monotonic()
             write_json(folder / "manifest.json", manifest)
+            self.update(identifier, input_progress={
+                "stage": "compressing", "files_completed": len(shards), "files_total": len(shards),
+                "bytes_completed": total_bytes, "bytes_total": total_bytes,
+            })
             with tarfile.open(directory / "input.tar.gz", "w:gz") as archive:
                 archive.add(folder, arcname="input", recursive=True)
             (directory / "input.tar.gz").chmod(0o600)
@@ -276,7 +320,10 @@ class JobStore:
                        "results_root": str(results_root.resolve()), "bundle_sha256": digest(directory / "input.tar.gz"),
                        "bundle_bytes": (directory / "input.tar.gz").stat().st_size, "source_config_sha256": source_sha256})
             return self.update(identifier, status="ready", input_bytes=(directory / "input.tar.gz").stat().st_size,
-                               use_adg=use_adg, sweep_enabled=sweep is not None)
+                               use_adg=use_adg, sweep_enabled=sweep is not None, input_progress={
+                                   "stage": "complete", "files_completed": len(shards), "files_total": len(shards),
+                                   "bytes_completed": total_bytes, "bytes_total": total_bytes,
+                               })
         except Exception:
             self.update(identifier, status="failed", error="Input preparation failed; no instance rented")
             raise

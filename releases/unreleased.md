@@ -1,5 +1,12 @@
 # Unreleased
 
+## 合并远端 main v2.04.7-v2.04.9 并完成 Vue 3 云端功能对齐
+
+- 合并远端 `main` 的 v2.04.7、v2.04.8 和 v2.04.9，纳入 Vast 多交易所场景导出、可恢复 rsync 输入同步、Worker guard 迁移、主机偏好/屏蔽、吞吐采样、性能历史以及 PB8 Suite 币种规范化修复。
+- 保留 Vue 3 + Tailwind CSS v4.3 页面架构，并在 PB8 Optimize 的 Vue 云端面板完整适配最低 TFLOPS、明确报价租赁、主机管理、准备/利用率/吞吐进度、预算/传输预留/任意分钟截止时间和本地性能历史对比图；遗留 HTML/JS 继续作为兼容回退。
+- PB8 Backtest 的 Vue Results 表格在持仓或钱包敞口为零时用 `-` 标识禁用方向；英文和简体中文词典、中文 PB8/Vast 指南及 API 重启 serial 同步更新。
+- 远端发布说明保留在 `releases/v2.04.7.md` 至 `releases/v2.04.9.md`。
+
 ## 合并远端 main v2.04.3-v2.04.6 并保留 Vue 3 前端适配
 
 - 合并远端 `main` 的 v2.04.3、v2.04.4、v2.04.5 和 v2.04.6 发布修复，纳入 Vast GPU、PB8 优化、场景编辑器、日志及市场数据相关更新。

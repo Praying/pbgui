@@ -144,6 +144,12 @@ function fmt(value: number | null | undefined, decimals: number): string {
   return Number(value).toFixed(decimals);
 }
 
+function positionPair(row: BacktestResultItem): string {
+  const longValue = row.pos_long === 0 || row.twe_long === 0 ? '-' : fmt(row.pos_long, 0);
+  const shortValue = row.pos_short === 0 || row.twe_short === 0 ? '-' : fmt(row.pos_short, 0);
+  return `${longValue} / ${shortValue}`;
+}
+
 /** fmtDate (:6497-6502). */
 function fmtDate(iso: string | undefined): string {
   if (!iso) return '-';
@@ -271,7 +277,7 @@ onBeforeUnmount(() => dragSelect.dispose());
           <td class="truncate font-mono tabular-nums">{{ fmt(entry.row.starting_balance, 0) }}</td>
           <td class="truncate font-mono tabular-nums">{{ entry.row.final_balance_estimated ? '~ ' : '' }}{{ fmt(entry.row.final_balance, 0) }}</td>
           <td class="truncate font-mono tabular-nums">{{ fmt(entry.row.twe_long, 2) }} / {{ fmt(entry.row.twe_short, 2) }}</td>
-          <td class="truncate font-mono tabular-nums">{{ fmt(entry.row.pos_long, 0) }} / {{ fmt(entry.row.pos_short, 0) }}</td>
+          <td data-test="position-pair" class="truncate font-mono tabular-nums">{{ positionPair(entry.row) }}</td>
           <TdActions>
             <BacktestRowActionButton
               v-for="action in ACTION_BUTTONS"

@@ -1,10 +1,35 @@
 # Vast.ai GPU-Queue
 
+Ist eine Mietsteuerung noch nicht verfügbar, erklärt ein Klick den Grund. Die Karten zeigen dafür keinen dauerhaften Starthinweis.
+
+Ungespeicherte Eingaben für Budget, Transferreserve und Minuten bleiben bei automatischen Aktualisierungen des Log-Dashboards erhalten. Beim Wechsel zu einer anderen Miete werden sie verworfen. Änderungen gelten erst nach dem Speichern und der Bestätigung des Workers.
+
+Beim Image-Download gewichtet der Fortschrittsbalken die komprimierten Layer-Größen aus dem Manifest des festgelegten Worker-Images. „At least … GB available“ zählt vollständig geladene und bereits gecachte Layer; laufende Downloads werden nicht geschätzt. Der Ready-Zähler zeigt das Entpacken separat. Bei unbekannten Image-Versionen bleiben Layer-Zähler sichtbar. Beim Veröffentlichen eines neuen Worker-Images muss `vast_image_layers.py` aktualisiert werden.
+
 Die Cloud-Optimierung ist direkt in **PB8 Optimize** integriert. Eine separate
 Vast-Seite unter System gibt es nicht mehr. Jeder Nutzer verwendet sein eigenes
 Vast-Konto und Mietguthaben.
 
+Das Log-Dashboard zeigt **Proxy / min**, **Exact / min**, **Proxy / exact** und **Exact / USD (estimate)**. Die Raten verwenden Zählerdifferenzen über ungefähr die letzten 60 Sekunden der nativen GPU-Logs mit Zeitstempeln (mindestens 10 Sekunden sind erforderlich). Messintervall und Alter werden angezeigt; nach 90 Sekunden ohne neue Probe verschwinden die Live-Raten. Beendete Jobs zeigen das letzte gemessene Intervall, keinen Gesamtdurchschnitt. Proxy/Exact beschreibt den kumulierten Auswahlaufwand, keine Ergebnisqualität oder Annahmequote. Exact/USD verwendet den Mietpreis pro Stunde und berücksichtigt weder Transfers noch Start- und Leerlaufzeiten. Fehlende Zähler bleiben unbekannt; die Populationsgröße dient nicht als Ersatz. Eine begrenzte Messhistorie wird bei den Job-Abfragen gespeichert und bleibt beim Ersetzen des Log-Ausschnitts sowie beim Neuladen der Seite oder API erhalten. Ein Update des entfernten Workers ist nicht erforderlich.
+
+## Performance History
+
+Öffne **Settings → Performance History** in der vorhandenen Sidebar. Die API speichert ungefähr alle 60 Sekunden lokale Job-Snapshots, auch ohne geöffneten Browser. Die private SQLite-Datenbank liegt unter `data/vast/performance.sqlite3`; beim Entfernen eines Queue-Jobs bleibt seine Historie erhalten. Bei gestoppter API pausiert die Aufzeichnung. Nach dem Neustart können noch vorhandene Log-Zähler übernommen werden; fehlende frühere Messungen lassen sich nicht rekonstruieren.
+
+Markiere bis zu vier Zeilen per Klick, Tastatur (Leertaste/Enter) oder Ziehen. **View selected run** öffnet einen einzelnen Lauf, auch ältere unvollständige Einträge. **Same workload only** filtert die gesamte Historie nach der Aufgabe des ersten ausgewählten Laufs. **Compare selected** ist nur bei identischen verifizierten Fingerabdrücken möglich; die API prüft dies ebenfalls. **Filter this page** durchsucht die geladene Seite nach Config, GPU, Machine ID, Coin oder Exchange. Previous/Next blättern durch ältere Einträge; **Refresh history** lädt neue Messwerte.
+
+Der Fingerabdruck umfasst vorbereitete Config, Daten-Prüfsummen und PB8-Version/Worker-Image. Jobspezifische Pfade, lokaler Benutzername und zugeteilte CPU-Worker werden ausgeschlossen. Seed, Population, Objectives, Bounds, Szenarien und Datenzeiträume gehören weiterhin zur Aufgabenidentität. CPU-Zuteilung, GPU, Speicher und Mietpreis sind getrennte Vergleichsmerkmale. Fehlende oder inkonsistente Eingaben gelten als unverifiziert und werden nicht automatisch zusammengefasst. Gleiche Fingerabdrücke garantieren keinen identischen Cache-Zustand, Ablauf oder Zufallsverlauf.
+
+Die Komplexitätsdaten unterscheiden konfigurierte Coins von exportierten Symbol-Datensätzen einschließlich BTC-Referenzen. Exportierte Kerzen werden anhand der NumPy-Header gezählt, ohne die Arrays zu laden; die tatsächlich vom Optimizer verwendete Kerzenmenge bleibt unbekannt. Nicht lesbare Header führen zu unbekannten Werten statt Schätzungen. Szenarienzahl, Zeitraum, Zeitauflösung, Population, Parameterzahl und Seed bleiben je Lauf erhalten. Vollständige Configs, Zugangsdaten und SSH-Details werden nicht in der Historie gespeichert.
+
+Die Diagramme zeigen Proxy/min und Exact/min relativ zur ersten aufgezeichneten Zählermessung. Durchschnittswerte teilen die gemessene Gesamtarbeit durch die erfasste Zeit, statt Einzelraten ungewichtet zu mitteln. Sinkende Zähler unterbrechen das Intervall. Doppelte oder alte Beobachtungen zählen keine zusätzliche Arbeit; je Minute bleibt die neueste native Zählermessung erhalten. Auslastung behält ihren ursprünglichen Messzeitpunkt; veraltete Werte bleiben unbekannt. Phasen und echte Auslastungsmessungen werden unabhängig von neuen Zählern gespeichert.
+
+Die Anlaufzeit bezeichnet den **ersten beobachteten** Zähler seit Container-Setup, ersatzweise seit Job-Erstellung. Spät beginnende Aufzeichnung kann diese Zeit überschätzen. Exact/USD verwendet Optimizer-Durchsatz und Stundenpreis. Die Kostenschätzung weist Container-Zeit und beobachtete Transfers separat aus; sie ist keine Provider-Rechnung und verteilt keine gemeinsamen Leerlaufkosten zwischen Jobs. Die Zahl vergleichbarer Host-Läufe berücksichtigt gleichen Fingerabdruck, gleiche Machine ID und ein messbares Zählerintervall. Es gibt keinen pauschalen Komplexitätsscore und keine automatisch angemieteten Benchmark-Läufe.
+
 ## Optimizer Settings
+
+In den Settings wechselst du links in der Sidebar zwischen **GPU offers**, **Known & preferred hosts** und **Blocked hosts**. Die Host-Verwaltung öffnet sich als eigene Hauptansicht. **Rent** und **End rental** stehen in der Sidebar.
+
 
 **Settings** öffnet lokale Ausführung, Cloud-Konto und GPU-Anforderungen. **Guide** springt hier direkt zu diesem Abschnitt. **Back to Queue** führt zur Jobliste zurück.
 
@@ -43,6 +68,10 @@ Das Image enthält Software, keine Nutzerkonfigurationen, Kursdaten oder Keys.
 
 ## GPU-Anforderungen in den Settings
 
+Im Cloud-CPU-Modus **Auto** bestimmt **Min CPU cores** die Mindestleistung der Miete. Trage hier 16 oder 32 ein, wenn diese CPU-Zahl benötigt wird. Die CPU-Zahl einer lokalen Optimizer-Config überschreibt diesen Wert nicht; die Cloud-Ausführung verwendet die gemessene Zuteilung, begrenzt auf die gemietete CPU-Quote. Ältere Jobs mit einer explizit festen CPU-Anforderung behalten diese Anforderung.
+
+Manuelles **Rent** verwendet GPU-Typ, Hardware, Disk-Größe, Verifizierungsstatus und angezeigten Preis des ausgewählten Angebots. Nachträgliche Änderungen der Suchfilter ersetzen dessen Eigenschaften nicht. Mietdauer und Budget stammen weiterhin aus den Miet-Einstellungen; Verfügbarkeit und Grenzen werden vor der Miete erneut geprüft.
+
 Im Editor nur **Execution → Vast.ai GPU** oder **Local** wählen.
 Unter **Queue → Settings → GPU requirements** GPU-Typ, maximalen Stundenpreis,
 Mindestwerte für VRAM/RAM/CPU, Disk-Größe und verifizierte Hosts festlegen.
@@ -75,20 +104,41 @@ Verschwindet ein Angebot zwischen Suche und Bereitstellung, kann der Start
 weiterhin scheitern. PBGui erzeugt keine nicht freigegebene Ersatzmiete.
 Der Stundenpreis enthält Disk; Transfers kosten zusätzlich. Der Worker prüft die
 tatsächliche CPU-Quote. Gespeicherte Vorgaben gelten für die nächste Miete.
+Mit **Min TFLOPS** wird die vom Provider angegebene Mindest-GPU-Rechenleistung
+gefordert; `0` lässt die Rechenleistung offen. Die Vorgabe gilt sowohl für die
+Vorschau als auch für die endgültige Angebotsauswahl vor einer Miete.
 
-**Save & Queue** speichert die aktuelle Konfiguration und erstellt einen festen
-Eingabestand. **Queue Selected** beachtet ebenfalls das gespeicherte Ziel. Lokale
+**Save & Queue** speichert die aktuelle Konfiguration und erstellt sofort eine
+Cloud-Queue-Zeile mit dem Status **Preparing input**. Der feste Eingabestand wird
+anschließend im Hintergrund kopiert und komprimiert; vor dem Status **queued**
+kann keine GPU gemietet werden. Die Zeile zeigt kopierte Eingabe-MB, die Anzahl
+fertiger Dateien und einen Fortschrittsbalken; die abschließende Komprimierung
+erscheint als unbestimmte Phase. **Queue Selected** beachtet ebenfalls das gespeicherte Ziel. Lokale
 Konfigurationen bleiben im bisherigen lokalen Ablauf. Cloud-Jobs erscheinen als
 gemeinsamen Tabelle unter **Queue**, erkennbar an der Spalte **Execution**.
 
 Aktuell unterstützt: frische Multi-Coin-Läufe mit `ema_anchor` oder
-`trailing_martingale`, Binance/Bybit und reine Datumsszenarien. HSL, Overrides,
+`trailing_martingale`, Binance, Bybit, Bitget, OKX, Hyperliquid, KuCoin und Szenarien mit eigenen Coins, Börsen, Zeiträumen und unterstützten GPU-Parameter-Overrides. HSL, separate Coin-Override-Pakete,
 BTC-Collateral und Successive Halving werden vor der Miete abgewiesen.
 Pareto-Seeds werden nicht übernommen. `gain_strategy_eq` wird vom festen
 GPU-Backend nicht unterstützt. Gegebenenfalls bewusst ein unterstütztes Ziel
 wie `adg_strategy_eq` im Editor auswählen; PBGui ändert das Ziel nicht heimlich.
 Die vorhandene Historie des Coins und der BTC-Referenz wird inklusive Warmup
 übernommen. Fehlende Daten zuvor über Market Data laden.
+
+### Bekannte, funktionierende und bevorzugte Hosts
+
+Die Angebotssuche kennzeichnet anhand der lokalen Miethistorie tatsächlich gemietete Rechner als **Previously used**. **Working** bedeutet, dass mindestens ein exaktes Optimierungsergebnis auf diesem Rechner erfasst wurde oder du ihn mit **Mark working** manuell markiert hast. Eine beim Image-Download hängende Miete wird nicht automatisch als Working markiert. Die Kennzeichnung beschreibt frühere Erfahrungen und garantiert nicht den Erfolg der nächsten Miete.
+
+Mit **Prefer host** in den Angebotsdetails, in der Host-Karte einer Miete oder unter **Settings → Known & preferred hosts** bevorzugst du einen Rechner. Bevorzugte Maschinen erscheinen zuerst und werden innerhalb dieser Gruppe nach Preis ausgewählt. PBGui sucht diese Maschinen zusätzlich gezielt, auch wenn sie nicht auf der ersten Seite der günstigsten Angebote stehen. Hardware-Anforderungen, Preisgrenze, Laufzeit und Budgetprüfung gelten weiterhin. Qualifiziert sich kein bevorzugter Rechner, bleiben andere passende Angebote verfügbar. Manuelles **Rent** mietet weiterhin exakt das ausgewählte Angebot. Eine Sperre hat immer Vorrang.
+
+Präferenzen und manuelle Working-Markierungen bleiben nach Neuladen und API-Neustart erhalten. **Remove preference** und **Clear working mark** heben deine Markierungen auf; nachgewiesene historische Ergebnisse bleiben sichtbar. Alte Mieten ohne gespeicherte Machine ID können nicht anhand des GPU-Namens zugeordnet werden. Bei einer noch existierenden Miete ermittelt eine Host-Aktion die ID über Vast; andernfalls kannst du die bekannte Machine ID manuell eintragen. Die Mietüberwachung speichert künftig die Rechner-ID automatisch. Die Markierungen ändern oder beenden keine laufende Miete.
+
+### Unzuverlässige Hosts sperren
+
+Mit **Block host** neben einem Angebot, neben der aktuellen Miete in den Settings oder in der **Host**-Karte des Optimizer-Logs sperrst du einen Rechner. PBGui speichert dessen dauerhafte Vast **Machine ID**. Auch neue Angebote desselben Rechners werden damit aus der Vorschau sowie aus zukünftigen manuellen und automatischen Mieten ausgeschlossen. Eine laufende Miete bleibt bestehen; beende sie bei Bedarf separat mit **End rental**.
+
+Unter **Blocked hosts** in den Settings kannst du die IDs ansehen, eine bekannte Vast Machine ID manuell sperren und mit **Unblock host** wieder freigeben. Die Sperren bleiben nach Neuladen und API-Neustart erhalten. Bei älteren Mieten ermittelt PBGui die Machine ID beim Klick auf Block host anhand der zugehörigen Vast-Instanz. Ist diese nicht mehr verfügbar, kannst du die ID manuell eintragen. Sobald Sperren vorhanden sind, werden auch Angebote ohne gültige Machine ID ausgeschlossen, weil sich deren Freigabe nicht zuverlässig prüfen lässt.
 
 ## Prüfung der GPU-Konfiguration
 
@@ -110,6 +160,8 @@ Runtime-/Geräteprüfungen folgen zusätzlich. Eine erfolgreiche Konfigurationsp
 garantiert deshalb noch keinen erfolgreichen GPU-Lauf.
 
 ## Eine Miete für mehrere Jobs
+
+Benötigt ein später hinzugefügter Job mehr Transferreserve, kann ein Worker mit aktuellem Budget-Control-Guard ungenutzte Mietzeit innerhalb desselben genehmigten Budgets in Transferreserve umschichten. PBGui startet den Job erst nach Bestätigung der verkürzten Deadline durch den Worker. Während einer ausstehenden Anpassung greift keine Leerlaufbereinigung. Bei älteren Guards oder unzureichendem Restbudget zeigt PBGui einen Hinweis zur manuellen Anpassung von **Transfer reserve/Budget**. Unbestätigte Reserven werden nicht ausgegeben und das Budget wird nicht automatisch erhöht.
 
 Unter **Queue → Settings** maximale Stunden, Budgetziel und Leerlaufregel zusammen mit den GPU-Anforderungen speichern. **Start** in der Jobzeile mietet direkt mit diesen gespeicherten Vorgaben, ohne weitere Bestätigung, und sucht ein aktuelles passendes Angebot.
 PBGui mietet einmal, richtet verifiziertes SSH ein und arbeitet die Jobs
@@ -151,12 +203,21 @@ bestätigt die Löschung; blosses Stoppen kann weitere Speicherkosten verursache
 
 ## Grenzen und Wiederaufnahme
 
+Vorübergehende Upload-/SSH-Fehler erhalten ein Wiederherstellungsfenster von 15 Minuten statt einer Grenze von zwei Versuchen. PBGui wartet zunächst 15, dann 30 und anschließend höchstens 60 Sekunden zwischen Versuchen und verwendet Teildateien bzw. geprüfte Blöcke weiter. Neuer beobachteter Transferfortschritt erneuert das Fenster; wiederholte Versuche ohne Fortschritt nicht. Das Log zeigt den nächsten Versuch und den ursprünglichen Verbindungsfehler. Der separate 15-Minuten-Timer für die Worker-Einrichtung gilt nach erfolgreicher Health-Prüfung nicht mehr für den Upload. Die Mietfrist abzüglich drei Minuten für Ergebnissicherung begrenzt weiterhin die Übertragung. Stop reagiert auch während der Wartezeit. Identitäts-, Integritäts- und Speicherplatzfehler führen weiterhin zum sofortigen Abbruch; Mietfrist und Budget werden nicht automatisch verlängert.
+
 OpenSSH und ein funktionierender systemd-User-Manager sind erforderlich.
 Controller und Mietwächter überleben Browser-/API-Neustarts. Ein entfernter
 Wächter versucht die Löschung unabhängig zur festen Frist. Nach einem Neustart
 des PBGui-Rechners mit **Resume supervision** die temporären Dienste wiederherstellen.
 
-Das Budget ist keine harte Vast-Ausgabensperre. Zur Frist hat die Löschung Vorrang
+**Budget**, **Deadline** und **Transfer reserve** stehen in eigenen Karten. Reserve-Eingaben zeigen vier Nachkommastellen. Das Eingabefeld für die Deadline-Anpassung startet immer mit 60 Minuten. Anpassungen sind in ganzen Minuten von 1 bis 1.440 möglich, innerhalb von Budget, 24-Stunden-Mietlimit und Aufräumreserve. Bei einer ausdrücklich angeforderten Deadline-Änderung aktualisiert PBGui einen älteren Mietwächter, während der Optimizer weiterläuft. Der neue Wächter muss zuerst die unveränderte Deadline bestätigen; erst danach wird die gewünschte Änderung gesendet. Bei fehlgeschlagener Übergabe wird der alte Wächter wieder aktiviert. Unbestätigte Anpassungen bleiben ausstehend und verlängern die lokale Deadline nicht. Während der Übergabe ist ein API-Neustart blockiert.
+
+In der Karte der aktiven Miete kann das **Budgetziel** geändert werden. PBGui
+berechnet daraus die Löschfrist neu und übergibt die Änderung zur Bestätigung an
+den Worker-Guard; bis zur Bestätigung bleibt sie ausstehend. Dieselbe Karte zeigt
+die für Ein- und Ausgaben reservierte Transferreserve. Bei der Meldung einer zu
+kleinen Transferreserve kann sie dort erhöht werden; PBGui verkürzt dafür die
+Frist innerhalb des gewählten Budgets. Das Budget ist keine harte Vast-Ausgabensperre. Zur Frist hat die Löschung Vorrang
 vor unvollständiger Sicherung; Provider-Ausfälle können sie verzögern. Grenzen
 pro Job: 10 GiB Eingabedaten, zwei Uploadversuche, 2 GiB Ergebnistransfers.
 Rohbackups bleiben unter `data/vast/jobs/<job-id>/`. Checkpoints bleiben dort und
@@ -275,3 +336,9 @@ Ein neuer Run zeigt einen Wartehinweis, bis sein eigenes Provider- oder Optimize
 - **Vast instance charges** zeigt nach einer fehlgeschlagenen Abrechnungsabfrage **Unavailable**. Ein bereits geladener Betrag bleibt als **last retrieved** sichtbar; der Hinweis am Feldtitel nennt Fehler und Abrufdetails.
 - Fehlt die lokale Mietüberwachung, erklären Settings und Job-Log die systemd/OpenSSH-Voraussetzung. Jobs werden über **Open log** in der gemeinsamen Queue ausgewählt; dieses Fenster enthält Fortschritt, Fehler, Mietdetails und das zuletzt heruntergeladene Log.
 - **Show incompatible hosts** aktualisiert die Angebotsvorschau. Die Auswahl eines Angebots übernimmt dessen GPU-Typ in die Anforderungen; diese vor dem Start speichern. Das Angebot wird dadurch nicht reserviert.
+
+Der Cloud-Export plant alle aktiven Szenarien gemeinsam: `coins`, `ignored_coins`, `exchanges`, Datumsfelder und `coin_sources` werden berücksichtigt. Er exportiert den gemeinsamen Markt-Datenbestand inklusive BTC-Referenz, entfernt doppelte Dateien und behält die gesamte vorhandene Tageshistorie für Warmup und Szenariozeiträume. Zusätzliche Szenario-Börsen werden auch bei Markt- und Erstkerzen-Metadaten berücksichtigt. Die ursprüngliche Konfiguration bleibt unverändert; verschachtelte Parameter-Overrides werden nur in der eingefrorenen Worker-Kopie in Punktpfade umgewandelt.
+
+Fehlende Mappings oder lokale OHLCV-Dateien nennen Szenario, Coin und Börse; die benötigte Historie vor dem Einreihen unter Market Data herunterladen. Eine Coin muss nicht auf jeder Börse gelistet sein. `coin_sources` muss eine Coin über die Suite hinweg derselben Börse zuordnen. Hyperliquid verwendet USDC, die anderen unterstützten Börsen USDT.
+
+Leere oder fehlende Szenario-`exchanges` übernehmen die Basisbörsen. Fehlende/null `coins` übernehmen die Basisauswahl; `coins: []` wählt dagegen ausdrücklich keine Coins und wird mit dieser Begründung abgelehnt, entsprechend PB8. Leere `overrides` und `coin_sources` sind erlaubt. Pro aktivem Szenario gelten 1–64 ausgewählte Coins; die gesamte Suite darf mehr enthalten. Parameter-Overrides müssen vorhandene kanonische PB8-Pfade verwenden, die der festgelegte GPU-Worker unterstützt. Separate Coin-Override-Pakete, Datenpfad-Overrides und HSL bleiben außerhalb dieses Cloud-Profils; Fehler nennen Szenario und konkretes Feld.

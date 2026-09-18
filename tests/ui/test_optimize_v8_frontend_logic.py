@@ -1886,6 +1886,7 @@ def test_v8_save_and_queue_with_new_name_does_not_rebind_opened_job() -> None:
         function setPageEditorStatus() {{}}
         function closeEditor() {{}}
         function toast() {{}}
+        function handleError(error) {{ throw error; }}
         async function loadConfigs() {{}}
         async function loadQueue() {{}}
         function setPanel() {{}}

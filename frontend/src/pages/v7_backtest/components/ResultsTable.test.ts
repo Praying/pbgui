@@ -147,6 +147,18 @@ describe('rows (:5541-5574)', () => {
     expect(text).toContain('1456');
   });
 
+  it('renders a dash for each explicitly disabled position side', () => {
+    const wrapper = mountTable({
+      rows: [
+        row({ path: 'short-disabled', pos_long: 4, pos_short: 5, twe_long: 1, twe_short: 0 }),
+        row({ path: 'long-disabled', pos_long: 0, pos_short: 3, twe_long: 1, twe_short: 1 }),
+      ],
+    });
+
+    const positionCells = wrapper.findAll('tbody tr').map((resultRow) => resultRow.get('[data-test="position-pair"]').text());
+    expect(positionCells).toEqual(['4 / -', '- / 3']);
+  });
+
   it('null metrics render the plain dash (:fmt)', () => {
     const wrapper = mountTable({ rows: [row({ path: 'p1', adg: null, gain: null })] });
     const text = wrapper.findAll('tbody tr')[0]!.findAll('td').map((c) => c.text());

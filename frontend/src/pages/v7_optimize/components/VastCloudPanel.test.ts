@@ -83,4 +83,26 @@ describe('VastCloudPanel', () => {
     ]);
     wrapper.unmount();
   });
+
+  it('includes the saved minimum TFLOPS requirement when previewing offers', async () => {
+    vi.mocked(apiFetch).mockImplementation(async (url: string) => {
+      if (url === '/api/vast/settings') return { configured: true };
+      if (url === '/api/vast/gpu-preferences') return { min_tflops: 45.5 };
+      if (url === '/api/vast/configs') return { configs: [] };
+      if (url === '/api/vast/jobs') return { jobs: [], worker: null, queue: {} };
+      if (url === '/api/vast/hosts') return { hosts: [] };
+      if (url.startsWith('/api/vast/offers?')) return { offers: [], hosts: [] };
+      return {};
+    });
+    const wrapper = mount(VastCloudPanel, { global: { plugins: [createI18n('en')] } });
+    await flushPromises();
+
+    await wrapper.findAll('button').find((button) => button.text() === 'Find GPU offers')!.trigger('click');
+    await flushPromises();
+
+    const offersCall = vi.mocked(apiFetch).mock.calls.filter(([url]) => String(url).startsWith('/api/vast/offers?')).at(-1);
+    expect(offersCall).toBeDefined();
+    expect(new URLSearchParams(String(offersCall![0]).split('?')[1]).get('min_tflops')).toBe('45.5');
+    wrapper.unmount();
+  });
 });

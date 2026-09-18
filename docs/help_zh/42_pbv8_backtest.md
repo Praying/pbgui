@@ -12,6 +12,7 @@ PBGui 维护一个短的有界缓存，用于 PB8 模板和已验证的配置文
 - Configs 表格显示活动的 PB8 策略，并支持按 Strategy 排序。
 - 双击行或使用 **Edit** 打开 PBv7 使用的完整可视化编辑器，包括日期、交易所、费用、行情数据、币种过滤器、approved/ignored 币种、套件、币种覆盖、PB8 结果指标和市场设置覆盖、Long/Short JSON 以及 Raw JSON。
 - **Queue** 或 **Save & Queue** 捕获已保存配置的不可变快照。
+- 启用 Suite 时，PB8 要求 `live.approved_coins` 和 `live.ignored_coins` 的 Long/Short 列表一致。如果恰好只有一个方向通过 `n_positions=0` 或 `total_wallet_exposure_limit=0` 明确禁用，PBGui 会在保存和启动快照时把活动方向的列表复制到禁用方向，而不会重新启用它。两个方向均活动且列表冲突时，保存会返回带确切字段路径的验证错误。
 - 币种覆盖 JSON 文件和 `backtest.json` 作为单个配置 bundle 验证并发布。失败的保存会保持之前的配置和覆盖文件不变；移除覆盖引用会从 bundle 中移除其过时文件。
 - PBGui 控制 `backtest.base_dir`，并将结果写入 `<pb8dir>/backtests/pbgui/<config>` 下。
 - 已保存的 PBv7 回测配置、单个 PBv7 结果和 PBv7 Run 行提供 **V8** 转换。转换使用 PB8 官方的 `migrate-config-v7` 实现，并保持 V7 源不变。Backtest 配置/结果转换总是打开未保存的 PB8 编辑器草稿；转换本身绝不创建或替换已存储的 V8 配置。附着的迁移报告只在用户显式保存草稿时写为 `migration_report.json`。对于结果转换，PBGui 首先恢复 `fills.csv` 证明的有效线性市场 maker 和 taker 费率，并将每个更正记录在 `pbgui_result_fee_adjustments` 中。调用 PB8 前移除仅 PBGui 的元数据和过期的临时 `live.base_config_path` 值。官方迁移后，PBGui 移除与策略不兼容的优化器覆盖，规范化固定运行时覆盖路径，冻结已有零持仓和零敞口的机器人方向，并在正的 V7 阈值使其隐式活动时启用 V8 WEL/TWEL 执行器。真实的 `bounded` 与 V7 原始 WEL 规模差异成为保存前在 `legacy_raw` 对等与 PB8 安全上限之间必须做出的标记选择。正的 minimum coin age 同样要求在 `0`（PB7 数据覆盖）与原始值（PB8 的交易所特定年龄门槛）之间做出标记选择。安全更改使用报告状态 `ok_with_adjustments`；不明确的路径或冲突值在未保存草稿中保持标记供手动审查。
@@ -75,6 +76,8 @@ AI 助手解析到确切受管的 PB8 回测资源后，可以通过相同的 Re
 Backtest/Rebacktest 对话框中的交易所列表使用无修饰符的切换选择：单击未选中的交易所会添加它而不清除现有选择，而单击已选中的交易所只移除该交易所。
 
 Results 工具栏包含一个持久的 **Columns** 选择器。**Defaults** 恢复可比较的未加权结果表，而 **All** 还暴露可用的加权指标、Final Equity 和 Equity/Balance Difference 值。此浏览器本地选择与 Archive 独立。
+
+Results、Legacy 和 Archive 表格的 POS 列显示配置的 Long/Short 持仓上限，而不是当前占用仓位。某个方向的持仓上限或总钱包敞口为零时，该方向显示 `-`，避免把已禁用方向误读为可用仓位数量。
 
 面板导航在显示 Results、Queue、Archive 或 Refine 操作前同步关闭 Config 编辑器侧边栏，因此延迟的编辑器状态不能把错误的侧边栏附着到活动面板上。
 

@@ -8,6 +8,11 @@ import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { queueVastConfig } from '../lib/vastApi';
+import { isOfferCompatible } from '../lib/vastModel';
+import type { VastHostProfile } from '../lib/vastTypes';
+import VastHostsPanel from './VastHostsPanel.vue';
+import VastPerformancePanel from './VastPerformancePanel.vue';
+import VastRentalPanel from './VastRentalPanel.vue';
 
 interface VastOffer {
   id?: string | number;
@@ -21,6 +26,9 @@ interface VastOffer {
   verified?: boolean;
   cuda_max_good?: number;
   duration_seconds?: number;
+  machine_id?: number;
+  tflops?: number;
+  host_history?: VastHostProfile;
   [key: string]: unknown;
 }
 
@@ -31,7 +39,8 @@ interface VastRental {
   deadline_protocol?: number;
   deadline_pending?: boolean;
   deadline_error?: string;
-  offer?: { gpu_name?: string; location?: string; price_hour_usd?: number };
+  transfer_reserve_usd?: number;
+  offer?: { gpu_name?: string; location?: string; price_hour_usd?: number; machine_id?: number };
 }
 
 interface VastJob {
@@ -58,6 +67,7 @@ interface VastPreferences {
   min_vram: number;
   min_ram: number;
   min_cpu: number;
+  min_tflops: number;
   disk_gb: number;
   verified_only: boolean;
   hours: number;
@@ -86,7 +96,13 @@ const showIncompatible = ref(false);
 const selectedOfferId = ref('');
 const jobs = ref<VastJob[]>([]);
 const worker = ref<VastWorker | null>(null);
+const queuePaused = ref(false);
+const hosts = ref<VastHostProfile[]>([]);
+const blockedMachineIds = ref<number[]>([]);
+const activeView = ref<'offers' | 'hosts' | 'performance'>('offers');
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
+let loadGeneration = 0;
+let loadController: AbortController | undefined;
 
 const credentials = reactive({ api_key: '', registry_token: '' });
 const preferences = reactive<VastPreferences>({
@@ -95,6 +111,7 @@ const preferences = reactive<VastPreferences>({
   min_vram: 12,
   min_ram: 16,
   min_cpu: 4,
+  min_tflops: 0,
   disk_gb: 40,
   verified_only: true,
   hours: 1,
@@ -112,26 +129,12 @@ const workerLabel = computed(() => worker.value?.rental_state || worker.value?.s
 const selectedOffer = computed(() => offers.value.find((offer) => String(offer.id) === selectedOfferId.value) || null);
 const selectedOfferCompatible = computed(() => {
   const offer = selectedOffer.value;
-  if (!offer) return false;
-  if (offer.cuda_max_good !== undefined && Number(offer.cuda_max_good) < 13) return false;
-  if (offer.duration_seconds !== undefined && Number(offer.duration_seconds) < preferences.hours * 3600) return false;
-  return true;
+  return offer ? isOfferCompatible(offer, preferences.hours) : false;
 });
 const activeRental = computed(() => {
   const jobRental = jobs.value.find((job) => job.rental)?.rental;
   return jobRental || worker.value?.rental || null;
 });
-const canAdjustDeadline = computed(() => {
-  const rental = activeRental.value;
-  return Boolean(
-    rental?.id &&
-    rental.deadline !== undefined &&
-    rental.deadline_protocol === 1 &&
-    rental.deadline_pending !== true &&
-    worker.value?.rental_state === 'active',
-  );
-});
-const deadlineChanging = ref(false);
 
 function valueAsNumber(value: unknown, fallback: number): number {
   const parsed = Number(value);
@@ -158,25 +161,36 @@ function preferencePayload(): VastPreferences {
 }
 
 async function loadData(): Promise<void> {
+  const generation = ++loadGeneration;
+  loadController?.abort();
+  const controller = new AbortController();
+  loadController = controller;
   loading.value = true;
   error.value = '';
   try {
-    const [settings, storedPreferences, configData, jobData] = await Promise.all([
-      apiFetch<Record<string, unknown>>('/api/vast/settings'),
-      apiFetch<Record<string, unknown>>('/api/vast/gpu-preferences'),
-      apiFetch<{ configs?: Array<Record<string, unknown>> }>('/api/vast/configs'),
-      apiFetch<{ jobs?: VastJob[]; worker?: VastWorker }>('/api/vast/jobs'),
+    const [settings, storedPreferences, configData, jobData, hostData] = await Promise.all([
+      apiFetch<Record<string, unknown>>('/api/vast/settings', { signal: controller.signal }),
+      apiFetch<Record<string, unknown>>('/api/vast/gpu-preferences', { signal: controller.signal }),
+      apiFetch<{ configs?: Array<Record<string, unknown>> }>('/api/vast/configs', { signal: controller.signal }),
+      apiFetch<{ jobs?: VastJob[]; worker?: VastWorker; queue?: Record<string, unknown> }>('/api/vast/jobs', { signal: controller.signal }),
+      apiFetch<{ hosts?: VastHostProfile[] }>('/api/vast/hosts', { signal: controller.signal }),
     ]);
+    if (generation !== loadGeneration || controller.signal.aborted) return;
     hasCredentials.value = Boolean(settings.configured);
     applyPreferenceValues(storedPreferences);
     configs.value = (configData.configs ?? []).map((config) => String(config.name ?? '')).filter(Boolean);
     if (!selectedConfig.value || !configs.value.includes(selectedConfig.value)) selectedConfig.value = configs.value[0] || '';
     jobs.value = jobData.jobs ?? [];
     worker.value = jobData.worker ?? null;
+    queuePaused.value = Boolean(jobData.queue?.paused);
+    blockedMachineIds.value = Array.isArray(jobData.queue?.blocked_machine_ids)
+      ? jobData.queue.blocked_machine_ids.map(Number).filter((value) => Number.isSafeInteger(value) && value > 0)
+      : [];
+    hosts.value = hostData.hosts ?? [];
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : String(caught);
+    if (!controller.signal.aborted && generation === loadGeneration) error.value = caught instanceof Error ? caught.message : String(caught);
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 }
 
@@ -228,14 +242,16 @@ async function findOffers(): Promise<void> {
     min_vram: String(preferences.min_vram),
     min_ram: String(preferences.min_ram),
     min_cpu: String(preferences.min_cpu),
+    min_tflops: String(preferences.min_tflops),
     disk_gb: String(preferences.disk_gb),
     verified_only: String(preferences.verified_only),
     gpu_name: preferences.gpu_name.trim(),
     include_incompatible: String(showIncompatible.value),
     rental_hours: String(preferences.hours),
   });
-  const result = await runRequest(() => apiFetch<{ offers?: VastOffer[] }>(`/api/vast/offers?${query}`), t('v7optimize.cloudOffersLoaded'));
+  const result = await runRequest(() => apiFetch<{ offers?: VastOffer[]; hosts?: VastHostProfile[] }>(`/api/vast/offers?${query}`), t('v7optimize.cloudOffersLoaded'));
   offers.value = result?.offers ?? [];
+  if (result?.hosts) hosts.value = result.hosts;
   selectedOfferId.value = '';
 }
 
@@ -278,29 +294,52 @@ async function rentSelectedOffer(): Promise<void> {
   selectedOfferId.value = '';
 }
 
-async function adjustDeadline(minutes: -30 | 30): Promise<void> {
-  const rental = activeRental.value;
-  if (!canAdjustDeadline.value || !rental?.id || rental.deadline === undefined || deadlineChanging.value) return;
-  deadlineChanging.value = true;
-  try {
-    await apiFetch('/api/vast/queue/deadline', {
+async function adjustDeadline(rental: VastRental, minutes: number): Promise<void> {
+  if (!rental.id || rental.deadline === undefined || !Number.isInteger(minutes) || minutes === 0) return;
+  await runRequest(() => apiFetch('/api/vast/queue/deadline', {
       method: 'POST',
       body: JSON.stringify({ worker_id: rental.id, expected_deadline: rental.deadline, minutes }),
-    });
-    await loadData();
-  } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : String(caught);
-  } finally {
-    deadlineChanging.value = false;
-  }
+    }), t('v7optimize.cloudQueueUpdated'));
+}
+
+async function adjustBudget(rental: VastRental, budget: number): Promise<void> {
+  if (!rental.id || rental.budget_usd === undefined) return;
+  await runRequest(() => apiFetch('/api/vast/queue/budget', {
+    method: 'POST',
+    body: JSON.stringify({ worker_id: rental.id, expected_budget_usd: rental.budget_usd, budget_usd: budget }),
+  }), t('v7optimize.cloudQueueUpdated'));
+}
+
+async function adjustReserve(rental: VastRental, reserve: number): Promise<void> {
+  if (!rental.id || rental.transfer_reserve_usd === undefined) return;
+  await runRequest(() => apiFetch('/api/vast/queue/transfer-reserve', {
+    method: 'POST',
+    body: JSON.stringify({ worker_id: rental.id, expected_reserve_usd: rental.transfer_reserve_usd, reserve_usd: reserve }),
+  }), t('v7optimize.cloudQueueUpdated'));
 }
 
 async function queueAction(action: 'pause' | 'resume' | 'end'): Promise<void> {
   await runRequest(() => apiFetch(`/api/vast/queue/${action}`, { method: 'POST' }), t('v7optimize.cloudQueueUpdated'));
 }
 
-async function jobAction(job: VastJob, action: 'stop' | 'recover' | 'requeue' | 'delete'): Promise<void> {
+async function jobAction(job: VastJob, action: 'stop' | 'recover' | 'requeue' | 'cleanup' | 'delete'): Promise<void> {
   await runRequest(() => apiFetch(`/api/vast/jobs/${encodeURIComponent(job.id)}/${action}`, { method: action === 'delete' ? 'DELETE' : 'POST' }), t('v7optimize.cloudJobUpdated'));
+}
+
+async function setHostBlock(machineId: number, blocked: boolean): Promise<void> {
+  const result = await runRequest(() => apiFetch<{ blocked_machine_ids?: number[] }>('/api/vast/blocked-hosts', {
+    method: 'POST',
+    body: JSON.stringify({ machine_id: machineId, blocked }),
+  }), t('v7optimize.cloudHostUpdated'));
+  if (result?.blocked_machine_ids) blockedMachineIds.value = result.blocked_machine_ids;
+}
+
+async function setHostPreference(machineId: number, field: 'preferred' | 'working', value: boolean): Promise<void> {
+  const result = await runRequest(() => apiFetch<{ hosts?: VastHostProfile[] }>('/api/vast/host-preferences', {
+    method: 'POST',
+    body: JSON.stringify({ machine_id: machineId, [field]: value }),
+  }), t('v7optimize.cloudHostUpdated'));
+  if (result?.hosts) hosts.value = result.hosts;
 }
 
 function formatMoney(value: unknown): string {
@@ -312,7 +351,11 @@ onMounted(() => {
   void loadData();
   refreshTimer = setInterval(() => { if (isOpen.value) void loadData(); }, 15000);
 });
-onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer); });
+onBeforeUnmount(() => {
+  if (refreshTimer) clearInterval(refreshTimer);
+  loadGeneration += 1;
+  loadController?.abort();
+});
 </script>
 
 <template>
@@ -325,7 +368,13 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer); });
       <p v-if="error" class="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger-soft" role="alert">{{ error }}</p>
       <p v-if="message" class="rounded-md border border-success/35 bg-success/10 px-3 py-2 text-sm text-success-soft" role="status">{{ message }}</p>
 
-      <section class="grid gap-3 rounded-md border border-border-subtle bg-page/35 p-3">
+      <nav class="flex flex-wrap gap-2" :aria-label="t('v7optimize.cloudViews')">
+        <Button type="button" :variant="activeView === 'offers' ? 'info' : 'ghost'" size="sm" @click="activeView = 'offers'">{{ t('v7optimize.cloudOffersAndQueue') }}</Button>
+        <Button type="button" :variant="activeView === 'hosts' ? 'info' : 'ghost'" size="sm" @click="activeView = 'hosts'">{{ t('v7optimize.cloudHostManagement') }}</Button>
+        <Button type="button" :variant="activeView === 'performance' ? 'info' : 'ghost'" size="sm" @click="activeView = 'performance'">{{ t('v7optimize.cloudPerformanceHistory') }}</Button>
+      </nav>
+
+      <section v-if="activeView === 'offers'" class="grid gap-3 rounded-md border border-border-subtle bg-page/35 p-3">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h3 class="text-md font-semibold text-primary">{{ t('v7optimize.cloudAccount') }}</h3>
           <Button type="button" variant="default" size="sm" :disabled="saving || !hasCredentials" @click="refreshAccount">{{ t('v7optimize.cloudRefreshBalance') }}</Button>
@@ -338,7 +387,7 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer); });
         <strong v-if="accountBalance !== null" class="text-sm text-primary">{{ t('v7optimize.cloudBalance') }}: {{ formatMoney(accountBalance) }}</strong>
       </section>
 
-      <section class="grid gap-3 rounded-md border border-border-subtle bg-page/35 p-3">
+      <section v-if="activeView === 'offers'" class="grid gap-3 rounded-md border border-border-subtle bg-page/35 p-3">
         <div class="flex flex-wrap items-center justify-between gap-2"><h3 class="text-md font-semibold text-primary">{{ t('v7optimize.cloudPreferences') }}</h3><Button type="button" variant="default" size="sm" :disabled="saving" @click="savePreferences">{{ t('common.save') }}</Button></div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div class="grid gap-1.5 lg:col-span-2"><Label for="vast-gpu-name">{{ t('v7optimize.cloudGpuName') }}</Label><Input id="vast-gpu-name" v-model="preferences.gpu_name" /></div>
@@ -347,31 +396,27 @@ onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer); });
           <div class="grid gap-1.5"><Label for="vast-min-vram">{{ t('v7optimize.cloudMinVram') }}</Label><Input id="vast-min-vram" v-model.number="preferences.min_vram" type="number" min="0" /></div>
           <div class="grid gap-1.5"><Label for="vast-min-ram">{{ t('v7optimize.cloudMinRam') }}</Label><Input id="vast-min-ram" v-model.number="preferences.min_ram" type="number" min="0" /></div>
           <div class="grid gap-1.5"><Label for="vast-min-cpu">{{ t('v7optimize.cloudMinCpu') }}</Label><Input id="vast-min-cpu" v-model.number="preferences.min_cpu" type="number" min="0" /></div>
+          <div class="grid gap-1.5"><Label for="vast-min-tflops">{{ t('v7optimize.cloudMinTflops') }}</Label><Input id="vast-min-tflops" v-model.number="preferences.min_tflops" type="number" min="0" step="0.1" /></div>
           <div class="grid gap-1.5"><Label for="vast-disk">{{ t('v7optimize.cloudDiskGb') }}</Label><Input id="vast-disk" v-model.number="preferences.disk_gb" type="number" min="40" /></div>
         </div>
         <label class="flex items-center gap-2 text-sm text-secondary"><Checkbox v-model="preferences.verified_only" />{{ t('v7optimize.cloudVerifiedOnly') }}</label>
         <div class="flex flex-wrap gap-2"><Button type="button" variant="default" :disabled="saving || !hasCredentials" @click="findOffers">{{ t('v7optimize.cloudFindOffers') }}</Button><Button type="button" variant="default" :disabled="saving || !selectedConfig" @click="prepareJob">{{ t('v7optimize.cloudQueueJob') }}</Button><Button type="button" variant="warning" :disabled="saving || !selectedOfferCompatible" @click="rentSelectedOffer">{{ t('v7optimize.cloudRentSelected') }}</Button></div>
       </section>
 
-      <section v-if="offers.length" class="grid gap-2 rounded-md border border-border-subtle bg-page/35 p-3">
+      <section v-if="activeView === 'offers' && offers.length" class="grid gap-2 rounded-md border border-border-subtle bg-page/35 p-3">
         <div class="flex items-center justify-between gap-2"><h3 class="text-md font-semibold text-primary">{{ t('v7optimize.cloudOffers') }}</h3><label class="flex items-center gap-2 text-xs text-secondary"><Checkbox v-model="showIncompatible" />{{ t('v7optimize.cloudShowIncompatible') }}</label></div>
-        <div class="max-h-56 overflow-auto rounded-md border border-border-subtle"><table class="w-full text-left text-xs"><thead class="sticky top-0 bg-panel text-secondary"><tr><th class="p-2">{{ t('v7optimize.cloudGpuName') }}</th><th class="p-2">{{ t('v7optimize.cloudVram') }}</th><th class="p-2">{{ t('v7optimize.cloudPrice') }}</th><th class="p-2">{{ t('v7optimize.cloudLocation') }}</th></tr></thead><tbody><tr v-for="offer in offers" :key="String(offer.id)" class="cursor-pointer border-t border-border-subtle" :class="selectedOfferId === String(offer.id) ? 'bg-accent/10' : ''" :aria-selected="selectedOfferId === String(offer.id)" @click="selectedOfferId = String(offer.id)"><td class="p-2">{{ offer.gpu_name || '-' }}</td><td class="p-2">{{ offer.vram_gb ?? '-' }} GB</td><td class="p-2">{{ formatMoney(offer.price_hour_usd) }}/h</td><td class="p-2">{{ offer.location || '-' }}</td></tr></tbody></table></div>
+        <div class="max-h-64 overflow-auto rounded-md border border-border-subtle"><table class="w-full min-w-[760px] text-left text-xs"><thead class="sticky top-0 bg-panel text-secondary"><tr><th class="p-2">{{ t('v7optimize.cloudGpuName') }}</th><th class="p-2">{{ t('v7optimize.cloudVram') }}</th><th class="p-2">TFLOPS</th><th class="p-2">{{ t('v7optimize.cloudPrice') }}</th><th class="p-2">{{ t('v7optimize.cloudLocation') }}</th><th class="p-2">{{ t('v7optimize.cloudHostHistory') }}</th><th class="p-2">{{ t('v7backtest.actions') }}</th></tr></thead><tbody><tr v-for="offer in offers" :key="String(offer.id)" class="cursor-pointer border-t border-border-subtle" :class="selectedOfferId === String(offer.id) ? 'bg-accent/10 border-l-[3px] border-l-accent' : ''" :aria-selected="selectedOfferId === String(offer.id)" tabindex="0" @click="selectedOfferId = String(offer.id)" @keydown.enter.prevent="selectedOfferId = String(offer.id)" @keydown.space.prevent="selectedOfferId = String(offer.id)"><td class="p-2">{{ offer.gpu_name || '-' }}</td><td class="p-2">{{ offer.vram_gb ?? '-' }} GB</td><td class="p-2">{{ offer.tflops ?? '-' }}</td><td class="p-2">{{ formatMoney(offer.price_hour_usd) }}/h</td><td class="p-2">{{ offer.location || '-' }}<span v-if="offer.machine_id" class="block text-micro text-muted">{{ t('v7optimize.cloudMachineNumber', { id: offer.machine_id }) }}</span></td><td class="p-2">{{ offer.host_history?.working ? t('v7optimize.cloudHostWorking') : offer.host_history?.used ? t('v7optimize.cloudHostPreviouslyUsed') : t('v7optimize.cloudHostNoRecordedUse') }}<span v-if="offer.host_history?.preferred" class="block text-micro text-accent-soft">{{ t('v7optimize.cloudHostPreferred') }}</span></td><td class="p-2"><div v-if="offer.machine_id" class="flex gap-1"><Button type="button" variant="ghost" size="sm" :disabled="saving" @click.stop="setHostPreference(offer.machine_id, 'preferred', !offer.host_history?.preferred)">{{ offer.host_history?.preferred ? t('v7optimize.cloudRemovePreference') : t('v7optimize.cloudPreferHost') }}</Button><Button type="button" variant="danger" size="sm" :disabled="saving" @click.stop="setHostBlock(offer.machine_id, true)">{{ t('v7optimize.cloudBlockHost') }}</Button></div></td></tr></tbody></table></div>
       </section>
 
-      <section class="grid gap-3 rounded-md border border-border-subtle bg-page/35 p-3">
+      <section v-if="activeView === 'offers'" class="grid gap-3 rounded-md border border-border-subtle bg-page/35 p-3">
         <div class="flex flex-wrap items-center justify-between gap-2"><h3 class="text-md font-semibold text-primary">{{ t('v7optimize.cloudQueue') }}</h3><span class="text-xs text-secondary">{{ activeJobs.length }} {{ t('v7optimize.cloudActiveJobs') }}</span></div>
         <div class="grid gap-3 sm:grid-cols-3"><div class="grid gap-1.5 sm:col-span-2"><Label>{{ t('v7optimize.cloudConfig') }}</Label><SelectRoot v-model="selectedConfig"><SelectTrigger><span>{{ selectedConfig || t('v7optimize.cloudSelectConfig') }}</span></SelectTrigger><SelectContent><SelectItem v-for="config in configs" :key="config" :value="config">{{ config }}</SelectItem></SelectContent></SelectRoot></div><div class="grid gap-1.5"><Label for="vast-iterations">{{ t('v7optimize.cloudIterations') }}</Label><Input id="vast-iterations" v-model.number="iterations" type="number" min="256" /></div></div>
-        <div class="flex flex-wrap gap-2"><Button type="button" variant="success" :disabled="saving || !configs.length" @click="startQueue">{{ t('v7optimize.cloudStartQueue') }}</Button><Button type="button" variant="default" :disabled="saving" @click="queueAction('pause')">{{ t('v7optimize.cloudPauseQueue') }}</Button><Button type="button" variant="default" :disabled="saving" @click="queueAction('resume')">{{ t('v7optimize.cloudResumeQueue') }}</Button><Button type="button" variant="danger" :disabled="saving" @click="queueAction('end')">{{ t('v7optimize.cloudEndRental') }}</Button></div>
-        <div v-if="activeRental?.deadline" class="flex flex-wrap items-center gap-2 rounded-md border border-border-subtle bg-page/35 px-3 py-2 text-xs text-secondary">
-          <span>{{ t('v7optimize.cloudRentalDeadline') }}: {{ new Date(activeRental.deadline * 1000).toLocaleString() }}</span>
-          <Button type="button" variant="default" size="sm" :disabled="!canAdjustDeadline || deadlineChanging" @click="adjustDeadline(-30)">{{ t('v7optimize.cloudShortenDeadline') }}</Button>
-          <Button type="button" variant="default" size="sm" :disabled="!canAdjustDeadline || deadlineChanging" @click="adjustDeadline(30)">{{ t('v7optimize.cloudExtendDeadline') }}</Button>
-          <span v-if="activeRental.deadline_pending">{{ t('v7optimize.cloudDeadlinePending') }}</span>
-          <span v-if="activeRental.deadline_error" class="text-danger-soft">{{ activeRental.deadline_error }}</span>
-        </div>
+        <div class="flex flex-wrap gap-2"><Button type="button" variant="success" :disabled="saving || !configs.length" @click="startQueue">{{ t('v7optimize.cloudStartQueue') }}</Button></div>
         <div v-if="loading" class="text-xs text-secondary">{{ t('common.loading') }}</div>
-        <div v-for="job in jobs" :key="job.id" class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border-subtle px-3 py-2 text-sm"><span class="min-w-0 truncate text-primary">{{ job.config_name || job.id }}</span><span class="text-secondary">{{ job.status || '-' }}<template v-if="job.cost_estimate?.total_usd !== undefined"> · {{ formatMoney(job.cost_estimate.total_usd) }}</template></span><div class="flex gap-1"><Button v-if="['failed', 'cancelled'].includes(String(job.status))" type="button" variant="default" size="sm" :disabled="saving" @click="jobAction(job, 'requeue')">{{ t('v7optimize.cloudRequeue') }}</Button><Button v-if="!['completed', 'cancelled', 'failed'].includes(String(job.status))" type="button" variant="danger" size="sm" :disabled="saving" @click="jobAction(job, 'stop')">{{ t('v7optimize.cloudStop') }}</Button><Button v-if="['failed', 'cancelled'].includes(String(job.status))" type="button" variant="default" size="sm" :disabled="saving" @click="jobAction(job, 'recover')">{{ t('v7optimize.cloudRecover') }}</Button><Button v-if="['completed', 'cancelled', 'failed'].includes(String(job.status))" type="button" variant="ghost" size="sm" :disabled="saving" @click="jobAction(job, 'delete')">{{ t('common.delete') }}</Button></div></div>
       </section>
+      <VastRentalPanel v-if="activeView === 'offers'" :jobs="jobs" :worker="worker" :queue-paused="queuePaused" :busy="saving" @queue-action="queueAction" @job-action="jobAction" @adjust-deadline="adjustDeadline" @adjust-budget="adjustBudget" @adjust-reserve="adjustReserve" />
+      <VastHostsPanel v-if="activeView === 'hosts'" :hosts="hosts" :blocked-machine-ids="blockedMachineIds" :busy="saving" @set-preference="setHostPreference" @set-block="setHostBlock" />
+      <VastPerformancePanel :active="isOpen && activeView === 'performance'" :class="activeView === 'performance' ? '' : 'hidden'" />
     </div>
   </details>
 </template>

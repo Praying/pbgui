@@ -1,10 +1,16 @@
 # PBv8 Backtest
 
+The POS column shows Long / Short position limits. A disabled side (zero position limit or zero total wallet exposure) is displayed as `-`, for example `4 / -`.
+
 PBv8 Backtest manages Passivbot V8 configurations and jobs independently from PBv7. PBGui validates every configuration through the currently installed PB8 loader before saving or starting it.
 
 The page renders the exact same page template and visual configuration editor as PBv7 Backtest. There is no separate PB8 editor implementation. PB8-specific behavior is limited to a path/API adapter, config validation, the process runner, and result data.
 
 PBGui keeps a short, bounded cache of PB8 templates and already validated config files. The first PB8 operation after an API restart may still initialize the isolated PB8 Python runtime; subsequent editor, queue, and start steps reuse canonical results while file-signature checks invalidate changed configs.
+
+## Scenario coin lists
+
+Scenario (suite) backtests require identical Long/Short approved and ignored coin lists. When exactly one side is disabled through zero positions or zero total wallet exposure, PBGui copies the active side's lists to the disabled side during save/queue preparation and again at launch for older queue entries. This does not enable that side. With two active sides, align the lists yourself; PBGui rejects conflicting lists instead of changing the trading universe. Runner exceptions appear in the job log and are also retained in the queue state file.
 
 ## Parameter tooltips
 

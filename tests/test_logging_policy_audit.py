@@ -18,6 +18,7 @@ PRINT_ALLOWLIST = {
     "frontend/codemod_type_scale.py": "One-off typography-token migration CLI for the type-scale rework.",
     "setup/vast_gpu_benchmark/cloud_worker.py": "Remote worker stdout is the machine-readable SSH control protocol.",
     "setup/vast_gpu_benchmark/prepare.py": "Isolated benchmark preparation CLI reports its export path.",
+    "setup/vast_gpu_benchmark/sync_input.py": "Remote worker stdout is the machine-readable input publication protocol.",
     "setup/vast_gpu_benchmark/export_metric_contract.py": "CLI exports the machine-readable PB8 metric contract.",
     "setup/vast_gpu_benchmark/store_pull_key.py": "Credential storage CLI reports completion without secrets.",
     "pb7_guard.py": "PB7 guard is a human-facing install/update safety CLI.",
@@ -119,6 +120,7 @@ def _call_name(node):
 
 def _append_open_calls(tree):
     """Yield append-mode built-in or pathlib open calls."""
+    append_modes = {"a", "ab", "at", "a+", "a+b", "ab+", "a+t", "at+"}
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call) or _call_name(node.func).split(".")[-1] != "open":
             continue
@@ -126,7 +128,7 @@ def _append_open_calls(tree):
         mode = node.args[positional_index] if len(node.args) > positional_index else next(
             (keyword.value for keyword in node.keywords if keyword.arg == "mode"), None
         )
-        if isinstance(mode, ast.Constant) and isinstance(mode.value, str) and "a" in mode.value:
+        if isinstance(mode, ast.Constant) and isinstance(mode.value, str) and mode.value in append_modes:
             yield node
 
 

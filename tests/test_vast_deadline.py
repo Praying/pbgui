@@ -8,8 +8,46 @@ from secure_files import ensure_private_directory
 from vast_jobs import JobStore, write_json
 from vast_queue import CloudQueue
 from vast_provider import VastError
-from vast_deadline import effective_intent, request_deadline, reconcile_deadline, maximum_deadline
+from vast_deadline import effective_intent, request_budget, request_deadline, reconcile_deadline, maximum_deadline
 from setup.vast_gpu_benchmark.cloud_worker import apply_deadline_request
+
+
+def test_legacy_lease_without_changes_keeps_original_intent():
+    """Unadjusted legacy rentals need no newly introduced billing metadata."""
+    intent = {'deadline': 8000}
+    store = SimpleNamespace(read=lambda identifier: {})
+    assert effective_intent(store, 'a'*32, intent) is intent
+
+
+@pytest.mark.parametrize('minutes', [1, 7, 30, 60, -7])
+def test_old_worker_upgrades_before_sending_any_minute_step(rental, monkeypatch, minutes):
+    """Legacy workers migrate on explicit adjustment, retaining confirmation semantics."""
+    queue, identifier, _ = rental
+    queue.store.update(identifier, deadline_protocol=1)
+    calls = []
+    def upgrade(store, worker_id, intent):
+        """Record migration without connecting to any real worker."""
+        assert not store.read(worker_id).get('deadline_request')
+        calls.append('upgrade')
+        store.update(worker_id, deadline_protocol=2)
+        return object()
+    monkeypatch.setattr('vast_guard_migration.upgrade_guard', upgrade)
+    monkeypatch.setattr('vast_guard_migration.confirm_migrated_request', lambda *args: False)
+    result = request_deadline(queue, identifier, 8000, minutes)
+    assert calls == ['upgrade'] and result['pending']
+    assert queue.store.read(identifier)['deadline_request']['deadline'] == 8000 + minutes * 60
+
+
+@pytest.mark.parametrize('control', ['stop', 'cleanup'])
+def test_budget_and_reserve_reject_cleanup(rental, control):
+    """A budget edit cannot interfere with a rental already being stopped."""
+    from vast_deadline import request_transfer_reserve
+    queue, identifier, _ = rental
+    queue.store.control(identifier, control)
+    with pytest.raises(VastError, match='cleanup'):
+        request_budget(queue, identifier, 2, 3)
+    with pytest.raises(VastError, match='cleanup'):
+        request_transfer_reserve(queue, identifier, .5, .6)
 
 
 @pytest.fixture
@@ -24,7 +62,7 @@ def rental(tmp_path, monkeypatch):
                   offer=dict(download_gb_usd=0, upload_gb_usd=0, price_hour_usd=.1))
     write_json(folder/'intent.json', intent)
     write_json(folder/'state.json', dict(id=identifier, status='running', rental_state='active',
-               deadline_protocol=1, deadline=8000, generation=0))
+               deadline_protocol=2, deadline=8000, generation=0))
     write_json(folder/'control.json', dict(stop=False, cleanup=False))
     queue = CloudQueue(store)
     queue.update(worker_id=identifier)
@@ -58,7 +96,7 @@ def test_deadline_rejects_unavailable_or_busy_rental(rental, change, expected):
         request_deadline(queue, identifier, 8000, 30)
 
 
-@pytest.mark.parametrize('expected,minutes', [(7000,30),(8000,60),(8000,True)])
+@pytest.mark.parametrize('expected,minutes', [(7000,30),(8000,0),(8000,1441),(8000,True)])
 def test_deadline_rejects_stale_or_invalid_steps(rental, expected, minutes):
     """An old browser cannot apply its click to a newer deadline."""
     queue, identifier, _ = rental
@@ -138,8 +176,21 @@ def test_deadline_preserves_already_reserved_transfer_budget(rental):
         request_deadline(queue, identifier, 8000, 30)
 
 
-@pytest.mark.parametrize('restart', [False, True])
-def test_guard_process_publishes_and_restores_confirmed_deadline(tmp_path, monkeypatch, restart):
+def test_budget_request_recalculates_deadline_after_guard_confirmation(rental):
+    """Editing the active budget changes its acknowledged deadline without exceeding it."""
+    queue, identifier, intent = rental
+    result = request_budget(queue, identifier, 2, .7)
+    assert result['pending'] and result['requested_deadline'] == pytest.approx(7700)
+    request = queue.store.read(identifier)['deadline_request']
+    queue.store.update(identifier, deadline_confirmed=request, budget_confirmed=.7, deadline_request=None)
+    effective = effective_intent(queue.store, identifier, intent)
+    assert effective['budget_usd'] == .7
+    assert effective['deadline'] == pytest.approx(7700)
+    assert effective['transfer_reserve_usd'] == .5
+
+
+@pytest.mark.parametrize('restart,maximum', [(False, 20000), (True, 20000), (True, 25000)])
+def test_guard_process_publishes_and_restores_confirmed_deadline(tmp_path, monkeypatch, restart, maximum):
     """Exercise the real guard loop without sleeping or calling the provider."""
     from setup.vast_gpu_benchmark import cloud_worker as worker
     monkeypatch.setattr(worker, 'ROOT', tmp_path)
@@ -153,7 +204,7 @@ def test_guard_process_publishes_and_restores_confirmed_deadline(tmp_path, monke
     request = dict(id='b'*32, expected=8000, deadline=9800, job_id='a'*32)
     if restart:
         worker.write_record(tmp_path/'guard.json', dict(instance_id=123, job_id='a'*32,
-            deadline=9800, max_deadline=20000, deadline_protocol=1, request_id='b'*32))
+            deadline=9800, max_deadline=maximum, deadline_protocol=2, request_id='b'*32))
     else:
         worker.write_record(tmp_path/'deadline-request.json', request)
 
@@ -170,3 +221,74 @@ def test_guard_process_publishes_and_restores_confirmed_deadline(tmp_path, monke
     saved = json.loads((tmp_path/'guard.json').read_text())
     assert saved['deadline'] == 9800
     assert saved['request_id'] == 'b'*32
+
+
+@pytest.mark.parametrize('outcome', ['failure', 'stop', 'confirmed', 'pending'])
+def test_migration_owns_restart_blocker_and_preserves_confirmed_deadline(rental, monkeypatch, outcome):
+    """Handover failure/cleanup never sends a change; only acknowledgement applies it."""
+    import vast_guard_migration as migration
+    queue, identifier, intent = rental
+    queue.store.update(identifier, deadline_protocol=1)
+    sent = []
+
+    def upgrade(store, worker_id, current):
+        """Emulate the remote handover while checking restart ownership."""
+        assert migration.restart_block_reason()
+        if outcome == 'failure':
+            raise VastError('Migration failed', 409)
+        if outcome == 'stop':
+            write_json(store.directory(worker_id) / 'control.json', {'stop': True})
+        store.update(worker_id, deadline_protocol=2, deadline_guard_upgraded_at=1000)
+        return object()
+
+    def confirm(store, worker_id, connection, request):
+        """Acknowledge only when explicitly selected by the test."""
+        assert migration.restart_block_reason()
+        sent.append(request)
+        if outcome == 'confirmed':
+            store.update(worker_id, deadline_confirmed=request, deadline_request=None)
+            return True
+        return False
+
+    monkeypatch.setattr(migration, 'upgrade_guard', upgrade)
+    monkeypatch.setattr(migration, 'confirm_migrated_request', confirm)
+    if outcome in ('failure', 'stop'):
+        with pytest.raises(VastError):
+            request_deadline(queue, identifier, 8000, 7)
+        assert not sent
+        assert not queue.store.read(identifier).get('deadline_request')
+    else:
+        result = request_deadline(queue, identifier, 8000, 7)
+        assert result['pending'] == (outcome == 'pending')
+        assert sent[0]['deadline'] == 8420
+    assert not migration.restart_block_reason()
+    assert effective_intent(queue.store, identifier, intent)['deadline'] == (8420 if outcome == 'confirmed' else 8000)
+
+
+@pytest.mark.parametrize('response', ['timeout', 'wrong_identity', 'confirmed', 'rejected'])
+def test_migrated_confirmation_keeps_pending_on_transport_failure(rental, monkeypatch, response):
+    """Transport errors and mismatched identities cannot change local enforcement."""
+    from vast_guard_migration import confirm_migrated_request
+    queue, identifier, intent = rental
+    request = dict(id='d'*32, job_id=identifier, expected=8000, deadline=8420)
+    queue.store.update(identifier, deadline_request=request)
+
+    def command(text, **kwargs):
+        """Emulate delivery plus a single acknowledgement read."""
+        if response == 'timeout':
+            raise VastError('SSH timed out', 502)
+        if not text.startswith('cat '):
+            return ''
+        return json.dumps(dict(job_id='wrong' if response == 'wrong_identity' else identifier,
+                              instance_id=123, deadline=8420, request_id=request['id'] if response != 'rejected' else '',
+                              rejected_request_id=request['id'] if response == 'rejected' else ''))
+
+    connection = SimpleNamespace(command=command, row={'id': 123})
+    if response == 'rejected':
+        with pytest.raises(VastError, match='rejected'):
+            confirm_migrated_request(queue.store, identifier, connection, request)
+        assert not queue.store.read(identifier)['deadline_request']
+    else:
+        assert confirm_migrated_request(queue.store, identifier, connection, request) == (response == 'confirmed')
+        assert bool(queue.store.read(identifier)['deadline_request']) == (response != 'confirmed')
+    assert effective_intent(queue.store, identifier, intent)['deadline'] == (8420 if response == 'confirmed' else 8000)
