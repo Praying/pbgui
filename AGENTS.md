@@ -6,6 +6,16 @@
 2. **serial.txt** — If any file under `api/`, `PBApiServer.py`, or a module imported at API startup changed: increment `api/serial.txt` by 1 before finishing. This is mandatory for every final change set that touches API startup/runtime code so the UI can show the restart-required button. If you make more API/startup edits after an earlier serial bump in the same session, bump `api/serial.txt` again. Never tell the user to restart first because you forgot this bump.
 3. **Commit** — Always ask before committing or pushing. Never commit without explicit user confirmation.
 
+## Global PBGui Refresh and Navigation Rule
+
+This rule is mandatory everywhere in PBGui, across all existing and future pages, modules, views, tabs, panels, dialogs, and workflows. It is not limited to any feature, account type, or frontend implementation.
+
+- Keep displayed data and derived UI state current automatically whenever needed, including after actions, background changes, and returning to a view. Users must never need to request an update to see the current state.
+- Never use in-app Refresh buttons, icons, menu items, or equivalent manual refresh controls. Do not introduce them; replace existing ones with automatic updates when working on the affected UI.
+- A user-triggered browser refresh is the only manual refresh mechanism. It must load current data and restore the exact current location and navigation context throughout PBGui, including nested views, active tabs, selected entities, filters, sorting, and pagination where applicable. Never reset navigation to a home page, default tab, or overview merely because the browser was refreshed.
+- Automatic updates must also preserve the user's current location, selections, and in-progress edits rather than rebuilding or resetting the interface unnecessarily.
+- Persist only non-secret navigation state. If the current destination no longer exists or is no longer accessible, explain that and use the nearest valid context instead of silently resetting navigation.
+
 ## Project Architecture
 
 ### Stack
@@ -151,7 +161,14 @@ SSE /api/live/stream → delta applies on top of DB snapshot
 - A generic release, commit, tag, or push approval does not imply permission to update any bot/VPS host.
 - Read-only inspection of remote hosts is allowed when needed for debugging, but any command that changes files, git state, services, processes, or runtime state requires a separate question first.
 
+### Closing Issues
+- Never close an issue without a substantive resolution comment. Post the comment before closing, or include it in the close operation.
+- State the concrete cause and fix, the checks actually performed and their results, and link the fixing commit and release when available. Do not claim unperformed tests or an unpublished release.
+- For duplicate, declined, or otherwise unfixed issues, explain the reason and link the relevant issue or decision instead of claiming a fix.
+- Apply this to every issue, including batch closures and release cleanup; a bare “fixed” or release link is insufficient.
+
 ### Release Workflow
+- A release is not complete until the issues actually fixed by that release have been handled on GitHub. After publishing, identify the corresponding issues from the release notes and changes, add a substantive resolution comment (cause, implemented fix, release/commit links, validation and any material limitations), close each fully resolved issue, and verify its final state. Do this as part of the user's release request without waiting for a reminder or asking again. Do not close partially resolved or unverified issues; explain what remains. Follow the Closing Issues rules above for every closure.
 - Steps in `RELEASING.md`.
 - Per release: bump `pbgui_purefunc.py` `PBGUI_VERSION`, move `releases/unreleased.md` notes into a dedicated `releases/vX.YY.md` file, keep `CHANGELOG.md` index updated.
 - Per release: bump `api/serial.txt` so the UI makes the restart requirement visible for already running processes. Treat the serial bump as a normal release-prep step; do not rely on remembering it ad hoc.

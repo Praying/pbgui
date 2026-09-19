@@ -2,7 +2,8 @@
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
-import type { ProviderInfo } from '../composables/useAiChat';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
+import type { ChatgptProfile, ProviderInfo, ProviderUsage } from '../composables/useAiChat';
 
 interface ProviderPanelProps {
   chatgpt: ProviderInfo;
@@ -12,6 +13,9 @@ interface ProviderPanelProps {
   loginInstructions: string;
   loginUrl: string;
   loginCode: string;
+  profiles: ChatgptProfile[];
+  profileId: string;
+  usage: ProviderUsage;
 }
 
 const props = defineProps<ProviderPanelProps>();
@@ -22,11 +26,20 @@ const emit = defineEmits<{
   chatgptDisconnect: [];
   goConnect: [];
   goDisconnect: [];
+  profileChange: [profile: string];
 }>();
 
 const { t } = useI18n();
 
 const goKey = defineModel<string>('goKey', { default: '' });
+
+function usageLabel(windowDurationMinutes: number | undefined): string {
+  if (windowDurationMinutes === 300) return '5h';
+  if (windowDurationMinutes === 1440) return '24h';
+  if (windowDurationMinutes === 10080) return '7d';
+  if (windowDurationMinutes === 43200) return '30d';
+  return 'Usage';
+}
 
 function onGoConnect(): void {
   emit('goConnect');
@@ -60,6 +73,28 @@ function onGoConnect(): void {
         </span>
       </div>
       <p class="mb-2.5 text-xs text-secondary">{{ t('ai.chat.chatgptHelp') }}</p>
+      <div v-if="props.profiles.length > 1" class="mb-2.5 grid gap-1.5">
+        <span class="text-xs text-secondary">{{ t('ai.chat.profile') }}</span>
+        <SelectRoot :model-value="props.profileId" @update:model-value="emit('profileChange', String($event))">
+          <SelectTrigger :aria-label="t('ai.chat.profile')">
+            <span>{{ props.profiles.find((profile) => profile.id === props.profileId)?.name || props.profileId }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="profile in props.profiles" :key="profile.id" :value="profile.id">{{ profile.name }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
+      </div>
+      <div v-if="props.chatgpt.connected && (props.usage.email || props.usage.limits.length)" class="mb-2.5 grid gap-1.5 rounded-md border border-border-subtle bg-input p-2 text-xs text-secondary">
+        <span v-if="props.usage.email" class="truncate">{{ props.usage.email }}</span>
+        <template v-if="props.usage.limits.length">
+          <div v-for="limit in props.usage.limits" :key="`${limit.windowDurationMins}-${limit.resetsAt}`" class="grid grid-cols-[1fr_auto] gap-x-2 gap-y-1">
+            <span>{{ usageLabel(limit.windowDurationMins) }}</span>
+            <strong class="text-primary">{{ Math.max(0, Math.min(100, 100 - Number(limit.usedPercent || 0))).toFixed(1) }}% {{ t('ai.chat.usageRemaining') }}</strong>
+            <progress class="col-span-2 h-1.5 w-full accent-success" max="100" :value="Math.max(0, Math.min(100, 100 - Number(limit.usedPercent || 0)))" :aria-label="`${usageLabel(limit.windowDurationMins)} ${t('ai.chat.usageRemaining')}`"></progress>
+          </div>
+        </template>
+        <span v-else>{{ t('ai.chat.usageUnavailable') }}</span>
+      </div>
       <div class="flex gap-2">
         <Button
           type="button"

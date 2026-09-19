@@ -73,6 +73,8 @@ interface VastPreferences {
   hours: number;
   budget: number;
   idle_seconds: 0 | 300;
+  max_rentals: number;
+  auto_rent: boolean;
   convergence_enabled: boolean;
   convergence_min_exact: number;
   convergence_patience: number;
@@ -117,10 +119,12 @@ const preferences = reactive<VastPreferences>({
   hours: 1,
   budget: 1,
   idle_seconds: 300,
+  max_rentals: 1,
+  auto_rent: false,
   convergence_enabled: false,
   convergence_min_exact: 512,
   convergence_patience: 512,
-  convergence_tolerance_pct: 0.1,
+  convergence_tolerance_pct: 0.25,
 });
 
 const hasCredentials = ref(false);
@@ -398,8 +402,10 @@ onBeforeUnmount(() => {
           <div class="grid gap-1.5"><Label for="vast-min-cpu">{{ t('v7optimize.cloudMinCpu') }}</Label><Input id="vast-min-cpu" v-model.number="preferences.min_cpu" type="number" min="0" /></div>
           <div class="grid gap-1.5"><Label for="vast-min-tflops">{{ t('v7optimize.cloudMinTflops') }}</Label><Input id="vast-min-tflops" v-model.number="preferences.min_tflops" type="number" min="0" step="0.1" /></div>
           <div class="grid gap-1.5"><Label for="vast-disk">{{ t('v7optimize.cloudDiskGb') }}</Label><Input id="vast-disk" v-model.number="preferences.disk_gb" type="number" min="40" /></div>
+          <div class="grid gap-1.5"><Label for="vast-max-rentals">{{ t('v7optimize.cloudMaxRentals') }}</Label><Input id="vast-max-rentals" v-model.number="preferences.max_rentals" type="number" min="1" max="16" step="1" /></div>
         </div>
         <label class="flex items-center gap-2 text-sm text-secondary"><Checkbox v-model="preferences.verified_only" />{{ t('v7optimize.cloudVerifiedOnly') }}</label>
+        <label class="flex items-center gap-2 text-sm text-secondary"><Checkbox v-model="preferences.auto_rent" />{{ t('v7optimize.cloudAutoRent') }}</label>
         <div class="flex flex-wrap gap-2"><Button type="button" variant="default" :disabled="saving || !hasCredentials" @click="findOffers">{{ t('v7optimize.cloudFindOffers') }}</Button><Button type="button" variant="default" :disabled="saving || !selectedConfig" @click="prepareJob">{{ t('v7optimize.cloudQueueJob') }}</Button><Button type="button" variant="warning" :disabled="saving || !selectedOfferCompatible" @click="rentSelectedOffer">{{ t('v7optimize.cloudRentSelected') }}</Button></div>
       </section>
 

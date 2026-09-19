@@ -122,10 +122,13 @@ async function main() {
     // instead of lazy-loading the legacy overlay script.
     assert.equal(c.location.href, app + c.testNav.FASTAPI_PAGES['help'] + '?topic=38_balance_calc');
     b.nodes['pbgui-ai-btn'].click();
-    assert.equal(b.assets.at(-2).href, prefix + '/app/css/ai_drawer.css?v=13');
+    assert.equal(b.assets.at(-2).href, prefix + '/app/css/ai_drawer.css?v=16');
     assert.equal(b.assets.at(-1).src, prefix + '/app/js/pbgui_dialogs.js?v=10');
     b.assets.at(-1).onload();
-    assert.equal(b.assets.at(-1).src, prefix + '/app/js/ai_drawer.js?v=40');
+    assert.equal(b.assets.at(-1).src, prefix + '/app/js/ai_usage.js?v=1');
+    c.PBGuiAIUsage = { render() {} };
+    b.assets.at(-1).onload();
+    assert.equal(b.assets.at(-1).src, prefix + '/app/js/ai_drawer.js?v=42');
     b.nodes['pbgui-notify-btn'].click();
     assert.equal(b.assets.at(-1).src, prefix + '/app/js/log_viewer_panel.js?v=47');
     let viewerOptions;

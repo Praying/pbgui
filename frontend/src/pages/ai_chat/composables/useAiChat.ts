@@ -18,6 +18,21 @@ export interface ProviderInfo {
   connected?: boolean;
   available?: boolean;
   plan?: string;
+  email?: string;
+  profile?: string;
+  profiles?: ChatgptProfile[];
+  limits?: UsageLimit[];
+}
+
+export interface ChatgptProfile {
+  id: string;
+  name: string;
+}
+
+export interface UsageLimit {
+  usedPercent?: number;
+  windowDurationMins?: number;
+  resetsAt?: number;
 }
 
 export interface ModelHealth {
@@ -59,6 +74,7 @@ export interface ConversationSummary {
   title?: string;
   model?: string;
   provider?: string;
+  chatgpt_profile?: string;
   effort?: string;
   busy?: boolean;
   last_error?: string;
@@ -83,6 +99,11 @@ interface LoginBoxState {
   code: string;
 }
 
+export interface ProviderUsage {
+  email?: string;
+  limits: UsageLimit[];
+}
+
 type Translate = (key: string, params?: Record<string, unknown>) => string;
 
 const AI_API_BASE = () => apiPath('/api/ai');
@@ -93,6 +114,7 @@ export function useAiChat(t: Translate) {
   const models = ref<ModelInfo[]>([]);
   const modelsById = ref<Record<string, ModelInfo>>({});
   const providerId = ref('');
+  const chatgptProfileId = ref(new URLSearchParams(window.location.search).get('chatgpt_profile') || 'default');
   const modelId = ref('');
   const effort = ref('');
   const conversations = ref<ConversationSummary[]>([]);
@@ -111,6 +133,7 @@ export function useAiChat(t: Translate) {
   const retryMessages = ref<Record<string, string>>({});
   const activityStartedAt = ref(0);
   const includeContext = ref(true);
+  const chatgptUsage = ref<ProviderUsage>({ email: '', limits: [] });
 
   /* ── Generation guards (non-reactive on purpose) ── */
   let requestGeneration = 0;
@@ -131,6 +154,7 @@ export function useAiChat(t: Translate) {
   ];
 
   const chatgpt = computed(() => providers.value.chatgpt || {});
+  const chatgptProfiles = computed(() => chatgpt.value.profiles || [{ id: 'default', name: 'Default' }]);
   const go = computed(() => providers.value['opencode-go'] || {});
   const selectedModel = computed<ModelInfo>(() => modelsById.value[modelId.value] || ({} as ModelInfo));
   const effortVariants = computed(() =>
@@ -168,6 +192,10 @@ export function useAiChat(t: Translate) {
   }
 
   function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+    if (chatgptProfileId.value !== 'default' &&
+        (path === '/status' || path.startsWith('/models?') || path.startsWith('/providers/chatgpt/'))) {
+      path += (path.includes('?') ? '&' : '?') + 'profile=' + encodeURIComponent(chatgptProfileId.value);
+    }
     return apiFetch<T>(AI_API_BASE() + path, { credentials: 'same-origin', ...init });
   }
 
@@ -262,6 +290,12 @@ export function useAiChat(t: Translate) {
       const result = await api<{ providers?: Record<string, ProviderInfo> }>('/status');
       if (generation !== statusGeneration) return;
       providers.value = result.providers || {};
+      const selectedProfile = chatgpt.value.profile || chatgptProfileId.value;
+      if (selectedProfile) chatgptProfileId.value = selectedProfile;
+      chatgptUsage.value = {
+        email: chatgpt.value.email || '',
+        limits: Array.isArray(chatgpt.value.limits) ? chatgpt.value.limits : [],
+      };
       rebuildProviders();
       await loadModels();
       if (loginBox.value.visible && chatgpt.value.connected) {
@@ -326,6 +360,7 @@ export function useAiChat(t: Translate) {
       if (generation !== chatGeneration || id !== conversationId.value) return;
       if (PROVIDER_LABELS.some(([provider]) => provider === snapshot.provider)) {
         providerId.value = snapshot.provider || '';
+        if (snapshot.chatgpt_profile) chatgptProfileId.value = snapshot.chatgpt_profile;
         await loadModels(snapshot.model);
       }
       if (generation !== chatGeneration || id !== conversationId.value) return;
@@ -397,9 +432,15 @@ export function useAiChat(t: Translate) {
     setNotice(t('ai.chat.startingConversation'), false, true);
     try {
       if (!conversationId.value) {
+        const conversationPayload: { provider: string; model: string; effort: string; profile?: string } = {
+          provider: providerId.value,
+          model: modelId.value,
+          effort: effort.value,
+        };
+        if (chatgptProfileId.value !== 'default') conversationPayload.profile = chatgptProfileId.value;
         const created = await api<{ conversation_id: string }>('/conversations', {
           method: 'POST',
-          body: JSON.stringify({ provider: providerId.value, model: modelId.value, effort: effort.value }),
+          body: JSON.stringify(conversationPayload),
         });
         if (generation !== chatGeneration) return;
         conversationId.value = created.conversation_id;
@@ -616,6 +657,18 @@ export function useAiChat(t: Translate) {
     }
   }
 
+  async function onChatgptProfileChange(profile: string): Promise<void> {
+    if (!profile || profile === chatgptProfileId.value) return;
+    chatgptProfileId.value = profile;
+    const url = new URL(window.location.href);
+    if (profile === 'default') url.searchParams.delete('chatgpt_profile');
+    else url.searchParams.set('chatgpt_profile', profile);
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+    await newChat();
+    await refreshStatus();
+    await loadConversations();
+  }
+
   async function connectGo(): Promise<void> {
     const key = goKey.value.trim();
     if (!key) {
@@ -707,6 +760,9 @@ export function useAiChat(t: Translate) {
   return {
     providers,
     chatgpt,
+    chatgptProfiles,
+    chatgptProfileId,
+    chatgptUsage,
     go,
     models,
     modelsById,
@@ -753,6 +809,7 @@ export function useAiChat(t: Translate) {
     disconnectGo,
     refreshModelHealth,
     onProviderChange,
+    onChatgptProfileChange,
     onModelChange,
     onQuickReplyAck,
   };

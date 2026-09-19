@@ -24,6 +24,8 @@
   var _restartRetryTimer = null;
   var _restartPollTimer = null;
   var _restartStatus = {};
+  var _restartInFlight = false;
+  var _restartConfirmPending = false;
   var _aiDrawerLoading = false;
   var _aiContextProviders = {};
   var _aiPageActions = {};
@@ -1897,11 +1899,19 @@
       _aiDrawerLoading = true;
       var link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = _appPath('/app/css/ai_drawer.css?v=13');
+      link.href = _appPath('/app/css/ai_drawer.css?v=16');
       document.head.appendChild(link);
       function loadDrawerScript() {
+        if (!window.PBGuiAIUsage) {
+          var usage = document.createElement('script');
+          usage.src = _appPath('/app/js/ai_usage.js?v=1');
+          usage.onload = loadDrawerScript;
+          usage.onerror = function () { _aiDrawerLoading = false; };
+          document.head.appendChild(usage);
+          return;
+        }
         var script = document.createElement('script');
-        script.src = _appPath('/app/js/ai_drawer.js?v=40');
+        script.src = _appPath('/app/js/ai_drawer.js?v=42');
         script.onload = function () { _aiDrawerLoading = false; if (window.PBGuiAI && window.PBGuiAI.open) window.PBGuiAI.open(); };
         script.onerror = function () { _aiDrawerLoading = false; };
         document.head.appendChild(script);
@@ -1994,6 +2004,7 @@
     var restartBtn = document.getElementById('pbgui-restart-btn');
     if (restartBtn) {
       restartBtn.addEventListener('click', function () {
+        if (_restartInFlight || _restartConfirmPending) return;
         var blocked = restartBtn.getAttribute('data-restart-blocked') === '1';
         var blockReason = restartBtn.getAttribute('data-restart-block-reason') || '';
         if (blocked) {
@@ -2014,13 +2025,17 @@
         var restartDetail = restartLabels.length
           ? navT('nav.restart_outdated', 'Outdated services: {list}. The API server restarts last and the page reconnects automatically.', { list: restartLabels.join(', ') })
           : navT('nav.restart_auto', 'The API server restarts and the page reconnects automatically.');
+        _restartConfirmPending = true;
         showNavConfirm({
           title: navT('nav.restart_services_title', 'Restart PBGui services'),
           message: navT('nav.restart_services_msg', 'Restart all PBGui services running outdated code?'),
           detail: restartDetail,
           confirmText: navT('nav.restart', 'Restart')
         }).then(function (confirmed) {
+          _restartConfirmPending = false;
           if (!confirmed) return;
+          _restartInFlight = true;
+          var previousInstance = _restartStatus.api_instance_id || '';
           var origin2 = _getAppBase();
           restartBtn.disabled = true;
           restartBtn.classList.add('disabled');
@@ -2034,8 +2049,10 @@
             }
             return resp.json().catch(function () { return {}; });
           }).then(function(data) {
-            showRestartOverlay(origin2, data && Array.isArray(data.restart_services) ? data.restart_services : []);
+            showRestartOverlay(origin2, data && Array.isArray(data.restart_services) ? data.restart_services : [],
+              (data && data.api_instance_id) || previousInstance);
           }).catch(function(err) {
+            _restartInFlight = false;
             restartBtn.disabled = false;
             restartBtn.classList.remove('disabled');
             restartBtn.innerHTML = '<span class="nav-restart-dot"></span>' + esc(navT('nav.restart', 'Restart'));
@@ -2066,7 +2083,7 @@
     });
   }
 
-  function showRestartOverlay(origin, requestedServices) {
+  function showRestartOverlay(origin, requestedServices, previousInstance) {
     /* Remove any existing overlay first */
     var existing = document.getElementById('pbgui-restart-overlay');
     if (existing) existing.remove();
@@ -2099,7 +2116,7 @@
           return r.json();
         })
         .then(function (data) {
-          if (!data || data.needs_restart) {
+          if (!data || data.needs_restart || (previousInstance && data.api_instance_id === previousInstance)) {
             var newlyDiscovered = data && Array.isArray(data.restart_services)
               ? data.restart_services.filter(function (item) {
                   var label = String((item || {}).label || (item || {}).service || '');
@@ -2159,6 +2176,14 @@
     updateAuthModeState(state && state.auth ? state.auth : {});
     var btn = document.getElementById('pbgui-restart-btn');
     if (!btn) return;
+    if (_restartInFlight) {
+      btn.style.display = 'flex';
+      btn.disabled = true;
+      btn.setAttribute('aria-disabled', 'true');
+      btn.classList.add('disabled');
+      btn.innerHTML = '<span class="nav-restart-dot"></span>' + esc(navT('nav.restarting', 'Restarting...'));
+      return;
+    }
     var visible = !!(state && state.needs_restart);
     var blocked = state && state.restart_blocked !== undefined
       ? !!state.restart_blocked
