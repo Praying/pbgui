@@ -87,6 +87,8 @@ export function populateForm(cfgInput: unknown, opts: PopulateOptions): Populate
   state.maxCreate = numOf(live.max_n_creations_per_batch, 3);
   state.forcedLong = forcedModeSelectValue(live.forced_mode_long, adapter.isV8);
   state.forcedShort = forcedModeSelectValue(live.forced_mode_short, adapter.isV8);
+  state.hslEngine = textVal(live.hsl_engine || 'legacy');
+  state.hslUnavailableGrace = numOf(live.hsl_unavailable_grace_seconds, 120);
   state.hslSignalMode = textVal(live.hsl_signal_mode || 'unified');
   state.hslCooldownPolicy = textVal(live.hsl_position_during_cooldown_policy || 'panic');
   state.maxRestarts = numOf(live.max_n_restarts_per_day, 10);

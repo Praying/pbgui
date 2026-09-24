@@ -58,6 +58,17 @@ def test_idle_timeout_and_new_job_cancel_countdown(queue):
     assert queue.store.read(worker, 'control.json')['cleanup']
 
 
+def test_deadline_idle_policy_keeps_reusable_worker(queue):
+    """Deadline retention never requests cleanup merely because the queue is idle."""
+    queue, worker = queue
+    for row in queue.waiting():
+        queue.store.update(row['id'], status='completed')
+    queue.store.update(worker, idle_seconds=-1)
+    assert worker_step(queue, worker, now=100) is None
+    assert worker_step(queue, worker, now=9_000) is None
+    assert not queue.store.read(worker, 'control.json')['cleanup']
+
+
 def test_stop_job_does_not_mark_complete_before_collection(queue):
     """Cancellation cannot release the GPU while an old process still runs."""
     queue, worker = queue
@@ -114,6 +125,27 @@ def test_cache_is_shared_and_revalidates_content(tmp_path, monkeypatch):
         assert cloud_worker.cache_missing() == {'missing':[]}
     (root/'cache'/digest).write_bytes(b'bad')
     assert cloud_worker.cache_missing() == {'missing':[digest]}
+
+
+def test_cached_worker_input_is_hard_linked_after_verification(tmp_path):
+    """Reused immutable input must avoid another multi-gigabyte byte copy."""
+    cached = tmp_path / 'cache' / 'blob'
+    cached.parent.mkdir()
+    cached.write_bytes(b'market-data')
+    target = tmp_path / 'job' / 'ohlcv' / 'a.npz'
+    checksum = cloud_worker.file_hash(cached)
+    cloud_worker.install_cached_file(target, cached, cached.stat().st_size, checksum)
+    assert target.read_bytes() == b'market-data'
+    assert target.stat().st_ino == cached.stat().st_ino
+
+
+def test_cached_worker_input_rejects_corruption(tmp_path):
+    """A wrong cache key cannot be linked into a prepared optimizer job."""
+    cached = tmp_path / 'cache' / 'blob'
+    cached.parent.mkdir()
+    cached.write_bytes(b'corrupt')
+    with pytest.raises(ValueError, match='missing or corrupt'):
+        cloud_worker.install_cached_file(tmp_path / 'job' / 'a.npz', cached, 7, '0' * 64)
 
 
 def test_config_queue_honors_cloud_target_without_local_cuda(tmp_path, monkeypatch):
@@ -205,6 +237,59 @@ def test_remove_waiting_job_prevents_claim_and_preserves_artifacts(queue):
     assert queue.store.directory(identifier).exists()
     assert queue.store.read(identifier)['status'] == 'cancelled'
     assert worker_step(queue, worker, now=100) == 'c' * 32
+
+
+def test_purge_job_history_removes_complete_retry_lineage_and_performance(queue):
+    """Explicit deletion removes every retry attempt and its retained measurements."""
+    from vast_performance import PerformanceHistory
+    queue, _ = queue
+    original = 'b' * 32
+    retry = 'd' * 32
+    directory = ensure_private_directory(queue.store.root / 'jobs' / retry)
+    write_json(directory / 'state.json', {'id': retry, 'kind': 'job', 'status': 'failed',
+               'rental_state': 'none', 'requeue_from': original, 'created_at': 4})
+    history = PerformanceHistory(queue.store.root)
+    for identifier in (original, retry):
+        history.record({'id': identifier, 'captured_at': 100, 'source_generation': 1,
+                        'workload': {'fingerprint': identifier}, 'hardware': {}}, [], None)
+
+    result = queue.purge_job_history(retry)
+
+    assert result['purged_ids'] == [original, retry]
+    assert not (queue.store.root / 'jobs' / original).exists()
+    assert not (queue.store.root / 'jobs' / retry).exists()
+    assert history.get(original) is None
+    assert history.get(retry) is None
+
+
+def test_purge_job_history_rejects_lineage_with_active_attempt(queue):
+    """History deletion validates the complete retry lineage before changing any attempt."""
+    from vast_provider import VastError
+    queue, _ = queue
+    original = 'b' * 32
+    retry = 'd' * 32
+    directory = ensure_private_directory(queue.store.root / 'jobs' / retry)
+    write_json(directory / 'state.json', {'id': retry, 'kind': 'job', 'status': 'running',
+               'rental_state': 'none', 'requeue_from': original, 'created_at': 4})
+
+    with pytest.raises(VastError, match='Stop every retry attempt'):
+        queue.purge_job_history(original)
+
+    assert queue.store.directory(original).exists()
+    assert queue.store.directory(retry).exists()
+    assert not queue.store.read(original).get('deleted_at')
+
+
+def test_purge_job_histories_batches_independent_jobs(queue):
+    """Bulk deletion scans and removes independent queue entries together."""
+    queue, _ = queue
+
+    result = queue.purge_job_histories(['b' * 32, 'c' * 32])
+
+    assert result['requested_ids'] == ['b' * 32, 'c' * 32]
+    assert result['purged_ids'] == ['b' * 32, 'c' * 32]
+    assert not (queue.store.root / 'jobs' / ('b' * 32)).exists()
+    assert not (queue.store.root / 'jobs' / ('c' * 32)).exists()
 
 
 def test_remove_claimed_job_is_rejected(queue):

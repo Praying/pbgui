@@ -119,7 +119,7 @@ export interface VastPreferences {
   verified_only: boolean;
   hours: number;
   budget: number;
-  idle_seconds: 0 | 300;
+  idle_seconds: -1 | 0 | 300 | 1800 | 3600;
   convergence_enabled: boolean;
   convergence_min_exact: number;
   convergence_patience: number;

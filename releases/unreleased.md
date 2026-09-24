@@ -1,5 +1,11 @@
 # Unreleased
 
+## 合并远端 main v2.05.2-v2.05.5 并补齐 Vue 3 适配
+
+- 合并远端 v2.05.2 至 v2.05.5 的 Vast GPU、PB8 优化器、VPS Hyperliquid 限额监控、运行时生命周期及回归测试更新。
+- 保留 Vue 3 + Tailwind CSS v4.3 页面架构，并适配 Vast 租期策略、GPU replay 进度、PB8 HSL 参数、Hyperliquid 限额轮询及共享日志查看器缓存版本。
+- API serial 更新至 2888，遗留页面继续保留上游行为作为兼容回退。
+
 ## 合并远端 main v2.04.12-v2.05.1 并补齐 Vue 3 适配
 
 - 合并远端 `main` 的 v2.04.12、v2.04.13、v2.04.14 和 v2.05.1 后端、Vast GPU、AI Chat、场景编辑器、日志及回归测试更新，API serial 同步至远端发布状态。

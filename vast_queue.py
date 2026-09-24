@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import time
 import uuid
 from pathlib import Path
@@ -50,7 +51,7 @@ class CloudQueue:
         """Read the private queue control record without following links."""
         path = self.root / 'queue.json'
         if not path.exists() and not path.is_symlink():
-            return {'worker_id': None, 'selected_offer': None, 'paused': False, 'idle_seconds': 300}
+            return {'worker_id': None, 'selected_offer': None, 'paused': False, 'idle_seconds': -1}
         try:
             value = json.loads(read_regular_file_nofollow(path, self.root))
             if not isinstance(value, dict):
@@ -112,8 +113,8 @@ class CloudQueue:
     def start(self, offer: dict, hours: float, budget: float, idle_seconds: int, *, manual: bool = False,
               pool_authorization_id: str | None = None) -> dict:
         """Rent once for the queue; duplicate starts return the existing worker."""
-        if idle_seconds not in (0, 300):
-            raise VastError('Choose immediate cleanup or five minutes idle', 422)
+        if idle_seconds not in (-1, 0, 300, 1800, 3600):
+            raise VastError('Choose deadline retention, immediate cleanup or an idle retention period', 422)
         ensure_private_directory(self.root)
         with advisory_file_lock(self.root / '.queue-lock'):
             current = self.worker()
@@ -156,6 +157,56 @@ class CloudQueue:
                 changes['status'] = 'cancelled'
             self.store.update(identifier, **changes)
             return {'id': identifier, 'deleted': True}
+
+    def purge_job_history(self, identifier: str) -> dict:
+        """Permanently remove an inactive job's complete retry lineage and history."""
+        result = self.purge_job_histories([identifier])
+        return {'id': result['requested_ids'][0], 'deleted': True,
+                'purged_ids': result['purged_ids']}
+
+    def purge_job_histories(self, identifiers: list[str]) -> dict:
+        """Permanently remove multiple inactive retry lineages in one transaction."""
+        requested = list(dict.fromkeys(job_id(identifier) for identifier in identifiers))
+        if not requested:
+            raise VastError('Choose at least one cloud job to delete', 422)
+        with advisory_file_lock(self.root / '.queue-lock'):
+            rows = self.store.list()
+            by_id = {row['id']: row for row in rows}
+            if any(identifier not in by_id or by_id[identifier].get('kind') == 'worker'
+                   for identifier in requested):
+                raise VastError('Cloud job not found', 404)
+            lineage = set(requested)
+            changed = True
+            while changed:
+                changed = False
+                for row in rows:
+                    parent = row.get('requeue_from')
+                    if row.get('kind') != 'worker' and (row['id'] in lineage or parent in lineage):
+                        before = len(lineage)
+                        lineage.add(row['id'])
+                        if parent in by_id and by_id[parent].get('kind') != 'worker':
+                            lineage.add(parent)
+                        changed = changed or len(lineage) != before
+            for job_identifier in lineage:
+                row = by_id[job_identifier]
+                if not can_remove_job(row, self.worker_for(row.get('lease_id'))):
+                    raise VastError('Stop every retry attempt and finish collection/cleanup before deleting its history', 409)
+            deleted_at = time.time()
+            for job_identifier in lineage:
+                row = by_id[job_identifier]
+                changes = {'deleted_at': deleted_at}
+                if row['status'] == 'ready':
+                    changes['status'] = 'cancelled'
+                self.store.update(job_identifier, **changes)
+            from vast_performance import PerformanceHistory
+            PerformanceHistory(self.root).delete_runs(lineage)
+            for job_identifier in lineage:
+                directory = self.store.directory(job_identifier)
+                try:
+                    shutil.rmtree(directory)
+                except OSError as exc:
+                    raise VastError('Cloud job history could not be removed completely', 500) from exc
+            return {'requested_ids': requested, 'deleted': True, 'purged_ids': sorted(lineage)}
 
     def action(self, action: str) -> dict:
         """Control queue scheduling without implicitly creating a replacement GPU."""
@@ -315,7 +366,8 @@ def worker_step(queue: CloudQueue, identifier: str, *, now: float | None = None)
         if idle_since is None:
             idle_since = now
         store.update(identifier, status='paused' if state.get('paused') else 'idle', idle_since=idle_since)
-        if now - idle_since >= worker.get('idle_seconds', 300):
+        idle_seconds = worker.get('idle_seconds', -1)
+        if idle_seconds >= 0 and now - idle_since >= idle_seconds:
             store.control(identifier, 'cleanup')
         return None
 
@@ -324,6 +376,7 @@ def worker_loop(store: JobStore, identifier: str) -> None:
     """Reuse one supervised instance across sequential isolated optimizer jobs."""
     from vast_job_runner import run_loop
     queue = CloudQueue(store)
+    last_idle_observation = 0.0
     while True:
         next_job = worker_step(queue, identifier)
         worker = store.read(identifier)
@@ -335,6 +388,28 @@ def worker_loop(store: JobStore, identifier: str) -> None:
             if result['status'] == 'failed' and not result.get('final_collected'):
                 queue.update(paused=True)
         else:
+            if worker.get('instance_id') and time.time() - last_idle_observation >= 15:
+                from vast_credentials import VastCredentialStore
+                from vast_job_runner import owned_instance
+                from vast_provider import VastClient
+                from vast_runtime_metrics import observe_optimizer, sample_metrics
+                from vast_transfer import WorkerConnection
+                try:
+                    intent = store.read(identifier, 'intent.json')
+                    client = VastClient(VastCredentialStore(store.root).secrets()['api_key'])
+                    row = owned_instance(client, intent)
+                    if row is not None and row.get('actual_status') == 'running':
+                        connection = WorkerConnection(store, identifier, row)
+                        connection.bootstrap(client)
+                        observation = observe_optimizer(connection, store, identifier)
+                        if observation is not None:
+                            sample_metrics(connection, store, identifier)
+                except Exception:
+                    import traceback
+                    from logging_helpers import human_log
+                    human_log(SERVICE, 'Idle GPU optimizer observation temporarily unavailable', level='WARNING',
+                              meta={'traceback': traceback.format_exc()})
+                last_idle_observation = time.time()
             if worker.get('instance_id') and worker.get('awaiting_queue_start'):
                 from vast_credentials import VastCredentialStore
                 from vast_provider import VastClient

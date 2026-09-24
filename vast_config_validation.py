@@ -7,8 +7,8 @@ from vast_exchanges import SUPPORTED_EXCHANGES
 from vast_scenarios import scenario_plan
 
 SERVICE = 'Vast'
-PROFILE_IMAGE = 'ghcr.io/msei99/pbgui-pb8-worker@sha256:b6f61c54b546640f5f00e386c10a27380e0ed8715788bcc8c4b597eedff58dbc'
-PROFILE_REVISION = 'ee2b7d49fd53ef790a66a28e2c85f2a6c8faebe8'
+PROFILE_IMAGE = 'ghcr.io/msei99/pbgui-pb8-worker@sha256:bc330893bef1864065dc21835faac725e551383c3455ad4c5908a6713417268e'
+PROFILE_REVISION = '69227b75e808f8ce1f4b8949350b3311916bd377'
 _METRIC_CONTRACT = json.loads((Path(__file__).resolve().parent / 'setup/vast_gpu_benchmark/gpu_metric_contract.json').read_text())
 METRICS = frozenset(_METRIC_CONTRACT['allowed_metrics'])
 if METRICS.intersection(_METRIC_CONTRACT['exact_only_metrics']):

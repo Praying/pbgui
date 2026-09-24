@@ -72,7 +72,7 @@ interface VastPreferences {
   verified_only: boolean;
   hours: number;
   budget: number;
-  idle_seconds: 0 | 300;
+  idle_seconds: -1 | 0 | 300 | 1800 | 3600;
   max_rentals: number;
   auto_rent: boolean;
   convergence_enabled: boolean;
@@ -118,7 +118,7 @@ const preferences = reactive<VastPreferences>({
   verified_only: true,
   hours: 1,
   budget: 1,
-  idle_seconds: 300,
+  idle_seconds: -1,
   max_rentals: 1,
   auto_rent: false,
   convergence_enabled: false,
@@ -150,7 +150,10 @@ function applyPreferenceValues(values: Record<string, unknown>): void {
     const value = values[key];
     if (value === undefined) continue;
     if (key === 'idle_seconds') {
-      preferences[key] = Number(value) === 0 ? 0 : 300;
+      const idleSeconds = Number(value);
+      preferences[key] = ([-1, 0, 300, 1800, 3600] as number[]).includes(idleSeconds)
+        ? idleSeconds as VastPreferences['idle_seconds']
+        : -1;
     } else if (typeof preferences[key] === 'number') {
       (preferences[key] as number) = valueAsNumber(value, preferences[key] as number);
     } else {
@@ -327,7 +330,12 @@ async function queueAction(action: 'pause' | 'resume' | 'end'): Promise<void> {
 }
 
 async function jobAction(job: VastJob, action: 'stop' | 'recover' | 'requeue' | 'cleanup' | 'delete'): Promise<void> {
-  await runRequest(() => apiFetch(`/api/vast/jobs/${encodeURIComponent(job.id)}/${action}`, { method: action === 'delete' ? 'DELETE' : 'POST' }), t('v7optimize.cloudJobUpdated'));
+  await runRequest(
+    () => action === 'delete'
+      ? apiFetch('/api/vast/jobs/delete', { method: 'POST', body: JSON.stringify({ ids: [job.id] }) })
+      : apiFetch(`/api/vast/jobs/${encodeURIComponent(job.id)}/${action}`, { method: 'POST' }),
+    t('v7optimize.cloudJobUpdated'),
+  );
 }
 
 async function setHostBlock(machineId: number, blocked: boolean): Promise<void> {
@@ -403,6 +411,7 @@ onBeforeUnmount(() => {
           <div class="grid gap-1.5"><Label for="vast-min-tflops">{{ t('v7optimize.cloudMinTflops') }}</Label><Input id="vast-min-tflops" v-model.number="preferences.min_tflops" type="number" min="0" step="0.1" /></div>
           <div class="grid gap-1.5"><Label for="vast-disk">{{ t('v7optimize.cloudDiskGb') }}</Label><Input id="vast-disk" v-model.number="preferences.disk_gb" type="number" min="40" /></div>
           <div class="grid gap-1.5"><Label for="vast-max-rentals">{{ t('v7optimize.cloudMaxRentals') }}</Label><Input id="vast-max-rentals" v-model.number="preferences.max_rentals" type="number" min="1" max="16" step="1" /></div>
+          <div class="grid gap-1.5"><Label for="vast-idle-seconds">{{ t('v7optimize.cloudIdlePolicy') }}</Label><SelectRoot id="vast-idle-seconds" v-model="preferences.idle_seconds"><SelectTrigger><span>{{ preferences.idle_seconds === -1 ? t('v7optimize.cloudIdleUntilDeadline') : preferences.idle_seconds === 0 ? t('v7optimize.cloudIdleImmediate') : t('v7optimize.cloudIdleAfter', { minutes: preferences.idle_seconds / 60 }) }}</span></SelectTrigger><SelectContent><SelectItem :value="-1">{{ t('v7optimize.cloudIdleUntilDeadline') }}</SelectItem><SelectItem :value="0">{{ t('v7optimize.cloudIdleImmediate') }}</SelectItem><SelectItem :value="300">{{ t('v7optimize.cloudIdleAfter', { minutes: 5 }) }}</SelectItem><SelectItem :value="1800">{{ t('v7optimize.cloudIdleAfter', { minutes: 30 }) }}</SelectItem><SelectItem :value="3600">{{ t('v7optimize.cloudIdleAfter', { minutes: 60 }) }}</SelectItem></SelectContent></SelectRoot></div>
         </div>
         <label class="flex items-center gap-2 text-sm text-secondary"><Checkbox v-model="preferences.verified_only" />{{ t('v7optimize.cloudVerifiedOnly') }}</label>
         <label class="flex items-center gap-2 text-sm text-secondary"><Checkbox v-model="preferences.auto_rent" />{{ t('v7optimize.cloudAutoRent') }}</label>

@@ -180,6 +180,8 @@ export function collectConfig(state: EditFormState, ctx: CollectContext): Record
       fee_pct_sanity_abs_max: numVal(state.feePctSanity),
       forager_ws_candle_rest_audit_minutes: numVal(state.foragerWsAudit),
       force_cold_startup: state.forceColdStartup,
+      hsl_engine: state.hslEngine,
+      hsl_unavailable_grace_seconds: getOptionalNum(state.hslUnavailableGrace),
       hsl_accept_incomplete_history: state.hslAcceptIncomplete,
       order_replacement_churn_gate_activation_count: intVal(state.churnActivationCount),
       order_replacement_churn_gate_market_dist_pct: numVal(state.churnMarketDist),

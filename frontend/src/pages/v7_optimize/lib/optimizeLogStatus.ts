@@ -154,6 +154,15 @@ export function progressLabel(status: OptimizeLogStatus | null): string {
     if (percent !== null) text += ` (${percent.toFixed(1)}%)`;
   }
   if (scan.complete === false) text += ` · counting history ${Number(scan.percent || 0).toFixed(1)}%`;
+  const replay = dict(progress.replay);
+  const replayCompleted = num(replay.bars_completed);
+  const replayTotal = num(replay.bars_total);
+  if (replayCompleted !== null && replayTotal !== null && replayTotal > 0) {
+    const replayPercent = Math.max(0, Math.min(100, replayCompleted / replayTotal * 100));
+    text += ` · replay ${replayPercent.toFixed(1)}%`;
+    const replayEta = num(replay.eta_seconds);
+    if (replayEta !== null && replayEta > 0) text += ` · ETA ${formatDurationCompact(replayEta)}`;
+  }
   return text;
 }
 

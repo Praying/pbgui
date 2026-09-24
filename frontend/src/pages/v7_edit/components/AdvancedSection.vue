@@ -77,6 +77,25 @@ const syncBounds = computed(() => executionSyncBounds(state));
         :tip="t('v7run.tip.hslSignalMode')"
       />
       <FieldSelect
+        v-if="page.isV8"
+        id="f-hsl-engine"
+        v-show="page.fieldVisible('hsl_engine')"
+        v-model="state.hslEngine"
+        label="hsl_engine"
+        :options="[{ value: 'legacy' }, { value: 'revised' }]"
+        :tip="t('v7run.tip.hslEngine')"
+      />
+      <FieldNumber
+        v-if="page.isV8"
+        id="f-hsl-grace"
+        v-show="page.fieldVisible('hsl_unavailable_grace_seconds')"
+        v-model="state.hslUnavailableGrace"
+        label="hsl_unavailable_grace_seconds"
+        :tip="t('v7run.tip.hslUnavailableGrace')"
+        min="0"
+        step="any"
+      />
+      <FieldSelect
         id="f-hsl-cooldown-policy"
         v-show="page.fieldVisible('hsl_position_during_cooldown_policy')"
         v-model="state.hslCooldownPolicy"

@@ -32,6 +32,8 @@ export interface EditFormState {
   /* Advanced: modes & policies */
   forcedLong: string;
   forcedShort: string;
+  hslEngine: string;
+  hslUnavailableGrace: string;
   hslSignalMode: string;
   hslCooldownPolicy: string;
   timeInForce: string;
@@ -229,7 +231,7 @@ export function createEmptyFormState(): EditFormState {
     minCoinAge: '', pnlsLookback: '', warmupRatio: '', maxLossPct: '', note: '',
     priceDist: '', execDelay: '', marketOrderThreshold: '',
     filterMinCost: false, marketOrders: false, hedgeMode: false, autoGs: false,
-    forcedLong: '', forcedShort: '', hslSignalMode: '', hslCooldownPolicy: '', timeInForce: '',
+    forcedLong: '', forcedShort: '', hslEngine: '', hslUnavailableGrace: '', hslSignalMode: '', hslCooldownPolicy: '', timeInForce: '',
     hslAcceptIncomplete: false, forceColdStartup: false,
     maxCancel: '', maxCreate: '', maxRestarts: '', recvWindow: '', orderMatchTol: '',
     fillsRecentOverlap: '', fillsConfirmOverlap: '', maxApiReq: '',

@@ -112,6 +112,8 @@ Wenn PB8 nicht installiert ist, wird **Install PB8** als gefüllte blaue Aktion 
 
 ---
 
+In der Bot-Tabelle des Bereichs **Monitor** steht **HL Limit** direkt vor **CPU** für jeden zugeordneten Hyperliquid-Bot, ob PB7 oder PB8. Der Nutzungsprozentsatz steht oberhalb der tatsächlichen Used/Cap-Zähler. Bots mit derselben Wallet zeigen dasselbe Adresslimit; bei Bots ohne bekanntes Hyperliquid-Konto steht ein Strich. PBGui fragt `userRateLimit` alle fünf Minuten einmal je eindeutiger Wallet-Adresse ab, auch wenn mehrere Bots dieselbe Adresse verwenden. **nRequestsUsed**, **nRequestsCap**, verbleibende Requests und Messzeit beziehen sich auf das kumulative adressbezogene Aktionslimit, nicht auf das REST-Gewichtslimit der IP. Bei einem Abfragefehler bleibt der letzte erfolgreiche Wert mit **Stale** gekennzeichnet. Die Browseranzeige liest nur den Cache und erzeugt keine zusätzlichen Hyperliquid-Abfragen. Ein Klick auf den HL-Limit-Wert eines Bots öffnet den 24-Stunden-Verlauf für **Used** und **Cap** im selben Diagrammfenster wie CPU und Memory. Erfolgreiche Messungen werden auf dem Master gespeichert und bleiben nach einem API-Neustart erhalten; Lücken zeigen ausgefallene Messungen. Der Verlauf beginnt mit der ersten Messung nach Installation dieser Funktion.
+
 ## VPS-Verwaltung
 
 Klick auf eine VPS-Karte in der linken Leiste öffnet die Detailansicht des jeweiligen VPS.

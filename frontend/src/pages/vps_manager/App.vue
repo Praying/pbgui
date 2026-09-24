@@ -92,6 +92,10 @@ const logDebug = ref(false);
 const logContent = ref('');
 const logLoading = ref(false);
 const metric = ref<JsonRecord>({ loading: false, data: null, bot: '', name: '', error: '' });
+const hlRateLimits = ref<JsonRecord>({ accounts: [] });
+let hlRateLimitsTimer: ReturnType<typeof setInterval> | null = null;
+let hlRateLimitsGeneration = 0;
+let hlRateLimitsController: AbortController | null = null;
 const botLog = ref<JsonRecord>({ loading: false, lines: [], bot: '', kind: '', error: '' });
 const fileBrowseTarget = ref<'vps-install-dir' | 'add-private-key' | ''>('');
 const ufw = ref<JsonRecord>({ hostname: '', loaded: false, loading: false, applying: false, enabled: false, revision: '', rules: [], addRules: [], deleteNumbers: [], form: { port: '', from: '', comment: '', action: 'allow' }, error: '', sudoPw: '' });
@@ -542,6 +546,51 @@ function historyBotName(bot: JsonRecord): string {
   return String(bot.pb_version || '7') === '8' ? `8:${name}` : name;
 }
 function openBotMetric(bot: JsonRecord): void { const botName = historyBotName(bot); metric.value = { loading: true, data: null, bot: botName, name: botName, error: '' }; send({ cmd: 'get_metric_history', hostname: hostname.value, bot_name: botName, metric: 'cpu' }); setModal('history', metric.value); }
+function hyperliquidAccountForBot(bot: JsonRecord): JsonRecord | null {
+  const accounts = Array.isArray(hlRateLimits.value.accounts) ? hlRateLimits.value.accounts : [];
+  const botName = String(bot.name || '');
+  const version = String(bot.pb_version || '7');
+  const host = String(bot.server || hostname.value || '');
+  const exact = accounts.filter((account: JsonRecord) => Array.isArray(account.bots) && account.bots.some((entry: JsonRecord) => String(entry.name || '') === botName && String(entry.host || '') === host && (!entry.pb_version || String(entry.pb_version) === version)));
+  if (exact.length === 1) return exact[0];
+  const byName = accounts.filter((account: JsonRecord) => Array.isArray(account.bots) && account.bots.some((entry: JsonRecord) => String(entry.name || '') === botName && (!entry.pb_version || String(entry.pb_version) === version)));
+  if (byName.length === 1) return byName[0];
+  const byUser = accounts.filter((account: JsonRecord) => Array.isArray(account.users) && account.users.includes(botName));
+  return byUser.length === 1 ? byUser[0] : null;
+}
+function hyperliquidLimitText(bot: JsonRecord): string {
+  const account = hyperliquidAccountForBot(bot);
+  if (!account) return '—';
+  const used = Number(account.used);
+  const cap = Number(account.cap);
+  return Number.isFinite(used) && Number.isFinite(cap) && cap > 0 ? `${used.toLocaleString()} / ${cap.toLocaleString()}` : t('vpsmgr.rateLimitWaiting');
+}
+async function loadHyperliquidRateLimits(): Promise<void> {
+  const generation = ++hlRateLimitsGeneration;
+  hlRateLimitsController?.abort();
+  const controller = new AbortController();
+  hlRateLimitsController = controller;
+  try {
+    const data = await apiFetch<JsonRecord>(`${apiBase}/user-rate-limits`, { signal: controller.signal });
+    if (generation === hlRateLimitsGeneration && !controller.signal.aborted) hlRateLimits.value = Array.isArray(data.accounts) ? data : { accounts: [] };
+  } catch {
+    if (!controller.signal.aborted && generation === hlRateLimitsGeneration) hlRateLimits.value = { accounts: [] };
+  }
+}
+async function openHyperliquidHistory(bot: JsonRecord): Promise<void> {
+  const account = hyperliquidAccountForBot(bot);
+  const user = String((account?.users || [])[0] || '');
+  if (!user) return;
+  metric.value = { loading: true, data: null, bot: user, name: 'hl_requests', error: '' };
+  setModal('history', metric.value);
+  try {
+    metric.value = { ...metric.value, loading: false, data: await apiFetch<JsonRecord>(`${apiBase}/user-rate-limits/history/${encodeURIComponent(user)}`) };
+    modalData.value = metric.value;
+  } catch (error) {
+    metric.value = { ...metric.value, loading: false, error: messageOf(error) };
+    modalData.value = metric.value;
+  }
+}
 function openBotLogMatches(bot: JsonRecord, kind = 'tracebacks'): void { const botName = String(bot.name || ''); botLog.value = { loading: true, lines: [], bot: botName, kind, error: '' }; send({ cmd: 'fetch_bot_log_matches', request_id: nextRequestId(), hostname: hostname.value, bot_name: botName, pb_version: String(bot.pb_version || ''), kind, bucket: 'today', expected_count: Number(bot[`${kind}_today`] || 0), lines: 5000 }); setModal('bot-log', botLog.value); }
 
 function branchOptions(source: JsonRecord): string[] { if (Array.isArray(source.branches)) return source.branches.map(String); if (source.branches && typeof source.branches === 'object') return Object.keys(source.branches); return source.current_branch ? [String(source.current_branch)] : ['main']; }
@@ -633,12 +682,17 @@ onMounted(() => {
   document.addEventListener('pointerup', endOverviewDrag);
   window.addEventListener('keydown', onEscape);
   connect();
+  void loadHyperliquidRateLimits();
+  hlRateLimitsTimer = setInterval(() => { void loadHyperliquidRateLimits(); }, 30000);
 });
 onUnmounted(() => {
   if (noticeTimer !== null) clearTimeout(noticeTimer);
   document.removeEventListener('pointerup', endOverviewDrag);
   window.removeEventListener('keydown', onEscape);
   disconnect();
+  if (hlRateLimitsTimer) clearInterval(hlRateLimitsTimer);
+  hlRateLimitsTimer = null;
+  hlRateLimitsController?.abort();
 });
 </script>
 
@@ -661,6 +715,16 @@ onUnmounted(() => {
 
     <template #header-actions>
       <Button type="button" variant="info" data-action="refresh" @click="refresh"><PbIcon :icon="PhArrowClockwise" /> {{ t('vpsmgr.refresh') }}</Button>
+      <Button
+        v-for="item in monitorItems.filter((entry) => hyperliquidAccountForBot(entry))"
+        :key="`hl-limit-${historyBotName(item)}`"
+        type="button"
+        variant="ghost"
+        size="sm"
+        class="h-auto min-h-0 px-1.5 py-0.5 text-micro"
+        :title="t('vpsmgr.rateLimit')"
+        @click="openHyperliquidHistory(item)"
+      >{{ display(item.name) }}: {{ hyperliquidLimitText(item) }}</Button>
     </template>
 
   <div class="vps-manager flex min-h-0 flex-1 flex-col bg-page text-primary">

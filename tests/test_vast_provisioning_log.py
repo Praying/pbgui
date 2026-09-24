@@ -10,7 +10,7 @@ def test_manifest_weighted_progress_preserves_rolling_tail():
     from vast_image_layers import IMAGE_LAYERS
     image, sizes = next(iter(IMAGE_LAYERS.items()))
     progress = logs.image_layer_progress('ea381c80ad7f: Download complete\n02a27392fe49: Already exists', image=image)
-    assert progress['total'] == 27
+    assert progress['total'] == len(sizes)
     assert progress['completed_bytes'] == 820822233 + 250
     assert progress['total_bytes'] == sum(sizes.values())
     assert progress['download_percent'] == pytest.approx(100 * (820822233 + 250) / sum(sizes.values()))
@@ -102,6 +102,30 @@ def test_missing_daemon_log_falls_back_without_losing_snapshot(tmp_path, monkeyp
     else:
         assert 'waiting for provider logs' in result
         assert 'No such file' not in result
+
+
+def test_waiting_snapshot_retries_when_worker_becomes_ready(tmp_path, monkeypatch):
+    """Worker readiness retries a placeholder without refetching a useful snapshot."""
+    identifier = 'a' * 32
+    path = tmp_path / f'vast_{identifier}_provider.log'
+    path.write_text('2026-09-20T10:45:38 [INFO] Instance 123: waiting for provider logs; automatic retry in 60 seconds.\n')
+    state = {'provider_log_checked_at': 1000}
+    store = SimpleNamespace(read=lambda _: state, update=lambda _, **kw: state.update(kw))
+    calls = []
+    monkeypatch.setattr(logs, 'LOG_ROOT', tmp_path)
+    monkeypatch.setattr(logs.time, 'time', lambda: 1010)
+    monkeypatch.setattr(logs, '_download_log', lambda *_args, **kwargs:
+                        calls.append(kwargs['daemon']) or 'Container ready\n')
+    logs.collect_provisioning_log(
+        store, identifier, object(), 123, retry_waiting=True
+    )
+    assert calls == [True]
+    assert path.read_text() == 'Container ready\n'
+
+    logs.collect_provisioning_log(
+        store, identifier, object(), 123, retry_waiting=True
+    )
+    assert calls == [True]
 
 
 def test_layer_progress_deduplicates_and_distinguishes_download_from_ready():
