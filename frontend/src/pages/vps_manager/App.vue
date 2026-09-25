@@ -558,12 +558,15 @@ function hyperliquidAccountForBot(bot: JsonRecord): JsonRecord | null {
   const byUser = accounts.filter((account: JsonRecord) => Array.isArray(account.users) && account.users.includes(botName));
   return byUser.length === 1 ? byUser[0] : null;
 }
+function formatHyperliquidRequestCount(value: number): string {
+  return String(Math.trunc(value)).replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+}
 function hyperliquidLimitText(bot: JsonRecord): string {
   const account = hyperliquidAccountForBot(bot);
   if (!account) return '—';
   const used = Number(account.used);
   const cap = Number(account.cap);
-  return Number.isFinite(used) && Number.isFinite(cap) && cap > 0 ? `${used.toLocaleString()} / ${cap.toLocaleString()}` : t('vpsmgr.rateLimitWaiting');
+  return Number.isFinite(used) && Number.isFinite(cap) && cap > 0 ? `${formatHyperliquidRequestCount(used)} / ${formatHyperliquidRequestCount(cap)}` : t('vpsmgr.rateLimitWaiting');
 }
 async function loadHyperliquidRateLimits(): Promise<void> {
   const generation = ++hlRateLimitsGeneration;

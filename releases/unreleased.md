@@ -1,5 +1,11 @@
 # Unreleased
 
+## 合并远端 main v2.05.6-v2.05.9 并适配 Hyperliquid 限额 Vue 页面
+
+- 合并远端 v2.05.6 至 v2.05.9 的 Hyperliquid 请求限额、VPS 采样、请求额度购买、监控代理和生命周期修复，API serial 同步至 2891。
+- 新增 Vue 3 + Tailwind CSS v4.3 的 Hyperliquid Limits 页面，保留账户筛选、自动更新、钱包汇总和 24 小时历史图，并将 API Keys 的实时限额读取与请求额度购买适配到 Vue 编辑面板；遗留页面继续作为兼容回退。
+- 同步 Hyperliquid Limits 的英文/简体中文导航、帮助文档、发布说明和回归测试。
+
 ## 合并远端 main v2.05.2-v2.05.5 并补齐 Vue 3 适配
 
 - 合并远端 v2.05.2 至 v2.05.5 的 Vast GPU、PB8 优化器、VPS Hyperliquid 限额监控、运行时生命周期及回归测试更新。

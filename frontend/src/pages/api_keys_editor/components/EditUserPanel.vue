@@ -22,6 +22,7 @@ import {
 } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { serverMsg } from '@/shared/i18n';
+import { apiFetch } from '@/shared/api';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
@@ -88,6 +89,20 @@ const bybitInline = ref<{ exp: BybitExpiryInfo | null; dateText: string; ips: st
 });
 const checkingHl = ref(false);
 const checkingBybit = ref(false);
+const hlRateLimit = ref<{ visible: boolean; used: number | null; cap: number | null; sampledAt: number | null; error: string }>({
+  visible: false,
+  used: null,
+  cap: null,
+  sampledAt: null,
+  error: '',
+});
+const hlCreditAmount = ref(6000);
+const hlCreditBusy = ref(false);
+const hlCreditStatus = ref('');
+
+function formatRequestCount(value: number): string {
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+}
 
 const isEdit = computed(() => editMode.value === 'edit');
 const isHL = computed(() => exchange.value === 'hyperliquid');
@@ -167,6 +182,8 @@ function showPanel(user: UserDetail): void {
   advancedOpen.value = false;
   secretVisible.value = false;
   balance.value = { visible: false, success: false, value: null, error: '' };
+  hlRateLimit.value = { visible: false, used: null, cap: null, sampledAt: null, error: '' };
+  hlCreditStatus.value = '';
 
   if (user.exchange === 'hyperliquid' && isEdit.value) {
     const cached = store.hlExpiryData.value[user.name ?? ''];
@@ -183,6 +200,7 @@ function showPanel(user: UserDetail): void {
       dateText: '',
       errorText: '',
     };
+    void loadHlRateLimit(user.name || '');
   } else {
     hlInline.value = { exp: null, dateText: '', errorText: '' };
   }
@@ -209,6 +227,56 @@ function showPanel(user: UserDetail): void {
   }
 
   onExchangeChange();
+}
+
+async function loadHlRateLimit(userName: string): Promise<void> {
+  if (!userName || exchange.value !== 'hyperliquid') return;
+  try {
+    const data = await apiFetch<{ used?: number; cap?: number; sampled_at?: number }>(
+      `/api/vps-manager/user-rate-limits/live/${encodeURIComponent(userName)}`,
+    );
+    if (editingName.value !== userName) return;
+    hlRateLimit.value = {
+      visible: true,
+      used: typeof data.used === 'number' && Number.isInteger(data.used) ? data.used : null,
+      cap: typeof data.cap === 'number' && Number.isInteger(data.cap) ? data.cap : null,
+      sampledAt: typeof data.sampled_at === 'number' && Number.isInteger(data.sampled_at) ? data.sampled_at : null,
+      error: '',
+    };
+  } catch (error) {
+    if (editingName.value === userName) {
+      hlRateLimit.value = { visible: true, used: null, cap: null, sampledAt: null, error: error instanceof Error ? error.message : t('misc.apikeys.rateLimitUnavailable') };
+    }
+  }
+}
+
+async function purchaseHlCredits(): Promise<void> {
+  if (!editingName.value || isVault.value || hlCreditBusy.value) return;
+  const credits = Math.trunc(Number(hlCreditAmount.value));
+  if (!Number.isInteger(credits) || credits < 1 || credits > 100000) {
+    hlCreditStatus.value = t('misc.apikeys.creditAmountInvalid');
+    return;
+  }
+  const confirmed = await confirmDialog({
+    title: t('misc.apikeys.buyCreditsTitle'),
+    message: t('misc.apikeys.buyCreditsMessage', { credits, cost: (credits * 0.0005).toFixed(4) }),
+    confirmText: t('misc.apikeys.buyCredits'),
+  });
+  if (!confirmed || !editingName.value) return;
+  hlCreditBusy.value = true;
+  hlCreditStatus.value = t('misc.apikeys.buyCreditsWorking');
+  try {
+    const data = await apiFetch<{ used?: number; cap?: number; sampled_at?: number }>(
+      '/api/vps-manager/user-rate-limits/credits',
+      { method: 'POST', body: JSON.stringify({ user_name: editingName.value, credits }) },
+    );
+    hlRateLimit.value = { visible: true, used: data.used ?? null, cap: data.cap ?? null, sampledAt: data.sampled_at ?? null, error: '' };
+    hlCreditStatus.value = t('misc.apikeys.buyCreditsComplete');
+  } catch (error) {
+    hlCreditStatus.value = error instanceof Error ? error.message : t('misc.apikeys.buyCreditsFailed');
+  } finally {
+    hlCreditBusy.value = false;
+  }
 }
 
 /* ── exchange change (:1606-1627) ── */
@@ -707,6 +775,24 @@ async function testConnection(): Promise<void> {
             <div v-if="balance.success" class="font-mono text-lg font-semibold tabular-nums text-success">{{ balance.value !== null ? balance.value.toFixed(2) : 'N/A' }}</div>
             <div v-else class="text-sm text-danger">{{ balance.error }}</div>
           </div>
+        </div>
+
+        <div v-if="isHL && isEdit && hlRateLimit.visible" class="mt-3 rounded-md border border-secondary/12 bg-secondary/5 px-3 py-2.5" aria-live="polite">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.accountRequestLimit') }}</div>
+              <div v-if="hlRateLimit.error" class="mt-1 text-sm text-danger">{{ hlRateLimit.error }}</div>
+              <div v-else class="mt-1 font-mono text-lg font-semibold tabular-nums text-success">{{ hlRateLimit.used !== null && hlRateLimit.cap !== null ? `${formatRequestCount(hlRateLimit.used)} / ${formatRequestCount(hlRateLimit.cap)}` : '—' }}</div>
+              <div v-if="hlRateLimit.sampledAt" class="mt-1 text-xs text-secondary">{{ t('misc.apikeys.liveRead') }}: {{ new Date(hlRateLimit.sampledAt * 1000).toLocaleString() }}</div>
+            </div>
+            <div v-if="hlRateLimit.cap !== null && hlRateLimit.used !== null && hlRateLimit.used >= hlRateLimit.cap" class="flex flex-wrap items-end gap-2">
+              <label class="flex flex-col gap-1 text-xs text-secondary" for="hlCreditAmount">{{ t('misc.apikeys.requestCredits') }}
+                <Input id="hlCreditAmount" v-model.number="hlCreditAmount" type="number" min="1" max="100000" step="1" class="w-32" />
+              </label>
+              <Button type="button" variant="warning" size="sm" :disabled="isVault || hlCreditBusy" @click="purchaseHlCredits">{{ hlCreditBusy ? t('misc.apikeys.buyCreditsWorking') : t('misc.apikeys.buyCredits') }}</Button>
+            </div>
+          </div>
+          <div v-if="hlCreditStatus" class="mt-2 text-xs text-secondary" role="status">{{ hlCreditStatus }}</div>
         </div>
       </section>
 

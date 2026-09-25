@@ -159,6 +159,13 @@ export const WORKBENCH_NAVIGATION = [
         groupId: 'information',
       },
       {
+        pageKey: 'info_hl_limits',
+        labelKey: 'nav.page.info_hl_limits',
+        href: '/api/vps-manager/hyperliquid-limits/main_page',
+        icon: PhChartLineUp,
+        groupId: 'information',
+      },
+      {
         pageKey: 'info_balance_calc',
         labelKey: 'nav.page.info_balance_calc',
         href: '/api/balance-calc/main_page',

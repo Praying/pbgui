@@ -12,6 +12,7 @@ const EXPECTED_NAVIGATION_ROUTES = {
   info_ai_chat: '/api/ai/main_page',
   info_balance_calc: '/api/balance-calc/main_page',
   info_coin_data: '/api/coin-data/main_page',
+  info_hl_limits: '/api/vps-manager/hyperliquid-limits/main_page',
   info_market_data_fastapi: '/api/market-data/main_page',
   info_api_docs: '/docs',
   system_api_keys: '/api/api-keys/main_page',
