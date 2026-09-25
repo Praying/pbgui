@@ -1,5 +1,32 @@
 # Unreleased
 
+## 「信息 / 行情数据 / 设置」页面间距与布局优化
+
+- **修复 Tiingo 令牌行的保存按钮被拉满整格**：该行原先用 `settings-grid`（auto-fit）同时承载输入框与保存按钮，按钮作为网格项被拉伸到与输入框同宽（实测 789px）。现改为 `flex` 行：输入框弹性增长并限制在 `max-w-[640px]`，保存按钮 `flex-none` 按内容宽度（实测 138px）并与输入框底对齐。
+- **压缩 TradFi 筛选区宽度**：三个筛选字段原先 `auto-fit minmax(220px,1fr)` 在宽屏下被拉到 522px/个；现改为固定 3 列 `repeat(3,minmax(0,320px))`（≤760px 自动单列），实测 320px/个。
+- **TradFi 操作按钮从整行色块改为工具栏**：两行各 5 个 `info` 按钮原先用 grid 拉伸成 308px 宽的长色条；现改为 `flex flex-wrap gap-2` 的内容宽度按钮（实测 54–138px），两行仍按「选中项操作 / 批量操作」分组。
+- **卡片内部间距补齐**：Tiingo 卡片的凭据说明、令牌行、提示、用量面板之间此前为 0 间距，现按 12 / 8 / 12px 节奏补齐；AWS 与 l2Book 存档卡片的标题与表单网格之间补 12px；TradFi 计数行与表格之间补 12px。
+- **设置区垂直节奏一致化**：`settings-shell` 与 `settings-layout` 统一使用 `--component-gap`（16px），移除重复的 `mt-3`，使「工具栏 → 卡片」与「卡片 → 卡片」的间距一致。
+- **空状态可读性**：TradFi 表格的空数据/错误提示由 `p-3` 左对齐改为 `p-6` 居中。
+- **未改动**：组件结构、控制器、数据接口与遗留页 `market_data_main.html`；仅调整前端 Vue 样式类，因此不递增 `api/serial.txt`。
+
+## 「信息 / Hyperliquid 限额」页面布局重构
+
+- **修复说明文字与筛选框被压缩到不可读的缺陷**：该页使用了 `max-w-4xl` 与 `max-w-md`，而在本项目的 Tailwind CSS v4.3 配置中，命名尺寸会回退到 `@theme` 的 `--spacing-*`（`max-w-4xl` → `40px`，`max-w-md` → `12px`），导致说明段落一字一行、筛选输入框宽约 12px。现改用显式任意值（`max-w-[72ch]`、`max-w-[420px]`），页面说明恢复为正常阅读宽度。
+- **摘要区改为共享指标块**：原来的三个计数胶囊替换为 `MetricBlock` 三列网格（钱包 / 有运行中机器人 / 没有运行中机器人），窄屏自动堆叠，数值使用等宽数字，层级更清晰。
+- **钱包列表收敛为工作台列表卡片**：表格改用共享 `Table` / `Th` / `ListWrap` / `ListFooter` / `EmptyRow` 契约，获得统一表头（吸顶、大写微标签）、行悬停与选中样式（accent 底色 + 首列 3px 强调条）、空状态与底部计数；筛选输入框与「自动更新」提示合并为顶部工具栏，数值列右对齐并加等宽数字，新增使用率进度条（≥80% 转警告色、≥100% 转危险色）。
+- **加载/错误/历史状态改用共享组件**：加载改为 `LoadingSkeleton`，失败改为 `ErrorState`，24 小时历史图改用 `ChartFrame`（标题 + 采样摘要），并补充已用/上限图例圆点。
+- **i18n**：新增 `misc.hlLimits.walletsLabel`、`misc.hlLimits.activeLabel`、`misc.hlLimits.idleLabel`（en/zh 同步）。
+- **未改动**：路由、数据接口、30 秒自动更新逻辑与 `frontend/hl_limits.html`（遗留独立页）；仅前端 Vue 页面，因此不递增 `api/serial.txt`。
+
+## 共享对话框（PBGuiDialogs）视觉统一到当前深色终端主题
+
+- 将 `frontend/js/pbgui_dialogs.js` 的 `ensureStyles()` 中硬编码的旧石板蓝配色（`#131b2b` / `#111827` / `#2d3748` / `#63b3ed` / `#e2e8f0` 等）替换为 PBGui 当前主题令牌（`--surface-page`、`--surface-card`、`--border-subtle`、`--border-default`、`--text-primary`、`--text-secondary`、`--accent`、`--accent-soft`、`--accent-contrast`、`--danger`、`--danger-soft`、`--bg-input`、`--shadow-modal`、`--focus-ring`），并保留与令牌等值的石墨色回退值，使未加载 Tailwind 令牌的遗留页面同样呈现一致的深色终端外观。
+- 弹窗结构与 `Modal.vue` / 行情数据 `ConfirmDialog.vue` 对齐：面板改为 12px 圆角 + `--surface-page` 主体、`--surface-card` 页眉与 `--border-subtle` 分隔线；按钮圆角统一为 `--radius-sm`，主按钮为实心 accent（`--accent-contrast` 文字），次按钮为 accent 浅色调，danger 按钮为 danger 浅色调；遮罩移除 `backdrop-filter: blur`，改用与页面一致的 `--bg-page-rgb` 半透明底。
+- 提示输入框标签改用共享 `Label` 的大写微标签样式（`--fs-xs` + `--tracking-label`），字号阶梯同步到当前 `@theme` 值（12/14/15/16/19），输入框与关闭按钮补齐主题化的 focus / hover 态。对话框自身的字号/间距回退令牌现挂在遮罩元素上（不再是全局 `:root`），不会再覆盖页面自身的 `--fs-*` / `--sp-*` 令牌。
+- 缓存版本：所有 `pbgui_dialogs.js?v=10`（以及 `vps_manager.html` 中滞留的 `?v=9`）统一升至 `?v=11`，重建 `frontend/dist`，并同步 `tests/ui/*` 与 `tests/nav_mount_paths.cjs` 中的版本断言。
+- 未改动后端与 API 启动代码，因此不递增 `api/serial.txt`。
+
 ## 合并远端 main v2.05.6-v2.05.9 并适配 Hyperliquid 限额 Vue 页面
 
 - 合并远端 v2.05.6 至 v2.05.9 的 Hyperliquid 请求限额、VPS 采样、请求额度购买、监控代理和生命周期修复，API serial 同步至 2891。

@@ -49,7 +49,7 @@ watch(
 </script>
 
 <template>
-  <article class="settings-shell flex flex-col gap-3">
+  <article class="settings-shell flex flex-col gap-[var(--component-gap)]">
     <div id="settings-context-actions" class="settings-context-actions flex flex-wrap items-center justify-between gap-3">
       <SubsectionNav
         :available="store.availableSubsections.value"
@@ -65,7 +65,7 @@ watch(
         @click="store.saveSettings()"
       >{{ t('market.saveSettings') }}</Button>
     </div>
-    <div class="settings-layout mt-3 flex flex-col gap-3">
+    <div class="settings-layout flex flex-col gap-[var(--component-gap)]">
       <template v-if="store.isHyperliquid.value">
         <FieldsForm
           :fields="store.fields"

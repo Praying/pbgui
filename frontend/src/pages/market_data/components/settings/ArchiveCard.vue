@@ -25,7 +25,7 @@ const IDS = SETTINGS_FIELD_IDS;
 <template>
   <article :class="panelCardClass" id="settings-hyperliquid-archive" data-settings-subsection="aws">
     <div class="eyebrow">{{ t('market.l2bookArchiveNas') }}</div>
-    <div :class="settingsGridWideClass">
+    <div :class="[settingsGridWideClass, 'mt-3']">
       <label :class="settingsFieldClass">
         <span :class="fieldLabelClass">{{ t('market.archiveEnabled') }}</span>
         <span class="settings-toggle flex min-h-8 cursor-pointer items-center gap-2 text-base text-primary">

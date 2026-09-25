@@ -37,7 +37,7 @@ const pwEyeBtnClass =
 <template>
   <article :class="panelCardClass" id="settings-hyperliquid-aws" data-settings-subsection="aws">
     <div class="eyebrow">{{ t('market.awsSettingsL2book') }}</div>
-    <div :class="settingsGridWideClass">
+    <div :class="[settingsGridWideClass, 'mt-3']">
       <label :class="settingsFieldClass">
         <span :class="fieldLabelClass">{{ t('market.awsProfileName') }}</span>
         <Input :id="IDS.awsProfile" v-model="fields.awsProfile" type="text" />

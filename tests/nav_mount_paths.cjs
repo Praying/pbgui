@@ -123,7 +123,7 @@ async function main() {
     assert.equal(c.location.href, app + c.testNav.FASTAPI_PAGES['help'] + '?topic=38_balance_calc');
     b.nodes['pbgui-ai-btn'].click();
     assert.equal(b.assets.at(-2).href, prefix + '/app/css/ai_drawer.css?v=16');
-    assert.equal(b.assets.at(-1).src, prefix + '/app/js/pbgui_dialogs.js?v=10');
+    assert.equal(b.assets.at(-1).src, prefix + '/app/js/pbgui_dialogs.js?v=11');
     b.assets.at(-1).onload();
     assert.equal(b.assets.at(-1).src, prefix + '/app/js/ai_usage.js?v=1');
     c.PBGuiAIUsage = { render() {} };

@@ -59,7 +59,7 @@ function onStatusSelect(value: unknown): void {
 
 <template>
   <div>
-    <div class="tradfi-filter-grid mb-3 grid gap-3 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+    <div class="tradfi-filter-grid mb-3 grid grid-cols-[repeat(3,minmax(0,320px))] gap-3 max-[760px]:grid-cols-1">
       <label :class="settingsFieldClass">
         <span :class="fieldLabelClass">{{ t('market.filterBySymbol') }}</span>
         <Input
@@ -99,12 +99,12 @@ function onStatusSelect(value: unknown): void {
         </SelectRoot>
       </label>
     </div>
-    <div :class="noteClass" id="tradfi-map-count">
+    <div :class="[noteClass, 'mb-3']" id="tradfi-map-count">
       {{ map.hasRendered.value ? map.countText.value : t('market.waitingForTradfiMap') }}
     </div>
     <div class="tradfi-table-wrap max-h-[420px] overflow-auto rounded-[10px] border border-secondary/14 bg-page/48" id="tradfi-table-wrap">
-      <div v-if="map.loadError.value" class="tradfi-empty p-3 text-secondary">{{ map.loadError.value }}</div>
-      <div v-else-if="!map.filteredRows.value.length" class="tradfi-empty p-3 text-secondary">
+      <div v-if="map.loadError.value" class="tradfi-empty p-6 text-center text-secondary">{{ map.loadError.value }}</div>
+      <div v-else-if="!map.filteredRows.value.length" class="tradfi-empty p-6 text-center text-secondary">
         {{ t('market.noTradfiMatch') }}
       </div>
       <table v-else class="tradfi-map-table w-full border-collapse">
