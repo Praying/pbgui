@@ -6,6 +6,8 @@ Bei unterstützten PB8-Versionen verwendet **Additional Parameters → offline**
 
 Der visuelle Scenario Editor nutzt die authentifizierten Backtest-Endpunkte für lokale Kerzendaten, Charts und Fenstervorschauen. Änderungen an Basisdaten oder Exchanges erhalten die gezeichneten Fenster; Check & Apply prüft sie gegen die aktuellen Basiseinstellungen.
 
+Die Reference Exchange kann fuer den lokalen Preischart unabhaengig von den Backtest-Exchanges gewaehlt werden. Hyperliquid-USDC- und Bybit-USDT-Perpetual-Kerzen werden ihrem Basis-Coin zugeordnet; die Referenzwahl aendert weder Simulations-Exchanges noch laedt sie Daten herunter.
+
 Die Spalte POS zeigt die Positionslimits Long / Short. Eine deaktivierte Seite (Positionslimit oder Total Wallet Exposure null) erscheint als `-`, zum Beispiel `4 / -`.
 
 Szenario-Backtests (Suite) benötigen identische Long-/Short-Listen für freigegebene und ignorierte Coins. Ist genau eine Seite durch null Positionen oder null Total Wallet Exposure deaktiviert, übernimmt sie beim Speichern bzw. Einreihen die Listen der aktiven Seite. Beim Start gilt dies auch für ältere Queue-Einträge. Die deaktivierte Seite wird dadurch nicht aktiviert. Bei zwei aktiven Seiten müssen die Listen selbst angeglichen werden; PBGui weist widersprüchliche Listen zurück. Fehler des Runners erscheinen im Job-Log und bleiben zusätzlich in der Queue-Statusdatei erhalten.
@@ -81,6 +83,12 @@ PB8 speichert wiederverwendbare Datensaetze unter `pb8/caches/hlcvs_data` und te
 
 ## Results
 
+In jeder Optimize-Validation-Gruppe stehen die Ergebnisse nach Startdatum vom fruehesten zum spaetesten; der gesamte Zeitraum steht am Schluss. Start- und Endspalte zeigen nur das Datum.
+
+Eingeklappte Optimize-Validation-Gruppen verwenden dieselben einzeiligen Spalten wie ein einzelner Backtest. Die Zeile zeigt Strategie, Coins, Exchanges, Ergebniszeit, Zeitraum, alle verfuegbaren Kennzahlen, Salden, Exposure-Limits und Positionszahlen des Full-Timerange-Ergebnisses; im Namen steht auch die Anzahl der Gruppenergebnisse. Fehlt das Full-Ergebnis, wird dies im Namen angezeigt und die Kennzahlen bleiben leer. Fuer einzelne Trainings- und Holdout-Werte die Gruppe aufklappen.
+
+Die Spalten **Start Date** und **End Date** zeigen standardmaessig den mit jedem Ergebnis gespeicherten Backtest-Zeitraum. Die Spalten sind in Results und Archive ueber **Columns** waehlbar.
+
 Wenn der AI-Assistent exakte verwaltete PB8-Backtest-Ressourcen aufgeloest hat, kann er sie ueber dieselbe Results-**Compare**-Ansicht oeffnen. Er kann die Auswahl durch 2-20 exakte Results ersetzen oder 1-20 neue Results wie einen fertigen Holdout zur aktuellen Auswahl hinzufuegen. PBGui leert Filter, laedt die vollstaendige Result-Liste, verlangt fuer jeden sicheren Result-Selektor genau eine passende Zeile, entfernt Duplikate aus der kombinierten Auswahl und rendert den vorhandenen Equity-/Balance-Vergleichschart. Grosse Vergleiche reservieren zusaetzliche Zeilen oberhalb der Plotflaeche fuer die umgebrochene Legende, damit Result-Labels die Backtest-Kurven nicht verdecken. Generische Button-Klicks oder Host-Pfade werden dafuer nicht verwendet.
 
 ### Legacy Results
@@ -114,3 +122,5 @@ Archiv-Backtests besitzen eine eigene persistente **Columns**-Auswahl, damit ein
 PBv8 verwendet dasselbe Archive-Panel und dieselben konfigurierten Git-Archive wie PBv7. Ergebnisse werden unter `pbgui/configs/<config_version>/backtests` gespeichert, damit V7- und V8-Dateien einander nicht ueberschreiben. Gemischte Archivlisten zeigen die besitzende Version und die aktive PB8-Strategie; die sortierbare Strategy-Spalte erscheint, sobald V8-Zeilen sichtbar sind. Charts, Dateien, Vergleiche, Loeschen, Rebacktest und Retest & Replace werden an das passende Backend geroutet. **Add to Archive** kopiert mehrere ausgewaehlte Results in einer Transaktion und aktualisiert nur deren Manifest-Eintraege, statt das komplette Archiv erneut zu scannen. Bei lokalen Aenderungen in **My Archive** zeigt die Results-Sidebar die bestehende Aktion **Git Push** direkt an. **Add to Run** erzeugt fuer genau ein PB8-Archivresultat einen ungespeicherten PB8-Run-Draft zur expliziten Pruefung und Speicherung. V8-Retests verwenden unveraenderliche Snapshots unter `data/bt_v8_queue`.
 
 Beim lokalen Backtest eines importierten Vast-Ergebnisses entfernt PBGui vor dem Start dessen nur im Container gültigen HLCV-Datasetpfad. Danach gilt die lokale Marktdaten-Einstellung für Trainings- und Holdout-Zeiträume. Andere benutzerdefinierte Datenpfade bleiben erhalten. Dies gilt auch beim erneuten Start vorhandener Queue-Einträge.
+
+Im visuellen Szenarioeditor bleibt der Zoom innerhalb der konfigurierten Daten. Ein erfolgreicher neuer Versuch entfernt frühere Fehler, und beim Abbrechen des Szenarioersatzes bleibt der offene Editor unverändert.

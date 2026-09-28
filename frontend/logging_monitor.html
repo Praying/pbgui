@@ -377,9 +377,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxyge
   var PBGUI_VERSION  = "%%VERSION%%";
   var PBGUI_SERIAL   = "%%SERIAL%%";
 </script>
-<script src="/app/js/log_viewer_panel.js?v=48"></script>
+<script src="/app/js/log_viewer_panel.js?v=50"></script>
 <script src="/app/js/pbgui_dialogs.js?v=10"></script>
-<script src="/app/js/shared_help_overlay.js?v=7"></script>
+<script src="/app/js/shared_help_overlay.js?v=9"></script>
 <script src="/app/js/pbgui_icons.js?v=1"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 
@@ -503,15 +503,20 @@ function onRotationChange() {
   }
 }
 
+var purgePending = false;
 async function purgeCurrentFile() {
-  if (!currentFile) return;
+  if (!currentFile || purgePending) return;
+  purgePending = true;
+  var purgeButton = document.getElementById('purge-btn');
+  if (purgeButton) purgeButton.disabled = true;
+  try {
   if (!(await window.PBGuiDialogs.confirm({
     title: 'Purge log file',
     message: 'Purge "' + currentFile + '"?',
     detail: 'The current log will be emptied. Its tail is rotated according to the configured maximum size and backup count; a backup count of 0 discards it.',
     confirmText: 'Purge'
   }))) return;
-  apiPost('/purge/' + encodeURIComponent(currentFile), {})
+  await apiPost('/purge/' + encodeURIComponent(currentFile), {})
     .then(function(data) {
       if (data.success) {
         loadRotationData();
@@ -529,6 +534,10 @@ async function purgeCurrentFile() {
         message: String(err)
       });
     });
+  } finally {
+    purgePending = false;
+    if (purgeButton) purgeButton.disabled = false;
+  }
 }
 
 /* ── Settings panel ──────────────────────────────────────── */
@@ -660,16 +669,21 @@ function saveDefault() {
   var maxMb = numberOrDefault(document.getElementById('def-max-mb').value, 10, 1);
   var bc    = numberOrDefault(document.getElementById('def-backup-count').value, 0, 0);
   var msg   = document.getElementById('def-msg');
+  var messageGeneration = (Number(msg.dataset.generation) || 0) + 1;
+  msg.dataset.generation = String(messageGeneration);
   apiPost('/rotation', { scope: 'default', max_mb: maxMb, backup_count: bc })
     .then(function(data) {
       if (data.success) {
         msg.textContent = data.apply && data.apply.message ? data.apply.message : 'Saved'; msg.className = 'settings-msg ok';
-        setTimeout(function() { msg.className = 'settings-msg'; }, 2500);
       } else {
-        msg.textContent = 'Error'; msg.className = 'settings-msg err';
+        msg.textContent = String(data.detail || data.error || 'Save failed'); msg.className = 'settings-msg err';
       }
+      setTimeout(function() { if (msg.dataset.generation === String(messageGeneration)) msg.className = 'settings-msg'; }, 2500);
     })
-    .catch(function() { msg.textContent = 'Error'; msg.className = 'settings-msg err'; });
+    .catch(function(error) {
+      msg.textContent = error.message || 'Save failed'; msg.className = 'settings-msg err';
+      setTimeout(function() { if (msg.dataset.generation === String(messageGeneration)) msg.className = 'settings-msg'; }, 2500);
+    });
 }
 
 function saveService(svc, maxInput, copiesInput, msgEl) {
@@ -873,8 +887,8 @@ loadRotationData();
       .catch(function() { helpTocList.innerHTML = '<div class="help-loading">Failed to load topics.</div>'; });
   }
   helpFilter.addEventListener('input', renderToc);
-  helpLangEN.addEventListener('click', function() { if (helpLang === 'EN') return; helpLang = 'EN'; helpLangEN.classList.add('active'); helpLangDE.classList.remove('active'); _topicCache = {}; helpSel = 0; loadHelpIndex('logging'); });
-  helpLangDE.addEventListener('click', function() { if (helpLang === 'DE') return; helpLang = 'DE'; helpLangDE.classList.add('active'); helpLangEN.classList.remove('active'); _topicCache = {}; helpSel = 0; loadHelpIndex('logging'); });
+  helpLangEN.addEventListener('click', function() { if (helpLang === 'EN') return; helpLang = 'EN'; helpLangEN.classList.add('active'); helpLangDE.classList.remove('active'); _topicCache = {}; loadHelpIndex((helpTopics[helpSel] && helpTopics[helpSel].file) || ('logging')); });
+  helpLangDE.addEventListener('click', function() { if (helpLang === 'DE') return; helpLang = 'DE'; helpLangDE.classList.add('active'); helpLangEN.classList.remove('active'); _topicCache = {}; loadHelpIndex((helpTopics[helpSel] && helpTopics[helpSel].file) || ('logging')); });
   document.getElementById('help-close').addEventListener('click', function() { helpOvl.classList.remove('visible'); });
   document.addEventListener('keydown', function(e) { if (e.key === 'Escape') helpOvl.classList.remove('visible'); });
   (function() {

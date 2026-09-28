@@ -23,7 +23,7 @@ def test_save_and_queue_navigates_before_slow_jobs_refresh(cloud_page):
       window.editorVisible = () => true;
       window.ensureRawJsonValidForSave = () => true;
       window.ensureStructuredJsonFieldsValidForSave = () => true;
-      window.collectEditorConfig = () => ({name:'test', config:{pbgui:{execution:'vast'}, optimize:{iters:100,n_cpus:4}}});
+      window.collectEditorConfig = () => ({name:'test', config:{pbgui:{execution:'vast'}, optimize:{backend:'gpu',iters:100,n_cpus:4,gpu:{population_size:4096,batch_size:4096,max_dispatch_candidate_bars:1000000000}}}});
       window.setPageEditorStatus = text => {window.saveStatus=text;};
       window.apiFetch = () => new Promise(resolve => {window.finishSave=resolve;});
       window.refreshOpenedQueueSnapshot = async () => {};
@@ -75,7 +75,7 @@ def test_manual_rent_uses_selected_specs_after_filter_edits(cloud_page):
     """Issue 350: stale search inputs cannot invalidate an explicitly chosen offer."""
     page, data, calls, overrides, held = cloud_page
     data['worker'] = None
-    offer = dict(id=7, gpu_name='RTX 5090', price_hour_usd=.35, vram_gb=32, ram_gb=64,
+    offer = dict(id=7, machine_id=77, gpu_name='RTX 5090', price_hour_usd=.35, vram_gb=32, ram_gb=64,
                  cpu_cores=16, tflops=100, disk_gb=80, verified=False, cuda_max_good=13,
                  duration_seconds=86400, location='Test')
     overrides['/api/vast/offers'] = (200, json.dumps({'offers': [offer]}), {'Content-Type': 'application/json'})
@@ -318,7 +318,8 @@ def cloud_page():
     """Run the production component with intercepted HTTP and no provider access."""
     playwright = pytest.importorskip('playwright.sync_api')
     preferences = dict(gpu_name=None, max_price=.5, min_vram=12, min_ram=16,
-                       min_cpu=4, disk_gb=40, verified_only=True, hours=1, budget=1,
+                       min_cpu=4, min_power_watts=0, min_reliability_pct=0,
+                       disk_gb=40, verified_only=True, hours=1, budget=1,
                        idle_seconds=300)
     job = dict(id='a'*32, config_name='test-run', status='failed', can_delete=True,
                has_log=True, iterations=1000, exact_completed=120, workers=4,
@@ -388,8 +389,13 @@ def cloud_page():
             payload = dict(balance_usd=3, account_id=1)
         elif path.endswith('/charges'):
             payload = dict(billing=dict(amount_usd=.12))
+        elif path == '/api/vast/calibration/status':
+            payload = dict(rental_profile=dict(population_size=8192, batch_size=8192,
+                max_dispatch_candidate_bars=1_000_000_000),
+                queued_gpu_previews=dict(jobs=[], total_jobs=0, truncated=False),
+                calibration_worker=False)
         elif path == '/api/vast/offers':
-            payload = dict(offers=[dict(id=1, gpu_name='RTX 3090', price_hour_usd=.15,
+            payload = dict(offers=[dict(id=1, machine_id=7, gpu_name='RTX 3090', price_hour_usd=.15,
                  duration_seconds=86400, cuda_max_good=13, location='test', tflops=35.58)])
         else:
             payload = {}
@@ -496,7 +502,7 @@ def test_delete_and_requeue_locks_survive_row_replacement(cloud_page):
     assert page.locator('[title="Delete queue item"]').is_disabled()
     assert page.locator('[title="Requeue"]').is_disabled()
     assert page.evaluate('confirmations') == 1
-    assert not any(x[0] == 'DELETE' for x in calls)
+    assert not any(method == 'POST' and url.endswith('/jobs/delete') for method, url in calls)
     page.evaluate('confirmDelete(false)')
     page.wait_for_function("!document.querySelector('[title=\"Requeue\"]').disabled")
     overrides[path + '/requeue'] = 'hold'
@@ -507,13 +513,13 @@ def test_delete_and_requeue_locks_survive_row_replacement(cloud_page):
     assert page.locator('[title="Delete queue item"]').is_disabled()
     held.pop().fulfill(status=500, json={'detail':'Prepare failed'})
     page.wait_for_function("!document.querySelector('[title=\"Requeue\"]').disabled")
-    overrides[path] = 'hold'
+    overrides['/api/vast/jobs/delete'] = 'hold'
     page.locator('[title="Delete queue item"]').click()
     page.evaluate('confirmDelete(true)')
     page.wait_for_timeout(50)
     page.evaluate('renderQueueMaybeDeferred()')
     assert page.locator('[title="Delete queue item"]').is_disabled()
-    assert len([x for x in calls if x[0] == 'DELETE']) == 1
+    assert len([x for x in calls if x[0] == 'POST' and x[1].endswith('/jobs/delete')]) == 1
     data['jobs'].clear()
     held.pop().fulfill(json={'deleted':True})
     page.wait_for_function('PBGuiVast.queueItems().length === 0')
@@ -938,9 +944,9 @@ def test_host_management_uses_existing_optimizer_sidebar(cloud_page):
     assert page.locator('#sidebar-resize').get_attribute('data-sidebar-resize-bound') == 'true'
 
 
-@pytest.mark.parametrize('status,age,available', [('running', 15, True), ('running', 120, False), ('completed', 120, True)])
+@pytest.mark.parametrize('status,age,available', [('running', 15, True), ('running', 18000, False), ('completed', 120, True)])
 def test_optimizer_statistics_rates_cost_and_sample_age(cloud_page, status, age, available):
-    """Only recent live counters or explicitly final intervals provide speed and cost rates."""
+    """Keep the last valid interval visible with its age, including on running jobs."""
     import time
     page, data, _, _, _ = cloud_page
     data['jobs'][0].update(status=status, throughput=dict(sampled_at=time.time()-age,
@@ -950,14 +956,14 @@ def test_optimizer_statistics_rates_cost_and_sample_age(cloud_page, status, age,
     page.reload()
     page.wait_for_function('window.PBGuiVast && PBGuiVast.queueItems().length === 1')
     page.locator('[title="Open log"]').click()
-    assert page.locator('#cloud-proxy-rate').inner_text() == ('6,000' if available else '—')
-    assert page.locator('#cloud-exact-rate').inner_text() == ('60' if available else '—')
-    assert page.locator('#cloud-cost-efficiency').inner_text() == ('7,200' if available else '—')
+    assert page.locator('#cloud-proxy-rate').inner_text() == '6,000'
+    assert page.locator('#cloud-exact-rate').inner_text() == '60'
+    assert page.locator('#cloud-cost-efficiency').inner_text() == '7,200'
     assert page.locator('#cloud-proxy-exact').inner_text() == '100'
     assert '12,000' in page.locator('#cloud-proxy-total').inner_text()
     note = page.locator('#cloud-throughput-sample').inner_text()
     assert '60s' in note
-    assert ('Last recorded interval' if status == 'completed' else 'Latest measured interval' if available else 'Stale sample') in note
+    assert ('Last recorded interval' if status == 'completed' else 'Latest measured interval' if available else 'Last measured interval') in note
 
 
 def test_missing_statistics_never_uses_estimated_gpu_population(cloud_page):
@@ -1071,6 +1077,30 @@ def test_cloud_validation_names_scenarios_and_displays_field_paths_safely(cloud_
     assert box.locator('img').count() == 0
     assert page.locator('#btn-editor-save-queue').is_enabled()
     assert page.locator('#btn-editor-save').is_enabled()
+
+
+def test_auto_gpu_sizing_never_prompts_for_missing_fields(cloud_page):
+    """Empty automatic fields remain valid during editing and queueing."""
+    page, _, _, _, _ = cloud_page
+    page.evaluate("""() => {
+        const box = document.getElementById('opted-vast-validation');
+        for (const id of ['opted-gpu-population-size', 'opted-gpu-batch-size',
+                          'opted-gpu-max-dispatch-bars']) {
+            const input = document.createElement('input');
+            input.id = id;
+            box.before(input);
+        }
+    }""")
+    config = {'pbgui': {'execution': 'vast'}, 'optimize': {'backend': 'gpu', 'gpu': {
+        'auto_lean_parallelism': True, 'population_size': None,
+        'batch_size': None, 'max_dispatch_candidate_bars': None}}}
+    box = page.locator('#opted-vast-validation')
+    assert page.evaluate('async config => PBGuiVast.validateConfig(config)', config) is True
+    assert box.is_hidden()
+    assert page.evaluate('async config => PBGuiVast.validateConfig(config, {forQueue: true})', config) is True
+    assert box.is_hidden()
+    assert page.locator('.cloud-invalid').count() == 0
+    assert page.locator('.cloud-required').count() == 0
 
 
 @pytest.mark.parametrize('minutes', [1, 7, 60])

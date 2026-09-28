@@ -1,5 +1,11 @@
 # Unreleased
 
+## 合并远端 main v2.06.1-v2.06.7 并补齐 Vue 3 前端适配
+
+- 合并远端 v2.06.1 至 v2.06.7 的 AI、OpenRouter、Jev 数据传输确认、Vast GPU 校准、PB8 队列、VPS、日志及运行时修复，并同步 API serial 至 3013。
+- 在 Vue 3 + Tailwind CSS v4.3 的 AI Chat 与共享 AI 抽屉中适配 OpenRouter 连接、provider 选择、service tier、用量状态和 Jev 数据传输预览；在 PB8 Optimize 的 Vue Vast 云面板中适配报价校准状态、临时性能测试启动和自动状态更新。
+- 保留遗留 HTML/JS 回退页面的远端行为，补齐所有导航回退页的本地 icon helper，并同步英文/简体中文词典和 v2.06 发布测试。
+
 ## 合并远端 main v2.05.6-v2.05.9 并适配 Hyperliquid 限额 Vue 页面
 
 - 合并远端 v2.05.6 至 v2.05.9 的 Hyperliquid 请求限额、VPS 采样、请求额度购买、监控代理和生命周期修复，API serial 同步至 2891。

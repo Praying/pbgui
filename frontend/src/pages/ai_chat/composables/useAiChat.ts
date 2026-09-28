@@ -13,6 +13,7 @@ import { computed, onBeforeUnmount, ref, shallowRef } from 'vue';
 import { apiFetch } from '@/shared/api';
 import { getBoot, apiPath } from '@/shared/boot';
 import { analysisResultText, type AiProposal, type ProposalPreview } from '../lib/proposal';
+import { reviewJevTransfer, discardJevTransfer } from '../lib/jevTransferPreview';
 
 export interface ProviderInfo {
   connected?: boolean;
@@ -22,6 +23,10 @@ export interface ProviderInfo {
   profile?: string;
   profiles?: ChatgptProfile[];
   limits?: UsageLimit[];
+}
+
+export interface ProviderUsageSummary {
+  [key: string]: unknown;
 }
 
 export interface ChatgptProfile {
@@ -56,6 +61,8 @@ export interface ModelInfo {
   retention?: string;
   health?: ModelHealth;
   reasoning_variants?: ReasoningVariant[];
+  service_tiers?: ReasoningVariant[];
+  default_service_tier?: string;
 }
 
 export interface ChatMessage {
@@ -76,6 +83,7 @@ export interface ConversationSummary {
   provider?: string;
   chatgpt_profile?: string;
   effort?: string;
+  service_tier?: string;
   busy?: boolean;
   last_error?: string;
   activity?: string;
@@ -117,6 +125,7 @@ export function useAiChat(t: Translate) {
   const chatgptProfileId = ref(new URLSearchParams(window.location.search).get('chatgpt_profile') || 'default');
   const modelId = ref('');
   const effort = ref('');
+  const serviceTier = ref('');
   const conversations = ref<ConversationSummary[]>([]);
   const conversationId = ref('');
   const conversation = shallowRef<ConversationSummary | null>(null);
@@ -134,6 +143,9 @@ export function useAiChat(t: Translate) {
   const activityStartedAt = ref(0);
   const includeContext = ref(true);
   const chatgptUsage = ref<ProviderUsage>({ email: '', limits: [] });
+  const openrouterKey = ref('');
+  const openrouterUsage = ref<ProviderUsageSummary | null>(null);
+  const goUsage = ref<ProviderUsageSummary | null>(null);
 
   /* ── Generation guards (non-reactive on purpose) ── */
   let requestGeneration = 0;
@@ -151,14 +163,19 @@ export function useAiChat(t: Translate) {
     ['chatgpt', 'ChatGPT'],
     ['opencode-zen', 'OpenCode Zen'],
     ['opencode-go', 'OpenCode Go'],
+    ['openrouter', 'OpenRouter'],
   ];
 
   const chatgpt = computed(() => providers.value.chatgpt || {});
   const chatgptProfiles = computed(() => chatgpt.value.profiles || [{ id: 'default', name: 'Default' }]);
   const go = computed(() => providers.value['opencode-go'] || {});
+  const openrouter = computed(() => providers.value.openrouter || {});
   const selectedModel = computed<ModelInfo>(() => modelsById.value[modelId.value] || ({} as ModelInfo));
   const effortVariants = computed(() =>
     Array.isArray(selectedModel.value.reasoning_variants) ? selectedModel.value.reasoning_variants : [],
+  );
+  const serviceTierVariants = computed(() =>
+    Array.isArray(selectedModel.value.service_tiers) ? selectedModel.value.service_tiers : [],
   );
   const messages = computed<ChatMessage[]>(() => {
     const rows = conversation.value?.messages || [];
@@ -266,6 +283,8 @@ export function useAiChat(t: Translate) {
       } else {
         modelId.value = defaultId;
       }
+      const selected = byId[modelId.value];
+      serviceTier.value = selected?.default_service_tier || '';
       if (!models.value.length) setNotice(t('ai.chat.noModels'), true);
       else showSelectedModelNotice();
     } catch (error) {
@@ -296,6 +315,7 @@ export function useAiChat(t: Translate) {
         email: chatgpt.value.email || '',
         limits: Array.isArray(chatgpt.value.limits) ? chatgpt.value.limits : [],
       };
+      await Promise.all([refreshProviderUsage('openrouter', openrouterUsage), refreshProviderUsage('opencode-go', goUsage)]);
       rebuildProviders();
       await loadModels();
       if (loginBox.value.visible && chatgpt.value.connected) {
@@ -305,6 +325,18 @@ export function useAiChat(t: Translate) {
       }
     } catch (error) {
       if (generation === statusGeneration) setNotice((error as Error).message, true);
+    }
+  }
+
+  async function refreshProviderUsage(provider: string, target: { value: ProviderUsageSummary | null }): Promise<void> {
+    if (!(providers.value[provider] || {}).connected) {
+      target.value = null;
+      return;
+    }
+    try {
+      target.value = await api<ProviderUsageSummary>('/usage?provider=' + encodeURIComponent(provider));
+    } catch {
+      target.value = null;
     }
   }
 
@@ -367,6 +399,10 @@ export function useAiChat(t: Translate) {
       const model = modelsById.value[modelId.value] || ({} as ModelInfo);
       const variantIds = (model.reasoning_variants || []).map((variant: ReasoningVariant) => variant && variant.id);
       effort.value = variantIds.indexOf(snapshot.effort || '') >= 0 ? snapshot.effort || '' : '';
+      const tierIds = (model.service_tiers || []).map((tier: ReasoningVariant) => tier && tier.id);
+      serviceTier.value = tierIds.indexOf(snapshot.service_tier || '') >= 0
+        ? snapshot.service_tier || ''
+        : model.default_service_tier || '';
       applyConversationSnapshot(snapshot);
       await reconcileProposals(id);
       if (snapshot.busy) {
@@ -440,7 +476,11 @@ export function useAiChat(t: Translate) {
         if (chatgptProfileId.value !== 'default') conversationPayload.profile = chatgptProfileId.value;
         const created = await api<{ conversation_id: string }>('/conversations', {
           method: 'POST',
-          body: JSON.stringify(conversationPayload),
+          body: JSON.stringify(
+            serviceTier.value
+              ? { ...conversationPayload, service_tier: serviceTier.value }
+              : conversationPayload,
+          ),
         });
         if (generation !== chatGeneration) return;
         conversationId.value = created.conversation_id;
@@ -453,19 +493,44 @@ export function useAiChat(t: Translate) {
       conversation.value = null;
       const providerLabel = (PROVIDER_LABELS.find(([provider]) => provider === providerId.value) || ['', providerId.value])[1];
       setNotice(t('ai.chat.waitingFor', { provider: providerLabel }), false, true);
-      await api('/conversations/' + encodeURIComponent(conversationId.value) + '/turns', {
-        method: 'POST',
-        body: JSON.stringify({
-          message: message,
-          effort: effort.value,
+      const conversationKey = conversationId.value;
+      let jevPreviewId = '';
+      if (providerId.value === 'openrouter') {
+        const review = await reviewJevTransfer({
+          api,
+          conversationId: conversationKey,
           model: modelId.value,
-          provider: providerId.value,
-          context:
-            includeContext.value && window.PBGuiAI && typeof window.PBGuiAI.collectContext === 'function'
-              ? window.PBGuiAI.collectContext()
-              : null,
-        }),
-      });
+          message,
+        });
+        if (review.cancelled) {
+          busy.value = false;
+          pendingMessage.value = '';
+          draft.value = message;
+          setNotice(t('ai.chat.jevTransferCancelled'));
+          return;
+        }
+        jevPreviewId = review.previewId;
+      }
+      try {
+        await api('/conversations/' + encodeURIComponent(conversationKey) + '/turns', {
+          method: 'POST',
+          body: JSON.stringify({
+            message: message,
+            effort: effort.value,
+            service_tier: serviceTier.value,
+            model: modelId.value,
+            provider: providerId.value,
+            jev_preview_id: jevPreviewId || null,
+            context:
+              includeContext.value && window.PBGuiAI && typeof window.PBGuiAI.collectContext === 'function'
+                ? window.PBGuiAI.collectContext()
+                : null,
+          }),
+        });
+      } catch (error) {
+        if (jevPreviewId) await discardJevTransfer(api, conversationKey, jevPreviewId).catch(() => undefined);
+        throw error;
+      }
       if (generation !== chatGeneration) return;
       startActivityPolling(generation, conversationId.value, providerLabel);
     } catch (error) {
@@ -732,6 +797,8 @@ export function useAiChat(t: Translate) {
     const model = modelsById.value[modelId.value] || ({} as ModelInfo);
     const variantIds = (model.reasoning_variants || []).map((variant: ReasoningVariant) => variant && variant.id);
     if (variantIds.indexOf(effort.value) < 0) effort.value = '';
+    const tierIds = (model.service_tiers || []).map((tier: ReasoningVariant) => tier && tier.id);
+    if (tierIds.indexOf(serviceTier.value) < 0) serviceTier.value = model.default_service_tier || '';
     showSelectedModelNotice();
   }
 
@@ -745,6 +812,39 @@ export function useAiChat(t: Translate) {
     })
       .then(() => sendMessage(value))
       .catch((error: Error) => setNotice(error.message, true));
+  }
+
+  async function connectOpenrouter(): Promise<void> {
+    const key = openrouterKey.value.trim();
+    if (!key) {
+      setNotice(t('ai.chat.enterOpenrouterKey'), true);
+      return;
+    }
+    transitioning.value = true;
+    try {
+      await api('/providers/openrouter/connect', { method: 'POST', body: JSON.stringify({ api_key: key }) });
+      openrouterKey.value = '';
+      setNotice(t('ai.chat.openrouterConnected'));
+      await refreshStatus();
+    } catch (error) {
+      openrouterKey.value = '';
+      setNotice((error as Error).message, true);
+    } finally {
+      transitioning.value = false;
+    }
+  }
+
+  async function disconnectOpenrouter(): Promise<void> {
+    transitioning.value = true;
+    try {
+      await newChat(true);
+      await api('/providers/openrouter/connection', { method: 'DELETE' });
+      await refreshStatus();
+    } catch (error) {
+      setNotice((error as Error).message, true);
+    } finally {
+      transitioning.value = false;
+    }
   }
 
   onBeforeUnmount(() => {
@@ -764,12 +864,18 @@ export function useAiChat(t: Translate) {
     chatgptProfileId,
     chatgptUsage,
     go,
+    goUsage,
+    openrouter,
+    openrouterKey,
+    openrouterUsage,
     models,
     modelsById,
     providerId,
     modelId,
     effort,
     effortVariants,
+    serviceTier,
+    serviceTierVariants,
     selectedModel,
     conversations,
     conversationId,
@@ -807,6 +913,8 @@ export function useAiChat(t: Translate) {
     disconnectChatgpt,
     connectGo,
     disconnectGo,
+    connectOpenrouter,
+    disconnectOpenrouter,
     refreshModelHealth,
     onProviderChange,
     onChatgptProfileChange,

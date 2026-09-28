@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="/app/src/styles/tokens.css">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <link rel="icon" type="image/svg+xml" href="/app/favicon.svg?v=2">
-<script src="/app/i18n.js?v=1"></script>
     <title>API Keys - PBGui</title>
     <style>
         /* ── Design tokens (tune these to resize globally) ── */
@@ -16,7 +13,7 @@
             --input-h: 32px; --btn-h: 32px;
         }
         /* Base layout — identical to dashboard_main.html */
-        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg-page, #10141d); color: var(--text-primary, #e8ecf4); font-family: 'Segoe UI', system-ui, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif; font-size: var(--fs-base); }
+        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0e1117; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; font-size: var(--fs-base); }
         * { box-sizing: border-box; }
 
         /* ── Page body ──────────────────────────────── */
@@ -33,8 +30,8 @@
             min-width: 180px;
             max-width: 340px;
             flex-shrink: 0;
-            background: var(--bg-page, #10141d);
-            border-right: 1px solid var(--border-subtle, #262f45);
+            background: #0e1117;
+            border-right: 1px solid #1e2736;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -44,7 +41,7 @@
             position: absolute; top: 0; right: 0; bottom: 0; width: 4px;
             cursor: col-resize; background: transparent;
         }
-        #sidebar-resize:hover, #sidebar-resize.active { background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.4); }
+        #sidebar-resize:hover, #sidebar-resize.active { background: rgba(99,179,237,0.4); }
         #sidebar-sticky { flex-shrink: 0; padding: 0.5rem 0.5rem 0; }
         #sidebar-header {
             display: flex;
@@ -54,16 +51,16 @@
             flex-wrap: wrap;
             gap: 4px;
         }
-        .sb-title { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.09em; color: #717b8e; font-weight: 700; }
-        .sb-count { font-size: var(--fs-sm); background: var(--bg-card, #1b2231); border: 1px solid var(--border-default, #333f5c); border-radius: 10px; padding: 0.1rem 0.5rem; color: var(--text-secondary, #a3adc2); font-weight: 600; }
+        .sb-title { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.09em; color: #64748b; font-weight: 700; }
+        .sb-count { font-size: var(--fs-sm); background: #1a202c; border: 1px solid #2d3748; border-radius: 10px; padding: 0.1rem 0.5rem; color: #94a3b8; font-weight: 600; }
         #sidebar-toolbar {
             display: flex;
             flex-direction: column;
             gap: 0.3rem;
             padding: 0.3rem 0.1rem 0.45rem;
-            border-bottom: 1px solid var(--border-subtle, #262f45);
+            border-bottom: 1px solid #1e2736;
         }
-        .sb-sep { border: none; border-top: 1px solid var(--border-subtle, #262f45); margin: 2px 0; }
+        .sb-sep { border: none; border-top: 1px solid #1e2736; margin: 2px 0; }
         .sb-btn {
             display: inline-flex;
             align-items: center;
@@ -71,22 +68,22 @@
             border-radius: 6px;
             font-size: var(--fs-base);
             cursor: pointer;
-            border: 1px solid var(--border-default, #333f5c);
-            background: var(--bg-card, #1b2231);
-            color: var(--text-secondary, #a3adc2);
+            border: 1px solid #2d3748;
+            background: #1a202c;
+            color: #94a3b8;
             transition: background 0.12s, border-color 0.12s, color 0.12s;
             width: 100%;
             text-align: left;
         }
-        .sb-btn:hover { background: #232b3d; color: var(--text-primary, #e8ecf4); border-color: var(--text-disabled, #4d5c82); }
-        .sb-btn.active { background: rgb(var(--success-rgb, 63 186 111) / .13); border-color: var(--success, #46c88f); color: var(--success, #46c88f); }
-        .sb-btn.primary { background: var(--success, #46c88f); border-color: var(--success, #46c88f); color: #f2f5fb; }
-        .sb-btn.primary:hover { background: var(--success-deep, #267a54); }
-        .sb-btn.warning { background: var(--warning-deep, #9c7029); border-color: var(--warning-deep, #9c7029); color: var(--bg-card, #1b2231); }
-        .sb-btn.warning:hover { background: var(--warning-soft, #ecc381); }
-        .sb-btn.info { color: var(--accent-soft, #96b9f4); border-color: rgb(var(--accent-soft-rgb, 141 185 248) / .27); }
-        .sb-btn.info:hover { background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.1); border-color: rgb(var(--accent-soft-rgb, 141 185 248) / 0.5); }
-        .sb-btn.danger { color: #e5615c; border-color: #c58e8a55; }
+        .sb-btn:hover { background: #252d3d; color: #e2e8f0; border-color: #4a5568; }
+        .sb-btn.active { background: #26a69a22; border-color: #26a69a; color: #26a69a; }
+        .sb-btn.primary { background: #26a69a; border-color: #26a69a; color: #fff; }
+        .sb-btn.primary:hover { background: #2bbbad; }
+        .sb-btn.warning { background: #d69e2e; border-color: #d69e2e; color: #1a202c; }
+        .sb-btn.warning:hover { background: #ecc94b; }
+        .sb-btn.info { color: #63b3ed; border-color: #63b3ed44; }
+        .sb-btn.info:hover { background: rgba(99,179,237,0.1); border-color: rgba(99,179,237,0.5); }
+        .sb-btn.danger { color: #ef4444; border-color: #ef444455; }
         .sb-btn.danger:hover { background: rgba(245,101,101,0.1); border-color: rgba(245,101,101,0.5); }
         .sb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -109,16 +106,16 @@
             transition: background 0.2s;
             color: white;
         }
-        .btn-primary { background: var(--success, #46c88f); }
-        .btn-primary:hover { background: var(--success-deep, #267a54); }
-        .btn-danger { background: #e5615c; }
-        .btn-danger:hover { background: #a83a35; }
-        .btn-secondary { background: var(--text-disabled, #4d5c82); }
-        .btn-secondary:hover { background: var(--border-default, #333f5c); }
-        .btn-info { background: var(--accent-deep, #3f63ad); }
-        .btn-info:hover { background: #333f5c; }
-        .btn-warning { background: var(--warning-deep, #9c7029); color: var(--bg-card, #1b2231); }
-        .btn-warning:hover { background: var(--warning-soft, #ecc381); }
+        .btn-primary { background: #26a69a; }
+        .btn-primary:hover { background: #2bbbad; }
+        .btn-danger { background: #ef4444; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-secondary { background: #4a5568; }
+        .btn-secondary:hover { background: #2d3748; }
+        .btn-info { background: #3182ce; }
+        .btn-info:hover { background: #2c5282; }
+        .btn-warning { background: #d69e2e; color: #1a202c; }
+        .btn-warning:hover { background: #ecc94b; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-sm { padding: 4px 10px; font-size: var(--fs-sm); }
 
@@ -131,8 +128,8 @@
         .user-table th {
             text-align: left;
             padding: 10px 12px;
-            border-bottom: 2px solid var(--bg-elevated, #232b3d);
-            color: var(--text-secondary, #a3adc2);
+            border-bottom: 2px solid #262730;
+            color: #94a3b8;
             font-size: var(--fs-sm);
             font-weight: 600;
             text-transform: uppercase;
@@ -142,14 +139,14 @@
             cursor: pointer;
             user-select: none;
         }
-        .user-table th.sortable:hover { color: var(--text-primary, var(--text-primary, #e8ecf4)); }
-        .user-table th.sort-asc .sort-icon::after  { content: " ▲"; color: var(--success, #46c88f); }
-        .user-table th.sort-desc .sort-icon::after { content: " ▼"; color: var(--success, #46c88f); }
+        .user-table th.sortable:hover { color: #fafafa; }
+        .user-table th.sort-asc .sort-icon::after  { content: " ▲"; color: #26a69a; }
+        .user-table th.sort-desc .sort-icon::after { content: " ▼"; color: #26a69a; }
         .user-table th.sort-asc .sort-icon,
         .user-table th.sort-desc .sort-icon { display: none; }
         .user-table td {
             padding: 10px 12px;
-            border-bottom: 1px solid #1b2231;
+            border-bottom: 1px solid #1e2533;
             font-size: var(--fs-base);
         }
         .user-table tr:hover { background: rgba(255,255,255,0.03); }
@@ -161,25 +158,25 @@
             border-radius: 3px;
             font-size: var(--fs-sm);
             font-weight: 500;
-            background: var(--border-default, #333f5c);
+            background: #2d3748;
         }
-        .badge-exchange.binance { color: #c9a961; }
-        .badge-exchange.bybit { color: #c79a6b; }
-        .badge-exchange.bitget { color: #6fbc9f; }
-        .badge-exchange.hyperliquid { color: #46c88f; }
-        .badge-exchange.okx { color: #a3adc2; }
-        .badge-exchange.gateio { color: #72a0ee; }
-        .badge-exchange.kucoin { color: #86ad9e; }
+        .badge-exchange.binance { color: #f0b90b; }
+        .badge-exchange.bybit { color: #f7a600; }
+        .badge-exchange.bitget { color: #00c9a7; }
+        .badge-exchange.hyperliquid { color: #50fa7b; }
+        .badge-exchange.okx { color: #ccc; }
+        .badge-exchange.gateio { color: #2ba6ff; }
+        .badge-exchange.kucoin { color: #23af91; }
 
         .badge-in-use {
             display: inline-block;
             padding: 2px 6px;
             border-radius: 3px;
             font-size: var(--fs-xs);
-            background: var(--border-default, #333f5c);
-            color: var(--text-secondary, #a3adc2);
+            background: #2d3748;
+            color: #94a3b8;
         }
-        .badge-in-use.active { background: rgb(var(--success-rgb, 63 186 111) / .2); color: var(--success, #46c88f); font-weight: 600; }
+        .badge-in-use.active { background: #26a69a33; color: #26a69a; font-weight: 600; }
 
         .badge-expiry {
             display: inline-block;
@@ -189,17 +186,17 @@
             font-weight: 500;
             white-space: nowrap;
         }
-        .badge-expiry.ok { background: rgb(var(--success-rgb, 63 186 111) / .2); color: var(--success, #46c88f); }
-        .badge-expiry.expiring_soon { background: #c4a67e33; color: var(--warning-soft, #ecc381); }
-        .badge-expiry.critical { background: #c58e8a33; color: #e5615c; }
-        .badge-expiry.expired { background: #1b181f; color: #5d6575; }
-        .badge-expiry.no_expiry { background: var(--border-default, #333f5c); color: var(--text-secondary, #a3adc2); }
-        .badge-expiry.unknown, .badge-expiry.error { background: var(--border-default, #333f5c); color: var(--text-muted, #717b8e); }
+        .badge-expiry.ok { background: #26a69a33; color: #26a69a; }
+        .badge-expiry.expiring_soon { background: #d69e2e33; color: #ecc94b; }
+        .badge-expiry.critical { background: #ef444433; color: #ef4444; }
+        .badge-expiry.expired { background: #1a1a1a; color: #555; }
+        .badge-expiry.no_expiry { background: #2d3748; color: #94a3b8; }
+        .badge-expiry.unknown, .badge-expiry.error { background: #2d3748; color: #718096; }
 
         /* Edit form */
         .edit-panel {
-            background: var(--bg-card, #1b2231);
-            border: 1px solid var(--border-default, #333f5c);
+            background: #1a202c;
+            border: 1px solid #2d3748;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
@@ -207,7 +204,7 @@
         .edit-panel h3 {
             margin-bottom: 16px;
             font-size: var(--fs-lg);
-            color: var(--text-primary, var(--text-primary, #e8ecf4));
+            color: #fafafa;
         }
         .form-grid {
             display: grid;
@@ -221,22 +218,22 @@
         }
         .form-group label {
             font-size: var(--fs-sm);
-            color: var(--text-secondary, #a3adc2);
+            color: #94a3b8;
             margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .form-group input, .form-group select {
-            background: var(--bg-page, #10141d);
-            border: 1px solid var(--border-default, #333f5c);
+            background: #0e1117;
+            border: 1px solid #2d3748;
             border-radius: 4px;
             padding: 8px 12px;
-            color: var(--text-primary, var(--text-primary, #e8ecf4));
+            color: #fafafa;
             font-size: var(--fs-base);
         }
         .form-group input:focus, .form-group select:focus {
             outline: none;
-            border-color: var(--success, #46c88f);
+            border-color: #26a69a;
         }
         .form-group input:disabled, .form-group select:disabled {
             opacity: 0.5;
@@ -247,16 +244,16 @@
         .pw-eye-btn {
             position: absolute; right: 8px;
             background: none; border: none; cursor: pointer;
-            color: #717b8e; font-size: var(--fs-md); padding: 0; line-height: 1;
+            color: #64748b; font-size: var(--fs-md); padding: 0; line-height: 1;
             user-select: none;
         }
-        .pw-eye-btn:hover { color: var(--text-secondary, #a3adc2); }
+        .pw-eye-btn:hover { color: #94a3b8; }
         .form-group textarea {
-            background: var(--bg-page, #10141d);
-            border: 1px solid var(--border-default, #333f5c);
+            background: #0e1117;
+            border: 1px solid #2d3748;
             border-radius: 4px;
             padding: 8px 12px;
-            color: var(--text-primary, var(--text-primary, #e8ecf4));
+            color: #fafafa;
             font-size: var(--fs-sm);
             font-family: 'Courier New', monospace;
             resize: vertical;
@@ -264,7 +261,7 @@
         }
         .form-group textarea:focus {
             outline: none;
-            border-color: var(--success, #46c88f);
+            border-color: #26a69a;
         }
 
         .form-actions {
@@ -273,7 +270,7 @@
             justify-content: flex-end;
             margin-top: 16px;
             padding-top: 16px;
-            border-top: 1px solid var(--border-default, #333f5c);
+            border-top: 1px solid #2d3748;
         }
 
         .form-checkbox {
@@ -285,7 +282,7 @@
         .form-checkbox input[type="checkbox"] {
             width: 16px;
             height: 16px;
-            accent-color: var(--success, #46c88f);
+            accent-color: #26a69a;
         }
 
         /* Expander */
@@ -294,8 +291,8 @@
         }
         .expander-toggle {
             background: transparent;
-            border: 1px solid var(--border-default, #333f5c);
-            color: var(--text-secondary, #a3adc2);
+            border: 1px solid #2d3748;
+            color: #94a3b8;
             cursor: pointer;
             font-size: var(--fs-sm);
             padding: 6px 12px;
@@ -303,7 +300,7 @@
             width: 100%;
             text-align: left;
         }
-        .expander-toggle:hover { border-color: var(--text-disabled, #4d5c82); color: var(--text-primary, var(--text-primary, #e8ecf4)); }
+        .expander-toggle:hover { border-color: #4a5568; color: #fafafa; }
         .expander-content {
             display: none;
             padding: 12px 0;
@@ -332,37 +329,47 @@
         /* Balance display */
         .balance-display {
             display: flex;
+            flex-wrap: wrap;
             gap: 24px;
             margin-top: 16px;
         }
         .balance-box {
-            background: var(--bg-page, #10141d);
-            border: 1px solid var(--border-default, #333f5c);
+            background: #0e1117;
+            border: 1px solid #2d3748;
             border-radius: 8px;
             padding: 16px;
             text-align: center;
             min-width: 200px;
         }
+        .balance-guidance {
+            flex-basis: 100%;
+            min-width: 0;
+            max-width: 100%;
+            text-align: left;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+        .balance-guidance a { color: #26a69a; }
         .balance-box .label {
             font-size: var(--fs-sm);
-            color: var(--text-secondary, #a3adc2);
+            color: #94a3b8;
             text-transform: uppercase;
             margin-bottom: 4px;
         }
         .balance-box .value {
             font-size: var(--fs-xl);
             font-weight: 600;
-            color: var(--success, #46c88f);
+            color: #26a69a;
         }
         .balance-box .error {
             font-size: var(--fs-base);
-            color: #e5615c;
+            color: #ef4444;
         }
 
         /* HL Expiry panel */
         .hl-expiry-panel {
-            background: var(--bg-card, #1b2231);
-            border: 1px solid var(--border-default, #333f5c);
+            background: #1a202c;
+            border: 1px solid #2d3748;
             border-radius: 8px;
             padding: 16px;
             margin-top: 20px;
@@ -378,14 +385,14 @@
         .hl-expiry-table th {
             text-align: left;
             padding: 8px 10px;
-            border-bottom: 2px solid var(--bg-elevated, #232b3d);
-            color: var(--text-secondary, #a3adc2);
+            border-bottom: 2px solid #262730;
+            color: #94a3b8;
             font-size: var(--fs-sm);
             text-transform: uppercase;
         }
         .hl-expiry-table td {
             padding: 8px 10px;
-            border-bottom: 1px solid #1b2231;
+            border-bottom: 1px solid #1e2533;
             font-size: var(--fs-sm);
         }
         .backup-compare-table {
@@ -393,8 +400,8 @@
             border-spacing: 0;
         }
         .backup-compare-table th {
-            background: var(--bg-card, #1b2231);
-            border-bottom: 2px solid var(--border-default, #333f5c);
+            background: #1a202c;
+            border-bottom: 2px solid #2d3748;
         }
         .backup-compare-table .backup-row {
             cursor: pointer;
@@ -403,24 +410,24 @@
             background: rgba(255,255,255,0.03);
         }
         .backup-compare-table .backup-row.selected td {
-            background: rgb(var(--accent-rgb, 91 156 245) / .12);
+            background: rgba(77,166,255,.12);
         }
         .backup-compare-table .backup-row.selected td:first-child {
-            border-left: 3px solid var(--success, #46c88f);
+            border-left: 3px solid #26a69a;
         }
-        .tradfi-profile-wrap { overflow-x:auto; border:1px solid var(--border-default, #333f5c); border-radius:6px; margin:12px 0; }
+        .tradfi-profile-wrap { overflow-x:auto; border:1px solid #2d3748; border-radius:6px; margin:12px 0; }
         .tradfi-profile-table { width:100%; min-width:980px; border-collapse:collapse; font-size:var(--fs-sm); }
-        .tradfi-profile-table th { position:sticky; top:0; background:var(--bg-card, #1b2231); color:var(--text-secondary, #a3adc2); text-align:left; padding:8px 10px; border-bottom:2px solid var(--border-default, #333f5c); white-space:nowrap; }
-        .tradfi-profile-table td { padding:8px 10px; border-bottom:1px solid #1b2231; white-space:nowrap; }
+        .tradfi-profile-table th { position:sticky; top:0; background:#1a202c; color:#94a3b8; text-align:left; padding:8px 10px; border-bottom:2px solid #2d3748; white-space:nowrap; }
+        .tradfi-profile-table td { padding:8px 10px; border-bottom:1px solid #1e2533; white-space:nowrap; }
         .tradfi-profile-table tbody tr { cursor:pointer; }
         .tradfi-profile-table tbody tr:hover td { background:rgba(255,255,255,.03); }
-        .tradfi-profile-table tbody tr.selected td { background:rgb(var(--accent-rgb, 91 156 245) / .12); }
-        .tradfi-profile-table tbody tr.selected td:first-child { border-left:3px solid var(--success, #46c88f); padding-left:7px; }
-        .tradfi-profile-id { font-family:monospace; color:var(--text-secondary, #a3adc2); }
-        .tradfi-projection-status { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:12px 0; padding:10px 12px; border:1px solid var(--border-default, #333f5c); border-radius:6px; background:#191622; }
-        .tradfi-projection-copy { min-width:0; color:var(--text-secondary, #a3adc2); font-size:var(--fs-sm); overflow-wrap:anywhere; }
-        .tradfi-active { color:var(--success-soft, #76d9ad); font-weight:700; }
-        .tradfi-inactive { color:#e0a458; }
+        .tradfi-profile-table tbody tr.selected td { background:rgba(77,166,255,.12); }
+        .tradfi-profile-table tbody tr.selected td:first-child { border-left:3px solid #26a69a; padding-left:7px; }
+        .tradfi-profile-id { font-family:monospace; color:#94a3b8; }
+        .tradfi-projection-status { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:12px 0; padding:10px 12px; border:1px solid #2d3748; border-radius:6px; background:#151d2b; }
+        .tradfi-projection-copy { min-width:0; color:#94a3b8; font-size:var(--fs-sm); overflow-wrap:anywhere; }
+        .tradfi-active { color:#68d391; font-weight:700; }
+        .tradfi-inactive { color:#fbbf24; }
         /* Toast notifications (success only) */
         .toast {
             position: fixed;
@@ -435,50 +442,50 @@
             max-width: 400px;
         }
         .toast.show { opacity: 1; }
-        .toast.success { background: var(--success, #46c88f); color: white; }
-        .toast.info { background: #72a0ee; color: white; }
+        .toast.success { background: #26a69a; color: white; }
+        .toast.info { background: #3b82f6; color: white; }
 
         /* Alert modal (error / warning) */
         .alert-modal-overlay {
-            position: fixed; inset: 0; background: rgba(5, 8, 14,0.65);
+            position: fixed; inset: 0; background: rgba(0,0,0,0.65);
             z-index: 3000; display: flex; align-items: center; justify-content: center;
         }
         .alert-modal {
-            background: #171c29; border-radius: 8px;
+            background: #1a1f2e; border-radius: 8px;
             padding: 28px 32px; max-width: 500px; width: 90%;
-            box-shadow: 0 8px 32px rgba(5, 8, 14,0.6);
-            border: 1px solid var(--border-default, #333f5c);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            border: 1px solid #2d3748;
             display: flex; flex-direction: column; gap: 16px;
         }
-        .alert-modal.error { border-left: 4px solid #e5615c; }
-        .alert-modal.warning { border-left: 4px solid var(--warning-deep, #9c7029); }
-        .alert-modal.success { border-left: 4px solid var(--success-deep, #267a54); }
-        .alert-modal.info { border-left: 4px solid #72a0ee; }
-        .alert-modal-title { font-size: var(--fs-md); font-weight: 700; color: var(--text-primary, var(--text-primary, #e8ecf4)); }
-        .alert-modal.error .alert-modal-title { color: #e5615c; }
-        .alert-modal.warning .alert-modal-title { color: #e0a458; }
-        .alert-modal.success .alert-modal-title { color: var(--success-soft, #76d9ad); }
-        .alert-modal.info .alert-modal-title { color: #72a0ee; }
+        .alert-modal.error { border-left: 4px solid #ef4444; }
+        .alert-modal.warning { border-left: 4px solid #d69e2e; }
+        .alert-modal.success { border-left: 4px solid #38a169; }
+        .alert-modal.info { border-left: 4px solid #38bdf8; }
+        .alert-modal-title { font-size: var(--fs-md); font-weight: 700; color: #fafafa; }
+        .alert-modal.error .alert-modal-title { color: #f87171; }
+        .alert-modal.warning .alert-modal-title { color: #fbbf24; }
+        .alert-modal.success .alert-modal-title { color: #68d391; }
+        .alert-modal.info .alert-modal-title { color: #38bdf8; }
         .dry-run-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); margin-top: 8px; }
-        .dry-run-table th { color: #717b8e; text-align: left; padding: 3px 8px; border-bottom: 1px solid #333f5c; }
-        .dry-run-table td { color: var(--text-primary, #e8ecf4); padding: 3px 8px; border-bottom: 1px solid #1b2231; }
-        .alert-modal-body { font-size: var(--fs-sm); color: var(--text-secondary, #a3adc2); line-height: 1.5; word-break: break-word; }
+        .dry-run-table th { color: #64748b; text-align: left; padding: 3px 8px; border-bottom: 1px solid #334155; }
+        .dry-run-table td { color: #e2e8f0; padding: 3px 8px; border-bottom: 1px solid #1e293b; }
+        .alert-modal-body { font-size: var(--fs-sm); color: #94a3b8; line-height: 1.5; word-break: break-word; }
         .alert-modal-footer { display: flex; justify-content: flex-end; }
         .alert-modal-footer .btn { min-width: 80px; }
 
         /* Diff viewer */
         .diff-modal {
-            position: fixed; inset: 0; background: #110f15;
+            position: fixed; inset: 0; background: #0f1117;
             z-index: 999; display: flex; flex-direction: column; overflow: hidden;
         }
         .diff-modal-header {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 16px; background: #171c29;
-            border-bottom: 1px solid #2e2a40; flex-shrink: 0;
+            padding: 10px 16px; background: #1a1f2e;
+            border-bottom: 1px solid #2d3553; flex-shrink: 0;
         }
         .diff-legend {
             display: flex; gap: 16px; padding: 5px 14px;
-            background: var(--surface-sidebar, #131826); border-bottom: 1px solid #1b2231;
+            background: #111827; border-bottom: 1px solid #1e2533;
             font-size: var(--fs-xs); flex-shrink: 0;
         }
         .diff-table {
@@ -487,23 +494,23 @@
         }
         .diff-table td { padding: 1px 8px; vertical-align: top; }
         .diff-table .ln {
-            color: var(--text-disabled, #4d5c82); text-align: right; user-select: none;
+            color: #4a5568; text-align: right; user-select: none;
             min-width: 36px; padding-right: 10px;
-            border-right: 1px solid var(--border-default, #333f5c);
+            border-right: 1px solid #2d3748;
         }
         .diff-table .diff-sign { width: 14px; user-select: none; text-align: center; }
-        .diff-add  { background: #14231c; color: #76d9ad; }
-        .diff-del  { background: #2a1214; color: #ee8d84; }
-        .diff-ctx  { color: var(--text-secondary, #a3adc2); }
-        .diff-empty { background: var(--surface-sidebar, #131826); }
-        .diff-sep td { background: #1b2231; color: var(--text-disabled, #4d5c82); text-align: center;
+        .diff-add  { background: #0d2b1b; color: #86efac; }
+        .diff-del  { background: #2b0d0d; color: #fca5a5; }
+        .diff-ctx  { color: #94a3b8; }
+        .diff-empty { background: #111827; }
+        .diff-sep td { background: #1e2533; color: #4a5568; text-align: center;
                        font-style: italic; padding: 3px 8px; }
         .diff-side-wrap { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
-        .diff-side-col { overflow-x: auto; border-right: 1px solid var(--border-default, #333f5c); }
+        .diff-side-col { overflow-x: auto; border-right: 1px solid #2d3748; }
         .diff-side-col:last-child { border-right: none; }
         .diff-side-hdr {
-            background: var(--bg-card, #1b2231); padding: 5px 10px; font-size: var(--fs-xs); color: var(--text-secondary, #a3adc2);
-            border-bottom: 1px solid var(--border-default, #333f5c); font-family: monospace;
+            background: #1a202c; padding: 5px 10px; font-size: var(--fs-xs); color: #94a3b8;
+            border-bottom: 1px solid #2d3748; font-family: monospace;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: sticky; top: 0;
         }
         /* Loading spinner */
@@ -511,8 +518,8 @@
             display: inline-block;
             width: 16px;
             height: 16px;
-            border: 2px solid var(--text-disabled, #4d5c82);
-            border-top-color: var(--success, #46c88f);
+            border: 2px solid #4a5568;
+            border-top-color: #26a69a;
             border-radius: 50%;
             animation: spin 0.6s linear infinite;
             vertical-align: middle;
@@ -524,7 +531,7 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .edit-panel, .hl-expiry-panel { animation: fadeIn 0.18s ease; }
 
-        .loading-row td { text-align: center; color: var(--text-secondary, #a3adc2); padding: 40px; }
+        .loading-row td { text-align: center; color: #94a3b8; padding: 40px; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -545,10 +552,10 @@
           width: min(900px, 95vw);
           height: min(700px, 90vh);
           min-width: 480px; min-height: 300px;
-          background: #10141d;
-          border: 1px solid var(--border-default, #333f5c);
+          background: #131b2b;
+          border: 1px solid #2d3748;
           border-radius: 12px;
-          box-shadow: 0 20px 70px rgba(5, 8, 14,0.9);
+          box-shadow: 0 20px 70px rgba(0,0,0,0.9);
           flex-direction: column;
           overflow: hidden;
           resize: both;
@@ -565,65 +572,65 @@
         .ovl-header {
           display: flex; align-items: center; justify-content: space-between;
           padding: 0.85rem 1.1rem 0.85rem 1.25rem;
-          border-bottom: 1px solid var(--border-subtle, #262f45);
-          flex-shrink: 0; background: var(--surface-sidebar, #131826);
+          border-bottom: 1px solid #1e2736;
+          flex-shrink: 0; background: #111827;
         }
-        .ovl-header-title { font-size: var(--fs-sm); font-weight: 700; color: var(--text-primary, #e8ecf4); display: flex; align-items: center; gap: 0.5rem; }
+        .ovl-header-title { font-size: var(--fs-sm); font-weight: 700; color: #e2e8f0; display: flex; align-items: center; gap: 0.5rem; }
         .ovl-header-actions { display: flex; align-items: center; gap: 0.5rem; position: relative; z-index: 3; }
-        .ovl-close { background: transparent; border: none; color: #717b8e; font-size: var(--fs-md); cursor: pointer; padding: 0.2rem 0.35rem; border-radius: 5px; line-height: 1; transition: color 0.12s, background 0.12s; }
-        .ovl-close:hover { color: var(--text-primary, #e8ecf4); background: rgba(255,255,255,0.06); }
-        .lang-pill { display: flex; border: 1px solid var(--border-default, #333f5c); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
-        .lang-pill button { background: transparent; border: none; color: #717b8e; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.05em; padding: 0.2rem 0.55rem; cursor: pointer; transition: all 0.12s; }
-        .lang-pill button.active { background: #333f5c; color: var(--accent-soft, #96b9f4); }
-        .lang-pill button:hover:not(.active) { background: rgba(255,255,255,0.04); color: var(--text-primary, #e8ecf4); }
+        .ovl-close { background: transparent; border: none; color: #64748b; font-size: var(--fs-md); cursor: pointer; padding: 0.2rem 0.35rem; border-radius: 5px; line-height: 1; transition: color 0.12s, background 0.12s; }
+        .ovl-close:hover { color: #e2e8f0; background: rgba(255,255,255,0.06); }
+        .lang-pill { display: flex; border: 1px solid #2d3748; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+        .lang-pill button { background: transparent; border: none; color: #64748b; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.05em; padding: 0.2rem 0.55rem; cursor: pointer; transition: all 0.12s; }
+        .lang-pill button.active { background: #1e3a5f; color: #63b3ed; }
+        .lang-pill button:hover:not(.active) { background: rgba(255,255,255,0.04); color: #e2e8f0; }
         #help-body { display: flex; flex: 1; overflow: hidden; }
-        #help-toc { width: 230px; min-width: 170px; flex-shrink: 0; border-right: 1px solid var(--border-subtle, #262f45); overflow-y: auto; padding: 0.5rem 0; background: var(--bg-page, #10141d); }
-        #help-toc-filter { width: calc(100% - 1.2rem); margin: 0 0.6rem 0.4rem; background: var(--bg-card, #1b2231); color: var(--text-primary, #e8ecf4); border: 1px solid var(--border-default, #333f5c); border-radius: 5px; padding: 0.35rem 0.5rem; font-size: var(--fs-sm); outline: none; }
-        #help-toc-filter:focus { border-color: var(--text-disabled, #4d5c82); }
-        #help-toc-filter::placeholder { color: var(--text-disabled, #4d5c82); }
-        .toc-item { display: block; padding: 0.42rem 0.9rem; color: var(--text-secondary, #a3adc2); font-size: var(--fs-sm); cursor: pointer; border-left: 3px solid transparent; transition: all 0.1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .toc-item:hover { background: #171c29; color: var(--text-primary, #e8ecf4); }
-        .toc-item.active { border-left-color: var(--accent-soft, #96b9f4); color: var(--accent-soft, #96b9f4); background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.07); font-weight: 600; }
-        #help-content { flex: 1; overflow-y: auto; padding: 1.5rem 1.8rem; line-height: 1.7; color: var(--text-primary, #e8ecf4); font-size: var(--fs-base); }
-        #help-content h1 { font-size: var(--fs-xl); color: var(--text-primary, #e8ecf4); margin: 0 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-subtle, #262f45); }
-        #help-content h2 { font-size: var(--fs-lg); color: var(--text-primary, #e8ecf4); margin: 1.5rem 0 0.5rem; }
-        #help-content h3 { font-size: var(--fs-md); color: var(--text-primary, #e8ecf4); margin: 1.1rem 0 0.35rem; }
+        #help-toc { width: 230px; min-width: 170px; flex-shrink: 0; border-right: 1px solid #1e2736; overflow-y: auto; padding: 0.5rem 0; background: #0e1117; }
+        #help-toc-filter { width: calc(100% - 1.2rem); margin: 0 0.6rem 0.4rem; background: #1a202c; color: #e2e8f0; border: 1px solid #2d3748; border-radius: 5px; padding: 0.35rem 0.5rem; font-size: var(--fs-sm); outline: none; }
+        #help-toc-filter:focus { border-color: #4a5568; }
+        #help-toc-filter::placeholder { color: #4a5568; }
+        .toc-item { display: block; padding: 0.42rem 0.9rem; color: #94a3b8; font-size: var(--fs-sm); cursor: pointer; border-left: 3px solid transparent; transition: all 0.1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .toc-item:hover { background: #1a2030; color: #e2e8f0; }
+        .toc-item.active { border-left-color: #63b3ed; color: #63b3ed; background: rgba(99,179,237,0.07); font-weight: 600; }
+        #help-content { flex: 1; overflow-y: auto; padding: 1.5rem 1.8rem; line-height: 1.7; color: #cbd5e0; font-size: var(--fs-base); }
+        #help-content h1 { font-size: var(--fs-xl); color: #e2e8f0; margin: 0 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1e2736; }
+        #help-content h2 { font-size: var(--fs-lg); color: #e2e8f0; margin: 1.5rem 0 0.5rem; }
+        #help-content h3 { font-size: var(--fs-md); color: #cbd5e0; margin: 1.1rem 0 0.35rem; }
         #help-content p  { margin: 0.5rem 0; }
-        #help-content a  { color: var(--accent-soft, #96b9f4); text-decoration: none; }
+        #help-content a  { color: #63b3ed; text-decoration: none; }
         #help-content a:hover { text-decoration: underline; }
-        #help-content strong { color: var(--text-primary, #e8ecf4); }
-        #help-content em { color: var(--text-secondary, #a3adc2); font-style: italic; }
-        #help-content code { background: var(--bg-card, #1b2231); color: var(--warning-soft, #ecc381); padding: 0.1em 0.35em; border-radius: 3px; font-size: var(--fs-xs); font-family: 'Fira Code','Consolas',monospace; }
-        #help-content pre { background: var(--bg-page, #10141d); border: 1px solid var(--border-default, #333f5c); border-radius: 6px; padding: 0.9rem 1rem; overflow-x: auto; margin: 0.75rem 0; }
-        #help-content pre code { background: none; padding: 0; color: var(--text-secondary, var(--text-secondary, #a3adc2)); font-size: var(--fs-sm); }
+        #help-content strong { color: #e2e8f0; }
+        #help-content em { color: #94a3b8; font-style: italic; }
+        #help-content code { background: #1a202c; color: #f6ad55; padding: 0.1em 0.35em; border-radius: 3px; font-size: var(--fs-xs); font-family: 'Fira Code','Consolas',monospace; }
+        #help-content pre { background: #0e1117; border: 1px solid #2d3748; border-radius: 6px; padding: 0.9rem 1rem; overflow-x: auto; margin: 0.75rem 0; }
+        #help-content pre code { background: none; padding: 0; color: #a0aec0; font-size: var(--fs-sm); }
         #help-content ul, #help-content ol { padding-left: 1.5rem; margin: 0.5rem 0; }
         #help-content li { margin: 0.2rem 0; }
-        #help-content blockquote { border-left: 3px solid var(--accent-soft, #96b9f4); margin: 0.75rem 0; padding: 0.4rem 0.9rem; background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.05); border-radius: 0 5px 5px 0; color: var(--text-secondary, #a3adc2); }
+        #help-content blockquote { border-left: 3px solid #63b3ed; margin: 0.75rem 0; padding: 0.4rem 0.9rem; background: rgba(99,179,237,0.05); border-radius: 0 5px 5px 0; color: #94a3b8; }
         #help-content table { border-collapse: collapse; width: 100%; margin: 0.75rem 0; }
-        #help-content th, #help-content td { border: 1px solid var(--border-default, #333f5c); padding: 0.4rem 0.7rem; text-align: left; font-size: var(--fs-sm); }
-        #help-content th { background: var(--bg-card, #1b2231); color: var(--text-primary, #e8ecf4); font-weight: 600; }
-        #help-content hr { border: none; border-top: 1px solid var(--border-subtle, #262f45); margin: 1rem 0; }
+        #help-content th, #help-content td { border: 1px solid #2d3748; padding: 0.4rem 0.7rem; text-align: left; font-size: var(--fs-sm); }
+        #help-content th { background: #1a202c; color: #e2e8f0; font-weight: 600; }
+        #help-content hr { border: none; border-top: 1px solid #1e2736; margin: 1rem 0; }
         #help-content img { max-width: 100%; border-radius: 6px; margin: 0.5rem 0; }
-        .help-loading { color: var(--text-disabled, #4d5c82); font-style: italic; padding: 2rem; text-align: center; }
+        .help-loading { color: #4a5568; font-style: italic; padding: 2rem; text-align: center; }
         /* help overlay — content search */
         #help-search-wrap { display: flex; align-items: center; gap: 3px; }
-        #help-search { background: var(--bg-card, #1b2231); color: var(--text-primary, #e8ecf4); border: 1px solid var(--border-default, #333f5c); border-radius: 5px; padding: 0.28rem 0.5rem; font-size: var(--fs-sm); outline: none; width: 170px; }
-        #help-search:focus { border-color: var(--text-disabled, #4d5c82); }
-        #help-search::placeholder { color: var(--text-disabled, #4d5c82); }
-        .help-snav-btn { background: var(--bg-card, #1b2231); border: 1px solid var(--border-default, #333f5c); border-radius: 3px; color: var(--text-secondary, #a3adc2); cursor: pointer; font-size: var(--fs-xs); padding: 2px 5px; line-height: 1.4; transition: color 0.1s, border-color 0.1s; }
-        .help-snav-btn:hover { color: var(--text-primary, #e8ecf4); border-color: var(--text-disabled, #4d5c82); }
-        #help-search-count { font-size: var(--fs-xs); color: #717b8e; white-space: nowrap; min-width: 44px; text-align: left; }
-        #help-content mark { background: rgb(var(--warning-rgb, 227 164 74) / 0.2); color: #ecc381; border-radius: 2px; }
-        #help-content mark.current { background: rgb(var(--warning-rgb, 227 164 74) / 0.45); color: #ecc381; outline: 1px solid #e0a458; }
-        #help-search-global-lbl { display:flex; align-items:center; gap:3px; color:var(--text-secondary, #a3adc2); font-size: var(--fs-xs); cursor:pointer; white-space:nowrap; user-select:none; }
-        #help-search-global-lbl input[type=checkbox] { accent-color:#72a0ee; cursor:pointer; margin:0; }
+        #help-search { background: #1a202c; color: #e2e8f0; border: 1px solid #2d3748; border-radius: 5px; padding: 0.28rem 0.5rem; font-size: var(--fs-sm); outline: none; width: 170px; }
+        #help-search:focus { border-color: #4a5568; }
+        #help-search::placeholder { color: #4a5568; }
+        .help-snav-btn { background: #1a202c; border: 1px solid #2d3748; border-radius: 3px; color: #94a3b8; cursor: pointer; font-size: var(--fs-xs); padding: 2px 5px; line-height: 1.4; transition: color 0.1s, border-color 0.1s; }
+        .help-snav-btn:hover { color: #e2e8f0; border-color: #4a5568; }
+        #help-search-count { font-size: var(--fs-xs); color: #64748b; white-space: nowrap; min-width: 44px; text-align: left; }
+        #help-content mark { background: rgba(255,200,0,0.2); color: #fcd34d; border-radius: 2px; }
+        #help-content mark.current { background: rgba(251,146,60,0.45); color: #fef08a; outline: 1px solid #f59e0b; }
+        #help-search-global-lbl { display:flex; align-items:center; gap:3px; color:#94a3b8; font-size: var(--fs-xs); cursor:pointer; white-space:nowrap; user-select:none; }
+        #help-search-global-lbl input[type=checkbox] { accent-color:#4da6ff; cursor:pointer; margin:0; }
         .gs-results { display:flex; flex-direction:column; gap:8px; padding:4px 0; }
-        .gs-item { background:var(--bg-card, #1b2231); border:1px solid var(--border-default, #333f5c); border-radius:6px; padding:10px 14px; cursor:pointer; transition:border-color 0.15s; }
-        .gs-item:hover { border-color:var(--text-disabled, #4d5c82); }
-        .gs-topic { color:#96b9f4; font-weight:600; font-size: var(--fs-sm); margin-bottom:5px; }
-        .gs-snip { color:var(--text-secondary, #a3adc2); font-size: var(--fs-xs); line-height:1.55; overflow:hidden; text-overflow:ellipsis; }
+        .gs-item { background:#1a202c; border:1px solid #2d3748; border-radius:6px; padding:10px 14px; cursor:pointer; transition:border-color 0.15s; }
+        .gs-item:hover { border-color:#4a5568; }
+        .gs-topic { color:#93c5fd; font-weight:600; font-size: var(--fs-sm); margin-bottom:5px; }
+        .gs-snip { color:#94a3b8; font-size: var(--fs-xs); line-height:1.55; overflow:hidden; text-overflow:ellipsis; }
     </style>
-    <script src="/app/js/log_viewer_panel.js?v=48"></script>
+    <script src="/app/js/log_viewer_panel.js?v=50"></script>
 </head>
 <body>
 
@@ -635,30 +642,29 @@
   <div class="ovl-panel">
     <div id="help-drag-handle"></div>
     <div class="ovl-header">
-      <div class="ovl-header-title">&#128218; <span data-i18n="misc.help.guideHelp">Guide &amp; Help</span></div>
+      <div class="ovl-header-title">&#128218; Guide &amp; Help</div>
       <div class="ovl-header-actions">
         <div id="help-search-wrap">
-          <input id="help-search" type="text" placeholder="Search in topic…" data-i18n-placeholder="misc.apikeys.searchInTopic" autocomplete="off">
-          <button class="help-snav-btn" id="help-search-up" title="Previous match (Shift+Enter)" data-i18n-title="misc.help.previousMatch">&#9650;</button>
-          <button class="help-snav-btn" id="help-search-dn" title="Next match (Enter)" data-i18n-title="misc.help.nextMatch">&#9660;</button>
+          <input id="help-search" type="text" placeholder="Search in topic…" autocomplete="off">
+          <button class="help-snav-btn" id="help-search-up" title="Previous match (Shift+Enter)">&#9650;</button>
+          <button class="help-snav-btn" id="help-search-dn" title="Next match (Enter)">&#9660;</button>
           <span id="help-search-count"></span>
-          <label id="help-search-global-lbl" title="Search across all topics" data-i18n-title="misc.help.searchAcrossAll"><input type="checkbox" id="help-search-global"> <span data-i18n="common.all">All</span></label>
+          <label id="help-search-global-lbl" title="Search across all topics"><input type="checkbox" id="help-search-global"> All</label>
         </div>
-        <div style="width:1px;height:16px;background:#333f5c;flex-shrink:0;"></div>
+        <div style="width:1px;height:16px;background:#2d3748;flex-shrink:0;"></div>
         <div class="lang-pill">
           <button id="help-lang-en" class="active">EN</button>
           <button id="help-lang-de">DE</button>
-          <button id="help-lang-zh" title="中文 (简体中文)">中文</button>
         </div>
         <button class="ovl-close" id="help-close">&#x2715;</button>
       </div>
     </div>
     <div id="help-body">
       <div id="help-toc">
-        <input id="help-toc-filter" type="text" placeholder="Filter topics…" data-i18n-placeholder="misc.apikeys.filterTopics" autocomplete="off">
+        <input id="help-toc-filter" type="text" placeholder="Filter topics…" autocomplete="off">
         <div id="help-toc-list"></div>
       </div>
-      <div id="help-content"><div class="help-loading" data-i18n="misc.apikeys.selectTopic">Select a topic from the left.</div></div>
+      <div id="help-content"><div class="help-loading">Select a topic from the left.</div></div>
     </div>
   </div>
 </div>
@@ -671,21 +677,21 @@
     <div id="sidebar">
         <div id="sidebar-sticky">
             <div id="sidebar-header">
-                <span class="sb-title" data-i18n="misc.apikeys.apiKeys">API Keys</span>
+                <span class="sb-title">API Keys</span>
                 <span class="sb-count" id="sb-count">…</span>
                 <span class="sb-count" id="sb-inuse" style="display:none;"></span>
             </div>
             <div id="sidebar-toolbar">
-                <button class="sb-btn primary" onclick="showCreateForm()">+ <span data-i18n="misc.apikeys.addUser">Add User</span></button>
+                <button class="sb-btn primary" onclick="showCreateForm()">+ Add User</button>
                 <hr class="sb-sep">
-                <button class="sb-btn info" onclick="refreshHLExpiry()" id="btnHLExpiry" data-i18n="misc.apikeys.hlExpiryCheck">HL Expiry Check</button>
-                <button class="sb-btn info" onclick="refreshBybitExpiry()" id="btnBybitExpiry" data-i18n="misc.apikeys.bybitExpiryCheck">Bybit Expiry Check</button>
-                <button class="sb-btn" onclick="toggleHLConfig()" id="btnHLConfig" data-i18n="misc.apikeys.hlWarningConfig">HL Warning Config</button>
+                <button class="sb-btn info" onclick="refreshHLExpiry()" id="btnHLExpiry">HL Expiry Check</button>
+                <button class="sb-btn info" onclick="refreshBybitExpiry()" id="btnBybitExpiry">Bybit Expiry Check</button>
+                <button class="sb-btn" onclick="toggleHLConfig()" id="btnHLConfig">HL Warning Config</button>
                 <hr class="sb-sep">
-                <button class="sb-btn" onclick="toggleTradfi()" id="btnTradfi" data-i18n="misc.apikeys.tradfi">TradFi</button>
-                <button class="sb-btn" onclick="toggleComments()" id="btnComments" data-i18n="misc.apikeys.comments">Comments</button>
-                <button class="sb-btn" onclick="toggleBackups()" id="btnBackups">&#x1F5C4; <span data-i18n="misc.apikeys.backups">Backups</span></button>
-                <button class="sb-btn" id="btnLogs" onclick="toggleLogPanel()">&#128203; <span data-i18n="misc.apikeys.logs">Logs</span></button>
+                <button class="sb-btn" onclick="toggleTradfi()" id="btnTradfi">TradFi</button>
+                <button class="sb-btn" onclick="toggleComments()" id="btnComments">Comments</button>
+                <button class="sb-btn" onclick="toggleBackups()" id="btnBackups">&#x1F5C4; Backups</button>
+                <button class="sb-btn" id="btnLogs" onclick="toggleLogPanel()">&#128203; Logs</button>
             </div>
         </div>
         <div id="sidebar-resize"></div>
@@ -695,34 +701,34 @@
         <!-- User list -->
         <div id="userListView">
             <!-- API keys metadata bar -->
-            <div id="apiMetaBar" style="display:flex; align-items:center; gap:6px; margin-bottom:8px; padding:4px 8px; background:#10141d; border:1px solid #1b2231; border-radius:5px; font-size:var(--fs-xs); color:#a3adc2;">
-                <span data-i18n="misc.apikeys.serial">Serial:</span>
-                <span id="metaSerial" style="color:#e8ecf4; font-weight:700;">—</span>
-                <span id="metaTs" style="color:#a3adc2;"></span>
-                <span id="metaBy" style="color:#717b8e;"></span>
+            <div id="apiMetaBar" style="display:flex; align-items:center; gap:6px; margin-bottom:8px; padding:4px 8px; background:#0f172a; border:1px solid #1e293b; border-radius:5px; font-size:var(--fs-xs); color:#94a3b8;">
+                <span>Serial:</span>
+                <span id="metaSerial" style="color:#e2e8f0; font-weight:700;">—</span>
+                <span id="metaTs" style="color:#94a3b8;"></span>
+                <span id="metaBy" style="color:#64748b;"></span>
             </div>
             <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-                <input type="text" id="userFilter" placeholder="Filter by name or exchange…" data-i18n-placeholder="misc.apikeys.filterByNameOrExchange"
+                <input type="text" id="userFilter" placeholder="Filter by name or exchange…"
                     oninput="applyFilterSort()"
                     onkeydown="if(event.key==='ArrowDown'){event.preventDefault();var r=document.querySelector('#userTableBody tr[tabindex]');if(r)r.focus();}"
-                    style="flex:1; background:#10141d; border:1px solid #333f5c; border-radius:4px;
-                           padding:6px 10px; color:#e8ecf4; font-size:var(--fs-sm);" />
-                <button class="btn btn-sm btn-secondary" onclick="clearFilter()" title="Clear filter" data-i18n-title="misc.apikeys.clearFilter">✕</button>
+                    style="flex:1; background:#0e1117; border:1px solid #2d3748; border-radius:4px;
+                           padding:6px 10px; color:#fafafa; font-size:var(--fs-sm);" />
+                <button class="btn btn-sm btn-secondary" onclick="clearFilter()" title="Clear filter">✕</button>
             </div>
             <table class="user-table">
                 <thead>
                     <tr>
-                        <th class="sortable" onclick="setSort('name')" id="th-name"><span data-i18n="misc.apikeys.user">User</span> <span class="sort-icon">⇅</span></th>
-                        <th class="sortable" onclick="setSort('exchange')" id="th-exchange"><span data-i18n="misc.apikeys.exchange">Exchange</span> <span class="sort-icon">⇅</span></th>
-                        <th data-i18n="misc.apikeys.credentials">Credentials</th>
-                        <th class="sortable" onclick="setSort('hl_expiry')" id="th-hl_expiry"><span data-i18n="misc.apikeys.keyExpiry">Key Expiry</span> <span class="sort-icon">⇅</span></th>
-                        <th class="sortable" onclick="setSort('status')" id="th-status"><span data-i18n="misc.apikeys.status">Status</span> <span class="sort-icon">⇅</span></th>
-                        <th data-i18n="misc.apikeys.actions">Actions</th>
+                        <th class="sortable" onclick="setSort('name')" id="th-name">User <span class="sort-icon">⇅</span></th>
+                        <th class="sortable" onclick="setSort('exchange')" id="th-exchange">Exchange <span class="sort-icon">⇅</span></th>
+                        <th>Credentials</th>
+                        <th class="sortable" onclick="setSort('hl_expiry')" id="th-hl_expiry">Key Expiry <span class="sort-icon">⇅</span></th>
+                        <th class="sortable" onclick="setSort('status')" id="th-status">Status <span class="sort-icon">⇅</span></th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="userTableBody">
                     <tr class="loading-row">
-                        <td colspan="6"><span class="spinner"></span> <span data-i18n="misc.apikeys.loadingUsers">Loading users...</span></td>
+                        <td colspan="6"><span class="spinner"></span> Loading users...</td>
                     </tr>
                 </tbody>
             </table>
@@ -731,40 +737,40 @@
         <!-- Edit/Create panel (hidden by default) -->
         <div id="editPanel" class="edit-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #46c88f); background:transparent; color:var(--success, #46c88f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
-                <h3 id="editPanelTitle" style="margin:0;" data-i18n="misc.apikeys.editUser">Edit User</h3>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
+                <h3 id="editPanelTitle" style="margin:0;">Edit User</h3>
             </div>
             <div class="form-grid">
                 <div class="form-group">
-                    <label data-i18n="misc.apikeys.username">Username</label>
+                    <label>Username</label>
                     <input type="text" id="editName" maxlength="32" />
                 </div>
                 <div class="form-group">
-                    <label data-i18n="misc.apikeys.exchange">Exchange</label>
+                    <label>Exchange</label>
                     <select id="editExchange" onchange="onExchangeChange()"></select>
                 </div>
                 <div class="form-group" id="testBtnGroup" style="padding-top:20px;">
-                    <button class="btn btn-info" onclick="testConnection()" id="btnTest" data-i18n="misc.apikeys.testConnection">Test Connection</button>
+                    <button class="btn btn-info" onclick="testConnection()" id="btnTest">Test Connection</button>
                 </div>
             </div>
 
             <!-- Standard fields (non-HL) -->
             <div class="form-grid" id="standardFields">
                 <div class="form-group">
-                    <label data-i18n="misc.apikeys.apiKey">API Key</label>
+                    <label>API Key</label>
                     <div class="pw-wrap">
                         <input type="password" id="editKey" />
                         <button type="button" class="pw-eye-btn" onclick="toggleApiKeyVisible(this)" tabindex="-1">&#128065;</button>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label data-i18n="misc.apikeys.apiSecret">API Secret</label>
+                    <label>API Secret</label>
                     <div class="pw-wrap">
                         <input type="password" id="editSecret" />
                     </div>
                 </div>
                 <div class="form-group" id="passphraseGroup" style="display:none;">
-                    <label data-i18n="misc.apikeys.passphrasePassword">Passphrase / Password</label>
+                    <label>Passphrase / Password</label>
                     <div class="pw-wrap">
                         <input type="password" id="editPassphrase" />
                     </div>
@@ -772,67 +778,67 @@
             </div>
 
             <!-- HL Expiry (only shown for Hyperliquid users in edit mode) -->
-            <div id="hlExpiryInline" style="display:none; margin-bottom:12px; padding:10px 14px; background:#10141d; border:1px solid #333f5c; border-radius:6px;">
+            <div id="hlExpiryInline" style="display:none; margin-bottom:12px; padding:10px 14px; background:#0e1117; border:1px solid #2d3748; border-radius:6px;">
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <span style="font-size:var(--fs-sm); color:#a3adc2;" data-i18n="misc.apikeys.hlKeyExpiry">HL Key Expiry:</span>
+                    <span style="font-size:var(--fs-sm); color:#94a3b8;">HL Key Expiry:</span>
                     <span id="hlExpiryInlineBadge">—</span>
-                    <span id="hlExpiryInlineDate" style="font-size:var(--fs-sm); color:#a3adc2;"></span>
-                    <button class="btn btn-sm btn-secondary" id="btnHLExpiryInline" onclick="checkSingleHLExpiry()" style="margin-left:auto;">&#8635; <span data-i18n="misc.apikeys.checkExpiry">Check Expiry</span></button>
+                    <span id="hlExpiryInlineDate" style="font-size:var(--fs-sm); color:#94a3b8;"></span>
+                    <button class="btn btn-sm btn-secondary" id="btnHLExpiryInline" onclick="checkSingleHLExpiry()" style="margin-left:auto;">&#8635; Check Expiry</button>
                 </div>
             </div>
 
             <!-- Bybit Expiry (only shown for Bybit users in edit mode) -->
-            <div id="bybitExpiryInline" style="display:none; margin-bottom:12px; padding:10px 14px; background:#10141d; border:1px solid #333f5c; border-radius:6px;">
+            <div id="bybitExpiryInline" style="display:none; margin-bottom:12px; padding:10px 14px; background:#0e1117; border:1px solid #2d3748; border-radius:6px;">
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <span style="font-size:var(--fs-sm); color:#a3adc2;" data-i18n="misc.apikeys.bybitKeyExpiry">Bybit Key Expiry:</span>
+                    <span style="font-size:var(--fs-sm); color:#94a3b8;">Bybit Key Expiry:</span>
                     <span id="bybitExpiryInlineBadge">—</span>
-                    <span id="bybitExpiryInlineDate" style="font-size:var(--fs-sm); color:#a3adc2;"></span>
-                    <button class="btn btn-sm btn-secondary" id="btnBybitExpiryInline" onclick="checkSingleBybitExpiry()" style="margin-left:auto;">&#8635; <span data-i18n="misc.apikeys.checkExpiryAndIps">Check Expiry + IPs</span></button>
+                    <span id="bybitExpiryInlineDate" style="font-size:var(--fs-sm); color:#94a3b8;"></span>
+                    <button class="btn btn-sm btn-secondary" id="btnBybitExpiryInline" onclick="checkSingleBybitExpiry()" style="margin-left:auto;">&#8635; Check Expiry + IPs</button>
                 </div>
                 <!-- IP list — shown only after live check, never persisted -->
-                <div id="bybitIPList" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid #333f5c;">
-                    <span style="font-size:var(--fs-xs); color:#a3adc2; display:block; margin-bottom:4px;" data-i18n="misc.apikeys.whitelistedIps">Whitelisted IPs (live, not saved):</span>
-                    <div id="bybitIPListContent" style="font-size:var(--fs-sm); color:#e8ecf4; line-height:1.8;"></div>
+                <div id="bybitIPList" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid #2d3748;">
+                    <span style="font-size:var(--fs-xs); color:#94a3b8; display:block; margin-bottom:4px;">Whitelisted IPs (live, not saved):</span>
+                    <div id="bybitIPListContent" style="font-size:var(--fs-sm); color:#e2e8f0; line-height:1.8;"></div>
                 </div>
             </div>
 
             <!-- Hyperliquid fields -->
             <div class="form-grid" id="hlFields" style="display:none;">
                 <div class="form-group">
-                    <label data-i18n="misc.apikeys.walletAddress">Wallet Address</label>
+                    <label for="editWallet">Wallet Address</label>
                     <input type="text" id="editWallet" />
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
-                    <label data-i18n="misc.apikeys.privateKey">Private Key</label>
+                    <label>Private Key</label>
                     <div class="pw-wrap">
                         <input type="password" id="editPrivateKey" />
                     </div>
                 </div>
                 <div class="form-checkbox">
                     <input type="checkbox" id="editIsVault" />
-                    <label for="editIsVault" style="text-transform:none; font-size:var(--fs-base); color:#e8ecf4;" data-i18n="misc.apikeys.vault">Vault</label>
+                    <label for="editIsVault" style="text-transform:none; font-size:var(--fs-base); color:#fafafa;">Vault</label>
                 </div>
             </div>
 
             <!-- Advanced (collapsible) -->
             <div class="expander">
                 <button class="expander-toggle" onclick="toggleAdvanced()">
-                    <span id="advancedToggleIcon">▶</span> <span data-i18n="misc.apikeys.advancedOptional">Advanced (optional)</span>
+                    ▶ Advanced (optional)
                 </button>
                 <div class="expander-content" id="advancedContent">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label data-i18n="misc.apikeys.quote">Quote</label>
+                            <label>Quote</label>
                             <input type="text" id="editQuote" placeholder="e.g. USDT" />
                         </div>
                     </div>
                     <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
                         <div class="form-group">
-                            <label data-i18n="misc.apikeys.optionsJson">Options (JSON)</label>
+                            <label>Options (JSON)</label>
                             <textarea id="editOptions" rows="3" placeholder='{"key": "value"}'></textarea>
                         </div>
                         <div class="form-group">
-                            <label data-i18n="misc.apikeys.extraJson">Extra (JSON passthrough)</label>
+                            <label>Extra (JSON passthrough)</label>
                             <textarea id="editExtra" rows="3" placeholder='{"key": "value"}'></textarea>
                         </div>
                     </div>
@@ -860,25 +866,25 @@
             </div>
 
             <div class="form-actions">
-                <button class="btn btn-danger" id="btnDelete" onclick="deleteUser()" style="display:none;" data-i18n="common.delete">Delete</button>
-                <button class="btn btn-primary" onclick="saveUser()" id="btnSave" data-i18n="common.save">Save</button>
+                <button class="btn btn-danger" id="btnDelete" onclick="deleteUser()" style="display:none;">Delete</button>
+                <button class="btn btn-primary" onclick="saveUser()" id="btnSave">Save</button>
             </div>
         </div>
 
         <!-- HL Expiry Panel (hidden by default) -->
         <div id="hlExpiryPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #46c88f); background:transparent; color:var(--success, #46c88f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
-                <h3 style="margin:0;" data-i18n="misc.apikeys.hyperliquidApiKeyExpiry">Hyperliquid API Key Expiry</h3>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
+                <h3 style="margin:0;">Hyperliquid API Key Expiry</h3>
             </div>
             <table class="hl-expiry-table">
                 <thead>
                     <tr>
-                        <th data-i18n="misc.apikeys.user">User</th>
-                        <th data-i18n="misc.apikeys.type">Type</th>
-                        <th data-i18n="misc.apikeys.expiry">Expiry</th>
-                        <th data-i18n="misc.apikeys.daysLeft">Days Left</th>
-                        <th data-i18n="misc.apikeys.status">Status</th>
+                        <th>User</th>
+                        <th>Type</th>
+                        <th>Expiry</th>
+                        <th>Days Left</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody id="hlExpiryBody"></tbody>
@@ -888,17 +894,17 @@
         <!-- Bybit Expiry Panel -->
         <div id="bybitExpiryPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #46c88f); background:transparent; color:var(--success, #46c88f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
-                <h3 style="margin:0;" data-i18n="misc.apikeys.bybitApiKeyExpiry">Bybit API Key Expiry</h3>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
+                <h3 style="margin:0;">Bybit API Key Expiry</h3>
             </div>
             <table class="hl-expiry-table">
                 <thead>
                     <tr>
-                        <th data-i18n="misc.apikeys.user">User</th>
-                        <th data-i18n="misc.apikeys.expiry">Expiry</th>
-                        <th data-i18n="misc.apikeys.daysLeft">Days Left</th>
-                        <th data-i18n="misc.apikeys.status">Status</th>
-                        <th data-i18n="misc.apikeys.ipsLive">IPs (live)</th>
+                        <th>User</th>
+                        <th>Expiry</th>
+                        <th>Days Left</th>
+                        <th>Status</th>
+                        <th>IPs (live)</th>
                     </tr>
                 </thead>
                 <tbody id="bybitExpiryBody"></tbody>
@@ -908,30 +914,30 @@
         <!-- Comments Panel -->
         <div id="commentsPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #46c88f); background:transparent; color:var(--success, #46c88f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
-                <h3 style="margin:0; flex:1;" data-i18n="misc.apikeys.commentFields">Comment Fields</h3>
-                <button class="btn btn-sm btn-primary" onclick="showAddComment()">+ <span data-i18n="misc.apikeys.add">Add</span></button>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
+                <h3 style="margin:0; flex:1;">Comment Fields</h3>
+                <button class="btn btn-sm btn-primary" onclick="showAddComment()">+ Add</button>
             </div>
-            <div id="addCommentForm" style="display:none; margin-bottom:12px; padding:12px; background:#10141d; border-radius:4px; border:1px solid #333f5c;">
+            <div id="addCommentForm" style="display:none; margin-bottom:12px; padding:12px; background:#0e1117; border-radius:4px; border:1px solid #2d3748;">
                 <div style="display:flex; gap:8px; align-items:flex-end;">
                     <div class="form-group" style="flex:1;">
-                        <label data-i18n="misc.apikeys.keyWithoutCommentPrefix">Key (without _comment_ prefix)</label>
+                        <label>Key (without _comment_ prefix)</label>
                         <input type="text" id="newCommentKey" placeholder="e.g. notes" />
                     </div>
                     <div class="form-group" style="flex:2;">
-                        <label data-i18n="misc.apikeys.value">Value</label>
+                        <label>Value</label>
                         <input type="text" id="newCommentValue" placeholder="Comment text" />
                     </div>
-                    <button class="btn btn-sm btn-primary" onclick="createComment()" style="margin-bottom:0;" data-i18n="common.save">Save</button>
-                    <button class="btn btn-sm btn-secondary" onclick="hideAddComment()" style="margin-bottom:0;" data-i18n="common.cancel">Cancel</button>
+                    <button class="btn btn-sm btn-primary" onclick="createComment()" style="margin-bottom:0;">Save</button>
+                    <button class="btn btn-sm btn-secondary" onclick="hideAddComment()" style="margin-bottom:0;">Cancel</button>
                 </div>
             </div>
             <table class="hl-expiry-table" id="commentsTable">
                 <thead>
                     <tr>
-                        <th data-i18n="misc.apikeys.key">Key</th>
-                        <th data-i18n="misc.apikeys.value">Value</th>
-                        <th style="width:120px;" data-i18n="misc.apikeys.actions">Actions</th>
+                        <th>Key</th>
+                        <th>Value</th>
+                        <th style="width:120px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="commentsBody"></tbody>
@@ -941,18 +947,18 @@
         <!-- HL Expiry Warning Config -->
         <div id="hlConfigPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #46c88f); background:transparent; color:var(--success, #46c88f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
-                <h3 style="margin:0;" data-i18n="misc.apikeys.hlExpiryTelegramWarning">HL Expiry Telegram Warning</h3>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
+                <h3 style="margin:0;">HL Expiry Telegram Warning</h3>
             </div>
             <div style="display:flex; gap:12px; align-items:flex-end;">
                 <div class="form-group">
-                    <label data-i18n="misc.apikeys.warningThresholdDays">Warning threshold (days)</label>
+                    <label>Warning threshold (days)</label>
                     <input type="number" id="hlWarningDays" min="1" max="365" value="7" style="width:100px;" />
                 </div>
-                <button class="btn btn-sm btn-primary" onclick="saveHLExpiryConfig()" data-i18n="common.save">Save</button>
+                <button class="btn btn-sm btn-primary" onclick="saveHLExpiryConfig()">Save</button>
             </div>
-            <p id="hlWarningConfigStatus" style="font-size:var(--fs-sm); color:#a3adc2; margin-top:8px;"></p>
-            <p style="font-size:var(--fs-sm); color:#a3adc2; margin-top:8px;" data-i18n="misc.apikeys.telegramWarningDesc">
+            <p id="hlWarningConfigStatus" style="font-size:var(--fs-sm); color:#94a3b8; margin-top:8px;"></p>
+            <p style="font-size:var(--fs-sm); color:#94a3b8; margin-top:8px;">
                 Telegram warning when HL keys expire within this many days. Alerts repeat daily.
             </p>
         </div>
@@ -960,96 +966,96 @@
         <!-- TradFi Data Provider Section -->
         <div id="tradfiPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #46c88f); background:transparent; color:var(--success, #46c88f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
-                <h3 style="margin:0;" data-i18n="misc.apikeys.tradfiDataProvider">TradFi Data Provider (Stock Perps Backtesting)</h3>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
+                <h3 style="margin:0;">TradFi Data Provider (Stock Perps Backtesting)</h3>
             </div>
-            <p style="font-size:var(--fs-sm); color:#a3adc2; margin-bottom:8px;" data-i18n-html="misc.apikeys.stockPerpBacktestsDesc">
+            <p style="font-size:var(--fs-sm); color:#94a3b8; margin-bottom:8px;">
                 Stock perp backtests use <strong>yfinance</strong> automatically for the last 7 days (free, no key).
                 For older data (months/years), configure an extended provider like <strong>Alpaca</strong> (free, 5+ years).
             </p>
-            <p style="font-size:var(--fs-sm); background:#21233a; border-left:3px solid var(--success, #46c88f); padding:8px 10px; border-radius:4px; margin-bottom:16px; color:#a3adc2;" data-i18n-html="misc.apikeys.betterAlternativeDesc">
-                💡 <strong style="color:#76d9ad;">Better alternative for full stock-perp history:</strong>
+            <p style="font-size:var(--fs-sm); background:#1a2744; border-left:3px solid #26a69a; padding:8px 10px; border-radius:4px; margin-bottom:16px; color:#a0aec0;">
+                💡 <strong style="color:#68d391;">Better alternative for full stock-perp history:</strong>
                 PBGui's <strong>Market Data</strong> module uses <strong>Tiingo</strong> (IEX/FX feeds) to build comprehensive local 1m OHLCV archives —
                 significantly faster and more complete than the providers below.
                 See <em>Setup → Market Data → Build best 1m OHLCV</em>.
             </p>
 
             <!-- yfinance section -->
-            <div style="border:1px solid #333f5c; border-radius:6px; padding:12px; margin-bottom:16px;">
+            <div style="border:1px solid #2d3748; border-radius:6px; padding:12px; margin-bottom:16px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <span data-i18n="misc.apikeys.yfinanceDesc">yfinance — automatic default, last 7 days, no API key</span>
-                        <span id="yfStatus" style="margin-left:8px; font-size:var(--fs-sm); color:#a3adc2;"></span>
+                        <strong>yfinance</strong> — automatic default, last 7 days, no API key
+                        <span id="yfStatus" style="margin-left:8px; font-size:var(--fs-sm); color:#94a3b8;"></span>
                     </div>
                     <div style="display:flex; gap:8px;">
-                        <button class="btn btn-sm btn-secondary" id="btnYfInstall" onclick="yfInstallToggle()" data-i18n="misc.apikeys.install">Install</button>
-                        <button class="btn btn-sm btn-info" id="btnYfTest" onclick="yfTest()" style="display:none;" data-i18n="misc.apikeys.test">Test</button>
+                        <button class="btn btn-sm btn-secondary" id="btnYfInstall" onclick="yfInstallToggle()">Install</button>
+                        <button class="btn btn-sm btn-info" id="btnYfTest" onclick="yfTest()" style="display:none;">Test</button>
                     </div>
                 </div>
             </div>
 
             <!-- Extended provider section -->
-            <div style="border:1px solid #333f5c; border-radius:6px; padding:12px;">
-                <span data-i18n="misc.apikeys.extendedProviderDesc">Extended provider — optional, for backtests older than 7 days</span>
+            <div style="border:1px solid #2d3748; border-radius:6px; padding:12px;">
+                <strong>Extended provider</strong> — optional, for backtests older than 7 days
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;">
-                    <span style="font-size:var(--fs-sm);color:#a3adc2;" data-i18n="misc.apikeys.selectExactVaultProfile">Select an exact vault profile. Active profiles are marked explicitly.</span>
-                    <button class="btn btn-sm btn-secondary" type="button" onclick="newTradfiProfile()" data-i18n="misc.apikeys.newProfile">New Profile</button>
+                    <span style="font-size:var(--fs-sm);color:#94a3b8;">Select an exact vault profile. Active profiles are marked explicitly.</span>
+                    <button class="btn btn-sm btn-secondary" type="button" onclick="newTradfiProfile()">New Profile</button>
                 </div>
                 <div class="tradfi-profile-wrap">
                     <table class="tradfi-profile-table">
-                        <thead><tr><th data-i18n="misc.apikeys.profileId">Profile ID</th><th data-i18n="misc.apikeys.provider">Provider</th><th data-i18n="misc.apikeys.label">Label</th><th data-i18n="misc.apikeys.localState">Local State</th><th data-i18n="misc.apikeys.replicatedSelection">Replicated Selection</th><th data-i18n="misc.apikeys.pending">Pending</th><th data-i18n="misc.apikeys.shared">Shared</th><th data-i18n="misc.apikeys.generation">Generation</th><th data-i18n="misc.apikeys.apiKey">API Key</th><th data-i18n="misc.apikeys.apiSecret">API Secret</th><th data-i18n="misc.apikeys.origin">Origin</th><th data-i18n="misc.apikeys.updated">Updated</th></tr></thead>
-                        <tbody id="tradfiProfilesBody"><tr><td colspan="12"><span data-i18n="common.loading">Loading profiles...</span></td></tr></tbody>
+                        <thead><tr><th>Profile ID</th><th>Provider</th><th>Label</th><th>Local State</th><th>Replicated Selection</th><th>Pending</th><th>Shared</th><th>Generation</th><th>API Key</th><th>API Secret</th><th>Origin</th><th>Updated</th></tr></thead>
+                        <tbody id="tradfiProfilesBody"><tr><td colspan="12">Loading profiles...</td></tr></tbody>
                     </table>
                 </div>
                 <div class="tradfi-projection-status">
-                    <div class="tradfi-projection-copy" id="tradfiProjectionStatus" data-i18n="misc.apikeys.pb7ProjectionStatusLoading">PB7 projection status loading...</div>
-                    <button class="btn btn-sm btn-secondary" id="btnTradfiProjectionRetry" type="button" onclick="retryTradfiProjection()" data-i18n="misc.apikeys.retryPb7Projection">Retry PB7 Projection</button>
+                    <div class="tradfi-projection-copy" id="tradfiProjectionStatus">PB7 projection status loading...</div>
+                    <button class="btn btn-sm btn-secondary" id="btnTradfiProjectionRetry" type="button" onclick="retryTradfiProjection()">Retry PB7 Projection</button>
                 </div>
                 <div class="form-grid" style="margin-top:12px;">
                     <div class="form-group">
-                        <label data-i18n="misc.apikeys.selectedProfileId">Selected Profile ID</label>
+                        <label>Selected Profile ID</label>
                         <input type="text" id="tradfiProfileId" readonly placeholder="New profile" />
                     </div>
                     <div class="form-group">
-                        <label data-i18n="misc.apikeys.provider">Provider</label>
+                        <label>Provider</label>
                         <select id="tradfiProvider" onchange="onTradfiProviderChange()"></select>
                         <a id="tradfiProviderLink" href="#" target="_blank" rel="noopener noreferrer"
-                           style="font-size:var(--fs-sm); color:var(--success, #46c88f); text-decoration:none; display:none; margin-top:4px; display:flex; align-items:center; gap:4px;">
+                           style="font-size:var(--fs-sm); color:#26a69a; text-decoration:none; display:none; margin-top:4px; display:flex; align-items:center; gap:4px;">
                             &#128279; <span id="tradfiProviderLinkLabel"></span>
                         </a>
                     </div>
                     <div class="form-group">
-                        <label data-i18n="misc.apikeys.label">Label</label>
+                        <label>Label</label>
                         <input type="text" id="tradfiLabel" maxlength="120" placeholder="Profile label" />
                     </div>
                     <div class="form-group" style="display:flex;gap:18px;align-items:center;padding-top:24px;">
-                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="tradfiShared" checked> <span data-i18n="misc.apikeys.shared">Shared</span></label>
-                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="tradfiActive" checked> <span data-i18n="misc.apikeys.active">Active</span></label>
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="tradfiShared" checked> Shared</label>
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="tradfiActive" checked> Active</label>
                     </div>
                     <div class="form-group">
-                        <label data-i18n="misc.apikeys.apiKey">API Key</label>
+                        <label>API Key</label>
                         <div class="pw-wrap">
                             <input type="password" id="tradfiApiKey" autocomplete="new-password" />
-                            <button type="button" class="pw-eye-btn" onclick="toggleTradfiApiKeyVisible(this)" tabindex="-1" title="Show or hide the stored API key" data-i18n-title="misc.apikeys.showHideStoredApiKey">&#128065;</button>
+                            <button type="button" class="pw-eye-btn" onclick="toggleTradfiApiKeyVisible(this)" tabindex="-1" title="Show or hide the stored API key">&#128065;</button>
                         </div>
-                        <div style="font-size:var(--fs-xs);color:#717b8e;margin-top:4px;" data-i18n="misc.apikeys.clickEyeToReveal">Click the eye to reveal the selected profile's API key. The revealed value is cleared when hidden, when another profile is selected, or when you leave the page.</div>
+                        <div style="font-size:var(--fs-xs);color:#718096;margin-top:4px;">Click the eye to reveal the selected profile's API key. The revealed value is cleared when hidden, when another profile is selected, or when you leave the page.</div>
                     </div>
                     <div class="form-group" id="tradfiSecretGroup">
-                        <label data-i18n="misc.apikeys.apiSecret">API Secret</label>
+                        <label>API Secret</label>
                         <div class="pw-wrap">
                             <input type="password" id="tradfiApiSecret" />
                             <button type="button" class="pw-eye-btn" onclick="togglePwVisible('tradfiApiSecret', this)" tabindex="-1">&#128065;</button>
                         </div>
                     </div>
                 </div>
-                <p id="tradfiProviderNote" style="font-size:var(--fs-sm); color:#a3adc2; margin:4px 0 12px;"></p>
-                <p id="tradfiProfileStatus" style="font-size:var(--fs-sm); color:#a3adc2; margin:4px 0 12px;"></p>
+                <p id="tradfiProviderNote" style="font-size:var(--fs-sm); color:#94a3b8; margin:4px 0 12px;"></p>
+                <p id="tradfiProfileStatus" style="font-size:var(--fs-sm); color:#94a3b8; margin:4px 0 12px;"></p>
                 <div id="tradfiActions" style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button class="btn btn-sm btn-info" onclick="tradfiTest()" data-i18n="misc.apikeys.testConnection">Test Connection</button>
-                    <button class="btn btn-sm btn-primary" onclick="tradfiSave(false)" data-i18n="misc.apikeys.createUpdate">Create / Update</button>
-                    <button class="btn btn-sm btn-secondary" id="btnTradfiRotate" onclick="tradfiSave(true)" data-i18n="misc.apikeys.rotateReplacement">Rotate Replacement</button>
-                    <button class="btn btn-sm btn-secondary" id="btnTradfiToggle" onclick="tradfiToggleActive()" data-i18n="misc.apikeys.disable">Disable</button>
-                    <button class="btn btn-sm btn-danger" id="btnTradfiDelete" onclick="tradfiClear()" data-i18n="misc.apikeys.deleteProfile">Delete Profile</button>
+                    <button class="btn btn-sm btn-info" onclick="tradfiTest()">Test Connection</button>
+                    <button class="btn btn-sm btn-primary" onclick="tradfiSave(false)">Create / Update</button>
+                    <button class="btn btn-sm btn-secondary" id="btnTradfiRotate" onclick="tradfiSave(true)">Rotate Replacement</button>
+                    <button class="btn btn-sm btn-secondary" id="btnTradfiToggle" onclick="tradfiToggleActive()">Disable</button>
+                    <button class="btn btn-sm btn-danger" id="btnTradfiDelete" onclick="tradfiClear()">Delete Profile</button>
                 </div>
             </div>
         </div>
@@ -1057,22 +1063,22 @@
         <!-- Backups Panel -->
         <div id="backupsPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #46c88f); background:transparent; color:var(--success, #46c88f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
-                <h3 style="margin:0;" data-i18n="misc.apikeys.apiKeyBackups">API Key Backups</h3>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
+                <h3 style="margin:0;">API Key Backups</h3>
             </div>
-            <p style="font-size:var(--fs-sm); color:#a3adc2; margin:0 0 12px;" data-i18n-html="misc.apikeys.backupsDesc">
+            <p style="font-size:var(--fs-sm); color:#94a3b8; margin:0 0 12px;">
                 Backups are created automatically before every save. Stored in <code>data/api-keys/</code>.
                 A pre-restore snapshot is created before any restore.
             </p>
             <div id="backupsList">
-                <div style="text-align:center;color:#a3adc2;padding:20px;"><span class="spinner"></span> Loading...</div>
+                <div style="text-align:center;color:#94a3b8;padding:20px;"><span class="spinner"></span> Loading...</div>
             </div>
         </div>
 
         <!-- Log viewer panel -->
         <div id="logPanel" class="hl-expiry-panel" style="display:none; flex-direction:column; padding:0; gap:0; height:calc(100vh - 120px);">
-            <div style="display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid #1b2231; flex-shrink:0;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:5px 12px; border-radius:5px; border:1px solid var(--success, #46c88f); background:transparent; color:var(--success, #46c88f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid #1e293b; flex-shrink:0;">
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:5px 12px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
             </div>
             <div id="logViewerTarget" style="padding:10px 16px 16px; display:flex; flex-direction:column; flex:1; min-height:0;"></div>
         </div>
@@ -1086,10 +1092,10 @@
     <!-- Alert modal (error/warning) -->
     <div id="alertModalOverlay" class="alert-modal-overlay" style="display:none;">
         <div id="alertModalBox" class="alert-modal error">
-            <div id="alertModalTitle" class="alert-modal-title" data-i18n="common.error">Error</div>
+            <div id="alertModalTitle" class="alert-modal-title">Error</div>
             <div id="alertModalBody" class="alert-modal-body"></div>
             <div class="alert-modal-footer">
-                <button class="btn btn-primary" onclick="closeAlertModal()" data-i18n="common.ok">OK</button>
+                <button class="btn btn-primary" onclick="closeAlertModal()">OK</button>
             </div>
         </div>
     </div>
@@ -1098,28 +1104,26 @@
     <div id="diffModal" style="display:none;" class="diff-modal">
         <div class="diff-modal-header">
             <div style="display:flex; align-items:center; gap:12px;">
-                <button class="btn btn-sm btn-secondary" onclick="closeDiffModal()">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
-                <span id="diffTitle" style="font-size:var(--fs-sm); color:#a3adc2; font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw;"></span>
+                <button class="btn btn-sm btn-secondary" onclick="closeDiffModal()">&#8592; Back</button>
+                <span id="diffTitle" style="font-size:var(--fs-sm); color:#94a3b8; font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw;"></span>
             </div>
             <div style="display:flex; gap:6px;">
-                <button class="btn btn-sm btn-secondary" id="btnDiffUnified" onclick="setDiffMode('unified')" data-i18n="misc.apikeys.unified">Unified</button>
-                <button class="btn btn-sm btn-secondary" id="btnDiffSide" onclick="setDiffMode('side')" data-i18n="misc.apikeys.sideBySide">Side by Side</button>
+                <button class="btn btn-sm btn-secondary" id="btnDiffUnified" onclick="setDiffMode('unified')">Unified</button>
+                <button class="btn btn-sm btn-secondary" id="btnDiffSide" onclick="setDiffMode('side')">Side by Side</button>
             </div>
         </div>
         <div class="diff-legend">
-            <span style="color:#76d9ad;">&#9608; <span data-i18n="misc.apikeys.added">Added</span></span>
-            <span style="color:#ee8d84;">&#9608; <span data-i18n="misc.apikeys.removed">Removed</span></span>
-            <span style="color:#a3adc2;">&#9608; <span data-i18n="misc.apikeys.unchanged">Unchanged</span></span>
+            <span style="color:#86efac;">&#9608; Added</span>
+            <span style="color:#fca5a5;">&#9608; Removed</span>
+            <span style="color:#94a3b8;">&#9608; Unchanged</span>
         </div>
         <div id="diffContent" style="flex:1; overflow:auto;"></div>
     </div>
 
     <script src="/app/js/pbgui_dialogs.js?v=10"></script>
+    <script src="/app/js/internal_transfer_panel.js?v=2"></script>
     <script>
     // ── Config ──────────────────────────────────────────────
-    document.title = PBGuiI18n.t('misc.apikeys.title');
-    function t(key, params) { return window.PBGuiI18n.t(key, params); }
-    function m(text) { return window.PBGuiI18n.serverMsg(text); }
     // Browser authentication uses the same-origin HttpOnly session cookie.
     // The server replaces "%%PLACEHOLDER%%" (with quotes) via html.replace(),
     // so guard strings must use a DIFFERENT form to avoid being replaced too.
@@ -1357,7 +1361,7 @@
             V7_EXCHANGES = data.v7_exchanges || [];
             populateExchangeSelect();
         } catch (e) {
-            showToast(t('misc.apikeys.failedToLoadExchanges', { error: m(e.message) }), "error");
+            showToast("Failed to load exchanges: " + e.message, "error");
         }
     }
 
@@ -1385,33 +1389,45 @@
             } else {
                 document.getElementById("metaTs").textContent = "";
             }
-            document.getElementById("metaBy").textContent = meta.api_by ? t('misc.apikeys.byPrefix', { name: meta.api_by }) : "";
+            document.getElementById("metaBy").textContent = meta.api_by ? "by " + meta.api_by : "";
         } catch (e) { /* non-critical — ignore */ }
     }
 
+    window.addEventListener("focus", () => {
+        const list = document.getElementById("userListView");
+        if (document.visibilityState === "visible" && list && list.style.display !== "none") loadUsers(true);
+    });
+
     // ── Load users ──────────────────────────────────────────
-    async function loadUsers() {
+    let usersRequestGeneration = 0;
+    async function loadUsers(quiet = false) {
+        const generation = ++usersRequestGeneration;
         const tbody = document.getElementById("userTableBody");
-        tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner"></span> ' + t('misc.apikeys.loadingUsers') + '</td></tr>';
-        document.getElementById("sb-count").textContent = "…";
+        if (!quiet) {
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner"></span> Loading users...</td></tr>';
+            document.getElementById("sb-count").textContent = "…";
+        }
 
         try {
-            currentUsers = await apiFetch("/");
+            const users = await apiFetch("/", {cache: "no-store"});
+            if (generation !== usersRequestGeneration) return;
+            currentUsers = users;
             renderUserTable();
-            document.getElementById("sb-count").textContent = t('misc.apikeys.usersCount', { count: currentUsers.length });
+            document.getElementById("sb-count").textContent = currentUsers.length + " users";
             const inUseCount = currentUsers.filter(u => u.in_use).length;
             const sbInuse = document.getElementById("sb-inuse");
             if (inUseCount > 0) {
-                sbInuse.textContent = t('misc.apikeys.inUseCount', { count: inUseCount });
+                sbInuse.textContent = inUseCount + " in use";
                 sbInuse.style.display = "";
             } else {
                 sbInuse.style.display = "none";
             }
             loadApiMeta();
         } catch (e) {
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:#e5615c;">' +
-                t('misc.apikeys.failedToLoad', { error: escapeHtml(m(e.message)) }) + '</td></tr>';
-            document.getElementById("sb-count").textContent = t('common.error');
+            if (generation !== usersRequestGeneration) return;
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:#ef4444;">Failed to load: ' +
+                escapeHtml(e.message) + '</td></tr>';
+            document.getElementById("sb-count").textContent = "Error";
             document.getElementById("sb-inuse").style.display = "none";
         }
     }
@@ -1419,7 +1435,7 @@
     function renderUserTable() {
         const tbody = document.getElementById("userTableBody");
         if (currentUsers.length === 0) {
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="6">' + t('misc.apikeys.noApiKeysConfigured') + '</td></tr>';
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6">No API keys configured. Click "Add User" to create one.</td></tr>';
             return;
         }
 
@@ -1471,7 +1487,7 @@
         });
 
         if (users.length === 0) {
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:#a3adc2;">' + t('misc.apikeys.noUsersMatchFilter') + '</td></tr>';
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:#94a3b8;">No users match the filter.</td></tr>';
             return;
         }
 
@@ -1487,7 +1503,7 @@
                 if (u.has_key) creds.push("key");
                 if (u.has_secret) creds.push("secret");
             }
-            const credStr = creds.length > 0 ? creds.join(", ") : '<span style="color:#e5615c;">' + t('misc.apikeys.none') + '</span>';
+            const credStr = creds.length > 0 ? creds.join(", ") : '<span style="color:#ef4444;">none</span>';
 
             // Key expiry — prefer live-fetched data, fall back to locally stored
             let expiryHtml = "-";
@@ -1516,8 +1532,8 @@
             }
 
             const inUseHtml = u.in_use
-                ? '<span class="badge-in-use active">' + t('misc.apikeys.inUse') + '</span>'
-                : '<span class="badge-in-use">' + t('misc.apikeys.unused') + '</span>';
+                ? '<span class="badge-in-use active">In Use</span>'
+                : '<span class="badge-in-use">Unused</span>';
 
             html += '<tr tabindex="0" data-user-name="' + escapeAttr(u.name) + '" style="cursor:pointer;">';
             html += '<td><strong>' + escapeHtml(u.name) + '</strong></td>';
@@ -1526,9 +1542,9 @@
             html += '<td>' + expiryHtml + '</td>';
             html += '<td>' + inUseHtml + '</td>';
             html += '<td>';
-            html += '<button class="btn btn-sm btn-info" data-user-action="edit">' + t('misc.apikeys.edit') + '</button> ';
+            html += '<button class="btn btn-sm btn-info" data-user-action="edit">Edit</button> ';
             if (!u.in_use) {
-                html += '<button class="btn btn-sm btn-danger" data-user-action="delete">' + t('common.delete') + '</button>';
+                html += '<button class="btn btn-sm btn-danger" data-user-action="delete">Delete</button>';
             }
             html += '</td>';
             html += '</tr>';
@@ -1591,11 +1607,11 @@
         } else if (exp.status === "critical") {
             return '<span class="badge-expiry critical">⚠ ' + escapeHtml(exp.days_remaining) + 'd</span>';
         } else if (exp.status === "expired") {
-            return '<span class="badge-expiry expired">' + t('misc.apikeys.expired') + '</span>';
+            return '<span class="badge-expiry expired">EXPIRED</span>';
         } else if (exp.status === "no_expiry") {
-            return '<span class="badge-expiry no_expiry">' + t('misc.apikeys.noExpiry') + '</span>';
+            return '<span class="badge-expiry no_expiry">No expiry</span>';
         } else if (exp.status === "error") {
-            return '<span class="badge-expiry error" title="' + escapeAttr(exp.error || "") + '">' + t('common.error') + '</span>';
+            return '<span class="badge-expiry error" title="' + escapeAttr(exp.error || "") + '">Error</span>';
         }
         return '<span class="badge-expiry unknown">—</span>';
     }
@@ -1616,7 +1632,7 @@
         } catch (e) {
             if (!isCurrentEditorRequest(context) || e.name === "AbortError") return;
             history.replaceState(null, "", location.pathname + location.search);
-            showToast(t('misc.apikeys.failedToLoadUser', { error: m(e.message) }), "error");
+            showToast("Failed to load user: " + e.message, "error");
         }
     }
 
@@ -1793,7 +1809,7 @@
         document.getElementById("btnBybitExpiryInline").textContent = "↻ Check Expiry + IPs";
 
         const isEdit = editMode === "edit";
-        document.getElementById("editPanelTitle").textContent = isEdit ? t('misc.apikeys.editPrefix', { name: user.name }) : t('misc.apikeys.newUser');
+        document.getElementById("editPanelTitle").textContent = isEdit ? "Edit: " + user.name : "New User";
         document.getElementById("editName").value = user.name || "";
         document.getElementById("editName").disabled = isEdit && user.in_use;
 
@@ -1886,7 +1902,7 @@
         document.getElementById("hlExpiryInlineBadge").innerHTML = exp && exp.status ? renderExpiryBadge(exp) : "—";
         const dateEl = document.getElementById("hlExpiryInlineDate");
         if (exp && exp.valid_until_iso) {
-            dateEl.textContent = t('misc.apikeys.expires', { date: exp.valid_until_iso.split("T")[0] });
+            dateEl.textContent = "(expires " + exp.valid_until_iso.split("T")[0] + ")";
         } else {
             dateEl.textContent = "";
         }
@@ -1901,7 +1917,7 @@
         const buttonOwner = {};
         btn._requestOwner = buttonOwner;
         btn.disabled = true;
-        btn.textContent = t('misc.apikeys.checkingEllipsis');
+        btn.textContent = "Checking…";
         try {
             // Send unsaved private keys only in a POST body so they never enter URLs.
             const unsavedKey = getMaskedFieldValue("editPrivateKey");
@@ -1922,13 +1938,13 @@
         } catch(e) {
             if (!isCurrentEditorRequest(context) || e.name === "AbortError") return;
             const badge = document.getElementById("hlExpiryInlineBadge");
-            badge.textContent = t('misc.apikeys.errorPrefix', { error: m(e.message) });
-            badge.style.color = "#ee8d84";
+            badge.textContent = "Error: " + e.message;
+            badge.style.color = "#fc8181";
         } finally {
             if (btn._requestOwner === buttonOwner) {
                 delete btn._requestOwner;
                 btn.disabled = false;
-                btn.textContent = "↻ " + t('misc.apikeys.checkExpiry');
+                btn.textContent = "↻ Check Expiry";
             }
         }
     }
@@ -1937,7 +1953,7 @@
         document.getElementById("bybitExpiryInlineBadge").innerHTML = exp && exp.status ? renderExpiryBadge(exp) : "—";
         const dateEl = document.getElementById("bybitExpiryInlineDate");
         if (exp && exp.expires_at_iso && exp.status !== "no_expiry") {
-            dateEl.textContent = t('misc.apikeys.expires', { date: exp.expires_at_iso.split("T")[0] });
+            dateEl.textContent = "(expires " + exp.expires_at_iso.split("T")[0] + ")";
         } else {
             dateEl.textContent = "";
         }
@@ -1948,7 +1964,7 @@
             ipContent.innerHTML = ips.map(ip => `<span style="font-family:monospace; margin-right:12px;">${escapeHtml(ip)}</span>`).join("");
             ipListDiv.style.display = "block";
         } else if (ips !== null && ips !== undefined) {
-            ipContent.textContent = t('misc.apikeys.noIpsUnrestricted');
+            ipContent.textContent = "No IPs (unrestricted)";
             ipListDiv.style.display = "block";
         } else {
             ipListDiv.style.display = "none";
@@ -1964,7 +1980,7 @@
         const buttonOwner = {};
         btn._requestOwner = buttonOwner;
         btn.disabled = true;
-        btn.textContent = t('misc.apikeys.checkingEllipsis');
+        btn.textContent = "Checking…";
         try {
             const data = await apiFetch("/" + encodeURIComponent(requestedName) + "/bybit-expiry", { signal: context.signal });
             if (!isCurrentEditorRequest(context) || editingName !== requestedName) return;
@@ -1974,13 +1990,13 @@
         } catch(e) {
             if (!isCurrentEditorRequest(context) || e.name === "AbortError") return;
             const badge = document.getElementById("bybitExpiryInlineBadge");
-            badge.textContent = t('misc.apikeys.errorPrefix', { error: m(e.message) });
-            badge.style.color = "#ee8d84";
+            badge.textContent = "Error: " + e.message;
+            badge.style.color = "#fc8181";
         } finally {
             if (btn._requestOwner === buttonOwner) {
                 delete btn._requestOwner;
                 btn.disabled = false;
-                btn.textContent = "↻ " + t('misc.apikeys.checkExpiryAndIps');
+                btn.textContent = "↻ Check Expiry + IPs";
             }
         }
     }
@@ -1992,7 +2008,7 @@
         const buttonOwner = {};
         btn._requestOwner = buttonOwner;
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.checking');
+        btn.innerHTML = '<span class="spinner"></span> Checking...';
 
         try {
             const data = await apiFetch("/bybit-expiry?force=true", { signal: context.signal });
@@ -2015,15 +2031,15 @@
             document.getElementById("btnBackups").classList.remove("active");
             document.getElementById("btnLogs").classList.remove("active");
             document.getElementById("bybitExpiryPanel").style.display = "";
-            showToast(t('misc.apikeys.bybitExpiryDataRefreshed'), "success");
+            showToast("Bybit expiry data refreshed", "success");
         } catch (e) {
             if (!isCurrentEditorRequest(context) || e.name === "AbortError") return;
-            showToast(t('misc.apikeys.bybitExpiryCheckFailed', { error: m(e.message) }), "error");
+            showToast("Bybit expiry check failed: " + e.message, "error");
         } finally {
             if (btn._requestOwner === buttonOwner) {
                 delete btn._requestOwner;
                 btn.disabled = false;
-                btn.textContent = t('misc.apikeys.bybitExpiryCheck');
+                btn.textContent = "Bybit Expiry Check";
             }
         }
     }
@@ -2031,7 +2047,7 @@
     function renderBybitExpiryPanel(data) {
         const tbody = document.getElementById("bybitExpiryBody");
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#a3adc2;">' + t('misc.apikeys.noBybitUsersFound') + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No Bybit users found</td></tr>';
             return;
         }
 
@@ -2042,7 +2058,7 @@
         for (const exp of data) {
             const ipsText = (exp.ips && exp.ips.length > 0)
                 ? exp.ips.map(ip => `<span style="font-family:monospace;font-size:var(--fs-xs);margin-right:8px;">${escapeHtml(ip)}</span>`).join("")
-                : '<span style="color:#a3adc2;font-size:var(--fs-xs);">' + t('misc.apikeys.noneUnrestricted') + '</span>';
+                : '<span style="color:#94a3b8;font-size:var(--fs-xs);">none (unrestricted)</span>';
             html += "<tr>";
             html += "<td><strong>" + escapeHtml(exp.name) + "</strong></td>";
             html += "<td>" + (exp.expires_at_iso && exp.status !== "no_expiry" ? exp.expires_at_iso.split("T")[0] : "—") + "</td>";
@@ -2056,13 +2072,13 @@
 
     function toggleAdvanced() {
         const content = document.getElementById("advancedContent");
-        const icon = document.getElementById("advancedToggleIcon");
+        const btn = content.previousElementSibling;
         if (content.classList.contains("open")) {
             content.classList.remove("open");
-            if (icon) icon.textContent = "▶";
+            btn.textContent = "▶ Advanced (optional)";
         } else {
             content.classList.add("open");
-            if (icon) icon.textContent = "▼";
+            btn.textContent = "▼ Advanced (optional)";
         }
     }
 
@@ -2088,9 +2104,9 @@
         if (saveInFlight && !preserveEditorContext) return;
         if (document.getElementById("editPanel").style.display !== "none" && formDirty) {
             if (!(await window.PBGuiDialogs.confirm({
-                title: t('misc.apikeys.discardChangesTitle'),
-                message: t('misc.apikeys.discardChangesMessage'),
-                confirmText: t('misc.apikeys.leave')
+                title: "Discard changes",
+                message: "You have unsaved changes. Leave without saving?",
+                confirmText: "Leave"
             }))) return;
         }
         if (!preserveEditorContext) invalidateEditorAccount();
@@ -2123,7 +2139,7 @@
         if (saveInFlight) return;
         const name = document.getElementById("editName").value.trim();
         if (!name) {
-            showToast(t('misc.apikeys.usernameRequired'), "error");
+            showToast("Username is required", "error");
             return;
         }
 
@@ -2139,7 +2155,7 @@
         if (isHL) {
             const wallet = document.getElementById("editWallet").value.trim();
             if (!wallet) {
-                showToast(t('misc.apikeys.walletAddressRequired'), "error");
+                showToast("Wallet Address is required for Hyperliquid", "error");
                 return;
             }
             // Private key: always required on create; on edit required only if not already saved
@@ -2147,14 +2163,14 @@
             const pkInput = document.getElementById("editPrivateKey");
             const pkAlreadySaved = !isCreate && pkInput.placeholder.includes("saved");
             if (pkVal === "" || (!pkVal && !pkAlreadySaved)) {
-                showToast(t('misc.apikeys.privateKeyRequired'), "error");
+                showToast("Private Key is required for Hyperliquid", "error");
                 return;
             }
         } else {
             const apiKey = getMaskedFieldValue("editKey");
             const apiKeyAlreadySaved = !isCreate && document.getElementById("editKey").placeholder.includes("saved");
             if (!apiKey && !apiKeyAlreadySaved) {
-                showToast(t('misc.apikeys.apiKeyRequired'), "error");
+                showToast("API Key is required", "error");
                 return;
             }
             // Secret: required on create; on edit required only if not already saved
@@ -2162,7 +2178,7 @@
             const secretInput = document.getElementById("editSecret");
             const secretAlreadySaved = !isCreate && secretInput.placeholder.includes("saved");
             if (secretVal === "" || (!secretVal && !secretAlreadySaved)) {
-                showToast(t('misc.apikeys.apiSecretRequired'), "error");
+                showToast("API Secret is required", "error");
                 return;
             }
             if (PASSPHRASE_EXCHANGES.includes(exchange)) {
@@ -2170,7 +2186,7 @@
                 const ppInput = document.getElementById("editPassphrase");
                 const ppAlreadySaved = !isCreate && ppInput.placeholder.includes("saved");
                 if (ppVal === "" || (!ppVal && !ppAlreadySaved)) {
-                    showToast(t('misc.apikeys.passphraseRequired', { exchange: exchange }), "error");
+                    showToast("Passphrase is required for " + exchange, "error");
                     return;
                 }
             }
@@ -2184,12 +2200,12 @@
         const extraRaw = document.getElementById("editExtra").value.trim();
         if (optionsRaw) {
             try { options = JSON.parse(optionsRaw); } catch {
-                showToast(t('misc.apikeys.invalidJsonOptions'), "error"); return;
+                showToast("Invalid JSON in Options field", "error"); return;
             }
         }
         if (extraRaw) {
             try { extra = JSON.parse(extraRaw); } catch {
-                showToast(t('misc.apikeys.invalidJsonExtra'), "error"); return;
+                showToast("Invalid JSON in Extra field", "error"); return;
             }
         }
 
@@ -2209,7 +2225,7 @@
         const btnSave = document.getElementById("btnSave");
         saveInFlight = true;
         setEditorSaveBusy(true);
-        btnSave.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.saving');
+        btnSave.innerHTML = '<span class="spinner"></span> Saving...';
 
         try {
             if (!isCreate && name !== originalName && !combinedUserUpdateSupported) {
@@ -2266,21 +2282,21 @@
             }
         } catch (e) {
             if (!isCurrentEditorRequest(context) || e.name === "AbortError") return;
-            showToast(t('misc.apikeys.saveFailed', { error: m(e.message) }), "error");
+            showToast("Save failed: " + e.message, "error");
         } finally {
             saveInFlight = false;
             setEditorSaveBusy(false);
-            btnSave.textContent = t('common.save');
+            btnSave.textContent = "Save";
         }
     }
 
     // ── Delete user ─────────────────────────────────────────
     function confirmDelete(name) {
         window.PBGuiDialogs.confirm({
-            title: t('misc.apikeys.deleteUserTitle'),
-            message: t('misc.apikeys.deleteUserMessage', { name: name }),
-            detail: t('misc.apikeys.cannotBeUndone'),
-            confirmText: t('common.delete')
+            title: "Delete user",
+            message: "Delete user '" + name + "'?",
+            detail: "This cannot be undone.",
+            confirmText: "Delete"
         }).then(function(confirmed) {
             if (confirmed) doDelete(name);
         });
@@ -2289,10 +2305,10 @@
     async function deleteUser() {
         if (!editingName) return;
         if (!(await window.PBGuiDialogs.confirm({
-            title: t('misc.apikeys.deleteUserTitle'),
-            message: t('misc.apikeys.deleteUserMessage', { name: editingName }),
-            detail: t('misc.apikeys.cannotBeUndone'),
-            confirmText: t('common.delete')
+            title: "Delete user",
+            message: "Delete user '" + editingName + "'?",
+            detail: "This cannot be undone.",
+            confirmText: "Delete"
         }))) return;
         await doDelete(editingName);
     }
@@ -2300,23 +2316,23 @@
     async function doDelete(name) {
         try {
             await apiFetch("/" + encodeURIComponent(name), { method: "DELETE" });
-            showToast(t('misc.apikeys.userDeleted', { name: name }), "success");
+            showToast("User deleted: " + name, "success");
             cancelEdit();
             await loadUsers();
         } catch (e) {
-            showToast(t('misc.apikeys.deleteFailed', { error: m(e.message) }), "error");
+            showToast("Delete failed: " + e.message, "error");
         }
     }
 
     // ── Test connection ─────────────────────────────────────
-    async function testConnection() {
+    async function testConnection(quiet = false) {
         const name = editMode === "edit" ? editingName : document.getElementById("editName").value.trim();
         if (!name) {
-            showToast(t('misc.apikeys.saveBeforeTesting'), "warning");
+            showToast("Save the user first before testing", "warning");
             return;
         }
         if (editMode === "create") {
-            showToast(t('misc.apikeys.saveBeforeTesting'), "warning");
+            showToast("Save the user first before testing", "warning");
             return;
         }
         const context = captureEditorRequest(name);
@@ -2326,7 +2342,7 @@
         const buttonOwner = {};
         btn._requestOwner = buttonOwner;
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.testing');
+        btn.innerHTML = '<span class="spinner"></span> Testing...';
 
         // Build optional override payload from unsaved field values
         const exchange = document.getElementById("editExchange").value;
@@ -2357,24 +2373,46 @@
             const display = document.getElementById("balanceDisplay");
             let html = "";
             if (result.success) {
-                html += '<div class="balance-box"><div class="label">' + t('misc.apikeys.futuresBalance') + '</div>';
-                html += '<div class="value">' + (result.balance_futures !== null ? result.balance_futures.toFixed(2) : "N/A") + '</div></div>';
-                showToast(t('misc.apikeys.connectionSuccessful'), "success");
+                html += '<div class="balance-box"><div class="label">' + escapeHtml(result.balance_unified != null ? 'Shared USDC Balance' : 'Futures Balance') + '</div>';
+                html += '<div class="value">' + (result.balance_unified != null ? escapeHtml(result.balance_unified) : result.balance_futures != null ? result.balance_futures.toFixed(2) : "N/A") + '</div></div>';
+                if (!quiet) showToast("Connection successful!", "success");
             } else {
-                html += '<div class="balance-box"><div class="label">' + t('misc.apikeys.connectionTest') + '</div>';
-                html += '<div class="error">' + escapeHtml(m(result.error) || t('common.unknown')) + '</div></div>';
-                showToast(t('misc.apikeys.connectionFailed'), "error");
+                html += '<div class="balance-box"><div class="label">Connection Test</div>';
+                html += '<div class="error">' + escapeHtml(result.error || "Unknown error") + '</div></div>';
+                showToast("Connection failed", "error");
             }
+            if (result.balance_spot != null) html += '<div class="balance-box"><div class="label">Spot Balance (USDC)</div><div class="value">' + escapeHtml(result.balance_spot) + '</div></div>';
+            if (result.account_mode_label) html += '<div class="balance-box"><div class="label">Account Type</div><div>' + escapeHtml(result.account_mode_label) + '</div></div>';
+            if (result.guidance) html += '<div class="balance-box balance-guidance">' + escapeHtml(result.guidance) + '<p><a href="https://app.hyperliquid.xyz/portfolio" target="_blank" rel="noopener noreferrer">Open Hyperliquid</a> → Account Type → Manual (Standard). Then run Test Connection again.</p></div>';
             display.innerHTML = html;
             display.style.display = "flex";
+            if (result.success && result.account_mode === 'standard_manual' && !formDirty && !document.getElementById('editIsVault').checked) {
+                window.PBGuiInternalTransferPanel.mount(display, {
+                    user: name,
+                    base: API_BASE.replace(/\/api-keys$/, '/profit-sweep'),
+                    signal: context.signal,
+                    isCurrent: () => isCurrentEditorRequest(context) && editingName === name && !formDirty && !saveInFlight,
+                    onBalances: preview => {
+                        const route = (preview.routes || []).find(item => item.id === 'spot_to_perp');
+                        if (!route) return;
+                        display.querySelectorAll('.balance-box').forEach(box => {
+                            const label = box.querySelector('.label'), value = box.querySelector('.value');
+                            if (!label || !value) return;
+                            if (label.textContent === 'Spot Balance (USDC)') value.textContent = route.source_balance;
+                            if (label.textContent === 'Futures Balance') value.textContent = route.destination_balance;
+                        });
+                    },
+                    onConfirmed: async () => { await testConnection(true); showToast('Transfer confirmed.', 'success'); }
+                });
+            }
         } catch (e) {
             if (!isCurrentEditorRequest(context) || e.name === "AbortError") return;
-            showToast(t('misc.apikeys.testFailed', { error: m(e.message) }), "error");
+            showToast("Test failed: " + e.message, "error");
         } finally {
             if (btn._requestOwner === buttonOwner) {
                 delete btn._requestOwner;
                 btn.disabled = false;
-                btn.textContent = t('misc.apikeys.testConnection');
+                btn.textContent = "Test Connection";
             }
         }
     }
@@ -2387,7 +2425,7 @@
         const buttonOwner = {};
         btn._requestOwner = buttonOwner;
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.checking');
+        btn.innerHTML = '<span class="spinner"></span> Checking...';
 
         try {
             const data = await apiFetch("/hl-expiry?force=true", { signal: context.signal });
@@ -2411,15 +2449,15 @@
             document.getElementById("btnBackups").classList.remove("active");
             document.getElementById("btnLogs").classList.remove("active");
             document.getElementById("hlExpiryPanel").style.display = "";
-            showToast(t('misc.apikeys.hlExpiryDataRefreshed'), "success");
+            showToast("HL expiry data refreshed", "success");
         } catch (e) {
             if (!isCurrentEditorRequest(context) || e.name === "AbortError") return;
-            showToast(t('misc.apikeys.hlExpiryCheckFailed', { error: m(e.message) }), "error");
+            showToast("HL expiry check failed: " + e.message, "error");
         } finally {
             if (btn._requestOwner === buttonOwner) {
                 delete btn._requestOwner;
                 btn.disabled = false;
-                btn.textContent = t('misc.apikeys.hlExpiryCheck');
+                btn.textContent = "HL Expiry Check";
             }
         }
     }
@@ -2427,7 +2465,7 @@
     function renderHLExpiryPanel(data) {
         const tbody = document.getElementById("hlExpiryBody");
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#a3adc2;">' + t('misc.apikeys.noHyperliquidUsersFound') + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No Hyperliquid users found</td></tr>';
             return;
         }
 
@@ -2439,7 +2477,7 @@
         for (const exp of data) {
             html += "<tr>";
             html += "<td><strong>" + escapeHtml(exp.name) + "</strong></td>";
-            html += "<td>" + (exp.is_vault ? t('misc.apikeys.vault') : t('misc.apikeys.wallet')) + "</td>";
+            html += "<td>" + (exp.is_vault ? "Vault" : "Wallet") + "</td>";
             html += "<td>" + escapeHtml(exp.valid_until_iso ? exp.valid_until_iso.split("T")[0] : "-") + "</td>";
             html += "<td>" + escapeHtml(exp.days_remaining !== null && exp.days_remaining !== undefined ? exp.days_remaining : "-") + "</td>";
             html += "<td>" + renderExpiryBadge(exp) + "</td>";
@@ -2471,7 +2509,7 @@
         delete inp.dataset.revealed;
         if (maskedValue) {
             inp.value = "";
-            inp.placeholder = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 " + t('misc.apikeys.savedLeaveBlank');
+            inp.placeholder = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 (saved \u2014 leave blank to keep)";
             inp.dataset.masked = maskedValue;
             inp.dataset.revealUrl = revealUrl || "";
             inp.onfocus = null;
@@ -2518,7 +2556,7 @@
                         inp.value = data.value;
                     }
                 } catch (e) {
-                    showToast(t('misc.apikeys.couldNotRevealKey', { error: m(e.message) }), "error");
+                    showToast("Could not reveal key: " + e.message, "error");
                     return;
                 }
             }
@@ -2578,7 +2616,7 @@
             btn.textContent = "\uD83D\uDE48";
         } catch (e) {
             if (!isCurrentEditorRequest(context) || e.name === "AbortError") return;
-            showToast(t('misc.apikeys.couldNotRevealApiKey', { error: m(e.message) }), "error");
+            showToast("Could not reveal API key: " + e.message, "error");
         }
     }
 
@@ -2623,7 +2661,7 @@
             const title  = document.getElementById("alertModalTitle");
             const body   = document.getElementById("alertModalBody");
             box.className = "alert-modal " + type;
-            title.textContent = type === "error" ? t('common.error') : t('misc.apikeys.warning');
+            title.textContent = type === "error" ? "Error" : "Warning";
             body.textContent = message;
             overlay.style.display = "flex";
             return;
@@ -2632,17 +2670,12 @@
         const toast = document.createElement("div");
         toast.className = "toast " + type;
         toast.textContent = message;
-        toast.style.cursor = "pointer";
-        const timer = setTimeout(() => {
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add("show"));
+        setTimeout(() => {
             toast.classList.remove("show");
             setTimeout(() => toast.remove(), 300);
         }, 4000);
-        toast.onclick = () => {
-            clearTimeout(timer);
-            toast.remove();
-        };
-        container.appendChild(toast);
-        requestAnimationFrame(() => toast.classList.add("show"));
     }
 
     function closeAlertModal() {
@@ -2666,7 +2699,7 @@
         const title = document.getElementById("alertModalTitle");
         const body  = document.getElementById("alertModalBody");
         box.className = "alert-modal " + type;
-        title.textContent = type === "error" ? t('common.error') : type === "warning" ? t('misc.apikeys.warning') : t('misc.apikeys.result');
+        title.textContent = type === "error" ? "Error" : type === "warning" ? "Warning" : "Result";
         body.textContent = message;
     }
 
@@ -2696,27 +2729,27 @@
 
     async function loadComments() {
         const tbody = document.getElementById("commentsBody");
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#a3adc2;">' + t('common.loading') + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;">Loading...</td></tr>';
         try {
             const data = await apiFetch("/comments/list");
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#a3adc2;">' + t('misc.apikeys.noCommentFields') + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;">No comment fields</td></tr>';
                 return;
             }
             let html = "";
             for (const c of data) {
                 html += "<tr>";
                 html += "<td><code>" + escapeHtml(c.key) + "</code></td>";
-                html += '<td><input type="text" class="comment-val" data-key="' + escapeAttr(c.key) + '" value="' + escapeAttr(c.value) + '" style="width:100%;background:#10141d;border:1px solid #333f5c;border-radius:4px;padding:6px 8px;color:#e8ecf4;font-size:var(--fs-sm);" /></td>';
+                html += '<td><input type="text" class="comment-val" data-key="' + escapeAttr(c.key) + '" value="' + escapeAttr(c.value) + '" style="width:100%;background:#0e1117;border:1px solid #2d3748;border-radius:4px;padding:6px 8px;color:#fafafa;font-size:var(--fs-sm);" /></td>';
                 html += "<td>";
-                html += '<button class="btn btn-sm btn-primary" onclick="updateComment(\'' + escapeAttr(c.key) + '\')">' + t('common.save') + '</button> ';
-                html += '<button class="btn btn-sm btn-danger" onclick="deleteComment(\'' + escapeAttr(c.key) + '\')">' + t('common.delete') + '</button>';
+                html += '<button class="btn btn-sm btn-primary" onclick="updateComment(\'' + escapeAttr(c.key) + '\')">Save</button> ';
+                html += '<button class="btn btn-sm btn-danger" onclick="deleteComment(\'' + escapeAttr(c.key) + '\')">Delete</button>';
                 html += "</td>";
                 html += "</tr>";
             }
             tbody.innerHTML = html;
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="3" style="color:#e5615c;">' + escapeHtml(e.message) + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="color:#ef4444;">' + escapeHtml(e.message) + '</td></tr>';
         }
     }
 
@@ -2734,17 +2767,17 @@
     async function createComment() {
         const key = document.getElementById("newCommentKey").value.trim();
         const value = document.getElementById("newCommentValue").value;
-        if (!key) { showToast(t('misc.apikeys.keyRequired'), "error"); return; }
+        if (!key) { showToast("Key is required", "error"); return; }
         try {
             await apiFetch("/comments/list", {
                 method: "POST",
                 body: JSON.stringify({ key: key, value: value }),
             });
-            showToast(t('misc.apikeys.commentCreated'), "success");
+            showToast("Comment created", "success");
             hideAddComment();
             await loadComments();
         } catch (e) {
-            showToast(t('misc.apikeys.failed', { error: m(e.message) }), "error");
+            showToast("Failed: " + e.message, "error");
         }
     }
 
@@ -2756,24 +2789,24 @@
                 method: "PUT",
                 body: JSON.stringify({ value: input.value }),
             });
-            showToast(t('misc.apikeys.commentUpdated'), "success");
+            showToast("Comment updated", "success");
         } catch (e) {
-            showToast(t('misc.apikeys.failed', { error: m(e.message) }), "error");
+            showToast("Failed: " + e.message, "error");
         }
     }
 
     async function deleteComment(key) {
         if (!(await window.PBGuiDialogs.confirm({
-            title: t('misc.apikeys.deleteCommentTitle'),
-            message: t('misc.apikeys.deleteCommentMessage', { key: key }),
-            confirmText: t('common.delete')
+            title: "Delete comment",
+            message: "Delete comment '" + key + "'?",
+            confirmText: "Delete"
         }))) return;
         try {
             await apiFetch("/comments/list/" + encodeURIComponent(key), { method: "DELETE" });
-            showToast(t('misc.apikeys.commentDeleted'), "success");
+            showToast("Comment deleted", "success");
             await loadComments();
         } catch (e) {
-            showToast(t('misc.apikeys.failed', { error: m(e.message) }), "error");
+            showToast("Failed: " + e.message, "error");
         }
     }
 
@@ -2806,7 +2839,7 @@
             const data = await apiFetch("/hl-expiry/config");
             updateHLExpiryConfigStatus(data);
         } catch (e) {
-            showToast(t('misc.apikeys.failedToLoadHlConfig', { error: m(e.message) }), "error");
+            showToast("Failed to load HL config: " + e.message, "error");
         }
     }
 
@@ -2821,18 +2854,18 @@
         if (!status) return;
 
         if (configured) {
-            status.textContent = t('misc.apikeys.hlConfigConfigured', { days: days, daysLabel: (days === 1 ? t('misc.apikeys.day') : t('misc.apikeys.days')) });
-            status.style.color = "var(--success, #46c88f)";
+            status.textContent = "Configured in pbgui.ini. PBAPIServer warns " + days + " day" + (days === 1 ? "" : "s") + " before expiry.";
+            status.style.color = "#26a69a";
         } else {
-            status.textContent = t('misc.apikeys.hlConfigNotConfigured');
-            status.style.color = "#ecc381";
+            status.textContent = "Not configured in pbgui.ini. PBAPIServer currently uses the default 7-day warning window until you save a value here.";
+            status.style.color = "#ecc94b";
         }
     }
 
     async function saveHLExpiryConfig() {
         const days = parseInt(document.getElementById("hlWarningDays").value, 10);
         if (isNaN(days) || days < 1) {
-            showToast(t('misc.apikeys.warningDaysAtLeastOne'), "error");
+            showToast("Warning days must be at least 1", "error");
             return;
         }
         try {
@@ -2841,9 +2874,9 @@
                 body: JSON.stringify({ telegram_warning_days: days }),
             });
             updateHLExpiryConfigStatus(data);
-            showToast(t('misc.apikeys.hlWarningConfigSaved'), "success");
+            showToast("HL warning config saved", "success");
         } catch (e) {
-            showToast(t('misc.apikeys.failed', { error: m(e.message) }), "error");
+            showToast("Failed: " + e.message, "error");
         }
     }
 
@@ -2944,12 +2977,12 @@
             && (item.pending_operation_id === pending.operationId || item.last_operation_id === pending.operationId)) || null;
         if (!sameTradfiSaveIntent(pending, intent)) {
             if (profile && profile.pending) {
-                showToast(t('misc.apikeys.operationStillPending', { operationId: pending.operationId, profileId: profile.id }), "warning");
+                showToast("Operation " + pending.operationId + " is still pending for profile " + profile.id + ". Resolve or retry it before starting another save.", "warning");
                 return { operationId: pending.operationId, completedProfile: null, blocked: true };
             }
             tradfiPendingSaveIntent = null;
             if (profile) {
-                showToast(t('misc.apikeys.operationAlreadyCompleted', { operationId: pending.operationId, profileId: profile.id }), "warning");
+                showToast("Operation " + pending.operationId + " already completed for profile " + profile.id + ". Review that profile before saving another change.", "warning");
                 return { operationId: pending.operationId, completedProfile: null, blocked: true };
             }
             return { operationId: "", completedProfile: null, blocked: false };
@@ -3006,9 +3039,9 @@
             selectTradfiProfile((retained || explicitActive || {}).id || "");
         } catch (e) {
             if (generation !== tradfiLoadGeneration || e.name === "AbortError") return;
-            document.getElementById("tradfiProfilesBody").innerHTML = '<tr><td colspan="12" style="color:#e5615c;cursor:default;">' + t('misc.apikeys.failedToLoadProfiles', { error: escapeHtml(m(e.message)) }) + '</td></tr>';
-            document.getElementById("tradfiProjectionStatus").textContent = t('misc.apikeys.pb7ProjectionStatusUnavailable', { error: m(e.message) });
-            showToast(t('misc.apikeys.failedToLoadTradFiProfiles', { error: m(e.message) }), "error");
+            document.getElementById("tradfiProfilesBody").innerHTML = '<tr><td colspan="12" style="color:#ef4444;cursor:default;">Failed to load profiles: ' + escapeHtml(e.message) + '</td></tr>';
+            document.getElementById("tradfiProjectionStatus").textContent = "PB7 projection status unavailable: " + e.message;
+            showToast("Failed to load TradFi profiles: " + e.message, "error");
         }
 
         // Check yfinance
@@ -3066,7 +3099,7 @@
         }
         const profile = tradfiProfiles.find(item => item && item.id === tradfiProfileId) || null;
         if (!profile || !profile.has_api_key) {
-            showToast(t('misc.apikeys.noStoredApiKeyForProfile'), "warning");
+            showToast("No stored API key is available for the selected profile", "warning");
             return;
         }
 
@@ -3086,7 +3119,7 @@
             button.textContent = "\uD83D\uDE48";
         } catch (e) {
             if (generation !== tradfiRevealGeneration) return;
-            showToast(t('misc.apikeys.couldNotRevealApiKey', { error: m(e.message) }), "error");
+            showToast("Could not reveal API key: " + e.message, "error");
         } finally {
             button.disabled = false;
         }
@@ -3104,16 +3137,16 @@
         tradfiSecretSaved = !!(profile && profile.has_api_secret);
         const keyInput = document.getElementById("tradfiApiKey");
         keyInput.value = "";
-        keyInput.placeholder = tradfiKeySaved ? t('misc.apikeys.storedInVaultReplace') : t('misc.apikeys.enterApiKey');
+        keyInput.placeholder = tradfiKeySaved ? "Stored in vault; enter only to replace" : "Enter API key";
         secretInput.value = "";
         if (needsSecret) {
             secretGroup.style.display = "";
             secretInput.disabled = false;
-            secretInput.placeholder = tradfiSecretSaved ? t('misc.apikeys.storedInVaultReplace') : t('misc.apikeys.enterApiSecret');
+            secretInput.placeholder = tradfiSecretSaved ? "Stored in vault; enter only to replace" : "Enter API secret";
         } else {
             secretGroup.style.display = "";
             secretInput.disabled = true;
-            secretInput.placeholder = t('misc.apikeys.notRequired');
+            secretInput.placeholder = "not required";
         }
         document.getElementById("tradfiProviderNote").textContent =
             tradfiProviderNotes[prov] || "";
@@ -3122,33 +3155,27 @@
         const link = tradfiProviderLinks[prov];
         if (link && link.url) {
             linkEl.href = link.url;
-            document.getElementById("tradfiProviderLinkLabel").textContent = link.label || t('misc.apikeys.getApiKey');
+            document.getElementById("tradfiProviderLinkLabel").textContent = link.label || "Get API key";
             linkEl.style.display = "flex";
         } else {
             linkEl.style.display = "none";
         }
         document.getElementById("tradfiProfileStatus").textContent = profile
-            ? t('misc.apikeys.selectedVaultProfile', {
-                id: profile.id,
-                generation: profile.generation,
-                activeState: (profile.active ? t('misc.apikeys.locallyActive') : t('misc.apikeys.locallyInactive')),
-                replicatedState: (profile.replicated_active ? t('misc.apikeys.replicatedActiveGen', { generation: profile.activation_generation }) : t('misc.apikeys.notReplicatedActive')),
-                pendingState: (profile.pending_delete ? t('misc.apikeys.deletePendingSuffix') : profile.pending ? t('misc.apikeys.pendingSuffix', { stage: (profile.pending_stage || 'stored') }) : '')
-              })
-            : t('misc.apikeys.newProfileSecretsNeverLoaded');
-        document.getElementById("btnTradfiToggle").textContent = profile && profile.active ? t('misc.apikeys.disable') : t('misc.apikeys.enable');
+            ? `Selected vault profile ${profile.id} · generation ${profile.generation} · ${profile.active ? "locally active" : "locally inactive"} · ${profile.replicated_active ? "replicated active selection generation " + profile.activation_generation : "not the replicated active selection"}${profile.pending_delete ? " · delete pending" : profile.pending ? " · pending " + (profile.pending_stage || "stored") : ""}`
+            : "New profile. Stored secrets are never loaded into this form.";
+        document.getElementById("btnTradfiToggle").textContent = profile && profile.active ? "Disable" : "Enable";
         updateTradfiActionButtons();
     }
 
     function renderTradfiProjection() {
         const projection = tradfiProjection || {};
         const parts = [
-            t('misc.apikeys.pb7Projection', { status: (projection.status || t('common.unknown')) }),
-            t('misc.apikeys.desired', { value: Number(projection.desired_generation || 0) }),
-            t('misc.apikeys.applied', { value: Number(projection.applied_generation || 0) }),
-            t('misc.apikeys.attempts', { value: Number(projection.attempts || 0) }),
+            "PB7 projection " + (projection.status || "unknown"),
+            "desired " + Number(projection.desired_generation || 0),
+            "applied " + Number(projection.applied_generation || 0),
+            "attempts " + Number(projection.attempts || 0),
         ];
-        if (projection.last_error) parts.push(t('misc.apikeys.lastError', { error: projection.last_error }));
+        if (projection.last_error) parts.push("last error: " + projection.last_error);
         document.getElementById("tradfiProjectionStatus").textContent = parts.join(" · ");
         updateTradfiActionButtons();
     }
@@ -3156,7 +3183,7 @@
     function renderTradfiProfiles() {
         const body = document.getElementById("tradfiProfilesBody");
         if (!tradfiProfiles.length) {
-            body.innerHTML = '<tr><td colspan="12" style="color:#a3adc2;cursor:default;">' + t('misc.apikeys.noTradfiProfiles') + '</td></tr>';
+            body.innerHTML = '<tr><td colspan="12" style="color:#94a3b8;cursor:default;">No TradFi vault profiles configured.</td></tr>';
             return;
         }
         body.innerHTML = tradfiProfiles.map(profile => {
@@ -3165,13 +3192,13 @@
                 + '<td class="tradfi-profile-id">' + escapeHtml(profile.id) + '</td>'
                 + '<td>' + escapeHtml(profile.provider || '-') + '</td>'
                 + '<td>' + escapeHtml(profile.label || '-') + '</td>'
-                + '<td class="' + (profile.active ? 'tradfi-active' : 'tradfi-inactive') + '">' + (profile.active ? t('misc.apikeys.active') : t('misc.apikeys.inactive')) + '</td>'
-                + '<td class="' + (profile.replicated_active ? 'tradfi-active' : 'tradfi-inactive') + '">' + (profile.replicated_active ? t('misc.apikeys.selectedGen', { gen: escapeHtml(profile.activation_generation) }) : t('misc.apikeys.notSelected')) + '</td>'
-                + '<td>' + (profile.pending_delete ? t('misc.apikeys.deletePending') : profile.pending ? t('misc.apikeys.pendingWithStage', { stage: escapeHtml(profile.pending_stage || 'stored') }) + (profile.pending_operation_id ? ' (' + escapeHtml(profile.pending_operation_id) + ')' : '') : '-') + '</td>'
-                + '<td>' + (profile.shared ? t('common.yes') : t('common.no')) + '</td>'
+                + '<td class="' + (profile.active ? 'tradfi-active' : 'tradfi-inactive') + '">' + (profile.active ? 'Active' : 'Inactive') + '</td>'
+                + '<td class="' + (profile.replicated_active ? 'tradfi-active' : 'tradfi-inactive') + '">' + (profile.replicated_active ? 'Selected (gen ' + escapeHtml(profile.activation_generation) + ')' : 'Not selected') + '</td>'
+                + '<td>' + (profile.pending_delete ? 'Delete pending' : profile.pending ? 'Pending: ' + escapeHtml(profile.pending_stage || 'stored') + (profile.pending_operation_id ? ' (' + escapeHtml(profile.pending_operation_id) + ')' : '') : '-') + '</td>'
+                + '<td>' + (profile.shared ? 'Yes' : 'No') + '</td>'
                 + '<td>' + escapeHtml(profile.generation) + '</td>'
-                + '<td>' + (profile.has_api_key ? t('misc.apikeys.stored') : t('misc.apikeys.missing')) + '</td>'
-                + '<td>' + (profile.has_api_secret ? t('misc.apikeys.stored') : t('misc.apikeys.notStored')) + '</td>'
+                + '<td>' + (profile.has_api_key ? 'Stored' : 'Missing') + '</td>'
+                + '<td>' + (profile.has_api_secret ? 'Stored' : 'Not stored') + '</td>'
                 + '<td>' + escapeHtml(profile.origin || '-') + '</td>'
                 + '<td>' + escapeHtml(profile.updated_at || '-') + '</td>'
                 + '</tr>';
@@ -3210,22 +3237,22 @@
             const installBtn = document.getElementById("btnYfInstall");
             const testBtn = document.getElementById("btnYfTest");
             if (data.installed) {
-                statusEl.innerHTML = '<span style="color:var(--success, #46c88f);">\u2713 ' + t('misc.apikeys.yfinanceInstalled', { version: escapeHtml(data.version) }) + '</span>';
-                installBtn.textContent = t('misc.apikeys.uninstall');
+                statusEl.innerHTML = '<span style="color:#26a69a;">\u2713 yfinance ' + escapeHtml(data.version) + ' installed</span>';
+                installBtn.textContent = "Uninstall";
                 installBtn.className = "btn btn-sm btn-danger";
                 testBtn.style.display = "";
             } else {
-                statusEl.innerHTML = '<span style="color:#e0a458;">\u26a0 ' + t('misc.apikeys.notInstalled') + '</span>';
-                installBtn.textContent = t('misc.apikeys.install');
+                statusEl.innerHTML = '<span style="color:#d69e2e;">\u26a0 not installed</span>';
+                installBtn.textContent = "Install";
                 installBtn.className = "btn btn-sm btn-primary";
                 testBtn.style.display = "none";
             }
             if (data.error) {
-                statusEl.innerHTML = '<span style="color:#e5615c;">' + escapeHtml(m(data.error)) + '</span>';
+                statusEl.innerHTML = '<span style="color:#ef4444;">' + escapeHtml(data.error) + '</span>';
             }
         } catch (e) {
             document.getElementById("yfStatus").innerHTML =
-                '<span style="color:#e5615c;">' + t('misc.apikeys.errorPrefix', { error: escapeHtml(m(e.message)) }) + '</span>';
+                '<span style="color:#ef4444;">Error: ' + escapeHtml(e.message) + '</span>';
         }
     }
 
@@ -3233,43 +3260,43 @@
         const btn = document.getElementById("btnYfInstall");
         const action = yfInstalled ? "uninstall" : "install";
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> ' + (yfInstalled ? t('misc.apikeys.uninstalling') : t('misc.apikeys.installing'));
+        btn.innerHTML = '<span class="spinner"></span> ' + (yfInstalled ? "Uninstalling..." : "Installing...");
         try {
             const data = await apiFetch("/tradfi/yfinance/" + action, { method: "POST" });
             if (data.success) {
-                showToast(m(data.message), "success");
+                showToast(data.message, "success");
             } else {
-                showToast(m(data.message), "error");
+                showToast(data.message, "error");
             }
             await checkYfinanceStatus();
         } catch (e) {
-            showToast(t('misc.apikeys.failed', { error: m(e.message) }), "error");
+            showToast("Failed: " + e.message, "error");
         } finally {
             btn.disabled = false;
-            btn.innerHTML = yfInstalled ? t('misc.apikeys.uninstall') : t('misc.apikeys.install');
+            btn.innerHTML = yfInstalled ? "Uninstall" : "Install";
         }
     }
 
     async function yfTest() {
         const btn = document.getElementById("btnYfTest");
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.testing');
-        showToast(t('misc.apikeys.testingYfinance'), "warning");
+        btn.innerHTML = '<span class="spinner"></span> Testing...';
+        showToast("Testing yfinance...", "warning");
         try {
             const data = await apiFetch("/tradfi/test", {
                 method: "POST",
                 body: JSON.stringify({ provider: "yfinance" }),
             });
             if (data.success) {
-                updateAlertModal(m(data.message), "success");
+                updateAlertModal(data.message, "success");
             } else {
-                updateAlertModal(m(data.message), "error");
+                updateAlertModal(data.message, "error");
             }
         } catch (e) {
-            updateAlertModal(t('misc.apikeys.failed', { error: m(e.message) }), "error");
+            updateAlertModal("Failed: " + e.message, "error");
         } finally {
             btn.disabled = false;
-            btn.textContent = t('misc.apikeys.test');
+            btn.textContent = "Test";
         }
     }
 
@@ -3278,11 +3305,11 @@
         const key = tradfiApiKeyForAction().trim();
         const secret = document.getElementById("tradfiApiSecret").value.trim();
         if (!key && !tradfiKeySaved) {
-            showToast(t('misc.apikeys.enterApiKeyFirst'), "warning");
+            showToast("Enter an API key first", "warning");
             return;
         }
         // Show "Testing..." in the modal and keep it open for the result
-        showToast(t('misc.apikeys.testingProvider', { provider: prov }), "warning");
+        showToast("Testing " + prov + "...", "warning");
         const context = beginTradfiAction();
         if (!context) return;
         try {
@@ -3297,13 +3324,13 @@
             if (context.generation !== tradfiActionGeneration) return;
             finishTradfiAction(context, true);
             if (data.success) {
-                updateAlertModal(m(data.message), "success");
+                updateAlertModal(data.message, "success");
             } else {
-                updateAlertModal(m(data.message), "error");
+                updateAlertModal(data.message, "error");
             }
         } catch (e) {
             if (context.generation !== tradfiActionGeneration || e.name === "AbortError") return;
-            updateAlertModal(t('misc.apikeys.testFailed', { error: m(e.message) }), "error");
+            updateAlertModal("Test failed: " + e.message, "error");
         } finally {
             finishTradfiAction(context);
         }
@@ -3316,15 +3343,15 @@
         const secret = intent.apiSecret;
         const profile = tradfiProfiles.find(item => item && item.id === tradfiProfileId) || null;
         if (rotateReplacement && !profile) {
-            showToast(t('misc.apikeys.selectProfileToRotate'), "warning");
+            showToast("Select a profile to rotate", "warning");
             return;
         }
         if (rotateReplacement && !key) {
-            showToast(t('misc.apikeys.enterReplacementApiKey'), "warning");
+            showToast("Enter a replacement API key", "warning");
             return;
         }
         if (!key && !tradfiKeySaved) {
-            showToast(t('misc.apikeys.enterApiKeyFirst'), "warning");
+            showToast("Enter an API key first", "warning");
             return;
         }
         const context = beginTradfiAction();
@@ -3337,7 +3364,7 @@
                 tradfiProfileId = String(checked.completedProfile.id || "");
                 finishTradfiAction(context, true);
                 await loadTradfiData();
-                showToast(t('misc.apikeys.tradfiOperationAlreadyCompleted', { operationId: checked.operationId }), "success");
+                showToast("TradFi operation " + checked.operationId + " already completed.", "success");
                 return;
             }
             const operationId = checked.operationId || ((window.crypto && window.crypto.randomUUID)
@@ -3364,12 +3391,12 @@
             finishTradfiAction(context, true);
             tradfiProfileId = String(((data || {}).profile || {}).id || tradfiProfileId || "");
             await loadTradfiData();
-            showToast(data.status === "pending" ? t('misc.apikeys.tradfiProfileSavedPending') : t('misc.apikeys.tradfiConfigSaved'), data.status === "pending" ? "warning" : "success");
+            showToast(data.status === "pending" ? "TradFi profile saved; replication pending" : "TradFi config saved", data.status === "pending" ? "warning" : "success");
         } catch (e) {
             if (context.generation !== tradfiActionGeneration || e.name === "AbortError") return;
             if (tradfiPendingSaveIntent && e.operationId) tradfiPendingSaveIntent.operationId = e.operationId;
             const operationText = (tradfiPendingSaveIntent || {}).operationId || e.operationId || "";
-            showToast(t('misc.apikeys.saveStatusUncertain', { operation: (operationText ? ' for operation ' + operationText : ''), error: m(e.message) }), "error");
+            showToast("Save status is uncertain" + (operationText ? " for operation " + operationText : "") + ": " + e.message + ". Submitted secrets remain in the form for an exact retry.", "error");
         } finally {
             finishTradfiAction(context, false);
         }
@@ -3384,14 +3411,14 @@
 
     async function tradfiClear() {
         if (!(await window.PBGuiDialogs.confirm({
-            title: t('misc.apikeys.deleteTradfiProfileTitle'),
-            message: t('misc.apikeys.deleteTradfiProfileMessage', { profileId: tradfiProfileId }),
-            confirmText: t('common.delete')
+            title: "Delete TradFi profile",
+            message: "Delete profile " + tradfiProfileId + "? Stored credential generations cannot be revealed or restored from this UI.",
+            confirmText: "Delete"
         }))) return;
         let context = null;
         try {
             if (!tradfiProfileId) {
-                showToast(t('misc.apikeys.noVaultProfileForProvider'), "warning");
+                showToast("No vault profile configured for this provider", "warning");
                 return;
             }
             context = beginTradfiAction();
@@ -3406,10 +3433,10 @@
             tradfiSecretSaved = false;
             tradfiProfileId = "";
             await loadTradfiData();
-            showToast(data.status === "pending_delete" ? t('misc.apikeys.tradfiProfileDeletePending') : t('misc.apikeys.tradfiProfileDeleted'), data.status === "pending_delete" ? "warning" : "success");
+            showToast(data.status === "pending_delete" ? "TradFi profile delete is pending" : "TradFi profile deleted", data.status === "pending_delete" ? "warning" : "success");
         } catch (e) {
             if (e.name === "AbortError") return;
-            showToast(t('misc.apikeys.failed', { error: m(e.message) }), "error");
+            showToast("Failed: " + e.message, "error");
         } finally {
             finishTradfiAction(context);
         }
@@ -3431,10 +3458,10 @@
             tradfiProjection = data.projection || {};
             renderTradfiProjection();
             await loadTradfiData();
-            showToast(data.ok ? t('misc.apikeys.pb7TradfiProjectionCurrent') : t('misc.apikeys.pb7TradfiProjectionPending'), data.ok ? "success" : "warning");
+            showToast(data.ok ? "PB7 TradFi projection is current" : "PB7 TradFi projection remains pending", data.ok ? "success" : "warning");
         } catch (e) {
             if (context.generation !== tradfiActionGeneration || e.name === "AbortError") return;
-            showToast(t('misc.apikeys.projectionRetryFailed', { error: m(e.message) }), "error");
+            showToast("Projection retry failed: " + e.message, "error");
             await loadTradfiData();
         } finally {
             finishTradfiAction(context);
@@ -3467,37 +3494,37 @@
 
     async function loadBackups() {
         const container = document.getElementById("backupsList");
-        container.innerHTML = '<div style="text-align:center;color:#a3adc2;padding:20px;"><span class="spinner"></span> ' + t('common.loading') + '</div>';
+        container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;"><span class="spinner"></span> Loading...</div>';
         try {
             const data = await apiFetch("/backups");
             renderBackupsPanel(data);
         } catch (e) {
-            container.innerHTML = '<div style="color:#e5615c;padding:20px;">' + escapeHtml(m(e.message)) + '</div>';
+            container.innerHTML = '<div style="color:#ef4444;padding:20px;">' + escapeHtml(e.message) + '</div>';
         }
     }
 
     function renderBackupsPanel(data) {
         const container = document.getElementById("backupsList");
         if (!data || data.length === 0) {
-            container.innerHTML = '<div style="text-align:center;color:#a3adc2;padding:20px;">' + t('misc.apikeys.noBackupsFound') + '</div>';
+            container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">No backups found.</div>';
             return;
         }
         selectedBackups = [];
         let html = '<div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">';
-        html += '<span style="font-size:var(--fs-sm); color:#a3adc2;">' + t('misc.apikeys.selectTwoToCompare') + '</span>';
-        html += '<button class="btn btn-sm btn-secondary" id="btnDiffSelected" onclick="openDiffSelected()" disabled style="opacity:0.4;">&#9654; ' + t('misc.apikeys.compareSelected') + '</button>';
+        html += '<span style="font-size:var(--fs-sm); color:#94a3b8;">Select 2 to compare:</span>';
+        html += '<button class="btn btn-sm btn-secondary" id="btnDiffSelected" onclick="openDiffSelected()" disabled style="opacity:0.4;">&#9654; Compare Selected</button>';
         html += '</div>';
         html += '<table class="hl-expiry-table backup-compare-table"><thead><tr>';
-        html += '<th>' + t('misc.apikeys.file') + '</th><th>' + t('misc.apikeys.dateTime') + '</th><th>' + t('misc.apikeys.target') + '</th><th>' + t('misc.apikeys.size') + '</th><th style="width:80px;"></th>';
+        html += '<th>File</th><th>Date / Time</th><th>Target</th><th>Size</th><th style="width:80px;"></th>';
         html += '</tr></thead><tbody>';
         for (const b of data) {
             const dt = b.ts.replace("T", " ");
             html += '<tr class="backup-row" data-backup-fn="' + escapeAttr(b.filename) + '" tabindex="0" aria-selected="false">';
-            html += '<td style="font-size:var(--fs-xs);font-family:monospace;color:#a3adc2;word-break:break-all;">' + escapeHtml(b.filename) + '</td>';
+            html += '<td style="font-size:var(--fs-xs);font-family:monospace;color:#94a3b8;word-break:break-all;">' + escapeHtml(b.filename) + '</td>';
             html += '<td>' + escapeHtml(dt) + '</td>';
             html += '<td><span class="badge-exchange">' + escapeHtml(b.target) + '</span></td>';
             html += '<td>' + b.size_kb + ' KB</td>';
-            html += '<td><button class="btn btn-sm btn-warning backup-restore-btn" type="button" data-restore-fn="' + escapeAttr(b.filename) + '">' + t('misc.apikeys.restore') + '</button></td>';
+            html += '<td><button class="btn btn-sm btn-warning backup-restore-btn" type="button" data-restore-fn="' + escapeAttr(b.filename) + '">Restore</button></td>';
             html += '</tr>';
         }
         html += '</tbody></table>';
@@ -3507,21 +3534,21 @@
 
     async function restoreBackup(filename) {
         if (!(await window.PBGuiDialogs.confirm({
-            title: t('misc.apikeys.restoreBackupTitle'),
-            message: t('misc.apikeys.restoreFromBackup', { filename: filename }),
-            detail: t('misc.apikeys.restoreBackupDetail'),
-            confirmText: t('misc.apikeys.restore')
+            title: "Restore backup",
+            message: "Restore from backup:\n" + filename,
+            detail: "This will overwrite the current api-keys.json. A pre-restore snapshot will be saved first.",
+            confirmText: "Restore"
         }))) return;
         try {
             await apiFetch("/backups/restore", {
                 method: "POST",
                 body: JSON.stringify({ filename: filename }),
             });
-            showToast(t('misc.apikeys.restoredFrom', { filename: filename }), "success");
+            showToast("Restored from: " + filename, "success");
             backToList();
             await loadUsers();
         } catch (e) {
-            showToast(t('misc.apikeys.restoreFailed', { error: m(e.message) }), "error");
+            showToast("Restore failed: " + e.message, "error");
         }
     }
 
@@ -3625,14 +3652,14 @@
     async function openDiffSelected() {
         if (selectedBackups.length !== 2) return;
         const btn = document.getElementById("btnDiffSelected");
-        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> ' + t('common.loading'); }
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Loading...'; }
         try {
             diffData = await apiFetch("/backups/diff", {
                 method: "POST",
                 body: JSON.stringify({ filename1: selectedBackups[0], filename2: selectedBackups[1] }),
             });
             function _backupLabel(fn) {
-                if (fn === '_current_pb7') return t('misc.apikeys.currentLivePb7');
+                if (fn === '_current_pb7') return 'Current (live) pb7';
                 return fn;
             }
             document.getElementById("diffTitle").textContent =
@@ -3643,9 +3670,9 @@
             renderDiff();
             document.getElementById("diffModal").style.display = "flex";
         } catch (e) {
-            showToast(t('misc.apikeys.diffFailed', { error: m(e.message) }), "error");
+            showToast("Diff failed: " + e.message, "error");
         } finally {
-            if (btn) { btn.disabled = false; btn.textContent = "\u25b6 " + t('misc.apikeys.compareSelected'); btn.style.opacity = "1"; }
+            if (btn) { btn.disabled = false; btn.textContent = "\u25b6 Compare Selected"; btn.style.opacity = "1"; }
         }
     }
 
@@ -3666,9 +3693,9 @@
         const allEqual = diffData.opcodes.every(function(op) { return op[0] === "equal"; });
         if (allEqual) {
             document.getElementById("diffContent").innerHTML =
-                '<div style="text-align:center;padding:40px 20px;color:var(--success, #46c88f);font-size:var(--fs-md);">' +
-                '<span style="font-size:var(--fs-xl);">&#10003;</span><br><strong>' + t('misc.apikeys.filesIdentical') + '</strong><br>' +
-                '<span style="font-size:var(--fs-sm);color:#a3adc2;margin-top:6px;display:block;">' + t('misc.apikeys.identicalContent', { lines: diffData.lines1.length }) + '</span>' +
+                '<div style="text-align:center;padding:40px 20px;color:#26a69a;font-size:var(--fs-md);">' +
+                '<span style="font-size:var(--fs-xl);">&#10003;</span><br><strong>Files are identical</strong><br>' +
+                '<span style="font-size:var(--fs-sm);color:#94a3b8;margin-top:6px;display:block;">Both versions contain exactly the same content (' + diffData.lines1.length + ' lines).</span>' +
                 '</div>';
             return;
         }
@@ -3696,7 +3723,7 @@
                     for (let i = i1; i < i2; i++) rows += _diffUnifiedRow("ctx", ln1++, ln2++, " ", lines1[i]);
                 } else {
                     for (let i = i1; i < i1 + CTX; i++) rows += _diffUnifiedRow("ctx", ln1++, ln2++, " ", lines1[i]);
-                    rows += "<tr class=\"diff-sep\"><td colspan=\"4\">&#8943; " + t('misc.apikeys.identicalLines', { count: (len - CTX * 2) }) + " &#8943;</td></tr>";
+                    rows += "<tr class=\"diff-sep\"><td colspan=\"4\">&#8943; " + (len - CTX * 2) + " identical lines &#8943;</td></tr>";
                     ln1 += len - CTX * 2;
                     ln2 += len - CTX * 2;
                     for (let i = i2 - CTX; i < i2; i++) rows += _diffUnifiedRow("ctx", ln1++, ln2++, " ", lines1[i]);
@@ -3739,7 +3766,7 @@
                         rightRows += _diffSideRow("ctx", ln2++, lines2[j1 + i]);
                     }
                     const skip = len - CTX * 2;
-                    const sep = "<tr class=\"diff-sep\"><td colspan=\"2\">&#8943; " + t('misc.apikeys.lines', { count: skip }) + " &#8943;</td></tr>";
+                    const sep = "<tr class=\"diff-sep\"><td colspan=\"2\">&#8943; " + skip + " lines &#8943;</td></tr>";
                     leftRows += sep; rightRows += sep;
                     ln1 += skip; ln2 += skip;
                     for (let i = len - CTX; i < len; i++) {
@@ -3851,7 +3878,6 @@
       var helpFilter   = document.getElementById('help-toc-filter');
       var helpLangEN   = document.getElementById('help-lang-en');
       var helpLangDE   = document.getElementById('help-lang-de');
-      var helpLangZH   = document.getElementById('help-lang-zh');
       var helpDragHandle = document.getElementById('help-drag-handle');
 
       var helpLang  = 'EN';
@@ -3908,14 +3934,14 @@
       }
       function _showGlobalResults(term) {
         if (!term) {
-          helpContent.innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + t('misc.help.typeSearchTerm') + '</p>';
+          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">Type a search term to find across all topics.</p>';
           helpSearchCount.textContent = '';
           return;
         }
         var re; try { re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'); } catch(e) { return; }
-        helpContent.innerHTML = '<div class="help-loading">' + t('misc.apikeys.searching') + '</div>';
+        helpContent.innerHTML = '<div class="help-loading">Searching\u2026</div>';
         var pending = helpTopics.length;
-        if (pending === 0) { helpContent.innerHTML = ''; helpSearchCount.textContent = t('misc.help.found0'); return; }
+        if (pending === 0) { helpContent.innerHTML = ''; helpSearchCount.textContent = '0 found'; return; }
         var allResults = [];
         helpTopics.forEach(function(t, idx) {
           _ensureTopicCached(idx, function(html) {
@@ -3936,11 +3962,11 @@
       function _renderGlobalResults(term, results) {
         var re; try { re = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'); } catch(e) { return; }
         if (results.length === 0) {
-          helpContent.innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + t('misc.help.noResultsFound') + '</p>';
-          helpSearchCount.textContent = t('misc.help.found0');
+          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>';
+          helpSearchCount.textContent = '0 found';
           return;
         }
-        helpSearchCount.textContent = results.length + (results.length === 1 ? ' ' + t('misc.help.topic') : ' ' + t('misc.help.topics'));
+        helpSearchCount.textContent = results.length + (results.length === 1 ? ' topic' : ' topics');
         var html = '<div class="gs-results">';
         results.forEach(function(r) {
           html += '<div class="gs-item" data-idx="' + r.idx + '">';
@@ -3958,7 +3984,7 @@
             var idx = parseInt(el.getAttribute('data-idx'), 10);
             helpSearchGlobal.checked = false;
             _globalMode = false;
-            helpSearch.placeholder = t('misc.apikeys.searchInTopic');
+            helpSearch.placeholder = 'Search in topic\u2026';
             loadTopic(idx);
           });
         });
@@ -3979,7 +4005,7 @@
       helpSearchDn.addEventListener('click', function() { _gotoMark(_sIdx + 1); });
       helpSearchGlobal.addEventListener('change', function() {
         _globalMode = helpSearchGlobal.checked;
-        helpSearch.placeholder = _globalMode ? t('misc.apikeys.searchAllTopics') : t('misc.apikeys.searchInTopic');
+        helpSearch.placeholder = _globalMode ? 'Search all topics\u2026' : 'Search in topic\u2026';
         var term = helpSearch.value.trim();
         if (_globalMode) {
           _showGlobalResults(term);
@@ -4023,7 +4049,7 @@
       }
 
       function loadHelpIndex(keyword) {
-        helpTocList.innerHTML = '<div class="help-loading">' + t('common.loading') + '</div>';
+        helpTocList.innerHTML = '<div class="help-loading">Loading...</div>';
         fetch(docsBase + '/docs/index?lang=' + helpLang, { credentials: 'same-origin' })
           .then(function (r) { return r.json(); })
           .then(function (data) {
@@ -4044,7 +4070,7 @@
             }
           })
           .catch(function () {
-            helpTocList.innerHTML = '<div class="help-loading">' + t('misc.help.failedLoadTopics') + '</div>';
+            helpTocList.innerHTML = '<div class="help-loading">Failed to load topics.</div>';
           });
       }
 
@@ -4067,7 +4093,7 @@
         var t = helpTopics[idx];
         if (!t) return;
         _rawHtml = null; _sMarks = []; _sIdx = -1; helpSearchCount.textContent = '';
-        helpContent.innerHTML = '<div class="help-loading">' + t('common.loading') + '</div>';
+        helpContent.innerHTML = '<div class="help-loading">Loading...</div>';
         fetch(docsBase + '/docs/content?file=' + encodeURIComponent(t.file) + '&lang=' + helpLang, { credentials: 'same-origin' })
           .then(function (r) { return r.json(); })
           .then(function (d) {
@@ -4077,27 +4103,21 @@
             helpContent.scrollTop = 0;
             var st = helpSearch.value.trim(); if (st) _applySearch(st);
           })
-          .catch(function () { helpContent.innerHTML = '<div class="help-loading">' + t('misc.help.failedLoadContent') + '</div>'; });
+          .catch(function () { helpContent.innerHTML = '<div class="help-loading">Failed to load content.</div>'; });
       }
 
       helpFilter.addEventListener('input', renderToc);
       helpLangEN.addEventListener('click', function () {
         if (helpLang === 'EN') return;
-        helpLang = 'EN'; helpLangEN.classList.add('active'); helpLangDE.classList.remove('active'); helpLangZH.classList.remove('active');
+        helpLang = 'EN'; helpLangEN.classList.add('active'); helpLangDE.classList.remove('active');
         _topicCache = {};
-        helpSel = 0; loadHelpIndex('api_keys');
+        loadHelpIndex((helpTopics[helpSel] && helpTopics[helpSel].file) || ('api_keys'));
       });
       helpLangDE.addEventListener('click', function () {
         if (helpLang === 'DE') return;
-        helpLang = 'DE'; helpLangDE.classList.add('active'); helpLangEN.classList.remove('active'); helpLangZH.classList.remove('active');
+        helpLang = 'DE'; helpLangDE.classList.add('active'); helpLangEN.classList.remove('active');
         _topicCache = {};
-        helpSel = 0; loadHelpIndex('api_keys');
-      });
-      helpLangZH.addEventListener('click', function () {
-        if (helpLang === 'ZH') return;
-        helpLang = 'ZH'; helpLangZH.classList.add('active'); helpLangEN.classList.remove('active'); helpLangDE.classList.remove('active');
-        _topicCache = {};
-        helpSel = 0; loadHelpIndex('api_keys');
+        loadHelpIndex((helpTopics[helpSel] && helpTopics[helpSel].file) || ('api_keys'));
       });
       document.getElementById('help-close').addEventListener('click', function () {
         helpOvl.classList.remove('visible');
@@ -4124,8 +4144,9 @@
 
             /* Expose opener for the shared Guide button handler */
             window._openApiKeysHelp = function () {
-                window.location.href = '/api/help/main_page?topic=20_api_keys';
-            };
+        if (!window.PBGuiSharedHelp || typeof window.PBGuiSharedHelp.open !== 'function') return;
+        window.PBGuiSharedHelp.open('api_keys');
+      };
             window.PBGUI_HELP_OPENER = window._openApiKeysHelp;
             window.PBGUI_AI_PAGE_CONTEXT = function () {
                 return {
@@ -4139,7 +4160,7 @@
     <!-- ── Shared nav bar ── -->
     <script>
     window.PBGUI_NAV_CONFIG = {
-        subtitle: (window.PBGuiI18n ? PBGuiI18n.t('misc.apikeys.subtitle') : 'API KEYS'),
+        subtitle: 'API KEYS',
         current:  'system_api_keys',
         authenticated: true,
         apiBase:  API_BASE,
@@ -4148,7 +4169,7 @@
     };
     </script>
     <script src="/app/js/shared_help_overlay.js?v=9"></script>
-    <script src="/app/js/pbgui_icons.js?v=1"></script>
+<script src="/app/js/pbgui_icons.js?v=1"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 </body>
 </html>

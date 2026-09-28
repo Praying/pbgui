@@ -28,6 +28,8 @@ interface ChatToolbarProps {
   models: ModelInfo[];
   effort: string;
   effortVariants: ReasoningVariant[];
+  serviceTier: string;
+  serviceTierVariants: ReasoningVariant[];
   transitioning: boolean;
   busy: boolean;
   conversationId: string;
@@ -39,6 +41,7 @@ const emit = defineEmits<{
   'update:providerId': [value: string];
   'update:modelId': [value: string];
   'update:effort': [value: string];
+  'update:serviceTier': [value: string];
   providerChange: [];
   modelChange: [];
   refreshHealth: [];
@@ -52,6 +55,7 @@ const PROVIDER_LABELS: Array<[string, string]> = [
   ['chatgpt', 'ChatGPT'],
   ['opencode-zen', 'OpenCode Zen'],
   ['opencode-go', 'OpenCode Go'],
+  ['openrouter', 'OpenRouter'],
 ];
 
 const connectedProviders = computed(() => PROVIDER_LABELS.filter(([id]) => (props.providers[id] || {}).connected));
@@ -60,6 +64,7 @@ const freeModels = computed(() => props.models.filter((model) => model.free));
 const standardModels = computed(() => props.models.filter((model) => !model.free));
 
 const effortSupported = computed(() => props.effortVariants.length > 0);
+const serviceTierSupported = computed(() => props.serviceTierVariants.length > 0);
 
 function modelLabel(model: ModelInfo): string {
   const health = model.health && model.health.status ? ' · ' + String(model.health.status).replace(/_/g, ' ') : '';
@@ -98,6 +103,10 @@ function onModelSelect(value: unknown): void {
 
 function onEffortSelect(value: unknown): void {
   emit('update:effort', String(value ?? ''));
+}
+
+function onServiceTierSelect(value: unknown): void {
+  emit('update:serviceTier', String(value ?? ''));
 }
 </script>
 
@@ -170,6 +179,20 @@ function onEffortSelect(value: unknown): void {
             :title="String(variant.description || '')"
           >
             {{ variant.label || variant.id }}
+          </SelectItem>
+        </SelectContent>
+      </SelectRoot>
+    </template>
+
+    <template v-if="serviceTierSupported">
+      <span id="service-tier-select-label" class="text-xs text-secondary">{{ t('ai.chat.speed') }}</span>
+      <SelectRoot :model-value="serviceTier" :disabled="transitioning || busy" @update:model-value="onServiceTierSelect">
+        <SelectTrigger class="w-[125px]" aria-labelledby="service-tier-select-label">
+          <span>{{ serviceTierVariants.find((tier) => tier.id === serviceTier)?.label || t('ai.chat.standardSpeed') }}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="tier in serviceTierVariants" :key="tier.id" :value="tier.id" :title="String(tier.description || '')">
+            {{ tier.label || tier.id }}
           </SelectItem>
         </SelectContent>
       </SelectRoot>

@@ -789,6 +789,7 @@ def test_all_timeranges_button_stays_enabled_without_sweep_plan() -> None:
         const el = id => controls[id];
         const pruneSelectionSet = () => {{}};
         const syncSelectedParetoScenarios = () => {{}};
+        const persistParetoSelection = () => {{}};
         const state = {{
           selectedParetos: new Set(['/candidate.json']),
           selectedResultPath: '/result',
@@ -1347,10 +1348,10 @@ def test_pb8_gpu_editor_uses_the_standard_eight_column_responsive_grid() -> None
     section = page.split("id=\"optimize-gpu-section\"", 1)[1].split("id=\"optimize-pymoo-section\"", 1)[0]
 
     for heading in (
-        "Automatic sizing",
+        "Population &amp; dispatch",
         "Exact validation &amp; checkpointing",
         "Drift safety",
-        "Successive halving",
+        "Optional search method (not GPU sizing)",
     ):
         assert heading in section
     assert "justify-content:space-between" not in section
@@ -1383,6 +1384,39 @@ def test_pb8_gpu_editor_uses_the_standard_eight_column_responsive_grid() -> None
         call = section.split("'" + field + "'", 1)[1].split("\n", 1)[0]
         assert call.rstrip().endswith(", 1)") or ", 1, optimizeGpuAutoPlaceholder(" in call
 
+
+
+def test_optional_staged_history_controls_do_not_look_like_vast_gpu_sizing() -> None:
+    """Only local, enabled staged-history search should expose its three parameters."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    function = _page_function(page, "updateOptimizeGpuHalvingFields")
+    _run_node(textwrap.dedent(f"""
+        const assert = require('node:assert/strict');
+        const nodes = Object.fromEntries([
+          'opted-gpu-halving-heading', 'opted-gpu-halving-mobile-heading',
+          'opted-gpu-halving-switch', 'opted-gpu-halving-fields',
+          'opted-gpu-halving-cloud-note'
+        ].map(id => [id, {{style: {{display: ''}}}}]));
+        nodes['opted-gpu-halving-enabled'] = {{checked: false}};
+        nodes['opted-execution'] = {{value: 'vast'}};
+        const el = id => nodes[id] || null;
+        {function}
+        updateOptimizeGpuHalvingFields();
+        assert.equal(nodes['opted-gpu-halving-switch'].style.display, 'none');
+        assert.equal(nodes['opted-gpu-halving-fields'].style.display, 'none');
+        nodes['opted-execution'].value = 'local';
+        updateOptimizeGpuHalvingFields();
+        assert.equal(nodes['opted-gpu-halving-switch'].style.display, '');
+        assert.equal(nodes['opted-gpu-halving-fields'].style.display, 'none');
+        nodes['opted-gpu-halving-enabled'].checked = true;
+        updateOptimizeGpuHalvingFields();
+        assert.equal(nodes['opted-gpu-halving-fields'].style.display, 'contents');
+        nodes['opted-execution'].value = 'vast';
+        updateOptimizeGpuHalvingFields();
+        assert.equal(nodes['opted-gpu-halving-fields'].style.display, 'none');
+        assert.equal(nodes['opted-gpu-halving-cloud-note'].style.display, '');
+    """))
+    assert "if (halving.enabled) {\n    halving.history_fractions" in page
 
 def test_pb8_gpu_dashboard_uses_exact_budget_and_log_activity() -> None:
     """GPU progress should use exact validations and the API log section."""
@@ -2155,6 +2189,7 @@ def test_pb8_default_bounds_do_not_limit_slider_minima() -> None:
         function el() {{ return null; }}
         function getOptimizeBoundSuffix(key) {{ return optimizeEditorAdapter.boundSuffix(key); }}
         function getOptimizeBoundRequiredMin() {{ return null; }}
+        function getOptimizeBoundRequiredMax() {{ return null; }}
 
         {functions}
 
@@ -2178,6 +2213,69 @@ def test_pb8_default_bounds_do_not_limit_slider_minima() -> None:
     _run_node(script)
     assert "if (maxPendingInput)" in page
     assert "el('opted-max-pending-starting-evals').value =" not in page
+
+
+def test_pb8_invalid_optimize_endpoints_are_clamped_even_with_runtime_metadata() -> None:
+    """Imported PB8 metadata and manually entered extremes stay inside valid ranges."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    functions = "\n\n".join(_page_function(page, name) for name in (
+        "isOptimizeHslRedThresholdBound", "getOptimizeHslRedThresholdRequiredMin",
+        "getOptimizeBoundRequiredMin", "getOptimizeBoundRequiredMax",
+        "countOptimizeDecimals", "getOptimizeStepFromDecimals",
+        "getOptimizeRoundToSignificantDigits", "getOptimizeBoundPrecisionFromStep",
+        "getOptimizeBoundMeta", "formatOptimizeBoundValue",
+        "optimizeBoundNumbersMatch", "constrainOptimizeBoundEntry",
+    ))
+    script = textwrap.dedent(f"""
+        const assert = require('node:assert/strict');
+        const fs = require('node:fs');
+        global.window = {{}};
+        eval(fs.readFileSync('frontend/js/optimize_editor_adapter.js', 'utf8'));
+        const optimizeEditorAdapter = window.PBGuiOptimizeEditorAdapter.create('v8', {{}});
+        const OPT_HSL_RED_THRESHOLD_MIN = 0.001;
+        const OPT_BOUNDS_META = {{
+          n_positions:[0,100,1,1,0], unstuck_ema_dist:[-1,1,0.001,0.00001,3],
+          hsl_red_threshold:[0,1,0.01,0.01,2], volume_ema_span_1m:[0,100,1,1,0]
+        }};
+        function el() {{ return null; }}
+        function getOptimizeBoundGroup(key) {{ return optimizeEditorAdapter.boundGroup(key); }}
+        function getOptimizeBoundSuffix(key) {{ return optimizeEditorAdapter.boundSuffix(key); }}
+        function isOptimizeHslEnabledForSide() {{ return true; }}
+        {functions}
+        function checked(key, low, high) {{
+          const entry={{key,lowValue:low,highValue:high,stepValue:0,lowText:String(low),highText:String(high)}};
+          constrainOptimizeBoundEntry(entry);
+          return entry;
+        }}
+        assert.equal(checked('long.risk.unstuck_ema_dist',-1,0).lowValue,-0.99);
+        assert.equal(checked('short.risk.unstuck_ema_dist',0,1).highValue,0.99);
+        assert.equal(checked('long.risk.n_positions',0,10).lowValue,1);
+        assert.equal(checked('long.forager.volume_ema_span_1m',0,20).lowValue,1);
+        assert.equal(checked('long.hsl.red_threshold',0,1).lowValue,0.001);
+        assert.equal(checked('long.hsl.red_threshold',0,1).highValue,0.999);
+        assert.equal(checked('long.hsl.red_threshold',0,1).highText,'0.999');
+    """)
+    _run_node(script)
+
+
+def test_pb7_imported_position_bounds_require_positive_counts() -> None:
+    """Legacy flat PB7 zero-position bounds are constrained on editor load."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    functions = "\n\n".join(_page_function(page, name) for name in (
+        "getOptimizeBoundRequiredMin", "getOptimizeBoundRequiredMax",
+    ))
+    _run_node(textwrap.dedent(f"""
+        const assert = require('node:assert/strict');
+        const optimizeEditorAdapter = {{isV8:false}};
+        const getOptimizeBoundSuffix = key => key.replace(/^(long|short)_/, '');
+        const getOptimizeBoundGroup = key => key.startsWith('long_') ? 'long' : 'short';
+        const getOptimizeHslRedThresholdRequiredMin = () => null;
+        const isOptimizeHslRedThresholdBound = () => false;
+        {functions}
+        assert.equal(getOptimizeBoundRequiredMin('long_n_positions'),1);
+        assert.equal(getOptimizeBoundRequiredMin('long_unstuck_ema_dist'),-0.99);
+        assert.equal(getOptimizeBoundRequiredMax('short_unstuck_ema_dist'),0.99);
+    """))
 
 
 def test_pb8_forager_ema_span_sliders_require_positive_values() -> None:
@@ -2544,6 +2642,7 @@ def test_switching_result_sets_clears_stale_paretos_before_loading() -> None:
         const deferred = [];
         function apiFetch(path) {{ return new Promise((resolve) => deferred.push({{path, resolve}})); }}
         function normalizeParetoStatistic(value) {{ return value || 'mean'; }}
+        function restoreParetoSelection() {{}}
         function clearParetoMeta() {{ state.paretoMode = 'none'; }}
         function applyParetoMeta(meta) {{ state.paretoMode = meta.mode || 'unknown'; }}
         function persistSelectedOptimizeResult() {{}}

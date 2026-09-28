@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
 import { Button } from '@/shared/components/ui/button';
@@ -9,6 +9,7 @@ import { Label } from '@/shared/components/ui/label';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { queueVastConfig } from '../lib/vastApi';
 import { isOfferCompatible } from '../lib/vastModel';
+import { dialogsConfirm } from '../../ai_chat/lib/dialogs';
 import type { VastHostProfile } from '../lib/vastTypes';
 import VastHostsPanel from './VastHostsPanel.vue';
 import VastPerformancePanel from './VastPerformancePanel.vue';
@@ -61,6 +62,13 @@ interface VastWorker {
   [key: string]: unknown;
 }
 
+interface VastCalibrationInfo {
+  calibration_worker?: boolean;
+  configurable_worker?: boolean;
+  match?: { population_size?: number; batch_size?: number; max_dispatch_candidate_bars?: number };
+  error?: string;
+}
+
 interface VastPreferences {
   gpu_name: string;
   max_price: number;
@@ -102,6 +110,17 @@ const queuePaused = ref(false);
 const hosts = ref<VastHostProfile[]>([]);
 const blockedMachineIds = ref<number[]>([]);
 const activeView = ref<'offers' | 'hosts' | 'performance'>('offers');
+const calibrationInfo = ref<VastCalibrationInfo | null>(null);
+const calibrationLoading = ref(false);
+const calibrationStarting = ref(false);
+const calibrationError = ref('');
+const calibrationPreset = ref('balanced');
+const calibrationStartPopulation = ref(4096);
+const calibrationPopulationStep = ref(4096);
+const calibrationMaximumPopulation = ref(131072);
+const calibrationMinimumGain = ref(10);
+const calibrationTimeoutSeconds = ref(390);
+let calibrationGeneration = 0;
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 let loadGeneration = 0;
 let loadController: AbortController | undefined;
@@ -138,6 +157,21 @@ const selectedOfferCompatible = computed(() => {
 const activeRental = computed(() => {
   const jobRental = jobs.value.find((job) => job.rental)?.rental;
   return jobRental || worker.value?.rental || null;
+});
+
+const selectedCalibrationOffer = computed(() => {
+  const offer = selectedOffer.value;
+  if (!offer || !offer.machine_id) return null;
+  return {
+    id: Number(offer.id),
+    machine_id: Number(offer.machine_id),
+    gpu_name: String(offer.gpu_name || ''),
+    vram_gb: Number(offer.vram_gb || 0),
+    gpu_mem_bw_gbps: offer.gpu_mem_bw_gbps == null ? null : Number(offer.gpu_mem_bw_gbps),
+    tflops: offer.tflops == null ? null : Number(offer.tflops),
+    price_hour_usd: Number(offer.price_hour_usd || 0),
+    gpu_max_power_watts: offer.gpu_max_power_watts == null ? null : Number(offer.gpu_max_power_watts),
+  };
 });
 
 function valueAsNumber(value: unknown, fallback: number): number {
@@ -262,6 +296,65 @@ async function findOffers(): Promise<void> {
   selectedOfferId.value = '';
 }
 
+async function refreshCalibration(): Promise<void> {
+  const offer = selectedCalibrationOffer.value;
+  const generation = ++calibrationGeneration;
+  calibrationInfo.value = null;
+  calibrationError.value = '';
+  if (!offer) return;
+  calibrationLoading.value = true;
+  try {
+    const result = await apiFetch<VastCalibrationInfo>('/api/vast/calibration/status', {
+      method: 'POST',
+      body: JSON.stringify(offer),
+    });
+    if (generation === calibrationGeneration) calibrationInfo.value = result;
+  } catch (caught) {
+    if (generation === calibrationGeneration) {
+      calibrationError.value = caught instanceof Error ? caught.message : String(caught);
+    }
+  } finally {
+    if (generation === calibrationGeneration) calibrationLoading.value = false;
+  }
+}
+
+async function startCalibration(): Promise<void> {
+  const offer = selectedCalibrationOffer.value;
+  if (!offer || calibrationStarting.value || !calibrationInfo.value?.configurable_worker) return;
+  const confirmed = await dialogsConfirm({
+    title: t('v7optimize.cloudCalibrationConfirmTitle'),
+    message: t('v7optimize.cloudCalibrationConfirmMessage', { gpu: offer.gpu_name }),
+    confirmText: t('v7optimize.cloudRunCalibration'),
+  });
+  if (!confirmed || offer.id !== selectedCalibrationOffer.value?.id) return;
+  calibrationStarting.value = true;
+  calibrationError.value = '';
+  try {
+    await apiFetch('/api/vast/calibration/start-configurable', {
+      method: 'POST',
+      body: JSON.stringify({
+        offer,
+        hours: Number(preferences.hours),
+        budget: Number(preferences.budget),
+        accept_rental_and_cleanup: true,
+        preset: calibrationPreset.value,
+        start_population: Number(calibrationStartPopulation.value),
+        population_step: Number(calibrationPopulationStep.value),
+        max_population: Number(calibrationMaximumPopulation.value),
+        min_scale_gain: Number(calibrationMinimumGain.value) / 100,
+        case_timeout_seconds: Number(calibrationTimeoutSeconds.value),
+      }),
+    });
+    message.value = t('v7optimize.cloudCalibrationQueued');
+    await loadData();
+    await refreshCalibration();
+  } catch (caught) {
+    calibrationError.value = caught instanceof Error ? caught.message : String(caught);
+  } finally {
+    calibrationStarting.value = false;
+  }
+}
+
 async function prepareJob(): Promise<void> {
   if (!selectedConfig.value) return;
   await runRequest(
@@ -363,6 +456,7 @@ onMounted(() => {
   void loadData();
   refreshTimer = setInterval(() => { if (isOpen.value) void loadData(); }, 15000);
 });
+watch(selectedOfferId, () => { void refreshCalibration(); });
 onBeforeUnmount(() => {
   if (refreshTimer) clearInterval(refreshTimer);
   loadGeneration += 1;
@@ -421,6 +515,30 @@ onBeforeUnmount(() => {
       <section v-if="activeView === 'offers' && offers.length" class="grid gap-2 rounded-md border border-border-subtle bg-page/35 p-3">
         <div class="flex items-center justify-between gap-2"><h3 class="text-md font-semibold text-primary">{{ t('v7optimize.cloudOffers') }}</h3><label class="flex items-center gap-2 text-xs text-secondary"><Checkbox v-model="showIncompatible" />{{ t('v7optimize.cloudShowIncompatible') }}</label></div>
         <div class="max-h-64 overflow-auto rounded-md border border-border-subtle"><table class="w-full min-w-[760px] text-left text-xs"><thead class="sticky top-0 bg-panel text-secondary"><tr><th class="p-2">{{ t('v7optimize.cloudGpuName') }}</th><th class="p-2">{{ t('v7optimize.cloudVram') }}</th><th class="p-2">TFLOPS</th><th class="p-2">{{ t('v7optimize.cloudPrice') }}</th><th class="p-2">{{ t('v7optimize.cloudLocation') }}</th><th class="p-2">{{ t('v7optimize.cloudHostHistory') }}</th><th class="p-2">{{ t('v7backtest.actions') }}</th></tr></thead><tbody><tr v-for="offer in offers" :key="String(offer.id)" class="cursor-pointer border-t border-border-subtle" :class="selectedOfferId === String(offer.id) ? 'bg-accent/10 border-l-[3px] border-l-accent' : ''" :aria-selected="selectedOfferId === String(offer.id)" tabindex="0" @click="selectedOfferId = String(offer.id)" @keydown.enter.prevent="selectedOfferId = String(offer.id)" @keydown.space.prevent="selectedOfferId = String(offer.id)"><td class="p-2">{{ offer.gpu_name || '-' }}</td><td class="p-2">{{ offer.vram_gb ?? '-' }} GB</td><td class="p-2">{{ offer.tflops ?? '-' }}</td><td class="p-2">{{ formatMoney(offer.price_hour_usd) }}/h</td><td class="p-2">{{ offer.location || '-' }}<span v-if="offer.machine_id" class="block text-micro text-muted">{{ t('v7optimize.cloudMachineNumber', { id: offer.machine_id }) }}</span></td><td class="p-2">{{ offer.host_history?.working ? t('v7optimize.cloudHostWorking') : offer.host_history?.used ? t('v7optimize.cloudHostPreviouslyUsed') : t('v7optimize.cloudHostNoRecordedUse') }}<span v-if="offer.host_history?.preferred" class="block text-micro text-accent-soft">{{ t('v7optimize.cloudHostPreferred') }}</span></td><td class="p-2"><div v-if="offer.machine_id" class="flex gap-1"><Button type="button" variant="ghost" size="sm" :disabled="saving" @click.stop="setHostPreference(offer.machine_id, 'preferred', !offer.host_history?.preferred)">{{ offer.host_history?.preferred ? t('v7optimize.cloudRemovePreference') : t('v7optimize.cloudPreferHost') }}</Button><Button type="button" variant="danger" size="sm" :disabled="saving" @click.stop="setHostBlock(offer.machine_id, true)">{{ t('v7optimize.cloudBlockHost') }}</Button></div></td></tr></tbody></table></div>
+      </section>
+
+      <section v-if="activeView === 'offers' && selectedOffer" class="grid gap-3 rounded-md border border-border-subtle bg-page/35 p-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-md font-semibold text-primary">{{ t('v7optimize.cloudCalibrationTitle') }}</h3>
+            <p class="mt-1 text-xs text-secondary">{{ t('v7optimize.cloudCalibrationDescription') }}</p>
+          </div>
+          <span v-if="calibrationLoading" class="text-xs text-secondary">{{ t('common.loading') }}</span>
+          <span v-else-if="calibrationInfo?.match" class="text-xs text-success">{{ t('v7optimize.cloudCalibrationMatch', { population: calibrationInfo.match.population_size || '-' }) }}</span>
+        </div>
+        <p v-if="calibrationError" class="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger-soft" role="alert">{{ calibrationError }}</p>
+        <p v-else-if="calibrationInfo && !calibrationInfo.configurable_worker" class="text-xs text-warning-soft">{{ t('v7optimize.cloudCalibrationWorkerUnavailable') }}</p>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div class="grid gap-1.5"><Label for="vast-calibration-preset">{{ t('v7optimize.cloudCalibrationPreset') }}</Label><SelectRoot id="vast-calibration-preset" v-model="calibrationPreset"><SelectTrigger><span>{{ calibrationPreset }}</span></SelectTrigger><SelectContent><SelectItem value="balanced">balanced</SelectItem><SelectItem value="fast">fast</SelectItem><SelectItem value="thorough">thorough</SelectItem></SelectContent></SelectRoot></div>
+          <div class="grid gap-1.5"><Label for="vast-calibration-start">{{ t('v7optimize.cloudCalibrationStartPopulation') }}</Label><Input id="vast-calibration-start" v-model.number="calibrationStartPopulation" type="number" min="1024" max="131072" step="512" /></div>
+          <div class="grid gap-1.5"><Label for="vast-calibration-step">{{ t('v7optimize.cloudCalibrationPopulationStep') }}</Label><Input id="vast-calibration-step" v-model.number="calibrationPopulationStep" type="number" min="512" max="32768" step="512" /></div>
+          <div class="grid gap-1.5"><Label for="vast-calibration-maximum">{{ t('v7optimize.cloudCalibrationMaximumPopulation') }}</Label><Input id="vast-calibration-maximum" v-model.number="calibrationMaximumPopulation" type="number" min="4096" max="131072" step="512" /></div>
+          <div class="grid gap-1.5"><Label for="vast-calibration-timeout">{{ t('v7optimize.cloudCalibrationTimeout') }}</Label><Input id="vast-calibration-timeout" v-model.number="calibrationTimeoutSeconds" type="number" min="390" max="7200" step="30" /></div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="warning" :disabled="saving || calibrationStarting || !calibrationInfo?.configurable_worker" @click="startCalibration">{{ calibrationStarting ? t('v7optimize.cloudCalibrationStarting') : t('v7optimize.cloudRunCalibration') }}</Button>
+          <span class="text-xs text-secondary">{{ t('v7optimize.cloudCalibrationGain', { gain: calibrationMinimumGain }) }}</span>
+        </div>
       </section>
 
       <section v-if="activeView === 'offers'" class="grid gap-3 rounded-md border border-border-subtle bg-page/35 p-3">

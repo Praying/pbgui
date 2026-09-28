@@ -518,9 +518,10 @@ function _suiteShowCoinDd(id, filter) {
 }
 
 /* ── Main render ────────────────────────────────────────────── */
-function _suiteRender() {
+function _suiteRender(preserveVisual) {
   var el = document.getElementById(_suiteState.containerId);
   if (!el) return;
+  var preservedVisualHost = preserveVisual ? el.querySelector('#suite-visual-host') : null;
   var existingExpander = document.getElementById('exp-suite');
   if (existingExpander) _suiteState.expanded = existingExpander.classList.contains('open');
 
@@ -568,11 +569,15 @@ function _suiteRender() {
   }
 
   h += '\x3C/div>\x3C/div>';
+  if (preservedVisualHost) preservedVisualHost.remove();
   el.innerHTML = h;
   if (typeof window !== 'undefined' && window.PBGuiScenarioVisual) {
-    window.PBGuiScenarioVisual.dispose();
-    var visualHost = document.getElementById('suite-visual-host');
-    if (visualHost) _suiteMountVisual(visualHost);
+    var visualHost = el.querySelector('#suite-visual-host');
+    if (preservedVisualHost && visualHost) visualHost.replaceWith(preservedVisualHost);
+    else {
+      window.PBGuiScenarioVisual.dispose();
+      if (visualHost) _suiteMountVisual(visualHost);
+    }
   }
   if (_suiteState.enabled && _suiteState.editIdx >= 0) {
     var current = _suiteState.scenarios[_suiteState.editIdx] || {};
@@ -810,14 +815,14 @@ async function _suiteConfirmScenarioReplacement(action, confirmText) {
   return accepted && scenarios === _suiteState.scenarios && editIdx === _suiteState.editIdx;
 }
 
-async function _suiteApplyScenarioPreview() {
+async function _suiteApplyScenarioPreview(preserveVisual) {
   var preview = _suiteState.scenarioPreview;
-  if (!preview || !Array.isArray(preview.training_scenarios)) return;
+  if (!preview || !Array.isArray(preview.training_scenarios)) return false;
   if (_suiteScenarioContextSignature(_suiteScenarioContext()) !== _suiteState.scenarioPreviewContext) {
     toast('Base dates or exchanges changed. Preview the scenario template again before applying.', 'err');
     return;
   }
-  if (!(await _suiteConfirmScenarioReplacement('Applying generated training scenarios', 'Apply scenarios'))) return;
+  if (!(await _suiteConfirmScenarioReplacement('Applying generated training scenarios', 'Apply scenarios'))) return false;
   if (preview !== _suiteState.scenarioPreview || _suiteScenarioContextSignature(_suiteScenarioContext()) !== _suiteState.scenarioPreviewContext) {
     toast('Scenario preview changed. Preview the scenario template again before applying.', 'err');
     return;
@@ -831,8 +836,9 @@ async function _suiteApplyScenarioPreview() {
   _suiteState.applyingGeneratedTemplate = true;
   _suiteNotifyStructuredSync();
   _suiteState.applyingGeneratedTemplate = false;
-  _suiteRender();
+  _suiteRender(preserveVisual);
   toast('Applied ' + _suiteState.scenarios.length + ' generated training scenarios', 'ok');
+  return true;
 }
 
 /* ── Toggle enabled ─────────────────────────────────────────── */
@@ -1340,7 +1346,8 @@ function _suiteMountVisual(host) {
   var context = _suiteScenarioContext();
   _suiteState.visualContextSignature = _suiteScenarioContextSignature(context);
   window.PBGuiScenarioVisual.mount(host, {
-    apiBase:_suiteState.apiBase, context:context, windows:_suiteVisualWindows(),
+    apiBase:_suiteState.apiBase, context:context, referenceExchanges:_suiteState.exchanges,
+    windows:_suiteVisualWindows(),
     settings:function(){return _suiteCaptureScenarioGeneratorDraft() || {};},
     coverage:function() {
       var button=document.getElementById('opted-sidebar-ohlcv-preflight-btn');
@@ -1367,11 +1374,12 @@ function _suiteMountVisual(host) {
       _suiteState.scenarioPreview=preview;
       _suiteState.scenarioPreviewContext=signature;
       _suiteState.scenarioGeneratorDraft=Object.assign({},draft,{windows:(preview.parameters && preview.parameters.windows) || windows});
-      await _suiteApplyScenarioPreview();
+      if (!(await _suiteApplyScenarioPreview(true))) return false;
       if(_suiteState.scenarioTemplate!==null && JSON.stringify(_suiteState.scenarios)===JSON.stringify(preview.training_scenarios)){
         var table=document.querySelector('#suite-container .suite-scenarios-table');
         if(table)table.scrollIntoView({block:'nearest'});
       }else throw new Error('Scenarios were not applied. Close the individual scenario editor and try again.');
+      return true;
     }
   });
 }

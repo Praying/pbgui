@@ -3,11 +3,12 @@ import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
-import type { ChatgptProfile, ProviderInfo, ProviderUsage } from '../composables/useAiChat';
+import type { ChatgptProfile, ProviderInfo, ProviderUsage, ProviderUsageSummary } from '../composables/useAiChat';
 
 interface ProviderPanelProps {
   chatgpt: ProviderInfo;
   go: ProviderInfo;
+  openrouter: ProviderInfo;
   transitioning: boolean;
   loginVisible: boolean;
   loginInstructions: string;
@@ -16,6 +17,8 @@ interface ProviderPanelProps {
   profiles: ChatgptProfile[];
   profileId: string;
   usage: ProviderUsage;
+  goUsage: ProviderUsageSummary | null;
+  openrouterUsage: ProviderUsageSummary | null;
 }
 
 const props = defineProps<ProviderPanelProps>();
@@ -26,12 +29,15 @@ const emit = defineEmits<{
   chatgptDisconnect: [];
   goConnect: [];
   goDisconnect: [];
+  openrouterConnect: [];
+  openrouterDisconnect: [];
   profileChange: [profile: string];
 }>();
 
 const { t } = useI18n();
 
 const goKey = defineModel<string>('goKey', { default: '' });
+const openrouterKey = defineModel<string>('openrouterKey', { default: '' });
 
 function usageLabel(windowDurationMinutes: number | undefined): string {
   if (windowDurationMinutes === 300) return '5h';
@@ -170,6 +176,36 @@ function onGoConnect(): void {
         :disabled="transitioning"
         @click="emit('goDisconnect')"
       >{{ t('ai.chat.disconnect') }}</Button>
+      <p v-if="props.go.connected && props.goUsage" class="mt-2 text-xs text-secondary">
+        {{ t('ai.chat.providerUsageAvailable') }}
+      </p>
+    </section>
+
+    <!-- OpenRouter -->
+    <section class="rounded-lg border border-border-subtle bg-panel p-4 shadow-panel">
+      <div class="mb-2 flex items-center justify-between gap-2">
+        <span class="font-bold text-primary">OpenRouter</span>
+        <span class="inline-flex items-center gap-1.5 text-micro" :class="openrouter.connected ? 'text-success' : 'text-secondary'">
+          <span class="inline-block h-[7px] w-[7px] rounded-full" :class="openrouter.connected ? 'bg-success shadow-[0_0_8px_rgb(var(--success-rgb)/.35)]' : 'bg-secondary'"></span>
+          {{ openrouter.connected ? t('ai.chat.connected') : t('ai.chat.notConnected') }}
+        </span>
+      </div>
+      <p class="mb-2.5 text-xs text-secondary">{{ t('ai.chat.openrouterHelp') }}</p>
+      <p v-if="props.openrouter.connected && props.openrouterUsage" class="mb-2.5 text-xs text-secondary">
+        {{ t('ai.chat.providerUsageAvailable') }}
+      </p>
+      <div v-if="!openrouter.connected" class="flex gap-2">
+        <Input
+          v-model="openrouterKey"
+          type="password"
+          autocomplete="new-password"
+          :placeholder="t('ai.chat.openrouterKeyPlaceholder')"
+          :aria-label="t('ai.chat.openrouterKeyPlaceholder')"
+          class="min-w-0 flex-1"
+        />
+        <Button type="button" variant="primary" class="shrink-0" :disabled="transitioning" @click="emit('openrouterConnect')">{{ t('ai.chat.connect') }}</Button>
+      </div>
+      <Button v-else type="button" variant="danger" class="mt-1.5" :disabled="transitioning" @click="emit('openrouterDisconnect')">{{ t('ai.chat.disconnect') }}</Button>
     </section>
   </div>
 </template>

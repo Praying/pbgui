@@ -182,8 +182,12 @@ Browse all completed backtest results.
 - **Version** dropdown — show PBv7 results, PBv8 results, or both; PBv7 is selected by default on this page
 - **Config** dropdown — filter by config name (exact match)
 - **Search** text field — free-text filter on any column
-- **Columns** — choose visible result columns. **Defaults** restores the established table, while **All** also enables available optional values such as Final Equity and Equity/Balance Difference. Local Results and Archive keep independent browser-local selections.
+- **Columns** — choose visible result columns. **Start Date** and **End Date** show the timeframe saved with each result and are visible by default. **Defaults** restores the standard table, while **All** also enables available optional values such as Final Equity and Equity/Balance Difference. Local Results and Archive keep independent browser-local selections.
 - Click any column header to sort; click again to reverse
+
+Optimize validation rows run from the earliest start date to the latest, with the full timeframe last. The Start Date and End Date columns show dates without time-of-day details.
+
+Collapsed Optimize validation groups use the same one-line columns as an individual backtest. The row shows the full-timerange result’s strategy, coins, exchanges, time, dates, all available metrics, balances, exposure limits, and position counts; the name also shows how many validation results belong to the group. If the full result is unavailable, the row marks this in its name and leaves its metrics empty. Expand the group for individual training and holdout values.
 
 Completed queue jobs now invalidate the cached Results list immediately. If you are already on the Results panel when a backtest finishes, PBGui refreshes the table automatically so the new result appears without having to leave and reopen the panel.
 
@@ -351,3 +355,5 @@ The AI assistant can also open exact managed PB7 backtest resources in this Resu
 When a Suite scenario editor is open, applying a template, resetting to Base, or applying generated training scenarios asks for confirmation before discarding unsaved edits. Cancel keeps the draft intact.
 
 If Add to Run cannot create an editor draft, Backtest shows the server error and keeps the current page open. Navigation occurs only after a valid draft ID is returned.
+
+In the visual scenario editor, zoom stays within the configured dates. A successful retry clears earlier errors, and cancelling scenario replacement leaves the open editor unchanged.

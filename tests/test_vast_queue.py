@@ -1,5 +1,6 @@
 """Offline shared-rental scheduling, queue cancellation and cached transfer contracts."""
 import json
+import time
 from pathlib import Path
 
 import pytest
@@ -41,6 +42,62 @@ def test_two_jobs_share_worker_and_deadline(queue):
     assert queue.store.read(worker)['deadline'] == 10000
     assert not queue.store.read(worker, 'control.json')['cleanup']
     assert worker_step(queue, worker, now=201) == second
+
+
+def test_reserved_rental_profile_can_change_only_before_first_job(queue):
+    """The shared manual rental stores one editable profile until queue start."""
+    from vast_jobs import VastError
+    queue, worker = queue
+    queue.store.update(worker, awaiting_queue_start=True)
+    selected = {'population_size': 6656, 'batch_size': 6656,
+                'max_dispatch_candidate_bars': 4_000_000_000}
+    queue.set_rental_gpu_profile(worker, selected)
+    assert queue.store.read(worker)['rental_gpu_profile'] == selected
+    assert queue.store.read(worker, 'intent.json')['rental_gpu_profile'] == selected
+    queue.set_rental_gpu_profile(worker, None)
+    assert queue.store.read(worker, 'intent.json')['rental_gpu_profile'] is None
+    queue.store.update(worker, awaiting_queue_start=False)
+    with pytest.raises(VastError) as exc:
+        queue.set_rental_gpu_profile(worker, selected)
+    assert exc.value.status == 409
+
+
+def test_reserved_rental_job_profiles_are_bounded_and_target_waiting_jobs(queue):
+    """Manual rental choices persist per job and reject unknown or stale IDs."""
+    from vast_jobs import VastError
+    queue, worker = queue
+    queue.store.update(worker, awaiting_queue_start=True)
+    first = 'b' * 32
+    second = 'c' * 32
+    profiles = {first: {'population_size': 7168, 'batch_size': 7168,
+                        'max_dispatch_candidate_bars': 130_170_880_000},
+                second: {'population_size': 8192, 'batch_size': 8192,
+                         'max_dispatch_candidate_bars': 159_252_480_000}}
+    queue.set_rental_gpu_profile(worker, None, profiles)
+    assert queue.store.read(worker, 'intent.json')['rental_job_gpu_profiles'] == profiles
+    assert queue.store.read(worker)['rental_job_gpu_profiles'] == profiles
+    with pytest.raises(VastError) as exc:
+        queue.set_rental_gpu_profile(worker, None, {'d' * 32: profiles[first]})
+    assert exc.value.status == 409
+    with pytest.raises(VastError) as exc:
+        queue.set_rental_gpu_profile(worker, None, {first: None})
+    assert exc.value.status == 422
+    queue.store.update(first, status='completed')
+    with pytest.raises(VastError) as exc:
+        queue.set_rental_gpu_profile(worker, None, profiles)
+    assert exc.value.status == 409
+    assert queue.store.read(worker, 'intent.json')['rental_job_gpu_profiles'] == profiles
+
+def test_completed_calibration_worker_cleans_up_without_claiming_normal_job(queue):
+    """An isolated calibration rental can never fall through to ordinary queue work."""
+    queue, worker = queue
+    calibration = 'b' * 32
+    queue.store.update(worker, calibration_job_id=calibration, active_job=calibration)
+    queue.store.update(calibration, kind='calibration', status='completed', lease_id=worker)
+    assert worker_step(queue, worker, now=100) is None
+    assert queue.store.read(worker, 'control.json')['cleanup'] is True
+    assert queue.store.read('c' * 32)['status'] == 'ready'
+    assert queue.store.read('c' * 32).get('lease_id') is None
 
 
 def test_idle_timeout_and_new_job_cancel_countdown(queue):
@@ -180,6 +237,7 @@ def test_private_image_blocks_before_any_provider_call(queue, monkeypatch):
     from vast_provider import VastError
     queue, worker = queue
     queue.store.update(worker,rental_state='deletion_verified')
+    monkeypatch.setattr('vast_queue.preflight_local_metadata', lambda *args: None)
     monkeypatch.setattr(vast_jobs,'services_available',lambda:True)
     def unavailable(*args):
         """Simulate an inaccessible public manifest."""
@@ -190,8 +248,10 @@ def test_private_image_blocks_before_any_provider_call(queue, monkeypatch):
         raise AssertionError('Provider called before image verification')
     monkeypatch.setattr(vast_jobs,'VastClient',no_provider)
     with pytest.raises(VastError,match='Image not public'):
-        queue.start({'id':42,'price_hour_usd':.15,'cuda_max_good':13,'disk_gb':40,'cpu_cores':8},1,1,300)
-    assert queue.worker()['rental_state']=='none'
+        queue.start({'id':42,'machine_id':70,'price_hour_usd':.15,'cuda_max_good':13,'disk_gb':40,'cpu_cores':8},1,1,300)
+    assert queue.worker()['id'] == worker
+    assert queue.worker()['rental_state'] == 'deletion_verified'
+    assert not queue.workers()
 
 
 def test_recover_claim_after_controller_crash(queue):
@@ -210,13 +270,14 @@ def test_repeated_start_reuses_authorization_and_reserves_remaining_budget(queue
     import vast_image
     queue, previous = queue
     queue.store.update(previous, rental_state='deletion_verified')
+    monkeypatch.setattr('vast_queue.preflight_local_metadata', lambda *args: None)
     monkeypatch.setattr(vast_jobs, 'services_available', lambda: True)
     monkeypatch.setattr(vast_image, 'require_public_image', lambda image: None)
     monkeypatch.setattr(vast_jobs, 'VastCredentialStore', lambda root: SimpleNamespace(secrets=lambda:{'api_key':'fake','generation':1}))
     monkeypatch.setattr(vast_jobs, 'VastClient', lambda key: SimpleNamespace(account=lambda:{'balance_usd':10}))
     launches=[]
     monkeypatch.setattr(queue.store,'launch_service',lambda identifier,mode:launches.append((identifier,mode)))
-    offer={'id':42,'price_hour_usd':.15,'cuda_max_good':13,'disk_gb':40,'cpu_cores':8,
+    offer={'id':42,'machine_id':70,'price_hour_usd':.15,'cuda_max_good':13,'disk_gb':40,'cpu_cores':8,
            'download_gb_usd':.01,'upload_gb_usd':.01}
     first=queue.start(offer,1,1,300)
     second=queue.start(offer,1,1,300)
@@ -280,6 +341,93 @@ def test_purge_job_history_rejects_lineage_with_active_attempt(queue):
     assert not queue.store.read(original).get('deleted_at')
 
 
+def test_legacy_deleted_jobs_are_purged_without_touching_visible_retry(queue):
+    """Startup recovery removes old tombstones but preserves a visible retry lineage."""
+    from vast_performance import PerformanceHistory
+
+    queue, _ = queue
+    original = 'b' * 32
+    retry = 'c' * 32
+    obsolete = 'd' * 32
+    queue.store.update(original, status='cancelled', deleted_at=1)
+    queue.store.update(retry, requeue_from=original)
+    directory = ensure_private_directory(queue.store.root / 'jobs' / obsolete)
+    write_json(directory / 'state.json', {
+        'id': obsolete, 'kind': 'job', 'status': 'failed',
+        'rental_state': 'none', 'deleted_at': 1, 'created_at': 3,
+    })
+    (directory / 'input.tar.gz').write_bytes(b'old input')
+    history = PerformanceHistory(queue.store.root)
+    history.record({'id': obsolete, 'captured_at': 100, 'source_generation': 1,
+                    'workload': {'fingerprint': obsolete}, 'hardware': {}}, [], None)
+
+    removed, retained, failed = queue.recover_deleted_job_histories()
+
+    assert removed == [obsolete]
+    assert retained == 1
+    assert failed == []
+    assert history.get(obsolete) is None
+    assert not directory.exists()
+    assert queue.store.directory(original).exists()
+    assert queue.store.directory(retry).exists()
+
+    queue.store.update(retry, status='cancelled', deleted_at=2)
+    removed, retained, failed = queue.recover_deleted_job_histories()
+    assert set(removed) == {original, retry}
+    assert retained == 0
+    assert failed == []
+
+
+def test_legacy_deleted_active_job_is_retained(queue):
+    """A stale deletion marker cannot remove a running job."""
+    queue, _ = queue
+    identifier = 'b' * 32
+    queue.store.update(identifier, status='running', deleted_at=1)
+    removed, retained, failed = queue.recover_deleted_job_histories()
+    assert removed == []
+    assert retained == 1
+    assert failed == []
+    assert queue.store.directory(identifier).exists()
+
+def test_deleted_parent_of_completed_retry_is_purged(queue):
+    """A completed visible retry no longer needs the deleted parent's snapshot."""
+    queue, worker = queue
+    original, retry = 'b' * 32, 'c' * 32
+    queue.store.update(original, status='cancelled', deleted_at=1, lease_id=worker)
+    queue.store.update(retry, status='completed', requeue_from=original, lease_id=worker)
+    (queue.store.directory(original) / 'input.tar.gz').write_bytes(b'old input')
+
+    removed, retained, failed = queue.recover_deleted_job_histories()
+
+    assert removed == [original]
+    assert retained == 0
+    assert failed == []
+    assert not (queue.store.root / 'jobs' / original).exists()
+    assert queue.store.directory(retry).exists()
+
+
+def test_closed_unreferenced_workers_are_purged(queue):
+    """Retain visible-job leases and active rentals, but clear a stale current worker."""
+    queue, worker = queue
+    orphan = 'd' * 32
+    directory = ensure_private_directory(queue.store.root / 'jobs' / orphan)
+    write_json(directory / 'state.json', {'id': orphan, 'kind': 'worker',
+               'status': 'completed', 'rental_state': 'deletion_verified', 'created_at': 4})
+    queue.store.update(worker, status='completed', rental_state='deletion_verified')
+    queue.store.update('b' * 32, status='completed', lease_id=orphan)
+    queue.update(selected_offer={'id': 1})
+
+    removed, failed = queue.recover_orphaned_workers()
+
+    assert removed == [worker]
+    assert failed == []
+    assert queue.read()['worker_id'] is None
+    assert queue.read()['selected_offer'] is None
+    assert not (queue.store.root / 'jobs' / worker).exists()
+    assert queue.store.directory(orphan).exists()
+    assert queue.store.directory('b' * 32).exists()
+
+
 def test_purge_job_histories_batches_independent_jobs(queue):
     """Bulk deletion scans and removes independent queue entries together."""
     queue, _ = queue
@@ -290,6 +438,53 @@ def test_purge_job_histories_batches_independent_jobs(queue):
     assert result['purged_ids'] == ['b' * 32, 'c' * 32]
     assert not (queue.store.root / 'jobs' / ('b' * 32)).exists()
     assert not (queue.store.root / 'jobs' / ('c' * 32)).exists()
+
+
+
+@pytest.mark.parametrize('cleanup_fails', [False, True])
+def test_purge_keeps_queue_readable_and_unlocked_during_snapshot_cleanup(queue, monkeypatch, cleanup_fails):
+    """Slow or failed snapshot deletion cannot break polling or block another job."""
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    import shutil
+    from vast_provider import VastError
+
+    queue, worker = queue
+    preparing = queue.store.create_preparation('preparing', 100, 4, False)['id']
+    cleanup_started, release_cleanup = Event(), Event()
+    original_rmtree = shutil.rmtree
+
+    def slow_cleanup(directory):
+        """Pause after removing state, as happens during a large recursive delete."""
+        (directory / 'state.json').unlink()
+        cleanup_started.set()
+        assert release_cleanup.wait(5)
+        if cleanup_fails:
+            raise OSError('Simulated cleanup failure')
+        original_rmtree(directory)
+
+    monkeypatch.setattr('vast_queue.shutil.rmtree', slow_cleanup)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        deletion = executor.submit(queue.purge_job_histories, ['b' * 32, 'c' * 32])
+        try:
+            assert cleanup_started.wait(5)
+            assert {row['id'] for row in queue.store.list()} == {worker, preparing}
+            updated = executor.submit(queue.update, paused=True).result(timeout=2)
+            assert updated['paused'] is True
+            assert queue.store.update(preparing, input_progress={'stage': 'copying'})['status'] == 'preparing'
+        finally:
+            release_cleanup.set()
+        if cleanup_fails:
+            with pytest.raises(VastError, match='could not be removed completely'):
+                deletion.result(timeout=5)
+            monkeypatch.setattr('vast_queue.shutil.rmtree', original_rmtree)
+            assert queue.recover_staged_deletions() == (2, [])
+            assert not list((queue.root / 'jobs').glob('.*.delete-*'))
+        else:
+            assert deletion.result(timeout=5)['purged_ids'] == ['b' * 32, 'c' * 32]
+            assert queue.recover_staged_deletions() == (0, [])
+            assert not list((queue.root / 'jobs').glob('.*.delete-*'))
+    assert {row['id'] for row in queue.store.list()} == {worker, preparing}
 
 
 def test_remove_claimed_job_is_rejected(queue):
@@ -333,7 +528,7 @@ def test_new_dispatch_resets_setup_timer_but_recovery_does_not(queue):
     assert queue.store.read(worker)['deadline'] == 10000
 
 
-def test_manual_rental_waits_for_start_and_then_uses_idle_policy(queue):
+def test_manual_rental_waits_for_start_and_then_uses_idle_policy(queue, monkeypatch):
     """Reservation survives idle timeout but releases normally after the first run."""
     queue, worker = queue
     queue.update(paused=True)
@@ -342,7 +537,8 @@ def test_manual_rental_waits_for_start_and_then_uses_idle_policy(queue):
     assert worker_step(queue, worker, now=1000) is None
     assert not queue.store.read(worker, 'control.json')['cleanup']
     assert queue.store.read(worker)['status'] == 'reserved'
-    queue.update(paused=False)
+    monkeypatch.setattr(queue.store, 'launch_service', lambda *args: None)
+    queue.worker_action(worker, 'start')
     assert worker_step(queue, worker, now=1001) == 'b'*32
     assert queue.store.read(worker)['awaiting_queue_start'] is False
     for item in ('b'*32, 'c'*32):
@@ -374,21 +570,58 @@ def test_manual_rental_can_end_and_cannot_outlive_deadline(queue, stop, now):
     assert queue.store.read(worker, 'control.json')['cleanup']
 
 
+@pytest.mark.parametrize('expired_bundle', [False, True])
+def test_missing_local_metadata_blocks_rental_before_worker_creation(tmp_path, monkeypatch, expired_bundle):
+    """Missing local snapshots and expired bundles both block a paid worker."""
+    import vast_market_cache
+    import vast_queue
+    from vast_provider import VastError
+
+    store = JobStore(tmp_path / 'vast')
+    row = store.create_preparation('offline-cache', 512, 4, False)
+    store.update(row['id'], status='ready', exchanges=['bybit'])
+    input_dir = store.directory(row['id']) / 'input'
+    input_dir.mkdir()
+    manifest = {'files': [{'path': 'ohlcv/bybit/1m/BTC_USDT:USDT/2024-01-01.npy'}]}
+    if expired_bundle:
+        manifest['public_market_cache_mtimes'] = {'bybit': time.time() - 86401}
+    write_json(input_dir / 'manifest.json', manifest)
+    market_root = tmp_path / 'data/coindata'
+    mapping = market_root / 'bybit/mapping.json'
+    mapping.parent.mkdir(parents=True)
+    mapping.write_text(json.dumps([{'coin': 'BTC', 'ccxt_symbol': 'BTC/USDT:USDT',
+                                    'quote': 'USDT', 'swap': True, 'linear': True}]))
+    monkeypatch.setattr(vast_queue, 'PROJECT', tmp_path)
+    monkeypatch.setattr(vast_market_cache, 'MARKET_ROOT', market_root)
+    queue = CloudQueue(store)
+    reason = 'Prepared market cache is invalid or expired' if expired_bundle else 'Local market metadata is missing for bybit'
+    with pytest.raises(VastError, match=reason):
+        queue.start({'id': 42, 'machine_id': 70}, 1, 1, 300)
+    assert queue.worker() is None
+    assert queue.read().get('worker_id') is None
+
+
 def test_rent_without_jobs_starts_services_immediately(tmp_path, monkeypatch):
-    """Manual rental creates a paused supervised worker even with an empty queue."""
+    """Two explicit rentals get separate supervisors and remain reserved."""
     queue = CloudQueue(JobStore(tmp_path/'vast'))
     calls = []
     def start(identifier, offer, hours, budget):
         """Capture the rental boundary without launching real services."""
         calls.append(identifier)
-        return queue.store.update(identifier, rental_state='creation_pending')
+        return queue.store.update(identifier, rental_state='creation_pending', offer_id=offer['id'])
     monkeypatch.setattr(queue.store, 'start', start)
-    first = queue.start({'id':123}, 1, 1, 300, manual=True)
-    second = queue.start({'id':456}, 1, 1, 300, manual=True)
-    assert calls == [first['id']]
-    assert second['id'] == first['id']
-    assert first['awaiting_queue_start']
+    first = queue.start({'id':123, 'machine_id':70}, 1, 1, 300, manual=True)
+    with pytest.raises(Exception, match='reserved GPU rental'):
+        queue.start({'id':456, 'machine_id':71}, 1, 1, 300, manual=True)
+    queue.store.update(first['id'], awaiting_queue_start=False)
+    second = queue.start({'id':456, 'machine_id':71}, 1, 1, 300, manual=True)
+    assert calls == [first['id'], second['id']]
+    assert second['id'] != first['id']
+    assert second['awaiting_queue_start']
     assert queue.read()['paused']
+    queue.store.update(second['id'], awaiting_queue_start=False)
+    with pytest.raises(Exception, match='already rented'):
+        queue.start({'id':456, 'machine_id':71}, 1, 1, 300, manual=True)
 
 
 def test_deleted_worker_finishes_claimed_job_and_preserves_waiting_queue(queue):
@@ -406,6 +639,20 @@ def test_deleted_worker_finishes_claimed_job_and_preserves_waiting_queue(queue):
     assert queue.store.read(worker)['rental_state'] == 'deletion_verified'
     assert queue.read()['paused']
     assert worker_step(queue, worker, now=120) is None
+
+
+def test_rejected_worker_creation_explains_that_no_instance_existed(queue):
+    """A calibration claim receives the provider create failure, not a disappearance."""
+    queue, worker = queue
+    claimed = worker_step(queue, worker, now=100)
+    queue.store.update(worker, rental_state='deletion_verified',
+                       rental_end_reason='provider_creation_failed',
+                       creation_error='Vast request failed (HTTP 400)')
+    assert worker_step(queue, worker, now=110) is None
+    error = queue.store.read(claimed)['error']
+    assert 'Rental was not created: Vast request failed (HTTP 400)' in error
+    assert 'select another host' in error
+    assert 'disappeared' not in error
 
 
 def test_deleted_worker_keeps_collected_results_recoverable(queue):
@@ -446,3 +693,109 @@ def test_guard_closes_missing_shared_rental_without_worker_controller(queue):
     # Re-running verification is idempotent and must not change the waiting job.
     assert guard_step(queue.store, worker, MissingProvider(), intent, '', now=220)
     assert queue.store.read('c'*32)['status'] == 'ready'
+
+
+def test_second_manual_rental_preserves_running_worker_and_waits_for_start(queue, monkeypatch):
+    """Another selected GPU can be rented without pausing or claiming running work."""
+    from types import SimpleNamespace
+    import vast_jobs
+    import vast_image
+
+    queue, original = queue
+    queue.store.update(original, offer_id=10, active_job='b' * 32)
+    queue.store.update('b' * 32, status='running', lease_id=original)
+    from contextlib import contextmanager
+    import vast_queue
+    real_lock = vast_queue.advisory_file_lock
+    queue_lock_held = [False]
+    preflight_calls = []
+
+    @contextmanager
+    def tracked_lock(path):
+        """Expose whether the queue lock is held during a metadata call."""
+        with real_lock(path):
+            if path.name == '.queue-lock':
+                queue_lock_held[0] = True
+            try:
+                yield
+            finally:
+                if path.name == '.queue-lock':
+                    queue_lock_held[0] = False
+
+    def preflight(_store, _jobs, resolve_missing=True):
+        """Slow resolution precedes the lock; the locked pass only validates."""
+        preflight_calls.append((resolve_missing, queue_lock_held[0]))
+
+    monkeypatch.setattr(vast_queue, 'advisory_file_lock', tracked_lock)
+    monkeypatch.setattr(vast_queue, 'preflight_local_metadata', preflight)
+    monkeypatch.setattr(vast_jobs, 'services_available', lambda: True)
+    monkeypatch.setattr(vast_image, 'require_public_image', lambda image: None)
+    monkeypatch.setattr(vast_jobs, 'VastCredentialStore', lambda root: SimpleNamespace(
+        secrets=lambda: {'api_key': 'fake', 'generation': 1}))
+    monkeypatch.setattr(vast_jobs, 'VastClient', lambda key: SimpleNamespace(
+        account=lambda: {'balance_usd': 10}))
+    launches = []
+    monkeypatch.setattr(queue.store, 'launch_service', lambda identifier, mode: launches.append((identifier, mode)))
+    offer = {'id': 42, 'machine_id': 70, 'price_hour_usd': .15, 'cuda_max_good': 13,
+             'disk_gb': 40, 'cpu_cores': 8, 'download_gb_usd': .01, 'upload_gb_usd': .01}
+    second = queue.start(offer, 1, 1, 300, manual=True)
+    assert second['id'] != original
+    assert second['offer_id'] == 42
+    assert queue.read()['paused'] is False
+    assert queue.store.read(original)['active_job'] == 'b' * 32
+    assert queue.store.read('c' * 32)['status'] == 'ready'
+    assert worker_step(queue, second['id']) is None
+    assert queue.store.read('c' * 32)['status'] == 'ready'
+    queue.worker_action(second['id'], 'start')
+    assert worker_step(queue, second['id']) == 'c' * 32
+    assert queue.store.read('c' * 32)['lease_id'] == second['id']
+    assert queue.store.read(original)['active_job'] == 'b' * 32
+    assert preflight_calls == [(True, False), (False, True)]
+    assert len(launches) == 4
+
+
+def test_manual_start_prefers_selected_gpu_with_other_rentals_and_paused_queue(queue, monkeypatch):
+    """A selected rental claims its waiting job even when another GPU keeps the pool paused."""
+    queue, original = queue
+    queue.store.update(original, active_job='b' * 32)
+    queue.store.update('b' * 32, status='running', lease_id=original)
+    selected, other_idle = 'd' * 32, 'e' * 32
+    for identifier in (selected, other_idle):
+        directory = ensure_private_directory(queue.store.root / 'jobs' / identifier)
+        write_json(directory / 'state.json', {
+            'id': identifier, 'kind': 'worker', 'status': 'reserved' if identifier == selected else 'idle',
+            'rental_state': 'active', 'workers': 4, 'deadline': 10000, 'created_at': 3,
+            'input_bytes': 100, 'idle_seconds': 300,
+            'awaiting_queue_start': identifier == selected,
+        })
+        write_json(directory / 'control.json', {'stop': False, 'cleanup': False})
+        intent = queue.store.read(original, 'intent.json')
+        write_json(directory / 'intent.json', {**intent, 'id': identifier})
+    queue.update(paused=True, worker_id=selected)
+    monkeypatch.setattr(queue.store, 'launch_service', lambda *args: None)
+
+    assert worker_step(queue, selected, now=100) is None
+    queue.worker_action(selected, 'start')
+    assert queue.read()['paused'] is False
+    assert queue.read()['start_worker_id'] == selected
+    assert worker_step(queue, other_idle, now=101) is None
+    assert queue.store.read('c' * 32)['status'] == 'ready'
+    assert worker_step(queue, selected, now=102) == 'c' * 32
+    assert queue.store.read('c' * 32)['lease_id'] == selected
+    assert queue.read()['start_worker_id'] is None
+    assert queue.store.read(original)['active_job'] == 'b' * 32
+
+
+def test_global_pause_cancels_selected_gpu_claim(queue, monkeypatch):
+    """An explicit pool pause still prevents a manually started GPU from claiming work."""
+    queue, worker = queue
+    queue.update(paused=True)
+    queue.store.update(worker, awaiting_queue_start=True)
+    monkeypatch.setattr(queue.store, 'launch_service', lambda *args: None)
+    queue.worker_action(worker, 'start')
+    assert queue.read()['start_worker_id'] == worker
+    queue.action('pause')
+    assert queue.read()['paused'] is True
+    assert queue.read()['start_worker_id'] is None
+    assert worker_step(queue, worker, now=100) is None
+    assert queue.store.read('b' * 32)['status'] == 'ready'

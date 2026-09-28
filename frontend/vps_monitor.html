@@ -1,29 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="/app/src/styles/tokens.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="icon" type="image/svg+xml" href="/app/favicon.svg?v=2">
-<script src="/app/i18n.js?v=1"></script>
 <title>VPS Monitor</title>
 <style>
 /* ─── Reset & Base ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; }
 :root {
-  --bg:var(--bg-page);
-  --bg2:var(--bg-panel);
-  --bg3:var(--bg-elevated);
-  --border:var(--border-default);
-  --text:var(--text-primary);
-  --text-dim:var(--text-secondary);
-  --green:var(--success);
-  --orange:var(--warning);
-  --red:var(--danger);
-  --blue:var(--accent);
-  --accent:#72a0ee;
-  --font:var(--font-family);
+  --bg:       #0e1117;
+  --bg2:      #1a1d24;
+  --bg3:      #262730;
+  --border:   #333640;
+  --text:     #fafafa;
+  --text-dim: #a0a4ab;
+  --green:    #21c354;
+  --orange:   #ff8c00;
+  --red:      #ff4b4b;
+  --blue:     #1f77ff;
+  --accent:   #4da6ff;
+  --font:     'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 body {
   font-family: var(--font);
@@ -47,7 +44,7 @@ body {
   font-size: 12px;
   line-height: 1.4;
   pointer-events: none;
-  box-shadow: 0 8px 24px rgba(5, 8, 14, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   white-space: pre-line;
   display: none;
 }
@@ -58,7 +55,7 @@ body {
   display: none;
   align-items: center;
   justify-content: center;
-  background: rgb(7, 6, 10, 0.72);
+  background: rgba(3, 6, 10, 0.72);
   backdrop-filter: blur(4px);
   z-index: 3001;
 }
@@ -71,9 +68,9 @@ body {
   width: min(980px, calc(100vw - 32px));
   max-height: min(86vh, 880px);
   border-radius: 18px;
-  background: rgb(18, 16, 24, 0.98);
+  background: rgba(12, 21, 34, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 24px 70px rgba(5, 8, 14, 0.54);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.54);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -150,7 +147,7 @@ body {
   gap: 6px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgb(24, 21, 32, 0.88);
+  background: rgba(16, 29, 48, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--text-dim);
   font-size: 12px;
@@ -159,7 +156,7 @@ body {
 .cpu-chart-wrap {
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgb(14, 13, 19, 0.82);
+  background: rgba(10, 17, 27, 0.82);
   padding: 10px;
   flex: 1;
   min-height: 240px;
@@ -181,7 +178,7 @@ body {
   cursor: nwse-resize;
   border-radius: 8px;
   display: none;
-  background: linear-gradient(135deg, transparent 0 45%, rgb(var(--accent-soft-rgb, 141 185 248) / 0.18) 45% 55%, transparent 55% 100%);
+  background: linear-gradient(135deg, transparent 0 45%, rgba(93,196,255,0.18) 45% 55%, transparent 55% 100%);
 }
 
 .cpu-history-resize-handle::before {
@@ -191,8 +188,8 @@ body {
   bottom: 3px;
   width: 10px;
   height: 10px;
-  border-right: 2px solid rgb(var(--accent-soft-rgb, 141 185 248) / 0.55);
-  border-bottom: 2px solid rgb(var(--accent-soft-rgb, 141 185 248) / 0.55);
+  border-right: 2px solid rgba(93,196,255,0.55);
+  border-bottom: 2px solid rgba(93,196,255,0.55);
   border-radius: 0 0 6px 0;
 }
 
@@ -292,14 +289,14 @@ body {
 }
 
 .cpu-clickable:hover {
-  outline: 1px solid rgb(var(--accent-rgb, 91 156 245) / 0.35);
+  outline: 1px solid rgba(77, 166, 255, 0.35);
   outline-offset: 2px;
   border-radius: 6px;
 }
 
 #inst-tbody td.cpu-clickable:hover {
   outline: none;
-  box-shadow: inset 0 0 0 1px rgb(var(--accent-rgb, 91 156 245) / 0.35);
+  box-shadow: inset 0 0 0 1px rgba(77, 166, 255, 0.35);
   border-radius: 6px;
 }
 
@@ -311,9 +308,9 @@ body {
   font-weight: 600;
   transition: all 0.3s;
 }
-.conn-ok      { background: var(--green); color: #0b1526; display: none; }
-.conn-lost    { background: var(--red);   color: #f2f5fb; }
-.conn-waiting { background: var(--orange); color: #0b1526; }
+.conn-ok      { background: var(--green); color: #000; display: none; }
+.conn-lost    { background: var(--red);   color: #fff; }
+.conn-waiting { background: var(--orange); color: #000; }
 
 /* ─── Page body (sidebar + content) ───────────────────────── */
 #page-body {
@@ -340,14 +337,14 @@ body {
   position: absolute; top: 0; right: 0; bottom: 0; width: 4px;
   cursor: col-resize; background: transparent;
 }
-#sidebar-resize:hover, #sidebar-resize.active { background: rgb(var(--accent-rgb, 91 156 245) / 0.4); }
+#sidebar-resize:hover, #sidebar-resize.active { background: rgba(77,166,255,0.4); }
 #sidebar-sticky { flex-shrink: 0; padding: 0.5rem 0.5rem 0; }
 #sidebar-header {
   padding: 0.3rem 0.25rem 0.4rem;
 }
 .sb-title {
   font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em;
-  color: #717b8e; font-weight: 700;
+  color: #64748b; font-weight: 700;
 }
 #sidebar-toolbar {
   display: flex;
@@ -373,7 +370,7 @@ body {
   text-align: left;
 }
 .sb-btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border); }
-.sb-btn.active { background: rgb(var(--accent-rgb, 91 156 245) / 0.12); border-color: rgb(var(--accent-rgb, 91 156 245) / 0.5); color: var(--accent); }
+.sb-btn.active { background: rgba(77,166,255,0.12); border-color: rgba(77,166,255,0.5); color: var(--accent); }
 
 /* Toggle rows in sidebar */
 .sb-toggle {
@@ -512,10 +509,10 @@ body.compact .tab-content      { padding: 8px 10px; }
   border-radius: 10px;
   font-weight: 500;
 }
-.badge-green { background: var(--green); color: #0b1526; }
-.badge-red   { background: var(--red);   color: #f2f5fb; }
-.badge-orange { background: var(--orange); color: #0b1526; }
-.badge-neutral { background: #4b5563; color: #f2f5fb; }
+.badge-green { background: var(--green); color: #000; }
+.badge-red   { background: var(--red);   color: #fff; }
+.badge-orange { background: var(--orange); color: #000; }
+.badge-neutral { background: #4b5563; color: #fff; }
 .vps-body { padding: 0 16px 16px; }
 .vps-body.collapsed { display: none; }
 
@@ -524,7 +521,7 @@ body.compact .tab-content      { padding: 8px 10px; }
   padding: 9px 11px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: rgba(19, 17, 20, 0.55);
+  background: rgba(14, 17, 23, 0.55);
   color: var(--text-dim);
   font-size: 12px;
 }
@@ -543,7 +540,7 @@ body.compact .tab-content      { padding: 8px 10px; }
 .agent-file-unknown { color: var(--text-dim); }
 .agent-errors { margin-top: 7px; color: var(--red); overflow-wrap: anywhere; }
 .agent-help { margin-top: 7px; }
-.agent-help code { color: var(--warning-soft, #ecc381); }
+.agent-help code { color: #f6ad55; }
 
 /* ─── Metrics Grid ─────────────────────────────────────────── */
 .metrics-grid {
@@ -678,9 +675,9 @@ tr.row-inactive td { opacity: 0.45; }
   font-size: 11px;
   transition: all 0.2s;
 }
-.svc-btn:hover { background: var(--accent); color: #0b1526; border-color: var(--accent); }
+.svc-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
 .svc-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.svc-btn.restarting { background: var(--orange); color: #0b1526; border-color: var(--orange); }
+.svc-btn.restarting { background: var(--orange); color: #000; border-color: var(--orange); }
 
 /* Services: expandable cards with inline dots (always used) */
 .svc-host-card { margin-bottom: 2px; border-radius: 4px; }
@@ -754,10 +751,10 @@ tr.row-inactive td { opacity: 0.45; }
   width: min(900px, 95vw);
   height: min(700px, 90vh);
   min-width: 480px; min-height: 300px;
-  background: #10141d;
-  border: 1px solid var(--border-default, #333f5c);
+  background: #131b2b;
+  border: 1px solid #2d3748;
   border-radius: 12px;
-  box-shadow: 0 20px 70px rgba(5, 8, 14,0.9);
+  box-shadow: 0 20px 70px rgba(0,0,0,0.9);
   flex-direction: column;
   overflow: hidden;
   resize: both;
@@ -774,62 +771,62 @@ tr.row-inactive td { opacity: 0.45; }
 .ovl-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 0.85rem 1.1rem 0.85rem 1.25rem;
-  border-bottom: 1px solid var(--border-subtle, #262f45);
-  flex-shrink: 0; background: var(--surface-sidebar, #131826);
+  border-bottom: 1px solid #1e2736;
+  flex-shrink: 0; background: #111827;
 }
-.ovl-header-title { font-size: var(--fs-sm); font-weight: 700; color: var(--text-primary, #e8ecf4); display: flex; align-items: center; gap: 0.5rem; }
+.ovl-header-title { font-size: var(--fs-sm); font-weight: 700; color: #e2e8f0; display: flex; align-items: center; gap: 0.5rem; }
 .ovl-header-actions { display: flex; align-items: center; gap: 0.5rem; position: relative; z-index: 3; }
-.ovl-close { background: transparent; border: none; color: #717b8e; font-size: var(--fs-md); cursor: pointer; padding: 0.2rem 0.35rem; border-radius: 5px; line-height: 1; transition: color 0.12s, background 0.12s; }
-.ovl-close:hover { color: var(--text-primary, #e8ecf4); background: rgba(255,255,255,0.06); }
-.lang-pill { display: flex; border: 1px solid var(--border-default, #333f5c); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
-.lang-pill button { background: transparent; border: none; color: #717b8e; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.05em; padding: 0.2rem 0.55rem; cursor: pointer; transition: all 0.12s; }
-.lang-pill button.active { background: #333f5c; color: var(--accent-soft, #96b9f4); }
-.lang-pill button:hover:not(.active) { background: rgba(255,255,255,0.04); color: var(--text-primary, #e8ecf4); }
+.ovl-close { background: transparent; border: none; color: #64748b; font-size: var(--fs-md); cursor: pointer; padding: 0.2rem 0.35rem; border-radius: 5px; line-height: 1; transition: color 0.12s, background 0.12s; }
+.ovl-close:hover { color: #e2e8f0; background: rgba(255,255,255,0.06); }
+.lang-pill { display: flex; border: 1px solid #2d3748; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+.lang-pill button { background: transparent; border: none; color: #64748b; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.05em; padding: 0.2rem 0.55rem; cursor: pointer; transition: all 0.12s; }
+.lang-pill button.active { background: #1e3a5f; color: #63b3ed; }
+.lang-pill button:hover:not(.active) { background: rgba(255,255,255,0.04); color: #e2e8f0; }
 #help-body { display: flex; flex: 1; overflow: hidden; }
-#help-toc { width: 230px; min-width: 170px; flex-shrink: 0; border-right: 1px solid var(--border-subtle, #262f45); overflow-y: auto; padding: 0.5rem 0; background: var(--bg-page, #10141d); }
-#help-toc-filter { width: calc(100% - 1.2rem); margin: 0 0.6rem 0.4rem; background: var(--bg-card, #1b2231); color: var(--text-primary, #e8ecf4); border: 1px solid var(--border-default, #333f5c); border-radius: 5px; padding: 0.35rem 0.5rem; font-size: var(--fs-sm); outline: none; }
-#help-toc-filter:focus { border-color: var(--text-disabled, #4d5c82); }
-#help-toc-filter::placeholder { color: var(--text-disabled, #4d5c82); }
-.toc-item { display: block; padding: 0.42rem 0.9rem; color: var(--text-secondary, #a3adc2); font-size: var(--fs-sm); cursor: pointer; border-left: 3px solid transparent; transition: all 0.1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.toc-item:hover { background: #171c29; color: var(--text-primary, #e8ecf4); }
-.toc-item.active { border-left-color: var(--accent-soft, #96b9f4); color: var(--accent-soft, #96b9f4); background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.07); font-weight: 600; }
-#help-content { flex: 1; overflow-y: auto; padding: 1.5rem 1.8rem; line-height: 1.7; color: var(--text-primary, #e8ecf4); font-size: var(--fs-base); }
-#help-content h1 { font-size: var(--fs-xl); color: var(--text-primary, #e8ecf4); margin: 0 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-subtle, #262f45); }
-#help-content h2 { font-size: var(--fs-lg); color: var(--text-primary, #e8ecf4); margin: 1.5rem 0 0.5rem; }
-#help-content h3 { font-size: var(--fs-md); color: var(--text-primary, #e8ecf4); margin: 1.1rem 0 0.35rem; }
+#help-toc { width: 230px; min-width: 170px; flex-shrink: 0; border-right: 1px solid #1e2736; overflow-y: auto; padding: 0.5rem 0; background: #0e1117; }
+#help-toc-filter { width: calc(100% - 1.2rem); margin: 0 0.6rem 0.4rem; background: #1a202c; color: #e2e8f0; border: 1px solid #2d3748; border-radius: 5px; padding: 0.35rem 0.5rem; font-size: var(--fs-sm); outline: none; }
+#help-toc-filter:focus { border-color: #4a5568; }
+#help-toc-filter::placeholder { color: #4a5568; }
+.toc-item { display: block; padding: 0.42rem 0.9rem; color: #94a3b8; font-size: var(--fs-sm); cursor: pointer; border-left: 3px solid transparent; transition: all 0.1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toc-item:hover { background: #1a2030; color: #e2e8f0; }
+.toc-item.active { border-left-color: #63b3ed; color: #63b3ed; background: rgba(99,179,237,0.07); font-weight: 600; }
+#help-content { flex: 1; overflow-y: auto; padding: 1.5rem 1.8rem; line-height: 1.7; color: #cbd5e0; font-size: var(--fs-base); }
+#help-content h1 { font-size: var(--fs-xl); color: #e2e8f0; margin: 0 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1e2736; }
+#help-content h2 { font-size: var(--fs-lg); color: #e2e8f0; margin: 1.5rem 0 0.5rem; }
+#help-content h3 { font-size: var(--fs-md); color: #cbd5e0; margin: 1.1rem 0 0.35rem; }
 #help-content p  { margin: 0.5rem 0; }
-#help-content a  { color: var(--accent-soft, #96b9f4); text-decoration: none; }
+#help-content a  { color: #63b3ed; text-decoration: none; }
 #help-content a:hover { text-decoration: underline; }
-#help-content strong { color: var(--text-primary, #e8ecf4); }
-#help-content em { color: var(--text-secondary, #a3adc2); font-style: italic; }
-#help-content code { background: var(--bg-card, #1b2231); color: var(--warning-soft, #ecc381); padding: 0.1em 0.35em; border-radius: 3px; font-size: var(--fs-xs); font-family: 'Fira Code','Consolas',monospace; }
-#help-content pre { background: var(--bg-page, #10141d); border: 1px solid var(--border-default, #333f5c); border-radius: 6px; padding: 0.9rem 1rem; overflow-x: auto; margin: 0.75rem 0; }
-#help-content pre code { background: none; padding: 0; color: var(--text-secondary, var(--text-secondary, #a3adc2)); font-size: var(--fs-sm); }
+#help-content strong { color: #e2e8f0; }
+#help-content em { color: #94a3b8; font-style: italic; }
+#help-content code { background: #1a202c; color: #f6ad55; padding: 0.1em 0.35em; border-radius: 3px; font-size: var(--fs-xs); font-family: 'Fira Code','Consolas',monospace; }
+#help-content pre { background: #0e1117; border: 1px solid #2d3748; border-radius: 6px; padding: 0.9rem 1rem; overflow-x: auto; margin: 0.75rem 0; }
+#help-content pre code { background: none; padding: 0; color: #a0aec0; font-size: var(--fs-sm); }
 #help-content ul, #help-content ol { padding-left: 1.5rem; margin: 0.5rem 0; }
 #help-content li { margin: 0.2rem 0; }
-#help-content blockquote { border-left: 3px solid var(--accent-soft, #96b9f4); margin: 0.75rem 0; padding: 0.4rem 0.9rem; background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.05); border-radius: 0 5px 5px 0; color: var(--text-secondary, #a3adc2); }
+#help-content blockquote { border-left: 3px solid #63b3ed; margin: 0.75rem 0; padding: 0.4rem 0.9rem; background: rgba(99,179,237,0.05); border-radius: 0 5px 5px 0; color: #94a3b8; }
 #help-content table { border-collapse: collapse; width: 100%; margin: 0.75rem 0; }
-#help-content th, #help-content td { border: 1px solid var(--border-default, #333f5c); padding: 0.4rem 0.7rem; text-align: left; font-size: var(--fs-sm); }
-#help-content th { background: var(--bg-card, #1b2231); color: var(--text-primary, #e8ecf4); font-weight: 600; }
-#help-content hr { border: none; border-top: 1px solid var(--border-subtle, #262f45); margin: 1rem 0; }
+#help-content th, #help-content td { border: 1px solid #2d3748; padding: 0.4rem 0.7rem; text-align: left; font-size: var(--fs-sm); }
+#help-content th { background: #1a202c; color: #e2e8f0; font-weight: 600; }
+#help-content hr { border: none; border-top: 1px solid #1e2736; margin: 1rem 0; }
 #help-content img { max-width: 100%; border-radius: 6px; margin: 0.5rem 0; }
-.help-loading { color: var(--text-disabled, #4d5c82); font-style: italic; padding: 2rem; text-align: center; }
+.help-loading { color: #4a5568; font-style: italic; padding: 2rem; text-align: center; }
 #help-search-wrap { display: flex; align-items: center; gap: 3px; }
-#help-search { background: var(--bg-card, #1b2231); color: var(--text-primary, #e8ecf4); border: 1px solid var(--border-default, #333f5c); border-radius: 5px; padding: 0.28rem 0.5rem; font-size: var(--fs-sm); outline: none; width: 170px; }
-#help-search:focus { border-color: var(--text-disabled, #4d5c82); }
-#help-search::placeholder { color: var(--text-disabled, #4d5c82); }
-.help-snav-btn { background: var(--bg-card, #1b2231); border: 1px solid var(--border-default, #333f5c); border-radius: 3px; color: var(--text-secondary, #a3adc2); cursor: pointer; font-size: var(--fs-xs); padding: 2px 5px; line-height: 1.4; transition: color 0.1s, border-color 0.1s; }
-.help-snav-btn:hover { color: var(--text-primary, #e8ecf4); border-color: var(--text-disabled, #4d5c82); }
-#help-search-count { font-size: var(--fs-xs); color: #717b8e; white-space: nowrap; min-width: 44px; text-align: left; }
-#help-content mark { background: rgb(var(--warning-rgb, 227 164 74) / 0.2); color: #ecc381; border-radius: 2px; }
-#help-content mark.current { background: rgb(var(--warning-rgb, 227 164 74) / 0.45); color: #ecc381; outline: 1px solid #e0a458; }
-#help-search-global-lbl { display:flex; align-items:center; gap:3px; color:var(--text-secondary, #a3adc2); font-size: var(--fs-xs); cursor:pointer; white-space:nowrap; user-select:none; }
-#help-search-global-lbl input[type=checkbox] { accent-color:#72a0ee; cursor:pointer; margin:0; }
+#help-search { background: #1a202c; color: #e2e8f0; border: 1px solid #2d3748; border-radius: 5px; padding: 0.28rem 0.5rem; font-size: var(--fs-sm); outline: none; width: 170px; }
+#help-search:focus { border-color: #4a5568; }
+#help-search::placeholder { color: #4a5568; }
+.help-snav-btn { background: #1a202c; border: 1px solid #2d3748; border-radius: 3px; color: #94a3b8; cursor: pointer; font-size: var(--fs-xs); padding: 2px 5px; line-height: 1.4; transition: color 0.1s, border-color 0.1s; }
+.help-snav-btn:hover { color: #e2e8f0; border-color: #4a5568; }
+#help-search-count { font-size: var(--fs-xs); color: #64748b; white-space: nowrap; min-width: 44px; text-align: left; }
+#help-content mark { background: rgba(255,200,0,0.2); color: #fcd34d; border-radius: 2px; }
+#help-content mark.current { background: rgba(251,146,60,0.45); color: #fef08a; outline: 1px solid #f59e0b; }
+#help-search-global-lbl { display:flex; align-items:center; gap:3px; color:#94a3b8; font-size: var(--fs-xs); cursor:pointer; white-space:nowrap; user-select:none; }
+#help-search-global-lbl input[type=checkbox] { accent-color:#4da6ff; cursor:pointer; margin:0; }
 .gs-results { display:flex; flex-direction:column; gap:8px; padding:4px 0; }
-.gs-item { background:var(--bg-card, #1b2231); border:1px solid var(--border-default, #333f5c); border-radius:6px; padding:10px 14px; cursor:pointer; transition:border-color 0.15s; }
-.gs-item:hover { border-color:var(--text-disabled, #4d5c82); }
-.gs-topic { color:#96b9f4; font-weight:600; font-size: var(--fs-sm); margin-bottom:5px; }
-.gs-snip { color:var(--text-secondary, #a3adc2); font-size: var(--fs-xs); line-height:1.55; overflow:hidden; text-overflow:ellipsis; }
+.gs-item { background:#1a202c; border:1px solid #2d3748; border-radius:6px; padding:10px 14px; cursor:pointer; transition:border-color 0.15s; }
+.gs-item:hover { border-color:#4a5568; }
+.gs-topic { color:#93c5fd; font-weight:600; font-size: var(--fs-sm); margin-bottom:5px; }
+.gs-snip { color:#94a3b8; font-size: var(--fs-xs); line-height:1.55; overflow:hidden; text-overflow:ellipsis; }
 </style>
 </head>
 <body>
@@ -842,30 +839,29 @@ tr.row-inactive td { opacity: 0.45; }
   <div class="ovl-panel">
     <div id="help-drag-handle"></div>
     <div class="ovl-header">
-      <div class="ovl-header-title">&#128218; <span data-i18n="sysmon.guideHelp">Guide &amp; Help</span></div>
+      <div class="ovl-header-title">&#128218; Guide &amp; Help</div>
       <div class="ovl-header-actions">
         <div id="help-search-wrap">
-          <input id="help-search" type="text" placeholder="Search in topic…" data-i18n-placeholder="sysmon.helpSearchInTopic" autocomplete="off">
-          <button class="help-snav-btn" id="help-search-up" title="Previous match (Shift+Enter)" data-i18n-title="sysmon.helpPreviousMatch">&#9650;</button>
-          <button class="help-snav-btn" id="help-search-dn" title="Next match (Enter)" data-i18n-title="sysmon.helpNextMatch">&#9660;</button>
+          <input id="help-search" type="text" placeholder="Search in topic…" autocomplete="off">
+          <button class="help-snav-btn" id="help-search-up" title="Previous match (Shift+Enter)">&#9650;</button>
+          <button class="help-snav-btn" id="help-search-dn" title="Next match (Enter)">&#9660;</button>
           <span id="help-search-count"></span>
-          <label id="help-search-global-lbl" title="Search across all topics" data-i18n-title="sysmon.helpSearchAllTopics"><input type="checkbox" id="help-search-global"> <span data-i18n="common.all">All</span></label>
+          <label id="help-search-global-lbl" title="Search across all topics"><input type="checkbox" id="help-search-global"> All</label>
         </div>
-        <div style="width:1px;height:16px;background:#333f5c;flex-shrink:0;"></div>
+        <div style="width:1px;height:16px;background:#2d3748;flex-shrink:0;"></div>
         <div class="lang-pill">
           <button id="help-lang-en" class="active">EN</button>
           <button id="help-lang-de">DE</button>
-          <button id="help-lang-zh" title="中文 (简体中文)">中文</button>
         </div>
         <button class="ovl-close" id="help-close">&#x2715;</button>
       </div>
     </div>
     <div id="help-body">
       <div id="help-toc">
-        <input id="help-toc-filter" type="text" placeholder="Filter topics…" data-i18n-placeholder="sysmon.helpFilterTopics" autocomplete="off">
+        <input id="help-toc-filter" type="text" placeholder="Filter topics…" autocomplete="off">
         <div id="help-toc-list"></div>
       </div>
-      <div id="help-content"><div class="help-loading" data-i18n="sysmon.helpSelectTopic">Select a topic from the left.</div></div>
+      <div id="help-content"><div class="help-loading">Select a topic from the left.</div></div>
     </div>
   </div>
 </div>
@@ -882,8 +878,8 @@ tr.row-inactive td { opacity: 0.45; }
     <div class="cpu-history-resize-handle corner corner-bottom-left" data-resize="bottom-left"></div>
     <div class="cpu-history-head" id="cpu-history-head">
       <div>
-        <div id="cpu-history-title" class="cpu-history-title" data-i18n="sysmon.cpuHistory">CPU History</div>
-        <div id="cpu-history-sub" class="cpu-history-sub" data-i18n="sysmon.loading">Loading…</div>
+        <div id="cpu-history-title" class="cpu-history-title">CPU History</div>
+        <div id="cpu-history-sub" class="cpu-history-sub">Loading…</div>
       </div>
       <button class="cpu-history-close" type="button" onclick="closeCpuHistory()">&times;</button>
     </div>
@@ -895,7 +891,7 @@ tr.row-inactive td { opacity: 0.45; }
 </div>
 
 <!-- Connection Banner -->
-<div id="conn-banner" class="conn-waiting" data-i18n="sysmon.connectingVpsMonitor">Connecting to VPS Monitor...</div>
+<div id="conn-banner" class="conn-waiting">Connecting to VPS Monitor...</div>
 
 <!-- Page body: sidebar + main content -->
 <div id="page-body">
@@ -904,22 +900,22 @@ tr.row-inactive td { opacity: 0.45; }
 <div id="sidebar">
   <div id="sidebar-sticky">
     <div id="sidebar-header">
-      <span class="sb-title" data-i18n="sysmon.vpsMonitor">VPS Monitor</span>
+      <span class="sb-title">VPS Monitor</span>
     </div>
     <div id="sidebar-toolbar">
-      <button class="sb-btn active" data-tab="dashboard">&#128187; <span data-i18n="sysmon.dashboard">Dashboard</span></button>
-      <button class="sb-btn" data-tab="instances">&#128196; <span data-i18n="sysmon.instances">Instances</span></button>
-      <button class="sb-btn" data-tab="services">&#9881;&#65039; <span data-i18n="sysmon.services">Services</span></button>
-      <button class="sb-btn" data-tab="logs">&#128203; <span data-i18n="sysmon.liveLogs">Live Logs</span></button>
+      <button class="sb-btn active" data-tab="dashboard">&#128187; Dashboard</button>
+      <button class="sb-btn" data-tab="instances">&#128196; Instances</button>
+      <button class="sb-btn" data-tab="services">&#9881;&#65039; Services</button>
+      <button class="sb-btn" data-tab="logs">&#128203; Live Logs</button>
       <hr class="sb-sep">
-      <label class="sb-toggle" title="Hide IP addresses" data-i18n-title="sysmon.hideIpAddresses">
-        <input type="checkbox" id="hideip-check"> <span data-i18n="sysmon.hideIp">Hide IP</span>
+      <label class="sb-toggle" title="Hide IP addresses">
+        <input type="checkbox" id="hideip-check"> Hide IP
       </label>
-      <label class="sb-toggle" title="Reduce card size for many servers" data-i18n-title="sysmon.reduceCardSize">
-        <input type="checkbox" id="compact-check"> <span data-i18n="sysmon.compact">Compact</span>
+      <label class="sb-toggle" title="Reduce card size for many servers">
+        <input type="checkbox" id="compact-check"> Compact
       </label>
-      <label class="sb-toggle" title="Enable DEBUG entries in VPSMonitor.log" data-i18n-title="sysmon.enableDebugEntries">
-        <input type="checkbox" id="debuglog-check" onchange="onDebugLogChange()"> <span data-i18n="sysmon.debugLog">Debug log</span>
+      <label class="sb-toggle" title="Enable DEBUG entries in VPSMonitor.log">
+        <input type="checkbox" id="debuglog-check" onchange="onDebugLogChange()"> Debug log
       </label>
     </div>
   </div>
@@ -961,7 +957,7 @@ tr.row-inactive td { opacity: 0.45; }
 </div><!-- /#main-content -->
 </div><!-- /#page-body -->
 
-<script src="/app/js/log_viewer_panel.js?v=48"></script>
+<script src="/app/js/log_viewer_panel.js?v=50"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════
    VPS Monitor — WebSocket-powered real-time dashboard
@@ -1024,7 +1020,7 @@ function connect() {
       if (banner) {
         banner.className = 'conn-lost';
         banner.style.display = 'block';
-        banner.textContent = PBGuiI18n.t('sysmon.sessionExpired');
+        banner.textContent = 'Session expired. Returning to login...';
       }
       window.location.replace('/');
       return;
@@ -1125,7 +1121,7 @@ function setBanner(status) {
   if (status === 'ok') { b.style.display = 'none'; }
   else {
     b.style.display = 'block';
-    b.textContent = status === 'lost' ? PBGuiI18n.t('sysmon.connectionLost') : PBGuiI18n.t('sysmon.connectingVpsMonitor');
+    b.textContent = status === 'lost' ? 'Connection lost — reconnecting...' : 'Connecting to VPS Monitor...';
   }
 }
 
@@ -1177,26 +1173,26 @@ function tooltipTextForMetrics(label, metrics) {
   }
   if (label === 'RAM') {
     return [
-      PBGuiI18n.t('sysmon.ramUsed', {v: fmtBytes(metrics.mem_used)}),
-      PBGuiI18n.t('sysmon.ramFree', {v: fmtBytes(metrics.mem_available)}),
-      PBGuiI18n.t('sysmon.ramTotal', {v: fmtBytes(metrics.mem_total)}),
-      PBGuiI18n.t('sysmon.usage', {v: (Number(metrics.mem_percent || 0)).toFixed(1) + '%'}),
+      'RAM used: ' + fmtBytes(metrics.mem_used),
+      'RAM free: ' + fmtBytes(metrics.mem_available),
+      'RAM total: ' + fmtBytes(metrics.mem_total),
+      'Usage: ' + (Number(metrics.mem_percent || 0)).toFixed(1) + '%',
     ].join('\n');
   }
   if (label === 'Disk') {
     return [
-      PBGuiI18n.t('sysmon.diskUsed', {v: fmtBytes(metrics.disk_used)}),
-      PBGuiI18n.t('sysmon.diskFree', {v: fmtBytes(metrics.disk_free)}),
-      PBGuiI18n.t('sysmon.diskTotal', {v: fmtBytes(metrics.disk_total)}),
-      PBGuiI18n.t('sysmon.usage', {v: (Number(metrics.disk_percent || 0)).toFixed(1) + '%'}),
+      'Disk used: ' + fmtBytes(metrics.disk_used),
+      'Disk free: ' + fmtBytes(metrics.disk_free),
+      'Disk total: ' + fmtBytes(metrics.disk_total),
+      'Usage: ' + (Number(metrics.disk_percent || 0)).toFixed(1) + '%',
     ].join('\n');
   }
   if (label === 'Swap') {
     return [
-      PBGuiI18n.t('sysmon.swapUsed', {v: fmtBytes(metrics.swap_used)}),
-      PBGuiI18n.t('sysmon.swapFree', {v: fmtBytes(metrics.swap_free)}),
-      PBGuiI18n.t('sysmon.swapTotal', {v: fmtBytes(metrics.swap_total)}),
-      PBGuiI18n.t('sysmon.usage', {v: (Number(metrics.swap_percent || 0)).toFixed(1) + '%'}),
+      'Swap used: ' + fmtBytes(metrics.swap_used),
+      'Swap free: ' + fmtBytes(metrics.swap_free),
+      'Swap total: ' + fmtBytes(metrics.swap_total),
+      'Usage: ' + (Number(metrics.swap_percent || 0)).toFixed(1) + '%',
     ].join('\n');
   }
   return '';
@@ -1286,11 +1282,11 @@ function handleResult(msg) {
       btn._monitorActionTimer = null;
       btn.disabled = false;
       btn.classList.remove('restarting');
-      btn.textContent = msg.success ? ('✅ ' + PBGuiI18n.t('sysmon.restarted')) : ('❌ ' + PBGuiI18n.t('sysmon.failed'));
+      btn.textContent = msg.success ? '✅ Restarted' : '❌ Failed';
       if (btn._monitorResultTimer) clearTimeout(btn._monitorResultTimer);
       btn._monitorResultTimer = setTimeout(() => {
         btn._monitorResultTimer = null;
-        if (!btn.classList.contains('restarting')) btn.textContent = PBGuiI18n.t('sysmon.restart');
+        if (!btn.classList.contains('restarting')) btn.textContent = 'Restart';
       }, 3000);
     }
   }
@@ -1379,11 +1375,11 @@ function pctColor(pct) {
 }
 
 function ageStr(ts) {
-  if (!ts || ts <= 0) return PBGuiI18n.t('sysmon.noData');
+  if (!ts || ts <= 0) return 'no data';
   const age = (Date.now() / 1000) - ts;
-  if (age < 0) return PBGuiI18n.t('sysmon.future');
-  if (age < 60) return PBGuiI18n.t('sysmon.secondsAgo', {n: Math.round(age)});
-  return PBGuiI18n.t('sysmon.minutesAgo', {n: (age / 60).toFixed(1)});
+  if (age < 0) return 'future?';
+  if (age < 60) return Math.round(age) + 's ago';
+  return (age / 60).toFixed(1) + 'm ago';
 }
 
 const TELEMETRY_STALE_SECONDS = 15;
@@ -1444,7 +1440,7 @@ function monitorAgentHealth(agent, metrics, stream, nowSeconds) {
   if (!agent || typeof agent !== 'object' || !Object.keys(agent).length) {
     return {
       state: 'unknown',
-      label: PBGuiI18n.t('common.unknown'),
+      label: 'Unknown',
       badgeClass: 'badge-neutral',
       liveAge: telemetryAgeSeconds(metrics, stream),
       heartbeatAge: null,
@@ -1497,11 +1493,11 @@ function monitorAgentHealth(agent, metrics, stream, nowSeconds) {
   else if (explicitState === 'ok') healthState = 'ok';
 
   const models = {
-    ok: { label: PBGuiI18n.t('sysmon.ok'), badgeClass: 'badge-green' },
-    stale: { label: PBGuiI18n.t('sysmon.stale'), badgeClass: 'badge-orange' },
-    missing: { label: PBGuiI18n.t('sysmon.missing'), badgeClass: 'badge-red' },
-    error: { label: PBGuiI18n.t('common.error'), badgeClass: 'badge-red' },
-    unknown: { label: PBGuiI18n.t('common.unknown'), badgeClass: 'badge-neutral' },
+    ok: { label: 'OK', badgeClass: 'badge-green' },
+    stale: { label: 'Stale', badgeClass: 'badge-orange' },
+    missing: { label: 'Missing', badgeClass: 'badge-red' },
+    error: { label: 'Error', badgeClass: 'badge-red' },
+    unknown: { label: 'Unknown', badgeClass: 'badge-neutral' },
   };
   return { state: healthState, label: models[healthState].label, badgeClass: models[healthState].badgeClass, liveAge, heartbeatAge, heartbeatBaseAge, files, errors: errors.filter(Boolean).slice(0, 4) };
 }
@@ -1520,16 +1516,16 @@ function renderMonitorAgentDetails(agent, metrics, stream, nowSeconds) {
     return `<span class="agent-file agent-file-${file.state}">${esc(file.name)}: ${esc(file.state)}${file.age === null ? '' : ' (' + esc(formatAgentAge(file.age)) + ')'}</span>`;
   }).join('');
   const errorHtml = health.errors.length
-    ? `<div class="agent-errors"><strong>${PBGuiI18n.t('sysmon.collectorErrors')}</strong> ${health.errors.map(esc).join(' | ')}</div>`
+    ? `<div class="agent-errors"><strong>Collector errors:</strong> ${health.errors.map(esc).join(' | ')}</div>`
     : '';
   const helpHtml = health.state === 'ok' ? '' : '<div class="agent-help">Troubleshooting: inspect <code>systemctl --user status pbgui-monitor-agent.service</code> and <code>journalctl --user -u pbgui-monitor-agent.service</code>. Restart with <code>systemctl --user restart pbgui-monitor-agent.service</code>. SSH can remain connected while telemetry is stale.</div>';
   return `<div class="agent-panel agent-${health.state}">
     <div class="agent-summary">
-      <span><strong>${PBGuiI18n.t('sysmon.source')}</strong> ${PBGuiI18n.t('sysmon.monitorAgentCache')}</span>
-      <span><strong>${PBGuiI18n.t('sysmon.liveEffectiveAge')}</strong> ${esc(formatAgentAge(health.liveAge))} (${PBGuiI18n.t('sysmon.healthyThrough', {n: TELEMETRY_STALE_SECONDS})})</span>
-      <span><strong>${PBGuiI18n.t('sysmon.collectorHeartbeat')}</strong> ${esc(formatAgentAge(health.heartbeatBaseAge))}; <strong>${PBGuiI18n.t('sysmon.effectiveAge')}</strong> ${esc(formatAgentAge(health.heartbeatAge))} (${PBGuiI18n.t('sysmon.healthyThrough', {n: MONITOR_AGENT_COLLECTOR_STALE_SECONDS})})</span>
+      <span><strong>Source:</strong> monitor-agent cache</span>
+      <span><strong>Live effective age:</strong> ${esc(formatAgentAge(health.liveAge))} (healthy through ${TELEMETRY_STALE_SECONDS}s)</span>
+      <span><strong>Collector heartbeat:</strong> ${esc(formatAgentAge(health.heartbeatBaseAge))}; <strong>effective age:</strong> ${esc(formatAgentAge(health.heartbeatAge))} (healthy through ${MONITOR_AGENT_COLLECTOR_STALE_SECONDS}s)</span>
     </div>
-    <div class="agent-files"><strong>${PBGuiI18n.t('sysmon.requiredFiles')}</strong> ${fileHtml}</div>
+    <div class="agent-files"><strong>Required files:</strong> ${fileHtml}</div>
     ${errorHtml}${helpHtml}
   </div>`;
 }
@@ -1548,10 +1544,10 @@ function renderDashboard() {
   const disconnected = total - connected - connecting;
   const summaryEl = document.getElementById('dash-summary');
   summaryEl.innerHTML = `
-    <span class="summary-item"><span class="summary-dot" style="background:var(--green)"></span> ${PBGuiI18n.t('sysmon.connectedCount', {n: connected})}</span>
-    <span class="summary-item"><span class="summary-dot" style="background:var(--orange)"></span> ${PBGuiI18n.t('sysmon.connectingCount', {n: connecting})}</span>
-    <span class="summary-item"><span class="summary-dot" style="background:var(--red)"></span> ${PBGuiI18n.t('sysmon.disconnectedCount', {n: disconnected})}</span>
-    <span class="summary-item" style="color:var(--text-dim)">${PBGuiI18n.t('sysmon.updated', {t: ageStr(state.timestamp)})}</span>
+    <span class="summary-item"><span class="summary-dot" style="background:var(--green)"></span> ${connected} connected</span>
+    <span class="summary-item"><span class="summary-dot" style="background:var(--orange)"></span> ${connecting} connecting</span>
+    <span class="summary-item"><span class="summary-dot" style="background:var(--red)"></span> ${disconnected} disconnected</span>
+    <span class="summary-item" style="color:var(--text-dim)">Updated: ${ageStr(state.timestamp)}</span>
   `;
 
   // VPS cards
@@ -1588,11 +1584,11 @@ function renderDashboard() {
     html += `<div class="vps-header" data-monitor-action="toggle-card">`;
     html += `<span class="vps-title">${isConn ? '✅' : (isConnecting ? '⏳' : '❌')} ${esc(host)}`;
     html += ` <span class="vps-badge ${isConn ? 'badge-green' : (isConnecting ? 'badge-orange' : 'badge-red')}"${hideIP ? ' style="display:none"' : ''}>${esc(info.ip || '?')}</span>`;
-    html += ` <span class="vps-badge ${agentHealth.badgeClass}" style="font-size:10px">${PBGuiI18n.t('sysmon.monitorAgentLabel', {label: agentHealth.label})}</span>`;
+    html += ` <span class="vps-badge ${agentHealth.badgeClass}" style="font-size:10px">Monitor Agent: ${agentHealth.label}</span>`;
     if (lastUpdate) {
       const streamAge = lastUpdate ? (Date.now()/1000 - lastUpdate) : -1;
       const ageColor = metricsFresh ? (streamAge < 5 ? 'green' : 'orange') : 'red';
-      const ageText = metricsFresh ? ageStr(lastUpdate) : PBGuiI18n.t('sysmon.staleAge', {age: ageStr(lastUpdate)});
+      const ageText = metricsFresh ? ageStr(lastUpdate) : ('stale ' + ageStr(lastUpdate));
       html += ` <span class="vps-badge badge-${ageColor}" style="font-size:10px">${ageText}</span>`;
     }
     html += `</span>`;
@@ -1608,7 +1604,7 @@ function renderDashboard() {
           html += compactMetric('Swap', fmtBytes(metrics.swap_used), metrics.swap_percent, '', tooltipTextForMetrics('Swap', metrics), ` class="cpu-clickable compact-metric" data-history-host="${escAttr(host)}" data-history-metric="swap"`);
         }
       } else {
-        html += `<span class="compact-metric"><span class="cm-label">${PBGuiI18n.t('sysmon.metrics')}</span><span class="cm-value" style="color:var(--red)">${PBGuiI18n.t('sysmon.staleText')}</span><span class="cm-sub">${esc(ageStr(lastUpdate))}</span></span>`;
+        html += `<span class="compact-metric"><span class="cm-label">Metrics</span><span class="cm-value" style="color:var(--red)">stale</span><span class="cm-sub">${esc(ageStr(lastUpdate))}</span></span>`;
       }
       html += `</span>`;
     }
@@ -1619,13 +1615,13 @@ function renderDashboard() {
 
     if (!isConn) {
       const err = info.error || info.last_error || '';
-      const statusText = isConnecting ? PBGuiI18n.t('sysmon.connecting') : PBGuiI18n.t('sysmon.disconnected');
+      const statusText = isConnecting ? 'Connecting...' : 'Disconnected';
       const statusColor = isConnecting ? 'var(--orange)' : 'var(--red)';
       html += `<div style="color:${statusColor};padding:8px 0">${statusText}${err ? ': ' + esc(err) : ''}</div>`;
     } else if (!metrics) {
-      html += `<div style="color:var(--text-dim);padding:8px 0">${PBGuiI18n.t('sysmon.waitingSystemMetrics')}</div>`;
+      html += `<div style="color:var(--text-dim);padding:8px 0">Waiting for system metrics...</div>`;
     } else if (!metricsFresh) {
-      html += `<div style="color:var(--orange);padding:8px 0">${PBGuiI18n.t('sysmon.metricsStale', {n: TELEMETRY_STALE_SECONDS, t: esc(ageStr(lastUpdate))})}</div>`;
+      html += `<div style="color:var(--orange);padding:8px 0">Live system metrics are stale after ${TELEMETRY_STALE_SECONDS}s. Last update: ${esc(ageStr(lastUpdate))}. The cache stream will reconnect without marking SSH disconnected.</div>`;
     } else {
       const cpuUi = cpuTelemetry(metrics);
       html += `<div class="metrics-grid">`;
@@ -1645,7 +1641,7 @@ function renderDashboard() {
   }
 
   if (!sorted.length) {
-    html = '<div style="padding:24px;text-align:center;color:var(--text-dim)">' + PBGuiI18n.t('sysmon.noVpsConfigured') + '</div>';
+    html = '<div style="padding:24px;text-align:center;color:var(--text-dim)">No VPS servers configured.</div>';
   }
   cardsEl.innerHTML = html;
 }
@@ -1674,14 +1670,14 @@ function compactMetric(label, value, pct, sub, title, extraAttrs) {
 }
 
 const METRIC_HISTORY_META = {
-  cpu: { label: 'CPU', source: 'cpu_60s', unit: '%', empty: PBGuiI18n.t('sysmon.noCpuSamples') },
-  memory: { label: PBGuiI18n.t('sysmon.memory'), source: 'mem_percent', unit: '%', botSource: 'rss_mb', botUnit: 'MB', empty: PBGuiI18n.t('sysmon.noMemoryHistory'), botEmpty: PBGuiI18n.t('sysmon.noBotMemoryHistory') },
-  disk: { label: PBGuiI18n.t('sysmon.disk'), source: 'disk_percent', unit: '%', empty: PBGuiI18n.t('sysmon.noDiskHistory') },
-  swap: { label: PBGuiI18n.t('sysmon.swap'), source: 'swap_percent', unit: '%', botSource: 'swap_mb', botUnit: 'MB', empty: PBGuiI18n.t('sysmon.noSwapHistory'), botEmpty: PBGuiI18n.t('sysmon.noBotSwapHistory') },
-  errors: { label: PBGuiI18n.t('sysmon.errors'), source: 'passivbot.log', unit: '', empty: PBGuiI18n.t('sysmon.noBotErrorHistory'), timezoneBasis: 'UTC', countMetric: true },
-  tracebacks: { label: PBGuiI18n.t('sysmon.tracebacks'), source: 'passivbot_err.log', unit: '', empty: PBGuiI18n.t('sysmon.noBotTracebackHistory'), timezoneBasis: 'UTC', countMetric: true },
-  pnl: { label: 'PNL', source: 'passivbot.log', unit: '', empty: PBGuiI18n.t('sysmon.noBotPnlHistory'), timezoneBasis: 'UTC', pnlMetric: true },
-  pnl_fills: { label: PBGuiI18n.t('sysmon.fills'), source: 'passivbot.log', unit: '', empty: PBGuiI18n.t('sysmon.noBotFillHistory'), timezoneBasis: 'UTC', fillsMetric: true },
+  cpu: { label: 'CPU', source: 'cpu_60s', unit: '%', empty: 'No confirmed 60s samples stored yet.' },
+  memory: { label: 'Memory', source: 'mem_percent', unit: '%', botSource: 'rss_mb', botUnit: 'MB', empty: 'No memory history available yet.', botEmpty: 'No bot memory history available yet.' },
+  disk: { label: 'Disk', source: 'disk_percent', unit: '%', empty: 'No disk history available yet.' },
+  swap: { label: 'Swap', source: 'swap_percent', unit: '%', botSource: 'swap_mb', botUnit: 'MB', empty: 'No swap history available yet.', botEmpty: 'No bot swap history available yet.' },
+  errors: { label: 'Errors', source: 'passivbot.log', unit: '', empty: 'No bot error history available yet.', timezoneBasis: 'UTC', countMetric: true },
+  tracebacks: { label: 'Tracebacks', source: 'passivbot_err.log', unit: '', empty: 'No bot traceback history available yet.', timezoneBasis: 'UTC', countMetric: true },
+  pnl: { label: 'PNL', source: 'passivbot.log', unit: '', empty: 'No bot PNL history available yet.', timezoneBasis: 'UTC', pnlMetric: true },
+  pnl_fills: { label: 'Fills', source: 'passivbot.log', unit: '', empty: 'No bot fill history available yet.', timezoneBasis: 'UTC', fillsMetric: true },
 };
 
 function metricHistoryMeta(metric) {
@@ -1690,25 +1686,24 @@ function metricHistoryMeta(metric) {
 
 function metricHistoryTitle(metric, host, bot) {
   const meta = metricHistoryMeta(metric);
-  const target = bot ? (bot + ' @ ' + host) : host;
-  return PBGuiI18n.t('sysmon.historyTitle', {label: meta.label, target: target});
+  return bot ? (meta.label + ' History - ' + bot + ' @ ' + host) : (meta.label + ' History - ' + host);
 }
 
 function metricHistorySubtitle(metric, payload) {
   const meta = metricHistoryMeta(metric);
   const source = String((payload && payload.source) || meta.source || '').trim();
-  if (meta.countMetric) return PBGuiI18n.t('sysmon.countSubtitle', {source: source});
-  if (meta.fillsMetric) return PBGuiI18n.t('sysmon.fillsSubtitle', {source: source});
-  if (meta.pnlMetric) return PBGuiI18n.t('sysmon.pnlSubtitle', {source: source});
-  return PBGuiI18n.t('sysmon.hourlySubtitle', {source: source});
+  if (meta.countMetric) return '4w history, 1 sample/hour, UTC day totals, source: ' + source;
+  if (meta.fillsMetric) return 'full history from available logs, UTC daily fill totals, source: ' + source;
+  if (meta.pnlMetric) return 'full history from available logs, UTC daily aggregates, source: ' + source;
+  return '24h history, 1 sample/minute, source: ' + source;
 }
 
 function metricHistoryLoadingSubtitle(metric, botName) {
   const meta = metricHistoryMeta(metric);
   const source = botName && meta.botSource ? meta.botSource : meta.source;
-  if (meta.fillsMetric) return PBGuiI18n.t('sysmon.loadingFillsHistory', {source: source});
-  if (meta.pnlMetric) return PBGuiI18n.t('sysmon.loadingFullHistory', {source: source});
-  return (meta.countMetric ? PBGuiI18n.t('sysmon.loading4wHistory', {source: source}) : PBGuiI18n.t('sysmon.loading24hHistory', {source: source}));
+  if (meta.fillsMetric) return 'Loading full ' + source + ' fill history...';
+  if (meta.pnlMetric) return 'Loading full ' + source + ' history...';
+  return (meta.countMetric ? 'Loading 4w ' : 'Loading 24h ') + source + ' history...';
 }
 
 function metricHistoryUnit(metric, payload) {
@@ -2150,10 +2145,10 @@ function renderInstances() {
     if (!servers.includes(instFilterServer)) instFilterServer = 'All';
     if (!versions.includes(instFilterVersion)) instFilterVersion = 'All';
     filtersEl.innerHTML = `
-      <label>${PBGuiI18n.t('sysmon.server')} <select id="f-server">${servers.map(s => `<option value="${esc(s)}"${s===instFilterServer?' selected':''}>${s === 'All' ? esc(PBGuiI18n.t('common.all')) : esc(s)}</option>`).join('')}</select></label>
-      <label>${PBGuiI18n.t('sysmon.version')} <select id="f-version">${versions.map(v => `<option value="${esc(v)}"${v===instFilterVersion?' selected':''}>${v === 'All' ? esc(PBGuiI18n.t('common.all')) : esc(v)}</option>`).join('')}</select></label>
-      <label><input type="checkbox" id="f-errors" ${instFilterErrors?'checked':''}> ${PBGuiI18n.t('sysmon.onlyWithErrors')}</label>
-      <label><input type="checkbox" id="f-others" ${instFilterOthers?'checked':''}> ${PBGuiI18n.t('sysmon.showOther')}</label>
+      <label>Server: <select id="f-server">${servers.map(s => `<option${s===instFilterServer?' selected':''}>${esc(s)}</option>`).join('')}</select></label>
+      <label>Version: <select id="f-version">${versions.map(v => `<option${v===instFilterVersion?' selected':''}>${esc(v)}</option>`).join('')}</select></label>
+      <label><input type="checkbox" id="f-errors" ${instFilterErrors?'checked':''}> Only with errors</label>
+      <label><input type="checkbox" id="f-others" ${instFilterOthers?'checked':''}> Show other</label>
     `;
     filtersEl.dataset.options = filterOptions;
     document.getElementById('f-server').onchange = (e) => { instFilterServer = e.target.value; renderInstances(); };
@@ -2188,18 +2183,18 @@ function renderInstances() {
     return na < nb ? -1 : na > nb ? 1 : 0;
   });
 
-  document.getElementById('inst-count').textContent = PBGuiI18n.t('sysmon.instancesOf', {filtered: filtered.length, total: rows.length});
+  document.getElementById('inst-count').textContent = `${filtered.length} of ${rows.length} instances`;
 
   // Table header
   const cols = [
-    {key:'host',label:PBGuiI18n.t('sysmon.server')},{key:'version',label:PBGuiI18n.t('sysmon.version')},{key:'name',label:PBGuiI18n.t('sysmon.name')},
-    {key:'syncStatus',label:PBGuiI18n.t('sysmon.sync')},{key:'enabledOn',label:PBGuiI18n.t('sysmon.enabledOn')},
-    {key:'configVer',label:PBGuiI18n.t('sysmon.cfgVer')},{key:'runningVer',label:PBGuiI18n.t('sysmon.runVer')},
-    {key:'start',label:PBGuiI18n.t('sysmon.start')},{key:'memMB',label:PBGuiI18n.t('sysmon.memMb')},{key:'cpu',label:PBGuiI18n.t('sysmon.cpuPct')},{key:'swapMB',label:PBGuiI18n.t('sysmon.swapMb')},
-    {key:'pnlToday',label:PBGuiI18n.t('sysmon.pnlToday')},{key:'fillsToday',label:PBGuiI18n.t('sysmon.fills')},
-    {key:'pnlHist',label:PBGuiI18n.t('sysmon.pnlHist')},{key:'fillsHist',label:PBGuiI18n.t('sysmon.fillsHist')},
-    {key:'errorsToday',label:PBGuiI18n.t('sysmon.errTdy')},{key:'errors4w',label:PBGuiI18n.t('sysmon.err4w')},
-    {key:'tbsToday',label:PBGuiI18n.t('sysmon.tbTdy')},{key:'tbs4w',label:PBGuiI18n.t('sysmon.tb4w')},
+    {key:'host',label:'Server'},{key:'version',label:'Version'},{key:'name',label:'Name'},
+    {key:'syncStatus',label:'Sync'},{key:'enabledOn',label:'Enabled On'},
+    {key:'configVer',label:'Cfg Ver'},{key:'runningVer',label:'Run Ver'},
+    {key:'start',label:'Start'},{key:'memMB',label:'Mem (MB)'},{key:'cpu',label:'CPU %'},{key:'swapMB',label:'Swap (MB)'},
+    {key:'pnlToday',label:'PnL Today'},{key:'fillsToday',label:'Fills'},
+    {key:'pnlHist',label:'PnL Hist'},{key:'fillsHist',label:'Fills Hist'},
+    {key:'errorsToday',label:'Err Tdy'},{key:'errors4w',label:'Err 4W'},
+    {key:'tbsToday',label:'TB Tdy'},{key:'tbs4w',label:'TB 4W'},
     {key:'_actions',label:''},
   ];
 
@@ -2251,8 +2246,8 @@ function renderInstanceActions(row) {
   const r = row || {};
   const pending = pendingMonitorActions.has(monitorActionKey('kill-instance', r.host, r.name));
   const attrs = `data-host="${escAttr(r.host)}" data-bot="${escAttr(r.name)}" data-pb-version="${escAttr(r.pbVersion)}"`;
-  return `<button class="inst-action" type="button" title="${escAttr(PBGuiI18n.t('sysmon.viewLog'))}" data-monitor-action="view-instance-log" ${attrs}>📋</button>
-    <button class="inst-action${pending ? ' killing' : ''}" ${pending ? 'disabled' : ''} type="button" title="${escAttr(pending ? PBGuiI18n.t('sysmon.killing') : PBGuiI18n.t('sysmon.restartKill'))}" data-monitor-action="kill-instance" ${attrs}>${pending ? '⏳' : '🔄'}</button>`;
+  return `<button class="inst-action" type="button" title="View Log" data-monitor-action="view-instance-log" ${attrs}>📋</button>
+    <button class="inst-action${pending ? ' killing' : ''}" ${pending ? 'disabled' : ''} type="button" title="${pending ? 'Killing...' : 'Restart (kill)'}" data-monitor-action="kill-instance" ${attrs}>${pending ? '⏳' : '🔄'}</button>`;
 }
 
 function instanceCpuCell(host, name, liveCpu, cpu60s, cpu60sWindow) {
@@ -2293,7 +2288,7 @@ window.openMetricHistory = function openMetricHistory(host, metricName, botName)
   const metaInfo = metricHistoryMeta(metric);
   sub.textContent = metricHistoryLoadingSubtitle(metric, bot);
   meta.innerHTML = '';
-  chart.innerHTML = '<div style="color:var(--text-dim);padding:24px;text-align:center">' + PBGuiI18n.t('sysmon.loading') + '</div>';
+  chart.innerHTML = '<div style="color:var(--text-dim);padding:24px;text-align:center">Loading…</div>';
   if (!send({ cmd: requestMetric === 'cpu' ? 'get_cpu_history' : 'get_metric_history', host: hostName, bot_name: bot, metric: requestMetric, sid: String(rid) })) {
     failMetricHistory(rid, 'Connection lost. Reconnect and try again.');
     return;
@@ -2401,15 +2396,15 @@ function renderCpuHistoryMeta(data, points, metric) {
   const metaInfo = metricHistoryMeta(metric);
   const showThresholds = !metaInfo.pnlMetric && !metaInfo.fillsMetric;
   return [
-    metaInfo.pnlMetric ? cpuChartPill(PBGuiI18n.t('sysmon.totalPnl'), metricHistoryValueLabel(metric, totalPnl, data)) : '',
-    (metaInfo.pnlMetric || metaInfo.fillsMetric) ? cpuChartPill(PBGuiI18n.t('sysmon.totalFills'), String(totalFills == null ? 'n/a' : totalFills)) : '',
-    cpuChartPill(PBGuiI18n.t('sysmon.latest'), metricHistoryValueLabel(metric, latest, data)),
-    cpuChartPill(PBGuiI18n.t('sysmon.peak'), metricHistoryValueLabel(metric, peak, data)),
-    metaInfo.pnlMetric && bestDayPnl != null ? cpuChartPill(PBGuiI18n.t('sysmon.bestDay'), metricHistoryValueLabel(metric, bestDayPnl, data)) : '',
-    metaInfo.pnlMetric && worstDayPnl != null ? cpuChartPill(PBGuiI18n.t('sysmon.worstDay'), metricHistoryValueLabel(metric, worstDayPnl, data)) : '',
-    showThresholds && warningThreshold != null ? cpuChartPill(PBGuiI18n.t('sysmon.warning'), metricHistoryValueLabel(metric, warningThreshold, data)) : '',
-    showThresholds && errorThreshold != null ? cpuChartPill(PBGuiI18n.t('common.error'), metricHistoryValueLabel(metric, errorThreshold, data)) : '',
-    cpuChartPill(metaInfo.countMetric ? PBGuiI18n.t('sysmon.lastHour') : ((metaInfo.pnlMetric || metaInfo.fillsMetric) ? PBGuiI18n.t('sysmon.lastFill') : PBGuiI18n.t('sysmon.lastSample')), metaInfo.countMetric ? lastSeenHourly : ((metaInfo.pnlMetric || metaInfo.fillsMetric) ? (lastFillTs > 0 ? new Date(lastFillTs * 1000).toISOString().replace('T', ' ').slice(0, 19) + ' UTC' : 'n/a') : lastSeen)),
+    metaInfo.pnlMetric ? cpuChartPill('Total PNL', metricHistoryValueLabel(metric, totalPnl, data)) : '',
+    (metaInfo.pnlMetric || metaInfo.fillsMetric) ? cpuChartPill('Total fills', String(totalFills == null ? 'n/a' : totalFills)) : '',
+    cpuChartPill('Latest', metricHistoryValueLabel(metric, latest, data)),
+    cpuChartPill('Peak', metricHistoryValueLabel(metric, peak, data)),
+    metaInfo.pnlMetric && bestDayPnl != null ? cpuChartPill('Best day', metricHistoryValueLabel(metric, bestDayPnl, data)) : '',
+    metaInfo.pnlMetric && worstDayPnl != null ? cpuChartPill('Worst day', metricHistoryValueLabel(metric, worstDayPnl, data)) : '',
+    showThresholds && warningThreshold != null ? cpuChartPill('Warning', metricHistoryValueLabel(metric, warningThreshold, data)) : '',
+    showThresholds && errorThreshold != null ? cpuChartPill('Error', metricHistoryValueLabel(metric, errorThreshold, data)) : '',
+    cpuChartPill(metaInfo.countMetric ? 'Last hour' : ((metaInfo.pnlMetric || metaInfo.fillsMetric) ? 'Last fill' : 'Last sample'), metaInfo.countMetric ? lastSeenHourly : ((metaInfo.pnlMetric || metaInfo.fillsMetric) ? (lastFillTs > 0 ? new Date(lastFillTs * 1000).toISOString().replace('T', ' ').slice(0, 19) + ' UTC' : 'n/a') : lastSeen)),
   ].join('');
 }
 
@@ -2419,7 +2414,7 @@ function cpuChartPill(label, value) {
 
 function renderCpuHistoryChart(data, points, metric) {
   if (!points.length) {
-    return '<div style="color:var(--text-dim);padding:24px;text-align:center">' + PBGuiI18n.t('sysmon.noHistoryAvailable') + '</div>';
+    return '<div style="color:var(--text-dim);padding:24px;text-align:center">No history available yet.</div>';
   }
   const meta = metricHistoryMeta(metric);
   const width = 920;
@@ -2453,7 +2448,7 @@ function renderCpuHistoryChart(data, points, metric) {
     path += (idx === 0 ? 'M' : ' L') + x(item.index).toFixed(1) + ' ' + y(item.value).toFixed(1);
   });
   const pointMarkers = (meta.pnlMetric || meta.fillsMetric) ? valid.map(function (item) {
-    return `<circle cx="${x(item.index).toFixed(1)}" cy="${y(item.value).toFixed(1)}" r="${valid.length === 1 ? 4 : 3}" fill="rgba(93,196,255,0.95)" stroke="rgb(7, 6, 10,0.9)" stroke-width="1.2" />`;
+    return `<circle cx="${x(item.index).toFixed(1)}" cy="${y(item.value).toFixed(1)}" r="${valid.length === 1 ? 4 : 3}" fill="rgba(93,196,255,0.95)" stroke="rgba(5,9,15,0.9)" stroke-width="1.2" />`;
   }).join('') : '';
   const guides = guidesMeta.values.filter(function (v, i, arr) { return v <= maxValue || i === arr.length - 1; }).map(function (v) {
     const yy = y(v);
@@ -2474,16 +2469,16 @@ function renderCpuHistoryChart(data, points, metric) {
     if (dayPath) {
       dailyLine = `<path d="${dayPath}" fill="none" stroke="rgba(171,219,255,0.92)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>`;
     }
-    dailyLabels = `<text x="${pad.left}" y="${pad.top + 14}" fill="rgba(171,219,255,0.9)" font-size="11">${PBGuiI18n.t('sysmon.dailyUtc')}</text>`
-      + `<text x="${pad.left + 72}" y="${pad.top + 14}" fill="rgba(93,196,255,0.72)" font-size="11">${PBGuiI18n.t('sysmon.hourlyUtc')}</text>`;
+    dailyLabels = `<text x="${pad.left}" y="${pad.top + 14}" fill="rgba(171,219,255,0.9)" font-size="11">daily UTC</text>`
+      + `<text x="${pad.left + 72}" y="${pad.top + 14}" fill="rgba(93,196,255,0.72)" font-size="11">hourly UTC</text>`;
   }
   const zeroLine = meta.pnlMetric && minValue < 0 && maxValue > 0 ? `<line x1="${pad.left}" y1="${y(0).toFixed(1)}" x2="${(width - pad.right)}" y2="${y(0).toFixed(1)}" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="3 3" />` : '';
   const warningLine = warningThreshold == null ? '' : `<line x1="${pad.left}" y1="${y(warningThreshold).toFixed(1)}" x2="${(width - pad.right)}" y2="${y(warningThreshold).toFixed(1)}" stroke="rgba(244,185,66,0.85)" stroke-width="1.5" stroke-dasharray="6 4" />`;
   const errorLine = errorThreshold == null ? '' : `<line x1="${pad.left}" y1="${y(errorThreshold).toFixed(1)}" x2="${(width - pad.right)}" y2="${y(errorThreshold).toFixed(1)}" stroke="rgba(255,75,75,0.78)" stroke-width="1.5" stroke-dasharray="6 4" />`;
-  const warningLabel = warningThreshold == null ? '' : `<text x="${width - pad.right}" y="${(y(warningThreshold) - 6).toFixed(1)}" text-anchor="end" fill="rgba(244,210,120,0.95)" font-size="11">${PBGuiI18n.t('sysmon.warningValue', {v: metricHistoryValueLabel(metric, warningThreshold, data)})}</text>`;
-  const errorLabel = errorThreshold == null ? '' : `<text x="${width - pad.right}" y="${(y(errorThreshold) + 14).toFixed(1)}" text-anchor="end" fill="rgba(255,120,120,0.95)" font-size="11">${PBGuiI18n.t('sysmon.errorValue', {v: metricHistoryValueLabel(metric, errorThreshold, data)})}</text>`;
-  const rangeLabel = meta.countMetric ? PBGuiI18n.t('sysmon.range4week') : ((meta.pnlMetric || meta.fillsMetric) ? PBGuiI18n.t('sysmon.rangeFull') : PBGuiI18n.t('sysmon.range24hour'));
-  const startLabel = meta.countMetric ? PBGuiI18n.t('sysmon.start4wAgo') : ((meta.pnlMetric || meta.fillsMetric) ? PBGuiI18n.t('sysmon.startFirstDay') : PBGuiI18n.t('sysmon.start24hAgo'));
+  const warningLabel = warningThreshold == null ? '' : `<text x="${width - pad.right}" y="${(y(warningThreshold) - 6).toFixed(1)}" text-anchor="end" fill="rgba(244,210,120,0.95)" font-size="11">warning ${metricHistoryValueLabel(metric, warningThreshold, data)}</text>`;
+  const errorLabel = errorThreshold == null ? '' : `<text x="${width - pad.right}" y="${(y(errorThreshold) + 14).toFixed(1)}" text-anchor="end" fill="rgba(255,120,120,0.95)" font-size="11">error ${metricHistoryValueLabel(metric, errorThreshold, data)}</text>`;
+  const rangeLabel = meta.countMetric ? '4 week' : ((meta.pnlMetric || meta.fillsMetric) ? 'full' : '24 hour');
+  const startLabel = meta.countMetric ? '4w ago' : ((meta.pnlMetric || meta.fillsMetric) ? 'first day' : '24h ago');
   let xAxisLabels = '';
   if ((meta.pnlMetric || meta.fillsMetric) && Array.isArray(data && data.days) && data.days.length) {
     const tickCount = Math.min(4, data.days.length);
@@ -2501,7 +2496,7 @@ function renderCpuHistoryChart(data, points, metric) {
   }
   return `
     <svg class="cpu-chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="${escAttr(rangeLabel)} ${escAttr(metricHistoryMeta(metric).label)} history chart">
-      <rect x="0" y="0" width="${width}" height="${height}" rx="10" fill="rgb(7, 6, 10,0.55)"></rect>
+      <rect x="0" y="0" width="${width}" height="${height}" rx="10" fill="rgba(5,9,15,0.55)"></rect>
       ${guides}
       ${zeroLine}
       ${warningLine}
@@ -2512,7 +2507,7 @@ function renderCpuHistoryChart(data, points, metric) {
       <path d="${path}" fill="none" stroke="rgba(93,196,255,0.95)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></path>
       ${pointMarkers}
       ${dailyLabels}
-      ${xAxisLabels || `<text x="${pad.left}" y="${height - 8}" fill="rgba(255,255,255,0.55)" font-size="11">${startLabel}</text><text x="${width - pad.right}" y="${height - 8}" text-anchor="end" fill="rgba(255,255,255,0.55)" font-size="11">${PBGuiI18n.t('sysmon.now')}</text>`}
+      ${xAxisLabels || `<text x="${pad.left}" y="${height - 8}" fill="rgba(255,255,255,0.55)" font-size="11">${startLabel}</text><text x="${width - pad.right}" y="${height - 8}" text-anchor="end" fill="rgba(255,255,255,0.55)" font-size="11">now</text>`}
     </svg>`;
 }
 
@@ -2544,7 +2539,7 @@ function killInstance(host, name, pbVersion, el) {
     el.classList.add('killing');
     el.style.opacity = '1';
     el.textContent = '⏳';
-    el.title = PBGuiI18n.t('sysmon.killing');
+    el.title = 'Killing...';
   }
   if (!send({ cmd: 'kill_instance', host: host, name: name, pb_version: pbVersion })) {
     finishMonitorAction(key);
@@ -2558,16 +2553,6 @@ function errClass(v) { return v === 0 ? 'err-none' : v < 10 ? 'err-low' : 'err-h
 function syncLabel(s) {
   const map = {synced:'synced',outdated:'outdated',pending:'pending',stopped:'stopped',disabled:'disabled'};
   return map[s] || '–';
-}
-function svcStatusLabel(s) {
-  const map = {
-    running: PBGuiI18n.t('sysmon.running'),
-    stopped: PBGuiI18n.t('sysmon.stopped'),
-    restarting: PBGuiI18n.t('sysmon.restarting'),
-    disabled: PBGuiI18n.t('sysmon.disabled'),
-    unknown: PBGuiI18n.t('common.unknown'),
-  };
-  return map[s] || s;
 }
 function esc(s) {
   if (!s) return '';
@@ -2587,7 +2572,7 @@ function renderServices() {
 
   if (!connected.length) {
     document.getElementById('svc-container').innerHTML =
-      '<div style="padding:24px;text-align:center;color:var(--text-dim)">' + PBGuiI18n.t('sysmon.noVpsConnected') + '</div>';
+      '<div style="padding:24px;text-align:center;color:var(--text-dim)">No VPS servers connected.</div>';
     return;
   }
 
@@ -2608,7 +2593,7 @@ function renderServices() {
       for (const [svcName, check] of Object.entries(hostSvc)) {
         const st = check.status || 'unknown';
         const expected = check.expected !== false && st !== 'disabled';
-        const label = expected ? svcStatusLabel(st) : PBGuiI18n.t('sysmon.skipped');
+        const label = expected ? st : 'skipped';
         let dotColor;
         if (!expected) dotColor = 'var(--text-dim)';
         else if (st === 'running') dotColor = 'var(--green)';
@@ -2622,7 +2607,7 @@ function renderServices() {
       }
       html += `</div>`;
     } else {
-      html += `<span style="color:var(--text-dim);font-size:12px">${PBGuiI18n.t('sysmon.waiting')}</span>`;
+      html += `<span style="color:var(--text-dim);font-size:12px">waiting...</span>`;
     }
     html += `<span class="svc-host-arrow">${isExpanded ? '▾' : '▸'}</span>`;
     html += `</div>`;
@@ -2634,7 +2619,7 @@ function renderServices() {
       for (const [svcName, check] of Object.entries(hostSvc)) {
         const st = check.status || 'unknown';
         const expected = check.expected !== false && st !== 'disabled';
-        const label = expected ? svcStatusLabel(st) : PBGuiI18n.t('sysmon.skipped');
+        const label = expected ? st : 'skipped';
         let icon, color;
         if (!expected) { icon = '-'; color = 'var(--text-dim)'; }
         else if (st === 'running') { icon = '✅'; color = 'var(--green)'; }
@@ -2659,7 +2644,7 @@ function renderServices() {
 
 function renderServiceRestartButton(host, service) {
   const pending = pendingMonitorActions.has(monitorActionKey('restart-service', host, service));
-  return `<button class="svc-btn${pending ? ' restarting' : ''}" ${pending ? 'disabled' : ''} type="button" data-monitor-action="restart-service" data-host="${escAttr(host)}" data-service="${escAttr(service)}">${pending ? PBGuiI18n.t('sysmon.restarting') : PBGuiI18n.t('sysmon.restart')}</button>`;
+  return `<button class="svc-btn${pending ? ' restarting' : ''}" ${pending ? 'disabled' : ''} type="button" data-monitor-action="restart-service" data-host="${escAttr(host)}" data-service="${escAttr(service)}">${pending ? 'Restarting...' : 'Restart'}</button>`;
 }
 
 function restartService(host, service, btn) {
@@ -2671,7 +2656,7 @@ function restartService(host, service, btn) {
   btn._monitorResultTimer = null;
   btn.disabled = true;
   btn.classList.add('restarting');
-  btn.textContent = PBGuiI18n.t('sysmon.restarting');
+  btn.textContent = 'Restarting...';
   if (!send({ cmd: 'restart_service', host, service })) {
     finishMonitorAction(key);
     return;
@@ -2767,7 +2752,6 @@ initMetricTooltipHandlers();
   var helpFilter     = document.getElementById('help-toc-filter');
   var helpLangEN     = document.getElementById('help-lang-en');
   var helpLangDE     = document.getElementById('help-lang-de');
-  var helpLangZH     = document.getElementById('help-lang-zh');
   var helpDragHandle  = document.getElementById('help-drag-handle');
   var helpSearch      = document.getElementById('help-search');
   var helpSearchUp    = document.getElementById('help-search-up');
@@ -2821,7 +2805,7 @@ initMetricTooltipHandlers();
     _sMarks = Array.from(helpContent.querySelectorAll('mark'));
     if (_sMarks.length > 0) _gotoMark(0); else _updateSCount();
   }
-  function _updateSCount() { helpSearchCount.textContent = _sMarks.length ? (_sIdx + 1) + '/' + _sMarks.length : (helpSearch.value.trim() ? PBGuiI18n.t('sysmon.helpZeroFound') : ''); }
+  function _updateSCount() { helpSearchCount.textContent = _sMarks.length ? (_sIdx + 1) + '/' + _sMarks.length : (helpSearch.value.trim() ? '0 found' : ''); }
   function _gotoMark(idx) {
     if (!_sMarks.length) return;
     if (_sIdx >= 0 && _sIdx < _sMarks.length) _sMarks[_sIdx].classList.remove('current');
@@ -2839,11 +2823,11 @@ initMetricTooltipHandlers();
       .catch(function() { _topicCache[idx] = ''; cb(''); });
   }
   function _showGlobalResults(term) {
-    if (!term) { helpContent.innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + PBGuiI18n.t('sysmon.helpTypeSearchTerm') + '</p>'; helpSearchCount.textContent = ''; return; }
+    if (!term) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">Type a search term to find across all topics.</p>'; helpSearchCount.textContent = ''; return; }
     var re; try { re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'); } catch(e) { return; }
-    helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpSearching') + '</div>';
+    helpContent.innerHTML = '<div class="help-loading">Searching\u2026</div>';
     var pending = helpTopics.length;
-    if (pending === 0) { helpContent.innerHTML = ''; helpSearchCount.textContent = PBGuiI18n.t('sysmon.helpZeroFound'); return; }
+    if (pending === 0) { helpContent.innerHTML = ''; helpSearchCount.textContent = '0 found'; return; }
     var allResults = [];
     helpTopics.forEach(function(t, idx) {
       _ensureTopicCached(idx, function(html) {
@@ -2860,8 +2844,8 @@ initMetricTooltipHandlers();
   }
   function _renderGlobalResults(term, results) {
     var re; try { re = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'); } catch(e) { return; }
-    helpSearchCount.textContent = results.length + (results.length === 1 ? PBGuiI18n.t('sysmon.helpOneTopic') : PBGuiI18n.t('sysmon.helpTopics'));
-    if (results.length === 0) { helpContent.innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + PBGuiI18n.t('sysmon.helpNoResults') + '</p>'; return; }
+    helpSearchCount.textContent = results.length + (results.length === 1 ? ' topic' : ' topics');
+    if (results.length === 0) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>'; return; }
     var html = '<div class="gs-results">';
     results.forEach(function(r) {
       html += '<div class="gs-item" data-idx="' + r.idx + '"><div class="gs-topic">' + r.title + '</div>';
@@ -2870,7 +2854,7 @@ initMetricTooltipHandlers();
     });
     helpContent.innerHTML = html + '</div>';
     helpContent.querySelectorAll('.gs-item').forEach(function(el) {
-      el.addEventListener('click', function() { var idx = parseInt(el.getAttribute('data-idx'), 10); helpSearchGlobal.checked = false; _globalMode = false; helpSearch.placeholder = PBGuiI18n.t('sysmon.helpSearchInTopic'); loadTopic(idx); });
+      el.addEventListener('click', function() { var idx = parseInt(el.getAttribute('data-idx'), 10); helpSearchGlobal.checked = false; _globalMode = false; helpSearch.placeholder = 'Search in topic\u2026'; loadTopic(idx); });
     });
   }
   helpSearch.addEventListener('input', function() { if (_sTimer) clearTimeout(_sTimer); _sTimer = setTimeout(function() { var term = helpSearch.value.trim(); if (_globalMode) _showGlobalResults(term); else _applySearch(term); }, 260); });
@@ -2879,7 +2863,7 @@ initMetricTooltipHandlers();
   helpSearchDn.addEventListener('click', function() { _gotoMark(_sIdx + 1); });
   helpSearchGlobal.addEventListener('change', function() {
     _globalMode = helpSearchGlobal.checked;
-    helpSearch.placeholder = _globalMode ? PBGuiI18n.t('sysmon.helpSearchAllTopics') : PBGuiI18n.t('sysmon.helpSearchInTopic');
+    helpSearch.placeholder = _globalMode ? 'Search all topics\u2026' : 'Search in topic\u2026';
     var term = helpSearch.value.trim();
     if (_globalMode) { _showGlobalResults(term); } else { if (_rawHtml !== null) { helpContent.innerHTML = _rawHtml; _sMarks = []; _sIdx = -1; helpSearchCount.textContent = ''; } if (term) _applySearch(term); }
   });
@@ -2900,14 +2884,14 @@ initMetricTooltipHandlers();
     helpSel = idx; renderToc();
     var t = helpTopics[idx]; if (!t) return;
     _rawHtml = null; _sMarks = []; _sIdx = -1; helpSearchCount.textContent = '';
-    helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpLoading') + '</div>';
+    helpContent.innerHTML = '<div class="help-loading">Loading...</div>';
     fetch(docsBase + '/api/docs/content?file=' + encodeURIComponent(t.file) + '&lang=' + helpLang, { credentials: 'same-origin', cache: 'no-store' })
       .then(function(r) { return r.json(); })
       .then(function(d) { _rawHtml = mdToHtml(d.content || ''); _topicCache[idx] = _rawHtml; helpContent.innerHTML = _rawHtml; helpContent.scrollTop = 0; var st = helpSearch.value.trim(); if (st) _applySearch(st); })
-      .catch(function() { helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpFailedLoadContent') + '</div>'; });
+      .catch(function() { helpContent.innerHTML = '<div class="help-loading">Failed to load content.</div>'; });
   }
   function loadHelpIndex(keyword) {
-    helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpLoading') + '</div>';
+    helpTocList.innerHTML = '<div class="help-loading">Loading...</div>';
     fetch(docsBase + '/api/docs/index?lang=' + helpLang, { credentials: 'same-origin', cache: 'no-store' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
@@ -2918,12 +2902,11 @@ initMetricTooltipHandlers();
           loadTopic(startIdx);
         }
       })
-      .catch(function() { helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpFailedLoadTopics') + '</div>'; });
+      .catch(function() { helpTocList.innerHTML = '<div class="help-loading">Failed to load topics.</div>'; });
   }
   helpFilter.addEventListener('input', renderToc);
-  helpLangEN.addEventListener('click', function() { if (helpLang === 'EN') return; helpLang = 'EN'; helpLangEN.classList.add('active'); helpLangDE.classList.remove('active'); helpLangZH.classList.remove('active'); _topicCache = {}; helpSel = 0; loadHelpIndex('vps_monitor'); });
-  helpLangDE.addEventListener('click', function() { if (helpLang === 'DE') return; helpLang = 'DE'; helpLangDE.classList.add('active'); helpLangEN.classList.remove('active'); helpLangZH.classList.remove('active'); _topicCache = {}; helpSel = 0; loadHelpIndex('vps_monitor'); });
-  helpLangZH.addEventListener('click', function() { if (helpLang === 'ZH') return; helpLang = 'ZH'; helpLangZH.classList.add('active'); helpLangEN.classList.remove('active'); helpLangDE.classList.remove('active'); _topicCache = {}; helpSel = 0; loadHelpIndex('vps_monitor'); });
+  helpLangEN.addEventListener('click', function() { if (helpLang === 'EN') return; helpLang = 'EN'; helpLangEN.classList.add('active'); helpLangDE.classList.remove('active'); _topicCache = {}; loadHelpIndex((helpTopics[helpSel] && helpTopics[helpSel].file) || ('vps_monitor')); });
+  helpLangDE.addEventListener('click', function() { if (helpLang === 'DE') return; helpLang = 'DE'; helpLangDE.classList.add('active'); helpLangEN.classList.remove('active'); _topicCache = {}; loadHelpIndex((helpTopics[helpSel] && helpTopics[helpSel].file) || ('vps_monitor')); });
   document.getElementById('help-close').addEventListener('click', function() { helpOvl.classList.remove('visible'); });
   document.addEventListener('keydown', function(e) { if (e.key === 'Escape') helpOvl.classList.remove('visible'); });
   (function() {
@@ -2955,13 +2938,12 @@ initMetricTooltipHandlers();
 <!-- ── Shared nav bar ── -->
 <script>
 window.PBGUI_NAV_CONFIG = {
-  subtitle: (window.PBGuiI18n ? PBGuiI18n.t('sysmon.vpsMonitorSubtitle') : 'VPS MONITOR'),
+  subtitle: 'VPS MONITOR',
   current:  'system_vps_monitor',
   authenticated: true,
   version:  PBGUI_VERSION,
   serial:   PBGUI_SERIAL
 };
-document.title = PBGuiI18n.t('sysmon.vpsMonitorTitle');
 </script>
 <script src="/app/js/shared_help_overlay.js?v=9"></script>
 <script src="/app/js/pbgui_icons.js?v=1"></script>

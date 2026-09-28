@@ -45,7 +45,7 @@ def test_rented_vram_resolves_bounded_dispatch(
     dispatch_candidates = target_candidates
     dispatch = max(
         dispatch_floor,
-        result['largest_candidate_bars'] * dispatch_candidates,
+        (result['largest_candidate_bars'] * dispatch_candidates * 105 + 99) // 100,
     )
     assert config['optimize']['gpu']['max_dispatch_candidate_bars'] == dispatch
     assert result['automatic']['max_dispatch_candidate_bars'] == dispatch
@@ -77,6 +77,54 @@ def test_large_workload_scales_population_and_exact_evidence_together():
     assert result['dispatch_candidates'] == 8192
     assert result['dispatch_chunks'] == 1
     assert original['optimize']['gpu']['population_size'] is None
+
+
+@pytest.mark.parametrize('legacy_image', [False, True])
+def test_exact_local_calibration_profile_precedes_hardware_default(monkeypatch, legacy_image):
+    """An exact current local profile supplies automatic coordinated sizing."""
+    from vast_jobs import IMAGE, REVISION
+    import vast_calibration
+
+    class Profiles:
+        """Return one already identity-checked local profile."""
+        def __init__(self, root):
+            self.root = root
+
+        def match(self, identity, workload_fingerprint=None):
+            """Expose one current exact match to the resolver."""
+            assert identity['runtime_verified'] is True
+            assert identity['gpu_power_limit_watts'] == 170
+            assert workload_fingerprint is None
+            return {'id': 'a' * 64, 'source': 'local', 'protocol': 1,
+                    'worker_image': ('ghcr.io/msei99/pbgui-pb8-worker@sha256:f078b47466f53e3039b13e41905531d9504ca6caca7b57469499fae20b77ec0e'
+                                     if legacy_image else IMAGE),
+                    'pb8_revision': REVISION, 'population_size': 12288,
+                    'max_dispatch_candidate_bars': 8_000_000_000}
+
+    monkeypatch.setattr(vast_calibration, 'CalibrationProfiles', Profiles)
+    config = workload()
+    result = resolve_gpu_settings(
+        config,
+        {'workers': 16, 'hardware': {'gpu': 'NVIDIA RTX 3090', 'vram_bytes': 24 * 1024**3,
+                                     'compute_capability': '8.6'},
+         'runtime_metrics': {'gpu_power_limit_watts': 170}},
+        {'gpu_name': 'RTX 3090', 'vram_gb': 24, 'gpu_mem_bw_gbps': 936, 'tflops': 35},
+    )
+    assert result['automatic']['population_size'] == 12288
+    assert result['applied_by'] == 'local_calibration'
+    assert result['calibration_profile_id'] == 'a' * 64
+    assert config['optimize']['gpu']['max_dispatch_candidate_bars'] == 8_000_000_000
+    assert result['calibration_max_dispatch_candidate_bars'] == 8_000_000_000
+    broader = workload()
+    broader['live']['approved_coins']['long'] += ['NEW' + str(index) for index in range(41)]
+    resolve_gpu_settings(
+        broader,
+        {'workers': 16, 'hardware': {'gpu': 'NVIDIA RTX 3090', 'vram_bytes': 24 * 1024**3,
+                                     'compute_capability': '8.6'},
+         'runtime_metrics': {'gpu_power_limit_watts': 170}},
+        {'gpu_name': 'RTX 3090', 'vram_gb': 24, 'gpu_mem_bw_gbps': 936, 'tflops': 35},
+    )
+    assert broader['optimize']['gpu']['max_dispatch_candidate_bars'] == 8_000_000_000
 
 
 @pytest.mark.parametrize(('name', 'vram_gb', 'bandwidth', 'tflops', 'population'), [
@@ -150,8 +198,26 @@ def test_pbgui_resolves_standard_cuda_profile_for_new_worker():
     assert config['optimize']['gpu']['population_size'] == 8192
     assert config['optimize']['gpu']['batch_size'] == 8192
     assert config['optimize']['gpu']['max_dispatch_candidate_bars'] == (
-        result['largest_candidate_bars'] * 8192
+        (result['largest_candidate_bars'] * 8192 * 105 + 99) // 100
     )
+    assert result['dispatch_chunks'] == 1
+
+
+def test_native_warmup_and_reserve_keep_large_suite_in_one_dispatch(monkeypatch):
+    """A 410-day two-coin suite has room for PB8 warmup and five percent spare."""
+    import vast_gpu_tuning
+
+    config = workload()
+    config['live']['warmup_ratio'] = 1.0
+    config['live']['approved_coins']['long'] = ['BTC', 'ETH']
+    config['live']['approved_coins']['short'] = ['BTC', 'ETH']
+    config['backtest'].update(start_date='2020-01-03', end_date='2021-02-15')
+    monkeypatch.setattr(vast_gpu_tuning, '_optimizer_warmup_minutes', lambda _: 12_096)
+    result = resolve_gpu_settings(config, {'hardware': {'vram_bytes': 12 * 1024**3}}, {})
+    assert result['largest_candidate_bars'] == (410 * 1440 + 12_096) * 2
+    expected = (result['largest_candidate_bars'] * 8192 * 105 + 99) // 100
+    assert config['optimize']['gpu']['max_dispatch_candidate_bars'] == expected
+    assert expected > 601_057 * 2 * 8192
     assert result['dispatch_chunks'] == 1
 
 
@@ -165,3 +231,69 @@ def test_fast_cuda_profile_is_hardware_resolved_by_pbgui():
     assert result['automatic']['population_size'] == 24576
     assert result['applied_by'] == 'pbgui'
     assert config['optimize']['gpu']['population_size'] == 24576
+
+
+def test_rental_gpu_override_applies_to_each_auto_workload():
+    """One rental's chosen sizing triple governs different Auto queue jobs."""
+    selected = {'population_size': 6656, 'batch_size': 6656,
+                'max_dispatch_candidate_bars': 4_000_000_000}
+    for end_date in ('2026-09-18', '2026-03-31'):
+        config = workload()
+        config['backtest']['end_date'] = end_date
+        result = resolve_gpu_settings(config, {'workers': 8},
+                                      {'gpu_name': 'RTX 3060', 'vram_gb': 12}, selected)
+        gpu = config['optimize']['gpu']
+        assert (gpu['population_size'], gpu['batch_size'], gpu['max_dispatch_candidate_bars']) == (
+            6656, 6656, 4_000_000_000)
+        assert result['applied_by'] == 'rental_override'
+        assert result['rental_gpu_profile'] == selected
+
+
+def test_rental_gpu_override_never_changes_explicit_config():
+    """An explicit queued config wins over a rental-wide Auto override."""
+    config = workload(population=4096, dispatch=2_000_000_000)
+    selected = {'population_size': 6656, 'batch_size': 6656,
+                'max_dispatch_candidate_bars': 4_000_000_000}
+    result = resolve_gpu_settings(config, {'workers': 8},
+                                  {'gpu_name': 'RTX 3060', 'vram_gb': 12}, selected)
+    assert config['optimize']['gpu']['population_size'] == 4096
+    assert config['optimize']['gpu']['max_dispatch_candidate_bars'] == 2_000_000_000
+    assert result['rental_gpu_profile'] is None
+
+
+@pytest.mark.parametrize('population', [0, 1023, True, 131073])
+def test_rental_gpu_override_rejects_invalid_population(population):
+    """Persisted manual values must satisfy the same boundaries as the UI."""
+    selected = {'population_size': population, 'batch_size': 1024,
+                'max_dispatch_candidate_bars': 4_000_000_000}
+    with pytest.raises(ValueError, match='Invalid rental GPU profile'):
+        resolve_gpu_settings(workload(), {'workers': 8}, {'vram_gb': 12}, selected)
+
+
+def test_rental_card_preview_uses_preliminary_measured_profile(monkeypatch, tmp_path):
+    """The selected offer exposes measured sizing without reading another queue root."""
+    from vast_gpu_tuning import rental_card_profile
+    from vast_jobs import IMAGE, REVISION
+    import vast_calibration
+
+    class Profiles:
+        """Return one version-compatible same-variant calibration profile."""
+        def __init__(self, root):
+            assert root == tmp_path
+
+        def preliminary_match(self, offer):
+            """Select the advertised variant before runtime measurement."""
+            assert offer['gpu_max_power_watts'] == 170
+            return {'source': 'local', 'match_type': 'preliminary_nearest',
+                    'protocol': 1, 'worker_image': IMAGE, 'pb8_revision': REVISION,
+                    'population_size': 6656, 'max_dispatch_candidate_bars': 4_000_000_000,
+                    'hardware_identity': {'gpu_power_limit_watts': 170}}
+
+    monkeypatch.setattr(vast_calibration, 'CalibrationProfiles', Profiles)
+    profile = rental_card_profile({'gpu_name': 'RTX 3060', 'vram_gb': 12,
+                                   'gpu_max_power_watts': 170}, profile_root=tmp_path)
+    assert profile['population_size'] == profile['batch_size'] == 6656
+    assert profile['max_dispatch_candidate_bars'] == 4_000_000_000
+    assert profile['source'] == 'local'
+    assert profile['runtime_verified'] is False
+    assert profile['work_limit_is_floor'] is False

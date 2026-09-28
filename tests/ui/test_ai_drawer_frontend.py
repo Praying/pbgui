@@ -12,8 +12,12 @@ CSS = (ROOT / "frontend" / "css" / "ai_drawer.css").read_text(encoding="utf-8")
 def test_nav_lazy_loads_the_versioned_global_ai_drawer() -> None:
     """Every authenticated top-level page should receive one isolated drawer loader."""
     assert 'id="pbgui-ai-btn"' in NAV
-    assert "/app/js/ai_drawer.js?v=40" in NAV
-    assert "/app/css/ai_drawer.css?v=13" in NAV
+    assert "/app/js/ai_drawer.js?v=54" in NAV
+    assert "/app/js/ai_usage.js?v=2" in NAV
+    assert "/app/js/jev_transfer_preview.js?v=1" in NAV
+    assert "jev_preview_id: jevPreviewId || null" in DRAWER
+    assert "PBGuiAIUsage.renderOpenRouter(container, usage)" in DRAWER
+    assert "/app/css/ai_drawer.css?v=18" in NAV
     assert "/app/js/pbgui_dialogs.js?v=10" in NAV
     loader = NAV.split("function loadDrawerScript", 1)[1].split("var pendingAIAction", 1)[0]
     assert loader.index("pbgui_dialogs.js?v=10") < loader.index("dialogs.onload = loadDrawerScript")
@@ -36,7 +40,7 @@ def test_drawer_uses_cookie_auth_persistent_history_and_detached_turns() -> None
     assert "credentials: 'same-origin'" in DRAWER
     assert "api('/conversations')" in DRAWER
     assert "'/turns'" in DRAWER
-    assert "models/health-refresh" in DRAWER
+    assert "Refresh free-model availability" not in DRAWER
     assert "navigator.clipboard.writeText" in DRAWER
     assert "'/rewind'" in DRAWER
     rewind = DRAWER.split("async function rewindMessage", 1)[1].split("async function", 1)[0]
@@ -57,16 +61,16 @@ def test_drawer_uses_cookie_auth_persistent_history_and_detached_turns() -> None
     assert "var context = collectDisplayContext();" in DRAWER
     assert "checked ? collectContext() : null" in DRAWER
     assert "prepareNewSelection" not in DRAWER
-    assert "state.selectionDirty = true; loadModels();" in DRAWER
+    assert "state.selectionDirty = true;" in DRAWER
     assert "state.selectionDirty = true; rebuildEfforts();" in DRAWER
     assert "if (!state.selectionDirty)" in DRAWER
-    assert "await rebuildProviders(conversation.provider, conversation.model)" in DRAWER
+    assert "await rebuildProviders(providerValue, conversation.model)" in DRAWER
     assert "Loading models..." in DRAWER
     assert "Models unavailable" in DRAWER
     assert "state.modelsLoading" in DRAWER
-    assert "model: root.querySelector('#pai-model').value" in DRAWER
-    assert "effort: root.querySelector('#pai-effort').value" in DRAWER
-    assert "provider: root.querySelector('#pai-provider').value" in DRAWER
+    assert "model: turnModel" in DRAWER
+    assert "effort: turnEffort" in DRAWER
+    assert "provider: turnProvider" in DRAWER
     assert "api('/preferences')" in DRAWER
     assert "method: 'PUT'" in DRAWER
     assert "pagehide" in DRAWER
@@ -116,6 +120,11 @@ def test_drawer_uses_cookie_auth_persistent_history_and_detached_turns() -> None
     assert "credentials: 'same-origin'" in NAV
     assert "chat.quick_replies" in DRAWER
     assert "renderQuickReplies" in DRAWER
+    assert "Jev decides how many to mark" in DRAWER
+    assert "Write your own answer…" in DRAWER
+    quick_reply = DRAWER.split("function renderQuickReplies", 1)[1].split("function renderMessages", 1)[0]
+    assert "sendMessage(value)" in quick_reply
+    assert "/ack" not in quick_reply
     assert "proposalReviewText" in DRAWER
     assert "python_analysis" in DRAWER
     assert "proposal.input_data" not in DRAWER
@@ -156,13 +165,13 @@ def test_drawer_renders_untrusted_values_as_text_and_has_explicit_close() -> Non
     assert "window.confirm" not in DRAWER
     assert "window.alert" not in DRAWER
     assert "https://" not in DRAWER
-    assert "position: fixed" in CSS
-    assert "transform: translateX(100%)" in CSS
-    assert "@media (max-width: 760px)" in CSS
+    assert "position:fixed" in CSS
+    assert "transform:translateX(100%)" in CSS
+    assert "@media(max-width:760px)" in CSS
     assert "pai-resize" in CSS
-    assert "cursor: ew-resize" in CSS
-    assert "width: 16px" in CSS
-    assert "touch-action: none" in CSS
+    assert "cursor:ew-resize" in CSS
+    assert "width:16px" in CSS
+    assert "touch-action:none" in CSS
     assert "html.pbgui-ai-drawer-pinned body" in CSS
     assert ".pai-head .pai-pin" in CSS
     assert ".pai-proposal" in CSS

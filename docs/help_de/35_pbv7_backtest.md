@@ -182,8 +182,12 @@ Alle abgeschlossenen Backtest-Ergebnisse durchsuchen.
 - **Version**-Dropdown — PBv7-Ergebnisse, PBv8-Ergebnisse oder beide anzeigen; auf dieser Seite ist PBv7 vorausgewählt
 - **Config**-Dropdown — nach Config-Name filtern (exakte Übereinstimmung)
 - **Suchfeld** — Freitext-Filter über alle Spalten
-- **Columns** — sichtbare Result-Spalten waehlen. **Defaults** stellt die bisherige Tabelle wieder her; **All** aktiviert zusaetzlich verfuegbare optionale Werte wie Final Equity und Equity/Balance Difference. Lokale Results und Archive speichern ihre Auswahl getrennt im Browser.
+- **Columns** — sichtbare Result-Spalten waehlen. **Start Date** und **End Date** zeigen den mit jedem Ergebnis gespeicherten Zeitraum und sind standardmaessig sichtbar. **Defaults** stellt die Standardtabelle wieder her; **All** aktiviert zusaetzlich verfuegbare optionale Werte wie Final Equity und Equity/Balance Difference. Lokale Results und Archive speichern ihre Auswahl getrennt im Browser.
 - Spaltenheader anklicken zum Sortieren; erneut klicken für umgekehrte Reihenfolge
+
+Zeilen einer Optimize-Validation-Gruppe stehen vom fruehesten zum spaetesten Startdatum; der gesamte Zeitraum steht am Schluss. Start Date und End Date zeigen nur das Datum ohne Uhrzeit.
+
+Eingeklappte Optimize-Validation-Gruppen verwenden dieselben einzeiligen Spalten wie ein einzelner Backtest. Die Zeile zeigt Strategie, Coins, Exchanges, Ergebniszeit, Zeitraum, alle verfuegbaren Kennzahlen, Salden, Exposure-Limits und Positionszahlen des Full-Timerange-Ergebnisses; im Namen steht auch die Anzahl der Gruppenergebnisse. Fehlt das Full-Ergebnis, wird dies im Namen angezeigt und die Kennzahlen bleiben leer. Fuer einzelne Trainings- und Holdout-Werte die Gruppe aufklappen.
 
 Abgeschlossene Queue-Jobs invalidieren jetzt sofort den gecachten Results-Stand. Wenn du bereits im Results-Panel bist, lädt PBGui die Tabelle automatisch neu, sodass der neue Eintrag ohne Panel-Wechsel erscheint.
 
@@ -351,3 +355,5 @@ Der AI-Assistent kann exakte verwaltete PB7-Backtest-Ressourcen ebenfalls in die
 Wenn ein Suite-Szenarioeditor geoeffnet ist, erfordern Templates, Reset to Base und Apply Training Scenarios eine Bestaetigung, bevor ungespeicherte Aenderungen verworfen werden. Abbrechen behaelt den Entwurf bei.
 
 Wenn Add to Run keinen Editorentwurf erstellen kann, zeigt Backtest den Serverfehler und behaelt die aktuelle Seite bei. Der Editor wird erst nach Erhalt einer gueltigen Entwurfs-ID geoeffnet.
+
+Im visuellen Szenarioeditor bleibt der Zoom innerhalb der konfigurierten Daten. Ein erfolgreicher neuer Versuch entfernt frühere Fehler, und beim Abbrechen des Szenarioersatzes bleibt der offene Editor unverändert.

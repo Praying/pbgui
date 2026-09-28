@@ -3652,10 +3652,10 @@
       serial: PBGUI_SERIAL
     };
   </script>
-  <script src="/app/js/shared_help_overlay.js?v=7"></script>
-  <script src="/app/js/pbgui_icons.js?v=1"></script>
-  <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
-  <script src="/app/js/log_viewer_panel.js?v=48"></script>
+  <script src="/app/js/shared_help_overlay.js?v=9"></script>
+<script src="/app/js/pbgui_icons.js?v=1"></script>
+<script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
+  <script src="/app/js/log_viewer_panel.js?v=50"></script>
   <script src="/app/js/pbgui_dialogs.js?v=10"></script>
   <script src="/app/js/editor_shared.js?v=15"></script>
   <script src="/app/plotly.min.js?v=1"></script>
@@ -3706,6 +3706,7 @@
         activeSubsection: 'normal',
         baselineRequest: '',
         isDirty: false,
+        saveBusy: false,
         tiingoConfigured: false,
         tiingoProfileId: '',
         tiingoSaveGeneration: 0,
@@ -4035,14 +4036,14 @@
           helpLang = 'EN';
           helpLangEN.classList.add('active');
           helpLangDE.classList.remove('active');
-          loadHelpIndex(helpDefaultTopic);
+          loadHelpIndex((helpTopics[helpSel] && helpTopics[helpSel].file) || (helpDefaultTopic));
         });
         helpLangDE.addEventListener('click', function () {
           if (helpLang === 'DE') return;
           helpLang = 'DE';
           helpLangDE.classList.add('active');
           helpLangEN.classList.remove('active');
-          loadHelpIndex(helpDefaultTopic);
+          loadHelpIndex((helpTopics[helpSel] && helpTopics[helpSel].file) || (helpDefaultTopic));
         });
         helpClose.addEventListener('click', function () {
           helpOvl.classList.remove('visible');
@@ -4185,7 +4186,7 @@
         var meta = getExchangeMeta(exchangeKey);
         var jobMeta = best1mJobMonitorMeta[meta.key];
         if (!jobMeta) return '';
-        var url = '/api/jobs/main_page?v=' + encodeURIComponent(PBGUI_SERIAL || '0')
+        var url = '/app/jobs_monitor.html?v=' + encodeURIComponent(PBGUI_SERIAL || '0')
           + '&embed=1'
           + '&exchange=' + encodeURIComponent(jobMeta.exchange)
           + '&job_type=' + encodeURIComponent(jobMeta.jobType);
@@ -4212,7 +4213,7 @@
       }
 
       function buildCopyDataJobMonitorUrl(forceReload) {
-        var url = '/api/jobs/main_page?v=' + encodeURIComponent(PBGUI_SERIAL || '0')
+        var url = '/app/jobs_monitor.html?v=' + encodeURIComponent(PBGUI_SERIAL || '0')
           + '&embed=1'
           + '&exchange=ohlcv'
           + '&job_type=' + encodeURIComponent('ohlcv_copy,ohlcv_copy_dry_run');
@@ -4237,7 +4238,7 @@
         var jobTypes = 'ohlcv_integrity_scan,ohlcv_integrity_repair,ohlcv_integrity_repair_all,ohlcv_removed_coin_delete,ohlcv_removed_coins_delete';
         if (meta.statusKey === 'hyperliquid') jobTypes += ',ohlcv_hyperliquid_normalize_fallback';
         if (meta.statusKey === 'bybit') jobTypes += ',ohlcv_checksum_publish,ohlcv_checksum_reference';
-        var url = '/api/jobs/main_page?v=' + encodeURIComponent(PBGUI_SERIAL || '0')
+        var url = '/app/jobs_monitor.html?v=' + encodeURIComponent(PBGUI_SERIAL || '0')
           + '&embed=1'
           + '&exchange=' + encodeURIComponent(meta.statusKey)
           + '&job_type=' + encodeURIComponent(jobTypes);
@@ -5526,7 +5527,7 @@
       function updateSaveSettingsButton() {
         var button = document.getElementById('btn-save-settings-sidebar');
         if (!button) return;
-        button.disabled = !settingsState.isDirty;
+        button.disabled = settingsState.saveBusy || !settingsState.isDirty;
         button.classList.toggle('save-needed', settingsState.isDirty);
       }
 
@@ -6972,7 +6973,9 @@
         }
       }
 
+      var tradfiSavePending = false;
       async function saveTradfiMapping() {
+        if (tradfiSavePending) return false;
         var xyzCoin = readFieldValue('tradfi-editor-xyz-coin').toUpperCase();
         if (!xyzCoin) {
           showToast('XYZ coin cannot be empty.', 'error');
@@ -6992,6 +6995,9 @@
           spec_source: 'manual'
         };
 
+        var saveButton = document.getElementById('btn-tradfi-save');
+        tradfiSavePending = true;
+        saveButton.disabled = true;
         try {
           var result = await fetchJson('/settings/hyperliquid/tradfi-map', {
             method: 'POST',
@@ -7002,11 +7008,15 @@
           }
           tradfiMapState.selectedCoin = String(((result.payload || {}).selected_xyz_coin) || xyzCoin);
           renderTradfiMap(result.payload || {});
+          cancelTradfiEditor();
           showToast(result.message || 'TradFi symbol mapping saved.', 'success');
           return true;
         } catch (error) {
           showToast(error && error.message ? error.message : 'TradFi symbol map save failed.', 'error');
           return false;
+        } finally {
+          tradfiSavePending = false;
+          saveButton.disabled = false;
         }
       }
 
@@ -8982,21 +8992,36 @@
       }
 
       async function saveSettings() {
+        if (settingsState.saveBusy) return;
+        settingsState.saveBusy = true;
+        updateSaveSettingsButton();
+        var savedExchange = settingsState.exchange;
         try {
-          var result = await fetchJson('/settings/' + encodeURIComponent(settingsState.exchange), {
+          var savedRequest = collectSettingsRequest();
+          var result = await fetchJson('/settings/' + encodeURIComponent(savedExchange), {
             method: 'POST',
-            body: JSON.stringify(collectSettingsRequest())
+            body: JSON.stringify(savedRequest)
           });
           if (!result.success) {
             throw new Error(result.error || 'Save failed.');
           }
-          settingsState.payload = result.settings;
-          settingsState.selectedCoins = new Set(Array.isArray(result.settings.enabled_coins) ? result.settings.enabled_coins : []);
-          renderSettingsPayload();
-          setSettingsBaseline();
-          showToast(result.message || 'Settings saved.', 'success');
+          if (settingsState.exchange === savedExchange) {
+            settingsState.payload = result.settings;
+            if (JSON.stringify(collectSettingsRequest()) === JSON.stringify(savedRequest)) {
+              settingsState.selectedCoins = new Set(Array.isArray(result.settings.enabled_coins) ? result.settings.enabled_coins : []);
+              renderSettingsPayload();
+              setSettingsBaseline();
+            } else {
+              settingsState.baselineRequest = JSON.stringify(savedRequest);
+              syncSettingsDirtyState();
+            }
+            showToast(result.message || 'Settings saved.', 'success');
+          }
         } catch (error) {
-          showToast(error && error.message ? error.message : 'Save failed.', 'error');
+          if (settingsState.exchange === savedExchange) showToast(error && error.message ? error.message : 'Save failed.', 'error');
+        } finally {
+          settingsState.saveBusy = false;
+          updateSaveSettingsButton();
         }
       }
 

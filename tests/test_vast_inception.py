@@ -1,11 +1,11 @@
 """Offline regression coverage for the cloud worker's missing-inception failure."""
 
-import asyncio
 import gzip
 import hashlib
 import json
 from pathlib import Path
 import shlex
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -41,44 +41,6 @@ def test_required_markets_uses_only_exported_mapped_perpetuals(tmp_path):
         inception.required_markets(manifest, tmp_path)
 
 
-@pytest.mark.parametrize('failure', [None, 'blocked', 'empty'])
-def test_first_candle_requests_match_pb8_and_always_close(monkeypatch, failure):
-    """Both venue horizons match PB8; unavailable inception cannot become age zero."""
-    import ccxt.async_support as ccxt
-    closed, requests = [], []
-
-    class Client:
-        """Offline exchange exposing only the required first-candle operation."""
-        def __init__(self, options):
-            """Accept bounded public-client settings."""
-            assert options['timeout'] == 30000
-
-        async def fetch_ohlcv(self, symbol, **kwargs):
-            """Return synthetic historical inception or a blocked/empty response."""
-            requests.append((symbol, kwargs))
-            if failure == 'blocked':
-                raise ValueError('location blocked')
-            return [] if failure == 'empty' else [[1600041600000, 1, 1, 1, 1, 1]]
-
-        async def close(self):
-            """Record deterministic resource release."""
-            closed.append(True)
-
-    monkeypatch.setattr(ccxt, 'binanceusdm', Client)
-    monkeypatch.setattr(ccxt, 'bybit', Client)
-    markets = {'binance': {'SOL': 'SOL/USDT:USDT'}, 'bybit': {'SOL': 'SOL/USDT:USDT'}}
-    if failure:
-        with pytest.raises((VastError, ValueError)):
-            asyncio.run(inception.fetch_inception(markets))
-        assert closed == [True]
-    else:
-        result = asyncio.run(inception.fetch_inception(markets))
-        assert requests == [('SOL/USDT:USDT', {'since': 1, 'timeframe': '1d'}),
-                            ('SOL/USDT:USDT', {'since': 1514764800000, 'timeframe': '1d'})]
-        assert set(result['files'][inception.CACHE_FILES[1]]['SOL']) == {'binanceusdm', 'bybit'}
-        assert closed == [True, True]
-
-
 def test_receiver_installs_all_cache_files_and_version(tmp_path):
     """The unified cache alone is insufficient; exchange and symbol caches accompany it."""
     source = tmp_path / 'utils.py'
@@ -111,13 +73,27 @@ def test_invalid_snapshot_is_rejected_before_writing(tmp_path, failure):
     assert not (tmp_path / 'output').exists()
 
 
+def test_local_inception_requires_matching_cached_symbols(tmp_path, monkeypatch):
+    """Use only matching local PB8 entries and reject stale symbol identities."""
+    cache = tmp_path / 'caches'
+    cache.mkdir()
+    data = snapshot()
+    (cache / 'first_ohlcv_timestamps_unified.version').write_text('2')
+    for name, value in data['files'].items():
+        (cache / name).write_text(json.dumps(value))
+    monkeypatch.setattr(inception, 'pb8dir', lambda: str(tmp_path))
+    markets = {'bybit': {'SOL': 'SOL/USDT:USDT'}}
+    result = inception.load_local_inception(markets)
+    assert result['files'][inception.CACHE_FILES[0]] == {'SOL': 1634256000000}
+    assert result['files'][inception.CACHE_FILES[1]] == {'SOL': {'bybit': 1634256000000}}
+    with pytest.raises(VastError, match='missing or outdated for bybit/SOL'):
+        inception.load_local_inception({'bybit': {'SOL': 'OTHER/USDT:USDT'}})
+
+
 def test_stage_transfers_verified_snapshot_without_changing_input(tmp_path, monkeypatch):
     """Old queued jobs receive a separate runtime cache rather than a rewritten bundle."""
     monkeypatch.setattr(inception, 'required_markets', lambda *args: {'bybit': {'SOL': 'SOL/USDT:USDT'}})
-    async def fetch(markets):
-        """Return a bounded public snapshot offline."""
-        return snapshot()
-    monkeypatch.setattr(inception, 'fetch_inception', fetch)
+    monkeypatch.setattr(inception, 'load_local_inception', lambda markets: snapshot())
     source = tmp_path / 'utils.py'
     source.write_text('FIRST_OHLCV_TIMESTAMPS_CACHE_VERSION = 2\n')
     def command(value, stdin, **kwargs):
@@ -154,3 +130,96 @@ def test_start_requires_inception_before_remote_launch(monkeypatch, failure):
     else:
         connection.start()
         assert calls == ['markets', 'inception', 'run']
+
+
+def test_preflight_resolves_every_missing_exported_coin_locally(tmp_path, monkeypatch):
+    """A prepared job repairs arbitrary missing pairs before a rental, not a fixed coin list."""
+    cache = tmp_path / 'caches'
+    cache.mkdir()
+    (cache / 'first_ohlcv_timestamps_unified.version').write_text('2')
+    (cache / inception.CACHE_FILES[1]).write_text(json.dumps({
+        'BTC': {'hyperliquid': 1609977600000},
+        'SHIB': {'hyperliquid': 1640995200000},
+    }))
+    (cache / inception.CACHE_FILES[2]).write_text(json.dumps({
+        'BTC': {'hyperliquid': 'BTC/USDC:USDC'},
+        'SHIB': {'hyperliquid': 'OLD/USDC:USDC'},
+    }))
+    monkeypatch.setattr(inception, 'pb8dir', lambda: str(tmp_path))
+    interpreter = tmp_path / 'pb8-python'
+    interpreter.symlink_to(sys.executable)
+    monkeypatch.setattr(inception, 'pb8venv', lambda: str(interpreter))
+    requests = []
+
+    def resolver(argv, **kwargs):
+        """Return local PB8 results for exactly the missing pairs."""
+        assert argv[0] == str(interpreter)
+        assert argv[1] == '-I'
+        assert kwargs['cwd'] == str(tmp_path)
+        requests.append(json.loads(kwargs['input'])['markets'])
+        return SimpleNamespace(returncode=0, stdout=json.dumps({'hyperliquid': {
+            'DOGE': {'timestamp': 1640995200000, 'symbol': 'DOGE/USDC:USDC'},
+            'SHIB': {'timestamp': 1640995200000, 'symbol': 'SHIB/USDC:USDC'},
+        }}))
+
+    monkeypatch.setattr(inception.subprocess, 'run', resolver)
+    markets = {'hyperliquid': {
+        'BTC': 'BTC/USDC:USDC', 'DOGE': 'DOGE/USDC:USDC', 'SHIB': 'SHIB/USDC:USDC',
+    }}
+    result = inception.ensure_local_inception(markets)
+    assert requests == [{'hyperliquid': {'DOGE': 'DOGE/USDC:USDC', 'SHIB': 'SHIB/USDC:USDC'}}]
+    assert set(result['files'][inception.CACHE_FILES[1]]) == {'BTC', 'DOGE', 'SHIB'}
+    inception.ensure_local_inception(markets)
+    assert len(requests) == 1
+
+
+def test_preflight_rejects_mismatched_local_result_without_cache_write(tmp_path, monkeypatch):
+    """A resolver symbol mismatch cannot publish metadata or permit rental."""
+    cache = tmp_path / 'caches'
+    cache.mkdir()
+    (cache / 'first_ohlcv_timestamps_unified.version').write_text('2')
+    for name in inception.CACHE_FILES[1:]:
+        (cache / name).write_text('{}')
+    monkeypatch.setattr(inception, 'pb8dir', lambda: str(tmp_path))
+    monkeypatch.setattr(inception, 'pb8venv', lambda: '/usr/bin/python3')
+    monkeypatch.setattr(inception.subprocess, 'run', lambda *args, **kwargs: SimpleNamespace(
+        returncode=0, stdout=json.dumps({'hyperliquid': {
+            'DOGE': {'timestamp': 1640995200000, 'symbol': 'OTHER/USDC:USDC'},
+        }})))
+    with pytest.raises(VastError, match='matching first candle for hyperliquid/DOGE'):
+        inception.ensure_local_inception({'hyperliquid': {'DOGE': 'DOGE/USDC:USDC'}})
+    for name in inception.CACHE_FILES[1:]:
+        assert (cache / name).read_text() == '{}'
+
+
+def test_local_helper_uses_temporary_cache_and_machine_readable_output(tmp_path):
+    """The PB8 subprocess writes only under a temporary directory before PBGui validates it."""
+    import subprocess
+    import sys
+
+    pb8 = tmp_path / 'pb8'
+    source = pb8 / 'src'
+    source.mkdir(parents=True)
+    (source / 'procedures.py').write_text('''
+import json
+from pathlib import Path
+async def get_first_timestamps_unified(coins, exchange=None):
+    print('PB8 progress')
+    root = Path('caches')
+    root.mkdir(exist_ok=True)
+    (root / 'first_ohlcv_timestamps_unified.version').write_text('2')
+    (root / 'first_ohlcv_timestamps_unified_exchange_specific.json').write_text(
+        json.dumps({coin: {exchange: 1640995200000} for coin in coins}))
+    (root / 'first_ohlcv_timestamps_unified_exchange_specific_symbols.json').write_text(
+        json.dumps({coin: {exchange: f'{coin}/USDC:USDC'} for coin in coins}))
+''')
+    helper = Path(inception.__file__).parent / 'setup/vast_gpu_benchmark/resolve_local_inception.py'
+    completed = subprocess.run(
+        [sys.executable, '-I', str(helper)], cwd=pb8,
+        input=json.dumps({'pb8_dir': str(pb8), 'markets': {'hyperliquid': {'DOGE': 'DOGE/USDC:USDC'}}}),
+        text=True, capture_output=True, timeout=10, check=True,
+    )
+    assert json.loads(completed.stdout) == {'hyperliquid': {
+        'DOGE': {'timestamp': 1640995200000, 'symbol': 'DOGE/USDC:USDC'},
+    }}
+    assert not (pb8 / 'caches').exists()

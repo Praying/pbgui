@@ -36,6 +36,7 @@ from api.archive_helpers import _read_json_object_nofollow, atomic_write_json, c
 from api.auth import SessionToken, authenticate_websocket, require_auth, serve_vue_or_legacy_page
 from api.page_templates import render_page_urls, script_json
 from api.backtest_price import build_market_price_payload
+from api.backtest_queue_batches import BacktestQueueBatches
 from api.v8_instances import store_v8_editor_draft
 from api.pb8_ohlcv_tools import (
     PB8OhlcvUnavailableError,
@@ -1772,6 +1773,7 @@ def _list_results(
                     "balance_equity_diff": equity_balance_diff,
                     "equity_balance_diff_neg_max": equity_balance_diff,
                     "btc_collateral_cap": backtest.get("btc_collateral_cap", 0),
+                    "start_date": backtest.get("start_date", ""),
                     "end_date": backtest.get("end_date", ""),
                     "twe_long": _bot_risk_value(config, "long", "total_wallet_exposure_limit"),
                     "twe_short": _bot_risk_value(config, "short", "total_wallet_exposure_limit"),
@@ -2020,11 +2022,12 @@ def startup() -> None:
     """Start the V8 queue controller for this API lifespan."""
     _cleanup_orphan_queue_snapshots()
     _worker.start()
+    _batch_submitter.start()
 
 
 async def shutdown() -> None:
     """Stop only the controller; detached PB8 backtests remain running."""
-    await _worker.stop()
+    await asyncio.gather(_worker.stop(), _batch_submitter.stop(), return_exceptions=True)
 
 
 @router.get("/main_page", response_class=HTMLResponse, response_model=None)
@@ -2761,6 +2764,51 @@ def add_to_queue(body: dict, session: SessionToken = Depends(require_auth)) -> d
                 rmtree(_snapshot_file(filename).parent, ignore_errors=True)
                 raise
     return {"ok": True, "filename": filename}
+
+
+_batch_submitter = BacktestQueueBatches(
+    _queue_dir() / "batches",
+    lambda item: add_to_queue(item, session=None),
+)
+
+
+@router.get("/queue/batches")
+def list_queue_batches(session: SessionToken = Depends(require_auth)) -> dict:
+    """Show this user's recent server-side queue submission progress."""
+    return {"batches": _batch_submitter.list_for_owner(session.user_id)}
+
+
+@router.post("/queue/batches")
+def submit_queue_batch(body: dict, session: SessionToken = Depends(require_auth)) -> dict:
+    """Accept one bounded durable command for all PB8 backtest jobs."""
+    items = body.get("items") if isinstance(body, dict) else None
+    if not isinstance(items, list) or not 1 <= len(items) <= 256:
+        raise HTTPException(status_code=422, detail="Provide 1 to 256 backtest jobs")
+    for item in items:
+        if not isinstance(item, dict):
+            raise HTTPException(status_code=422, detail="Each backtest job must be an object")
+        _validate_name(str(item.get("name") or ""))
+        if not isinstance(item.get("config"), dict) or not isinstance(item.get("override_configs", {}), dict):
+            raise HTTPException(status_code=422, detail="Invalid backtest config or overrides")
+        operation_id = item.get("operation_id")
+        if operation_id is not None:
+            _validate_name(str(operation_id))
+    try:
+        return _batch_submitter.submit(session.user_id, items)
+    except ValueError as exc:
+        raise HTTPException(status_code=413, detail=str(exc)) from exc
+
+
+@router.post("/queue/batches/{batch_id}/retry")
+def retry_queue_batch(batch_id: str, session: SessionToken = Depends(require_auth)) -> dict:
+    """Resume an errored server batch without duplicating confirmed jobs."""
+    try:
+        parsed = uuid.UUID(batch_id)
+        if str(parsed) != batch_id:
+            raise ValueError
+        return _batch_submitter.retry(session.user_id, batch_id)
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail="Backtest batch not found") from exc
 
 
 @router.post("/queue/{filename}/start")

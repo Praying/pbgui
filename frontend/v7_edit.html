@@ -3,28 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="icon" type="image/svg+xml" href="/app/favicon.svg?v=2">
 <title>PBv7 Edit</title>
-<script src="/app/i18n.js?v=1"></script>
-<link rel="stylesheet" href="/app/src/styles/tokens.css">
-    <link rel="stylesheet" href="/app/css/sidebar.css?v=1">
+<link rel="stylesheet" href="/app/css/sidebar.css?v=1">
 <style>
 /* ─── Reset & Base ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; }
 :root {
-  --bg:var(--bg-page);
-  --bg2:var(--bg-panel);
-  --bg3:var(--bg-elevated);
-  --border:var(--border-default);
-  --text:var(--text-primary);
-  --text-dim:var(--text-secondary);
-  --green:var(--success);
-  --orange:var(--warning);
-  --red:var(--danger);
-  --blue:var(--accent);
-  --accent:#72a0ee;
-  --font:var(--font-family);
+  --bg:       #0e1117;
+  --bg2:      #1a1d24;
+  --bg3:      #262730;
+  --border:   #333640;
+  --text:     #fafafa;
+  --text-dim: #a0a4ab;
+  --green:    #21c354;
+  --orange:   #ff8c00;
+  --red:      #ff4b4b;
+  --blue:     #1f77ff;
+  --accent:   #4da6ff;
+  --font:     'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
   --fs-xs:    11px;
   --fs-sm:    13px;
   --fs-base:  14px;
@@ -62,16 +59,16 @@ body {
 .migration-review-notice {
   margin-bottom: var(--sp-md);
   padding: 12px 14px;
-  border: 1px solid rgb(var(--warning-rgb, 227 164 74) / .5);
+  border: 1px solid rgba(255, 140, 0, .5);
   border-left: 4px solid var(--orange);
   border-radius: 6px;
-  background: rgb(var(--warning-rgb, 227 164 74) / .10);
-  color: #ecc381;
+  background: rgba(255, 140, 0, .10);
+  color: #ffd29a;
   line-height: 1.45;
 }
-.migration-review-notice strong { display: block; margin-bottom: 4px; color: #e0a458; }
+.migration-review-notice strong { display: block; margin-bottom: 4px; color: #ffb454; }
 .migration-review-notice ul { margin: 8px 0 0 20px; }
-.migration-review-notice code { color: #ecc381; }
+.migration-review-notice code { color: #ffe1ba; }
 .migration-review-notice.migration-conversion-notice {
   border-color: rgba(77,166,255,.45);
   background: rgba(77,166,255,.08);
@@ -129,7 +126,7 @@ body {
   border-bottom: none;
   text-decoration-line: underline;
   text-decoration-style: dotted;
-  text-decoration-color: #717b8e;
+  text-decoration-color: #64748b;
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
 }
@@ -137,9 +134,9 @@ body {
   display: none;
   position: fixed;
   z-index: 9999;
-  background: #1b2231;
-  color: var(--text-primary, #e8ecf4);
-  border: 1px solid #333f5c;
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #334155;
   border-radius: 5px;
   font-size: var(--fs-xs);
   font-weight: normal;
@@ -147,7 +144,7 @@ body {
   white-space: pre-wrap;
   max-width: 480px;
   line-height: 1.5;
-  box-shadow: 0 4px 12px rgba(5, 8, 14,.5);
+  box-shadow: 0 4px 12px rgba(0,0,0,.5);
   pointer-events: none;
 }
 .form-group input, .form-group select, .form-group textarea {
@@ -171,7 +168,7 @@ body {
   position:absolute; z-index:30; top:calc(100% + 4px); left:0; right:0;
   max-height:220px; overflow-y:auto; padding:4px;
   background:var(--bg2); border:1px solid var(--border); border-radius:6px;
-  box-shadow:0 12px 30px rgba(5, 8, 14,.48);
+  box-shadow:0 12px 30px rgba(0,0,0,.48);
 }
 .user-combobox-options[hidden] { display:none; }
 .user-combobox-option {
@@ -179,7 +176,7 @@ body {
   background:transparent; border:0; border-radius:4px; text-align:left; cursor:pointer;
 }
 .user-combobox-option:hover,
-.user-combobox-option.active { background:rgb(var(--accent-rgb, 91 156 245) / .14); color:#f2f5fb; }
+.user-combobox-option.active { background:rgba(77,166,255,.14); color:#fff; }
 .user-combobox-empty { padding:8px 9px; color:var(--text-dim); font-size:var(--fs-xs); }
 
 /* ─── Numeric stepper (+/− buttons) ─────────────────────── */
@@ -197,7 +194,7 @@ body {
 }
 .stepper-btn:first-child { border-radius: 4px 0 0 4px; border-right: none; }
 .stepper-btn:last-child  { border-radius: 0 4px 4px 0; border-left: none; }
-.stepper-btn:hover { background: var(--accent); color: #0b1526; border-color: var(--accent); }
+.stepper-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
 .stepper-btn:active { opacity: 0.8; }
 
 /* Checkbox row */
@@ -252,7 +249,7 @@ body {
 .tbl td { padding: 7px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
           overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
 .tbl tr:hover td { background: rgba(255,255,255,.03); }
-.tbl tr.selected td { background: rgb(var(--accent-rgb, 91 156 245) / .08); }
+.tbl tr.selected td { background: rgba(77,166,255,.08); }
 
 /* ─── Action buttons & coin-override badge ──────────────────── */
 .act-btn { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim);
@@ -266,7 +263,7 @@ body {
 #cov-tooltip { display: none; position: fixed; z-index: 9000;
   background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
   padding: 8px 10px; min-width: 280px; max-width: 540px;
-  box-shadow: 0 4px 16px rgba(5, 8, 14,.45);
+  box-shadow: 0 4px 16px rgba(0,0,0,.45);
   font-size: var(--fs-xs); color: var(--text); pointer-events: none; }
 .cov-tt-tbl { border-collapse: collapse; width: 100%; }
 .cov-tt-tbl td { padding: 2px 8px; border-bottom: 1px solid var(--border); vertical-align: top; word-break: break-all; }
@@ -288,19 +285,19 @@ body {
   cursor: pointer; color: var(--text-dim); font-size: 11px; padding: 0 3px;
   border-radius: 3px; margin-left: 2px;
 }
-.ms-clear-btn:hover { color: var(--red); background: rgb(var(--danger-rgb, 229 97 92) / 0.15); }
+.ms-clear-btn:hover { color: var(--red); background: rgba(255,75,75,0.15); }
 .ms-all-btn {
   cursor: pointer; color: var(--text-dim); font-size: 11px; padding: 0 3px;
   border-radius: 3px; margin-left: 2px;
 }
-.ms-all-btn:hover { color: var(--accent); background: rgb(var(--accent-rgb, 91 156 245) / 0.15); }
+.ms-all-btn:hover { color: var(--accent); background: rgba(77,166,255,0.15); }
 .ms-tag {
   display: inline-flex; align-items: center; gap: 3px;
   background: var(--bg3); border: 1px solid var(--border); border-radius: 3px;
   padding: 1px 6px; font-size: var(--fs-xs); color: var(--text);
 }
 .ms-tag.ms-tag-invalid {
-  color: #ee8d84; border-color: rgb(var(--danger-rgb, 229 97 92) / .6); background: rgb(var(--danger-rgb, 229 97 92) / .14);
+  color: #ffb3b3; border-color: rgba(255,75,75,.6); background: rgba(255,75,75,.14);
 }
 .ms-tag .ms-x {
   cursor: pointer; color: var(--text-dim); font-size: 11px; line-height: 1;
@@ -361,13 +358,13 @@ textarea.json-invalid:focus {
 .field-status-inline.error {
   margin-top: var(--sp-xs);
   padding: 6px 10px;
-  border: 1px solid rgb(var(--danger-rgb, 229 97 92) / 0.35);
+  border: 1px solid rgba(255, 75, 75, 0.35);
   border-radius: 4px;
   background: rgba(55, 20, 20, 0.84);
 }
 .field-status-meta {
   margin-top: 2px;
-  color: #ee8d84;
+  color: #ffb3b3;
 }
 .field-status-actions {
   margin-top: 8px;
@@ -375,10 +372,10 @@ textarea.json-invalid:focus {
 .field-status-btn {
   height: 26px;
   padding: 0 10px;
-  border: 1px solid rgb(var(--danger-rgb, 229 97 92) / 0.45);
+  border: 1px solid rgba(255, 75, 75, 0.45);
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.04);
-  color: #ee8d84;
+  color: #ffe7e7;
   cursor: pointer;
   font-size: var(--fs-sm);
 }
@@ -416,7 +413,7 @@ textarea.json-invalid:focus {
 #log-panel {
   display: none; position: fixed; top: 52px; right: 0; bottom: 0;
   background: var(--bg2); border-left: 1px solid var(--border);
-  box-shadow: -6px 0 24px rgba(5, 8, 14,.5);
+  box-shadow: -6px 0 24px rgba(0,0,0,.5);
   z-index: 150; flex-direction: column;
   overflow: hidden;
 }
@@ -448,52 +445,52 @@ textarea.json-invalid:focus {
   transform: translate(-50%, -50%); z-index: 3000;
   width: min(900px, 95vw); height: min(700px, 90vh);
   min-width: 480px; min-height: 300px;
-  background: #10141d; border: 1px solid var(--border-default, #333f5c); border-radius: 12px;
-  box-shadow: 0 20px 70px rgba(5, 8, 14,.9);
+  background: #131b2b; border: 1px solid #2d3748; border-radius: 12px;
+  box-shadow: 0 20px 70px rgba(0,0,0,.9);
   flex-direction: column; overflow: hidden; resize: both;
 }
 #help-ovl.visible { display: flex; }
 #help-drag-handle { position: absolute; top: 0; left: 0; right: 48px; height: 46px; cursor: move; z-index: 2; }
 #help-ovl > .ovl-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-.ovl-header { display: flex; align-items: center; justify-content: space-between; padding: .85rem 1.1rem .85rem 1.25rem; border-bottom: 1px solid var(--border-subtle, #262f45); flex-shrink: 0; background: var(--surface-sidebar, #131826); }
-.ovl-header-title { font-size: var(--fs-sm); font-weight: 700; color: var(--text-primary, #e8ecf4); display: flex; align-items: center; gap: .5rem; }
+.ovl-header { display: flex; align-items: center; justify-content: space-between; padding: .85rem 1.1rem .85rem 1.25rem; border-bottom: 1px solid #1e2736; flex-shrink: 0; background: #111827; }
+.ovl-header-title { font-size: var(--fs-sm); font-weight: 700; color: #e2e8f0; display: flex; align-items: center; gap: .5rem; }
 .ovl-header-actions { display: flex; align-items: center; gap: .5rem; position: relative; z-index: 3; }
-.ovl-close { background: transparent; border: none; color: #717b8e; font-size: var(--fs-md); cursor: pointer; padding: .2rem .35rem; border-radius: 5px; line-height: 1; transition: color .12s,background .12s; }
-.ovl-close:hover { color: var(--text-primary, #e8ecf4); background: rgba(255,255,255,.06); }
-.lang-pill { display: flex; border: 1px solid var(--border-default, #333f5c); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
-.lang-pill button { background: transparent; border: none; color: #717b8e; font-size: var(--fs-xs); font-weight: 600; letter-spacing: .05em; padding: .2rem .55rem; cursor: pointer; transition: all .12s; }
-.lang-pill button.active { background: #333f5c; color: var(--accent-soft, #96b9f4); }
-.lang-pill button:hover:not(.active) { background: rgba(255,255,255,.04); color: var(--text-primary, #e8ecf4); }
+.ovl-close { background: transparent; border: none; color: #64748b; font-size: var(--fs-md); cursor: pointer; padding: .2rem .35rem; border-radius: 5px; line-height: 1; transition: color .12s,background .12s; }
+.ovl-close:hover { color: #e2e8f0; background: rgba(255,255,255,.06); }
+.lang-pill { display: flex; border: 1px solid #2d3748; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+.lang-pill button { background: transparent; border: none; color: #64748b; font-size: var(--fs-xs); font-weight: 600; letter-spacing: .05em; padding: .2rem .55rem; cursor: pointer; transition: all .12s; }
+.lang-pill button.active { background: #1e3a5f; color: #63b3ed; }
+.lang-pill button:hover:not(.active) { background: rgba(255,255,255,.04); color: #e2e8f0; }
 #help-body { display: flex; flex: 1; overflow: hidden; }
-#help-toc { width: 230px; min-width: 170px; flex-shrink: 0; border-right: 1px solid var(--border-subtle, #262f45); overflow-y: auto; padding: .5rem 0; background: var(--bg-page, #10141d); }
-#help-toc-filter { width: calc(100% - 1.2rem); margin: 0 .6rem .4rem; background: var(--bg-card, #1b2231); color: var(--text-primary, #e8ecf4); border: 1px solid var(--border-default, #333f5c); border-radius: 5px; padding: .35rem .5rem; font-size: var(--fs-sm); outline: none; }
-#help-toc-filter:focus { border-color: var(--text-disabled, #4d5c82); }
-.toc-item { display: block; padding: .42rem .9rem; color: var(--text-secondary, #a3adc2); font-size: var(--fs-sm); cursor: pointer; border-left: 3px solid transparent; transition: all .1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.toc-item:hover { background: #171c29; color: var(--text-primary, #e8ecf4); }
-.toc-item.active { border-left-color: var(--accent-soft, #96b9f4); color: var(--accent-soft, #96b9f4); background: rgb(var(--accent-soft-rgb, 141 185 248) / .07); font-weight: 600; }
-#help-content { flex: 1; overflow-y: auto; padding: 1.5rem 1.8rem; line-height: 1.7; color: var(--text-primary, #e8ecf4); font-size: var(--fs-base); }
-#help-content h1 { font-size: var(--fs-xl); color: var(--text-primary, #e8ecf4); margin: 0 0 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--border-subtle, #262f45); }
-#help-content h2 { font-size: var(--fs-lg); color: var(--text-primary, #e8ecf4); margin: 1.5rem 0 .5rem; }
-#help-content h3 { font-size: var(--fs-md); color: var(--text-primary, #e8ecf4); margin: 1.1rem 0 .35rem; }
+#help-toc { width: 230px; min-width: 170px; flex-shrink: 0; border-right: 1px solid #1e2736; overflow-y: auto; padding: .5rem 0; background: #0e1117; }
+#help-toc-filter { width: calc(100% - 1.2rem); margin: 0 .6rem .4rem; background: #1a202c; color: #e2e8f0; border: 1px solid #2d3748; border-radius: 5px; padding: .35rem .5rem; font-size: var(--fs-sm); outline: none; }
+#help-toc-filter:focus { border-color: #4a5568; }
+.toc-item { display: block; padding: .42rem .9rem; color: #94a3b8; font-size: var(--fs-sm); cursor: pointer; border-left: 3px solid transparent; transition: all .1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toc-item:hover { background: #1a2030; color: #e2e8f0; }
+.toc-item.active { border-left-color: #63b3ed; color: #63b3ed; background: rgba(99,179,237,.07); font-weight: 600; }
+#help-content { flex: 1; overflow-y: auto; padding: 1.5rem 1.8rem; line-height: 1.7; color: #cbd5e0; font-size: var(--fs-base); }
+#help-content h1 { font-size: var(--fs-xl); color: #e2e8f0; margin: 0 0 1rem; padding-bottom: .5rem; border-bottom: 1px solid #1e2736; }
+#help-content h2 { font-size: var(--fs-lg); color: #e2e8f0; margin: 1.5rem 0 .5rem; }
+#help-content h3 { font-size: var(--fs-md); color: #cbd5e0; margin: 1.1rem 0 .35rem; }
 #help-content p  { margin: .5rem 0; }
-#help-content a  { color: var(--accent-soft, #96b9f4); text-decoration: none; }
+#help-content a  { color: #63b3ed; text-decoration: none; }
 #help-content a:hover { text-decoration: underline; }
-#help-content strong { color: var(--text-primary, #e8ecf4); }
-#help-content code { background: var(--bg-card, #1b2231); color: var(--warning-soft, #ecc381); padding: .1em .35em; border-radius: 3px; font-size: var(--fs-xs); font-family: 'Fira Code','Consolas',monospace; }
-#help-content pre { background: var(--bg-page, #10141d); border: 1px solid var(--border-default, #333f5c); border-radius: 6px; padding: .9rem 1rem; overflow-x: auto; margin: .75rem 0; }
-#help-content pre code { background: none; padding: 0; color: var(--text-secondary, var(--text-secondary, #a3adc2)); font-size: var(--fs-sm); }
+#help-content strong { color: #e2e8f0; }
+#help-content code { background: #1a202c; color: #f6ad55; padding: .1em .35em; border-radius: 3px; font-size: var(--fs-xs); font-family: 'Fira Code','Consolas',monospace; }
+#help-content pre { background: #0e1117; border: 1px solid #2d3748; border-radius: 6px; padding: .9rem 1rem; overflow-x: auto; margin: .75rem 0; }
+#help-content pre code { background: none; padding: 0; color: #a0aec0; font-size: var(--fs-sm); }
 #help-content ul, #help-content ol { padding-left: 1.5rem; margin: .5rem 0; }
 #help-content li { margin: .2rem 0; }
-#help-content blockquote { border-left: 3px solid var(--accent-soft, #96b9f4); margin: .75rem 0; padding: .4rem .9rem; background: rgb(var(--accent-soft-rgb, 141 185 248) / .05); border-radius: 0 5px 5px 0; color: var(--text-secondary, #a3adc2); }
+#help-content blockquote { border-left: 3px solid #63b3ed; margin: .75rem 0; padding: .4rem .9rem; background: rgba(99,179,237,.05); border-radius: 0 5px 5px 0; color: #94a3b8; }
 #help-content table { border-collapse: collapse; width: 100%; margin: .75rem 0; }
-#help-content th, #help-content td { border: 1px solid var(--border-default, #333f5c); padding: .4rem .7rem; text-align: left; font-size: var(--fs-sm); }
-#help-content th { background: var(--bg-card, #1b2231); color: var(--text-primary, #e8ecf4); font-weight: 600; }
-#help-content hr { border: none; border-top: 1px solid var(--border-subtle, #262f45); margin: 1rem 0; }
-.help-loading { color: var(--text-disabled, #4d5c82); font-style: italic; padding: 2rem; text-align: center; }
+#help-content th, #help-content td { border: 1px solid #2d3748; padding: .4rem .7rem; text-align: left; font-size: var(--fs-sm); }
+#help-content th { background: #1a202c; color: #e2e8f0; font-weight: 600; }
+#help-content hr { border: none; border-top: 1px solid #1e2736; margin: 1rem 0; }
+.help-loading { color: #4a5568; font-style: italic; padding: 2rem; text-align: center; }
 
 /* ─── Import modal ─────────────────────────────────────────── */
 .modal-overlay {
-  display: none; position: fixed; inset: 0; background: rgba(5, 8, 14,0.6);
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
   z-index: 1000; justify-content: center; align-items: center;
 }
 .modal-overlay.open { display: flex; }
@@ -509,9 +506,9 @@ textarea.json-invalid:focus {
   border-radius: 4px; font-size: var(--fs-sm); font-family: var(--font);
   cursor: pointer; background: var(--bg3); color: var(--text);
 }
-.btn:hover { background: var(--border-default, #333f5c); }
-.btn-ok { background: var(--green); color: #0b1526; border-color: var(--green); }
-.btn-ok:hover { background: #267a54; }
+.btn:hover { background: #2d3748; }
+.btn-ok { background: var(--green); color: #000; border-color: var(--green); }
+.btn-ok:hover { background: #1aa34a; }
 .btn-cancel { background: var(--bg3); }
 
 /* ─── Toast ────────────────────────────────────────────────── */
@@ -521,9 +518,9 @@ textarea.json-invalid:focus {
   font-size: var(--fs-sm); font-weight: 600; z-index: 9999;
   display: none; transition: opacity 0.3s;
 }
-.toast-ok   { background: var(--green); color: #0b1526; }
-.toast-err  { background: var(--red); color: #f2f5fb; }
-.toast-info { background: var(--blue); color: #f2f5fb; }
+.toast-ok   { background: var(--green); color: #000; }
+.toast-err  { background: var(--red); color: #fff; }
+.toast-info { background: var(--blue); color: #fff; }
 
 /* ─── Spinner ──────────────────────────────────────────────── */
 .spinner {
@@ -549,7 +546,6 @@ textarea.json-invalid:focus {
         <div class="lang-pill">
           <button id="help-lang-en" class="active">EN</button>
           <button id="help-lang-de">DE</button>
-          <button id="help-lang-zh" title="中文 (简体中文)">中文</button>
         </div>
         <button class="ovl-close" id="help-close">&#x2715;</button>
       </div>
@@ -572,18 +568,18 @@ textarea.json-invalid:focus {
       <span class="sb-title">Edit Instance</span>
     </div>
     <div id="sidebar-toolbar">
-      <button class="sb-btn" onclick="goBack()" title="Back to list" data-i18n-title="v7run.backToList">🏠 <span data-i18n="v7run.home">Home</span></button>
-      <button class="sb-btn primary" id="btn-save" onclick="saveConfig()" title="Save config & sync" data-i18n-title="v7run.saveConfigSync">💾 <span data-i18n="common.save">Save</span></button>
-      <button class="sb-btn info" onclick="openImportModal()" title="Import JSON config" data-i18n-title="v7run.importJsonConfig">📥 <span data-i18n="v7run.import">Import</span></button>
-      <button class="sb-btn info" onclick="openCopyUserModal()" title="Copy current config to another user" data-i18n-title="v7run.copyCurrentConfig">📋 <span data-i18n="v7run.copy">Copy</span></button>
+      <button class="sb-btn" onclick="goBack()" title="Back to list">🏠 Home</button>
+      <button class="sb-btn primary" id="btn-save" onclick="saveConfig()" title="Save config & sync">💾 Save</button>
+      <button class="sb-btn info" onclick="openImportModal()" title="Import JSON config">📥 Import</button>
+      <button class="sb-btn info" onclick="openCopyUserModal()" title="Copy current config to another user">📋 Copy</button>
       <hr class="sb-sep">
-      <button class="sb-btn" onclick="goBacktest()" title="Open in Backtest" data-i18n-title="v7run.openInBacktest">📊 <span data-i18n="v7run.backtest">Backtest</span></button>
-      <button class="sb-btn" onclick="goStrategyExplorer()" title="Open Strategy Explorer" data-i18n-title="v7run.openStrategyExplorer">🔍 <span data-i18n="v7run.strategyExplorer">Strategy Explorer</span></button>
-      <button class="sb-btn" onclick="goBalanceCalc()" title="Open Balance Calculator page" data-i18n-title="v7run.openBalanceCalculatorPage">💰 <span data-i18n="v7run.balanceCalculator">Balance Calculator</span></button>
-      <button class="sb-btn" onclick="calculateBalance()" title="Calculate needed balance from current config (shown inline)" data-i18n-title="v7run.calcBalanceTitle">⚡ <span data-i18n="v7run.calcBalance">Calc Balance</span></button>
-      <button class="sb-btn" id="btn-apply-filters" onclick="applyRunFilters()" title="Apply market cap, volume, tag, CPT, and notice filters to approved/ignored coins" data-i18n="v7run.applyFilters">🔎 Apply Filters</button>
+      <button class="sb-btn" onclick="goBacktest()" title="Open in Backtest">📊 Backtest</button>
+      <button class="sb-btn" onclick="goStrategyExplorer()" title="Open Strategy Explorer">🔍 Strategy Explorer</button>
+      <button class="sb-btn" onclick="goBalanceCalc()" title="Open Balance Calculator page">💰 Balance Calculator</button>
+      <button class="sb-btn" onclick="calculateBalance()" title="Calculate needed balance from current config (shown inline)">⚡ Calc Balance</button>
+      <button class="sb-btn" id="btn-apply-filters" onclick="applyRunFilters()" title="Apply market cap, volume, tag, CPT, and notice filters to approved/ignored coins">🔎 Apply Filters</button>
       <hr class="sb-sep">
-      <button class="sb-btn" id="btn-log" onclick="toggleLogPanel()" title="Live passivbot log" data-i18n-title="v7run.livePassivbotLog">📋 <span data-i18n="v7run.log">Log</span></button>
+      <button class="sb-btn" id="btn-log" onclick="toggleLogPanel()" title="Live passivbot log">📋 Log</button>
     </div>
   </div>
   <div id="sidebar-resize"></div>
@@ -596,19 +592,19 @@ textarea.json-invalid:focus {
 <div class="form-row cols-8" style="margin-bottom:var(--sp-lg)">
   <!-- Row 1: Configuration & Identity  2+2+1+1+1+1 = 8 -->
   <div class="form-group" style="grid-column:span 2">
-    <label><span data-tip="Fetch API key/secret from api-keys.json." data-i18n="v7run.user">User</span></label>
+    <label><span data-tip="Fetch API key/secret from api-keys.json.">User</span></label>
     <select id="f-user"></select>
   </div>
   <div class="form-group" style="grid-column:span 2">
-    <label data-i18n="v7run.enabledOn">Enabled on</label>
+    <label>Enabled on</label>
     <select id="f-enabled-on"></select>
   </div>
   <div class="form-group">
-    <label><span data-tip="The Version number of the configuration. Required for synchronisation to VPS." data-i18n="v7run.configVersion">Config version</span></label>
+    <label><span data-tip="The Version number of the configuration. Required for synchronisation to VPS.">Config version</span></label>
     <input type="number" id="f-version" min="0" step="1">
   </div>
   <div class="form-group" data-v7-only>
-    <label><span data-tip="Leverage set on exchange" data-i18n="v7run.leverage">Leverage</span></label>
+    <label><span data-tip="Leverage set on exchange">Leverage</span></label>
     <input type="number" id="f-leverage" min="0" max="100" step="1" value="10">
   </div>
   <div class="form-group" data-v7-only>
@@ -626,7 +622,7 @@ isolated: require isolated (cross-only skipped)">margin_mode_preference</span></
     </select>
   </div>
   <div class="form-group" data-v7-only>
-    <label><span data-tip="0=warning, 1=info, 2=debug, 3=trace" data-i18n="v7run.loggingLevel">Logging level</span></label>
+    <label><span data-tip="0=warning, 1=info, 2=debug, 3=trace">Logging level</span></label>
     <select id="f-logging-level">
       <option value="0">warning</option>
       <option value="1" selected>info</option>
@@ -654,7 +650,7 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak.">max_real
     <input type="number" id="f-max-loss-pct" min="0" max="2" step="0.01" value="1.0">
   </div>
   <div class="form-group span-4">
-    <label><span data-tip="Personal note for organising instances" data-i18n="v7run.note">Note</span></label>
+    <label><span data-tip="Personal note for organising instances">Note</span></label>
     <input type="text" id="f-note" placeholder="">
   </div>
   <!-- Row 3: Execution & Flags  1+1+1+1+2+2 = 8 -->
@@ -696,10 +692,10 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak.">max_real
 <!-- Advanced Settings -->
 <div class="expander" id="exp-advanced" data-v7-only>
   <div class="expander-header" onclick="toggleExpander('exp-advanced')">
-    <span class="arrow">▶</span> <span data-i18n="v7run.advancedSettings">Advanced Settings</span>
+    <span class="arrow">▶</span> Advanced Settings
   </div>
   <div class="expander-body">
-    <div class="subsection-title" data-i18n="v7run.modesPolicies">Modes &amp; Policies</div>
+    <div class="subsection-title">Modes &amp; Policies</div>
     <div class="form-row cols-8">
     <div class="form-group" style="grid-column:span 2">
       <label><span data-tip="Force all long positions to same mode.
@@ -786,7 +782,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     </div>
     </div>
 
-    <div class="subsection-title" data-i18n="v7run.executionExchangeSync">Execution &amp; Exchange Sync</div>
+    <div class="subsection-title">Execution &amp; Exchange Sync</div>
     <div class="form-row cols-8">
     <div class="form-group">
       <label><span data-tip="Cancels up to n open orders per execution cycle. Must always be greater than max_n_creations_per_batch, and the editor keeps the two fields within a valid range automatically.">max_n_cancellations_per_batch</span></label>
@@ -822,7 +818,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     </div>
     </div>
 
-    <div class="subsection-title" data-v8-only data-i18n="v7run.feesOrderChurn">Fees &amp; Order Churn</div>
+    <div class="subsection-title" data-v8-only>Fees &amp; Order Churn</div>
     <div class="form-row cols-8" data-v8-only>
     <div class="form-group">
       <label><span data-tip="Maximum age in milliseconds for cached fee-currency conversion prices.">fee_conversion_max_age_ms</span></label>
@@ -854,7 +850,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     </div>
     </div>
 
-    <div class="subsection-title" data-i18n="v7run.warmupCandleFetch">Warmup &amp; Candle Fetch</div>
+    <div class="subsection-title">Warmup &amp; Candle Fetch</div>
     <div class="form-row cols-8">
     <div class="form-group">
       <label><span data-tip="Hard ceiling for the historical warm-up window (minutes). Use 0 to disable the cap; values above 0 clamp the per-symbol warmup calculated from EMA spans.">max_warmup_minutes</span></label>
@@ -924,7 +920,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     </div>
     </div>
 
-    <div class="subsection-title" data-i18n="v7run.storageFreshnessRuntime">Storage, Freshness &amp; Runtime</div>
+    <div class="subsection-title">Storage, Freshness &amp; Runtime</div>
     <div class="form-row cols-8" style="margin-bottom:0">
     <div class="form-group">
       <label><span data-tip="Maximum candles persisted on disk per symbol and timeframe. Oldest shards are pruned once this limit is hit. Default 2,000,000.">max_disk_candles_per_symbol_per_tf</span></label>
@@ -960,7 +956,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     </div>
     </div>
 
-    <div class="subsection-title" data-v8-only data-i18n="v7run.pb8Runtime">PB8 Runtime</div>
+    <div class="subsection-title" data-v8-only>PB8 Runtime</div>
     <div class="form-row cols-8" data-v8-only>
       <div class="form-group" style="grid-column:span 2">
         <label><span data-tip="Hours PB8 keeps an exchange-reported unavailable symbol in its in-memory cooldown. 0 disables the cooldown. The state resets when PB8 restarts.">exchange_symbol_unavailable_cooldown_hours</span></label>
@@ -977,7 +973,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
       </div>
     </div>
 
-    <div class="subsection-title" data-v8-only data-i18n="v7run.logging">Logging</div>
+    <div class="subsection-title" data-v8-only>Logging</div>
     <div class="form-row cols-8" data-v8-only>
       <div class="form-group">
         <label><span data-tip="Directory used by PB8 for its own log files.">logging.dir</span></label>
@@ -1002,7 +998,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
       </div>
     </div>
 
-    <div class="subsection-title" data-v8-only data-i18n="v7run.monitoring">Monitoring</div>
+    <div class="subsection-title" data-v8-only>Monitoring</div>
     <div class="form-row cols-8" data-v8-only>
       <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-enabled"><label for="f-monitor-enabled">monitor.enabled</label></div></div>
       <div class="form-group"><label>monitor.root_dir</label><input type="text" id="f-monitor-root-dir" value="monitor"></div>
@@ -1026,7 +1022,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 </div>
 
 <!-- Filters section -->
-<div class="section-title" data-i18n="v7run.filters">Filters</div>
+<div class="section-title">Filters</div>
 <div class="form-row cols-8">
   <div class="form-group" style="grid-column:span 2">
     <label><span data-tip="Minimum market capitalisation in million USD. Coins below this threshold are excluded.">market_cap (min M$)</span></label>
@@ -1037,7 +1033,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     <input type="number" id="f-vol-mcap" min="0" step="0.05" value="10">
   </div>
   <div class="form-group" id="tags-container" style="grid-column:span 2">
-    <label><span data-tip="Filter by CoinMarketCap category tags (e.g. DeFi, Layer 1). Leave empty to include all." data-i18n="v7run.tags">Tags</span></label>
+    <label><span data-tip="Filter by CoinMarketCap category tags (e.g. DeFi, Layer 1). Leave empty to include all.">Tags</span></label>
     <div class="ms-wrap" id="ms-tags">
       <input class="ms-input" id="ms-tags-input" placeholder="Select tags..." autocomplete="off">
       <div class="ms-dropdown" id="ms-tags-dd"></div>
@@ -1101,7 +1097,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 </div>
 
 <div id="dynamic-ignore-preview" data-v7-only style="display:none; margin-bottom:var(--sp-md);">
-  <div style="font-size:var(--fs-sm); color:var(--text-dim); margin-bottom:4px;" data-i18n="v7run.dynamicIgnorePreview">Dynamic ignore preview:</div>
+  <div style="font-size:var(--fs-sm); color:var(--text-dim); margin-bottom:4px;">Dynamic ignore preview:</div>
   <pre id="di-approved" style="font-size:var(--fs-xs); color:var(--green); margin-bottom:4px; white-space:pre-wrap;"></pre>
   <pre id="di-ignored" style="font-size:var(--fs-xs); color:var(--orange); white-space:pre-wrap;"></pre>
 </div>
@@ -1111,7 +1107,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 
 <!-- Bot Long / Short -->
 <div class="section-title section-title-with-control">
-  <span data-i18n="v7run.botConfiguration">Bot Configuration</span>
+  <span>Bot Configuration</span>
   <div class="form-group section-title-control run-version-hidden" data-v8-only>
     <label><span data-tip="PB8 strategy schema reported by the installed runtime.">strategy_kind</span></label>
     <select id="f-strategy-kind"></select>
@@ -1119,19 +1115,19 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 </div>
 <div class="form-row cols-4">
   <div class="form-group">
-    <label data-i18n="v7run.longTwe">Long TWE</label>
+    <label>Long TWE</label>
     <input type="number" id="f-long-twe" min="0" max="100" step="0.05" value="1.7">
   </div>
   <div class="form-group">
-    <label data-i18n="v7run.longNpositions">Long n_positions</label>
+    <label>Long n_positions</label>
     <input type="number" id="f-long-npos" min="0" max="100" step="1" value="10">
   </div>
   <div class="form-group">
-    <label data-i18n="v7run.shortTwe">Short TWE</label>
+    <label>Short TWE</label>
     <input type="number" id="f-short-twe" min="0" max="100" step="0.05" value="0">
   </div>
   <div class="form-group">
-    <label data-i18n="v7run.shortNpositions">Short n_positions</label>
+    <label>Short n_positions</label>
     <input type="number" id="f-short-npos" min="0" max="100" step="1" value="0">
   </div>
 </div>
@@ -1154,7 +1150,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <!-- Raw JSON -->
 <div class="expander" id="exp-raw">
   <div class="expander-header" onclick="toggleExpander('exp-raw')">
-    <span class="arrow">&#x25B6;</span> <span data-i18n="v7run.rawJson">Raw JSON</span>
+    <span class="arrow">&#x25B6;</span> Raw JSON
   </div>
   <div class="expander-body">
     <div class="form-group">
@@ -1170,9 +1166,9 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <!-- Log panel (floating, opened via sidebar button) -->
 <div id="log-panel">
   <div id="log-panel-header">
-    <span id="log-panel-title">📋 <span data-i18n="v7run.passivbotLog">Passivbot Log</span></span>
+    <span id="log-panel-title">📋 Passivbot Log</span>
     <span id="log-panel-host" class=""></span>
-    <button class="log-close" onclick="closeLogPanel()" title="Close" data-i18n-title="common.close">×</button>
+    <button class="log-close" onclick="closeLogPanel()" title="Close">×</button>
   </div>
   <div id="log-viewer-target" style="flex:1;overflow:hidden;min-height:0"></div>
 </div>
@@ -1184,15 +1180,15 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <!-- Balance Calc Modal -->
 <div class="modal-overlay" id="bc-modal">
   <div class="modal-box" style="max-width:560px;">
-    <h3 data-i18n="v7run.calculateBalance">Calculate Balance</h3>
-    <div id="bc-loading" style="color:var(--text-dim); font-size:var(--fs-sm); margin-bottom:var(--sp-md);" data-i18n="v7run.calculating">Calculating...</div>
+    <h3>Calculate Balance</h3>
+    <div id="bc-loading" style="color:var(--text-dim); font-size:var(--fs-sm); margin-bottom:var(--sp-md);">Calculating...</div>
     <div id="bc-result" style="display:none;">
       <div id="bc-recommendation" style="background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:var(--sp-md); margin-bottom:var(--sp-md); font-size:var(--fs-sm);"></div>
       <div id="bc-details" style="font-size:var(--fs-xs); color:var(--text-dim);"></div>
     </div>
     <div id="bc-error" style="color:var(--red); font-size:var(--fs-sm); display:none;"></div>
     <div class="modal-actions">
-      <button class="btn btn-cancel" onclick="document.getElementById('bc-modal').classList.remove('open');" data-i18n="common.close">Close</button>
+      <button class="btn btn-cancel" onclick="document.getElementById('bc-modal').classList.remove('open');">Close</button>
     </div>
   </div>
 </div>
@@ -1200,20 +1196,20 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <!-- Import Modal -->
 <div class="modal-overlay" id="import-modal">
   <div class="modal-box">
-    <h3 data-i18n="v7run.pasteConfig">Paste config</h3>
+    <h3>Paste config</h3>
     <div class="form-group">
-      <label data-i18n="v7run.user">User</label>
+      <label>User</label>
       <div class="user-combobox">
-        <input id="import-user" type="text" placeholder="Type to search users..." data-i18n-placeholder="v7run.typeToSearchUsers" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="import-user-options">
-        <button class="user-combobox-toggle" id="import-user-toggle" type="button" aria-label="Show configured users" data-i18n-aria-label="v7run.showConfiguredUsers" aria-controls="import-user-options">&#x25BE;</button>
+        <input id="import-user" type="text" placeholder="Type to search users..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="import-user-options">
+        <button class="user-combobox-toggle" id="import-user-toggle" type="button" aria-label="Show configured users" aria-controls="import-user-options">&#x25BE;</button>
         <div class="user-combobox-options" id="import-user-options" role="listbox" hidden></div>
       </div>
     </div>
-    <textarea class="json-editor" id="import-json" rows="18" placeholder="Paste full JSON config here" data-i18n-placeholder="v7run.pasteFullJsonConfig"></textarea>
+    <textarea class="json-editor" id="import-json" rows="18" placeholder="Paste full JSON config here"></textarea>
     <div id="import-error" class="field-status field-status-inline" aria-live="polite"></div>
     <div class="modal-actions">
-      <button class="btn btn-ok" onclick="doImport()" data-i18n="common.ok">OK</button>
-      <button class="btn btn-cancel" onclick="closeImportModal()" data-i18n="common.cancel">Cancel</button>
+      <button class="btn btn-ok" onclick="doImport()">OK</button>
+      <button class="btn btn-cancel" onclick="closeImportModal()">Cancel</button>
     </div>
   </div>
 </div>
@@ -1221,18 +1217,18 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <!-- Copy User Modal -->
 <div class="modal-overlay" id="copy-user-modal">
   <div class="modal-box" style="max-width:520px;">
-    <h3 data-i18n="v7run.copyConfigToUser">Copy config to user</h3>
-    <div style="color:var(--text-dim);font-size:var(--fs-sm);line-height:1.45;" data-i18n="v7run.copyConfigToUserDesc">
+    <h3>Copy config to user</h3>
+    <div style="color:var(--text-dim);font-size:var(--fs-sm);line-height:1.45;">
       Save the current editor config for another user. The copied config is saved disabled. If the target already has a config, it will be backed up and overwritten.
     </div>
     <div class="form-group">
-      <label data-i18n="v7run.targetUser">Target user</label>
+      <label>Target user</label>
       <select id="copy-user"></select>
     </div>
     <div id="copy-user-error" class="field-status field-status-inline" aria-live="polite"></div>
     <div class="modal-actions">
-      <button class="btn btn-ok" id="btn-copy-user-ok" onclick="doCopyToUser()" data-i18n="v7run.copy">Copy</button>
-      <button class="btn btn-cancel" onclick="closeCopyUserModal()" data-i18n="common.cancel">Cancel</button>
+      <button class="btn btn-ok" id="btn-copy-user-ok" onclick="doCopyToUser()">Copy</button>
+      <button class="btn btn-cancel" onclick="closeCopyUserModal()">Cancel</button>
     </div>
   </div>
 </div>
@@ -1241,10 +1237,10 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <div id="cov-tooltip"></div>
 <div id="data-tip-tooltip"></div>
 
-<script src="/app/js/editor_shared.js?v=16"></script>
+<script src="/app/js/editor_shared.js?v=15"></script>
 <script src="/app/js/pbgui_dialogs.js?v=10"></script>
 <script src="/app/js/run_editor_adapter.js?v=10"></script>
-<script src="/app/js/log_viewer_panel.js?v=48"></script>
+<script src="/app/js/log_viewer_panel.js?v=50"></script>
 <script src="/app/js/coin_overrides_editor.js?v=26"></script>
 <script>
 /* ─── Injected Vars ────────────────────────────────────────── */
@@ -1352,16 +1348,11 @@ function toast(msg, type) {
   el.className = 'toast-' + (type || 'info');
   el.style.display = 'block';
   el.style.opacity = '1';
-  el.style.cursor = 'pointer';
-  el.onclick = function() {
-    clearTimeout(toastTimer);
-    el.style.display = 'none';
-  };
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function() {
     el.style.opacity = '0';
     setTimeout(function() { el.style.display = 'none'; }, 300);
-  }, 4000);
+  }, 8000);
 }
 
 function showRunMigrationReview(draft) {
@@ -1402,7 +1393,7 @@ function showRunMigrationReview(draft) {
     : {};
   if (manualRequired && fields.length) {
     var list = document.createElement('ul');
-    fields.slice(0, 20).forEach(function(field) {
+    fields.forEach(function(field) {
       var item = document.createElement('li');
       var code = document.createElement('code');
       var suffix = Object.prototype.hasOwnProperty.call(values, field) ? ' = ' + JSON.stringify(values[field]) : '';
@@ -1441,7 +1432,7 @@ async function prepareConfigForRunEditor(config) {
     body: JSON.stringify({ config: config })
   }));
   if (!data || !data.draft_id) {
-    throw new Error(PBGuiI18n.t('v7run.draftCreationFailed'));
+    throw new Error('Draft creation failed');
   }
   return fetchPreparedDraftConfig(data.draft_id);
 }
@@ -1509,9 +1500,9 @@ function setRawJsonValidationError(error) {
     syncRawJsonHighlightOverlay(null, null);
     return;
   }
-  var summary = PBGuiI18n.t('v7run.rawJsonInvalid');
+  var summary = 'Raw JSON is invalid';
   if (error.line != null && error.column != null) {
-    summary += PBGuiI18n.t('v7run.atLineColumn', { line: error.line, column: error.column });
+    summary += ' at line ' + error.line + ', column ' + error.column;
   }
   var detail = rawEl ? getJsonLineDetail(rawEl.value || '', error.line, error.column) : null;
   if (detail) {
@@ -1528,7 +1519,7 @@ function setRawJsonValidationError(error) {
   window.PBGuiEditorShared.setFixedValidationStatus('cfg-raw-json', {
     summary: summary,
     message: error.message || '',
-    actionLabel: detail ? PBGuiI18n.t('v7run.revealLineInEditor') : '',
+    actionLabel: detail ? 'Reveal line in editor' : '',
     action: detail ? revealRawJsonError : null,
   });
   syncRawJsonHighlightOverlay(error, detail);
@@ -1541,7 +1532,7 @@ function validateJsonText(raw, opts) {
 function validateRawJson(raw) {
   return validateJsonText(raw, {
     expectObject: true,
-    emptyMessage: PBGuiI18n.t('v7run.configCannotBeEmpty')
+    emptyMessage: 'Config cannot be empty'
   });
 }
 
@@ -1553,8 +1544,8 @@ function getJsonFieldStatusEl(textarea) {
 }
 
 function getJsonFieldLabel(textarea) {
-  if (!textarea) return PBGuiI18n.t('v7run.jsonField');
-  return textarea.dataset.jsonLabel || textarea.id || PBGuiI18n.t('v7run.jsonField');
+  if (!textarea) return 'JSON field';
+  return textarea.dataset.jsonLabel || textarea.id || 'JSON field';
 }
 
 function getJsonFieldValidationOptions(textarea) {
@@ -1562,7 +1553,7 @@ function getJsonFieldValidationOptions(textarea) {
     expectObject: textarea && textarea.dataset ? textarea.dataset.jsonExpectObject === '1' : false,
     emptyMessage: textarea && textarea.dataset && textarea.dataset.jsonEmptyMessage
       ? textarea.dataset.jsonEmptyMessage
-      : PBGuiI18n.t('v7run.jsonCannotBeEmpty')
+      : 'JSON cannot be empty'
   };
 }
 
@@ -1603,9 +1594,9 @@ function setJsonFieldValidationState(textarea, error) {
     return;
   }
 
-  var summary = PBGuiI18n.t('v7run.fieldIsInvalid', { label: getJsonFieldLabel(textarea) });
+  var summary = getJsonFieldLabel(textarea) + ' is invalid';
   if (error.line != null && error.column != null) {
-    summary += PBGuiI18n.t('v7run.atLineColumn', { line: error.line, column: error.column });
+    summary += ' at line ' + error.line + ', column ' + error.column;
   }
   if (statusEl) {
     statusEl.innerHTML = '';
@@ -1614,7 +1605,7 @@ function setJsonFieldValidationState(textarea, error) {
   window.PBGuiEditorShared.setFixedValidationStatus(textarea.id, {
     summary: summary,
     message: error.message || '',
-    actionLabel: error.line != null ? PBGuiI18n.t('v7run.revealLineInEditor') : '',
+    actionLabel: error.line != null ? 'Reveal line in editor' : '',
     action: error.line != null ? function() { revealJsonFieldError(textarea.id); } : null,
   });
 }
@@ -1640,7 +1631,7 @@ function bindJsonFieldValidation(textareaId, opts) {
   textarea.dataset.jsonStatusId = opts.statusId || (textareaId + '-status');
   textarea.dataset.jsonLabel = opts.label || textareaId;
   textarea.dataset.jsonExpectObject = opts.expectObject ? '1' : '';
-  textarea.dataset.jsonEmptyMessage = opts.emptyMessage || PBGuiI18n.t('v7run.jsonCannotBeEmpty');
+  textarea.dataset.jsonEmptyMessage = opts.emptyMessage || 'JSON cannot be empty';
   if (!textarea.dataset.jsonValidationBound) {
     textarea.dataset.jsonValidationBound = '1';
     textarea.addEventListener('input', function() {
@@ -1660,13 +1651,13 @@ function bindJsonFieldValidation(textareaId, opts) {
 function bindStructuredJsonFieldValidation() {
   bindJsonFieldValidation('f-long-json', {
     expectObject: true,
-    emptyMessage: PBGuiI18n.t('v7run.longConfigCannotBeEmpty'),
-    label: PBGuiI18n.t('v7run.longConfigJsonLabel')
+    emptyMessage: 'Long config cannot be empty',
+    label: 'Long config JSON'
   });
   bindJsonFieldValidation('f-short-json', {
     expectObject: true,
-    emptyMessage: PBGuiI18n.t('v7run.shortConfigCannotBeEmpty'),
-    label: PBGuiI18n.t('v7run.shortConfigJsonLabel')
+    emptyMessage: 'Short config cannot be empty',
+    label: 'Short config JSON'
   });
   bindJsonFieldValidation('f-startup-phase-budgets', {
     expectObject: true,
@@ -1680,8 +1671,8 @@ function bindStructuredJsonFieldValidation() {
   });
   bindJsonFieldValidation('import-json', {
     expectObject: true,
-    emptyMessage: PBGuiI18n.t('v7run.configCannotBeEmpty'),
-    label: PBGuiI18n.t('v7run.importJson'),
+    emptyMessage: 'Config cannot be empty',
+    label: 'Import JSON',
     statusId: 'import-error',
     skipInitialValidation: true
   });
@@ -1690,7 +1681,7 @@ function bindStructuredJsonFieldValidation() {
     if (!textarea || textarea.tagName !== 'TEXTAREA') return;
     bindJsonFieldValidation(textarea.id, {
       expectObject: false,
-      emptyMessage: PBGuiI18n.t('v7run.jsonValueCannotBeEmpty'),
+      emptyMessage: 'JSON value cannot be empty',
       label: k + ' JSON',
       statusId: textarea.id + '-status'
     });
@@ -1721,11 +1712,11 @@ function ensureStructuredJsonFieldsValidForSave() {
   var expander = firstInvalid.textarea.closest('.expander');
   if (expander) expander.classList.add('open');
   revealJsonFieldError(firstInvalid.textarea.id);
-  var msg = PBGuiI18n.t('v7run.fieldIsInvalid', { label: getJsonFieldLabel(firstInvalid.textarea) });
+  var msg = getJsonFieldLabel(firstInvalid.textarea) + ' is invalid';
   if (firstInvalid.validation.error.line != null && firstInvalid.validation.error.column != null) {
-    msg += PBGuiI18n.t('v7run.atLineColumn', { line: firstInvalid.validation.error.line, column: firstInvalid.validation.error.column });
+    msg += ' at line ' + firstInvalid.validation.error.line + ', column ' + firstInvalid.validation.error.column;
   }
-  toast(msg + PBGuiI18n.t('v7run.fixBeforeSaving'), 'err');
+  toast(msg + '. Fix it before saving.', 'err');
   return false;
 }
 
@@ -1739,7 +1730,7 @@ function validateExecutionSyncFieldsForSave() {
   if (expander) expander.classList.add('open');
   var field = document.getElementById('f-max-cancel');
   if (field && typeof field.focus === 'function') field.focus();
-  toast(PBGuiI18n.t('v7run.maxCancelMustExceedCreate'), 'err');
+  toast('max_n_cancellations_per_batch must be greater than max_n_creations_per_batch. Fix it before saving.', 'err');
   return false;
 }
 
@@ -1768,11 +1759,11 @@ function ensureRawJsonValidForSave() {
   var rawExpander = document.getElementById('exp-raw');
   if (rawExpander) rawExpander.classList.add('open');
   revealRawJsonError();
-  var msg = PBGuiI18n.t('v7run.rawJsonInvalid');
+  var msg = 'Raw JSON is invalid';
   if (validation.error.line != null && validation.error.column != null) {
-    msg += PBGuiI18n.t('v7run.atLineColumn', { line: validation.error.line, column: validation.error.column });
+    msg += ' at line ' + validation.error.line + ', column ' + validation.error.column;
   }
-  toast(msg + PBGuiI18n.t('v7run.fixBeforeSaving'), 'err');
+  toast(msg + '. Fix it before saving.', 'err');
   return false;
 }
 
@@ -1810,7 +1801,7 @@ function goBacktest() {
       + '&draft_name=' + encodeURIComponent(INSTANCE_NAME || config.live.user || 'draft');
     window.location.href = url;
   }).catch(function(e) {
-    toast(PBGuiI18n.t('v7run.failedCreateDraft') + ': ' + e.message, 'err');
+    toast('Failed to create draft: ' + e.message, 'err');
   });
 }
 
@@ -1846,7 +1837,7 @@ function goStrategyExplorer() {
     var url = explorerBase + '/main_page?draft_id=' + encodeURIComponent(data.draft_id || '');
     window.location.href = url;
   }).catch(function(e) {
-    toast(PBGuiI18n.t('v7run.failedOpenStrategyExplorer') + ': ' + e.message, 'err');
+    toast('Failed to open Strategy Explorer: ' + e.message, 'err');
   });
 }
 
@@ -1865,7 +1856,7 @@ async function goBalanceCalc() {
   if (!ensureStructuredJsonFieldsValidForSave()) return;
   var exchange = getSelectedUserExchange();
   if (!exchange) {
-    toast(PBGuiI18n.t('v7run.cannotDetermineExchange'), 'err');
+    toast('Cannot determine exchange — please select a user first.', 'err');
     return;
   }
   try {
@@ -1875,7 +1866,7 @@ async function goBalanceCalc() {
       exchange: exchange,
     });
   } catch (e) {
-    toast(PBGuiI18n.t('v7run.failedOpenBalanceCalculator') + ': ' + e.message, 'err');
+    toast('Failed to open Balance Calculator: ' + e.message, 'err');
   }
 }
 
@@ -2065,8 +2056,10 @@ async function requestHostCapabilities() {
     ? window.crypto.randomUUID()
     : 'host-capability-' + Date.now() + '-' + generation;
   var hostQuery = '?request_id=' + encodeURIComponent(requestId);
-  if (runEditorAdapter.isV8 && INSTANCE_NAME) hostQuery += '&name=' + encodeURIComponent(INSTANCE_NAME);
-  if (runEditorAdapter.isV8) hostQuery += '&config_schema=' + encodeURIComponent(String((cfg || {}).config_version || ''));
+  if (runEditorAdapter.isV8) {
+    if (INSTANCE_NAME) hostQuery += '&name=' + encodeURIComponent(INSTANCE_NAME);
+    hostQuery += '&config_schema=' + encodeURIComponent(String((cfg || {}).config_version || ''));
+  }
   var response = await apiFetch('/hosts' + hostQuery, {
     signal: _hostCapabilityController.signal,
     cache: 'no-store'
@@ -2087,10 +2080,9 @@ async function refreshHostCapabilities() {
     if (currentSelection && currentSelection !== selected) selected = currentSelection;
     hostCapabilitiesByName = payload.host_capabilities || {};
     allHosts = payload.hosts || allHosts;
-    var selectedCapability = hostCapabilitiesByName[selected] || null;
-    var preserveUnknownSelection = !selectedCapability || selectedCapability.pb8_capable !== true || selectedCapability.schema_compatible == null;
-    if (selected && selected !== 'disabled' && allHosts.indexOf(selected) < 0 && preserveUnknownSelection) {
-      allHosts.push(selected);
+    if (selected && selected !== 'disabled' && allHosts.indexOf(selected) < 0) {
+      var selectedCapability = hostCapabilitiesByName[selected] || null;
+      if (!selectedCapability || selectedCapability.schema_compatible !== false) allHosts.push(selected);
     }
     populateHosts();
     var select = document.getElementById('f-enabled-on');
@@ -2132,8 +2124,13 @@ function updateEnabledOnAvailability() {
       return;
     }
     var capability = hostCapabilitiesByName[opt.value] || null;
-    opt.disabled = !capability || capability[runEditorAdapter.capabilityKey] !== true;
-    if (opt.disabled) opt.textContent += PBGuiI18n.t('v7run.capabilityUnconfirmed', { label: runEditorAdapter.label });
+    var schemaBlocked = runEditorAdapter.isV8 && capability && capability.schema_compatible === false;
+    opt.disabled = !capability || capability[runEditorAdapter.capabilityKey] !== true || schemaBlocked;
+    if (schemaBlocked) {
+      opt.textContent += ' (' + String(capability.schema_reason || 'PB8 config schema unsupported') + ')';
+    } else if (opt.disabled) {
+      opt.textContent += ' (' + runEditorAdapter.label + ' capability unconfirmed)';
+    }
   });
 }
 
@@ -2153,7 +2150,7 @@ async function fetchTemplateConfig(user) {
     if (runEditorAdapter.isV8) throw e;
     console.warn('fetchTemplateConfig failed, using built-in defaults:', e);
   }
-  if (runEditorAdapter.isV8) throw new Error(PBGuiI18n.t('v7run.pb8TemplateUnavailable'));
+  if (runEditorAdapter.isV8) throw new Error('PB8 template is unavailable');
   return buildDefaultConfig(user);
 }
 
@@ -2221,15 +2218,8 @@ function buildDefaultConfig(user) {
   };
 }
 
-async function loadSymbolsAndTags(sourceCfg, opts) {
+function seedSymbolsAndTags(sourceCfg, opts) {
   opts = opts || {};
-  var requestSeq = ++_symbolsAndTagsLoadSeq;
-  var user = document.getElementById('f-user').value;
-  var exchange = '';
-  for (var i = 0; i < allUsers.length; i++) {
-    if (allUsers[i].name === user) { exchange = allUsers[i].exchange; break; }
-  }
-
   var approvedLong = getCoinsForLoad(sourceCfg, 'approved_coins', 'long', 'ms-approved-long', opts);
   var approvedShort = getCoinsForLoad(sourceCfg, 'approved_coins', 'short', 'ms-approved-short', opts);
   var ignoredLong = getCoinsForLoad(sourceCfg, 'ignored_coins', 'long', 'ms-ignored-long', opts);
@@ -2246,6 +2236,31 @@ async function loadSymbolsAndTags(sourceCfg, opts) {
   rebuildMultiselect('ms-tags', selectedTags, selectedTags);
   coinOvSetCoins(seededCoins);
   restoreRawEditorAnchor(seededAnchor);
+  return {
+    approvedLong: approvedLong,
+    approvedShort: approvedShort,
+    ignoredLong: ignoredLong,
+    ignoredShort: ignoredShort,
+    selectedTags: selectedTags,
+    seededCoins: seededCoins,
+  };
+}
+
+async function loadSymbolsAndTags(sourceCfg, opts) {
+  opts = opts || {};
+  var requestSeq = ++_symbolsAndTagsLoadSeq;
+  var user = document.getElementById('f-user').value;
+  var exchange = '';
+  for (var i = 0; i < allUsers.length; i++) {
+    if (allUsers[i].name === user) { exchange = allUsers[i].exchange; break; }
+  }
+  var seeded = seedSymbolsAndTags(sourceCfg, opts);
+  var approvedLong = seeded.approvedLong;
+  var approvedShort = seeded.approvedShort;
+  var ignoredLong = seeded.ignoredLong;
+  var ignoredShort = seeded.ignoredShort;
+  var selectedTags = seeded.selectedTags;
+  var seededCoins = seeded.seededCoins;
 
   if (!exchange) {
     allSymbols = seededCoins.slice();
@@ -2390,13 +2405,13 @@ function selectRunStrategyConfig(side, sideConfig, strategy) {
 
 function refreshBotParamStatusLabels() {
   var legend = ' <span style="font-size:var(--fs-xs,11px);font-weight:400;opacity:.8">'
-    + '\u25a0 <span style="color:#e0a458">' + PBGuiI18n.t('v7run.paramNeutralized') + '</span>'
-    + ' &nbsp;\u25a0 <span style="color:#e5615c">' + PBGuiI18n.t('v7run.paramReview') + '</span></span>';
+    + '\u25a0 <span style="color:#f0a500">neutralized</span>'
+    + ' &nbsp;\u25a0 <span style="color:#e05252">review</span></span>';
   var longLabel = document.getElementById('lbl-long-json');
   var shortLabel = document.getElementById('lbl-short-json');
-  if (longLabel) longLabel.innerHTML = PBGuiI18n.t('v7run.longConfigJson')
+  if (longLabel) longLabel.innerHTML = 'Long config (JSON)'
     + (paramStatus.long && Object.keys(paramStatus.long).length ? legend : '');
-  if (shortLabel) shortLabel.innerHTML = PBGuiI18n.t('v7run.shortConfigJson')
+  if (shortLabel) shortLabel.innerHTML = 'Short config (JSON)'
     + (paramStatus.short && Object.keys(paramStatus.short).length ? legend : '');
 }
 
@@ -2414,7 +2429,7 @@ function changeRunStrategyKind(nextStrategy) {
     });
   } catch (error) {
     setVal('f-strategy-kind', current);
-    toast(PBGuiI18n.t('v7run.fixLongShortJsonBeforeStrategy'), 'err');
+    toast('Fix the Long/Short config JSON before changing strategy_kind.', 'err');
     return;
   }
   cfg.live = cfg.live && typeof cfg.live === 'object' ? cfg.live : {};
@@ -2668,10 +2683,10 @@ function populateForm(opts) {
     arrow.className = 'arrow';
     arrow.textContent = '\u25B6';
     header.appendChild(arrow);
-    header.appendChild(document.createTextNode(' ' + PBGuiI18n.t('v7run.additionalParameters')));
+    header.appendChild(document.createTextNode(' Additional Parameters'));
     var hint = document.createElement('span');
     hint.style.cssText = 'margin-left:auto;font-size:var(--fs-xs);color:var(--text-dim)';
-    hint.textContent = PBGuiI18n.t('v7run.parametersNotInGui');
+    hint.textContent = 'Parameters not yet in the GUI - edit and they will be preserved on save';
     header.appendChild(hint);
     var body = document.createElement('div');
     body.className = 'expander-body';
@@ -2759,6 +2774,21 @@ function setVal(id, v) {
 function getExtraLiveElement(key) {
   var id = _extraLiveFieldIds[key];
   return id ? document.getElementById(id) : null;
+}
+
+function removeKnownExtraLiveFields() {
+  _extraLiveKeys = _extraLiveKeys.filter(function(key) {
+    if (!KNOWN_LIVE_PARAMS.has(key)) return true;
+    var field = getExtraLiveElement(key);
+    var group = field ? field.closest('.form-group') : null;
+    if (group) group.remove();
+    delete _extraLiveFieldIds[key];
+    return false;
+  });
+  if (_extraLiveKeys.length === 0) {
+    var expander = document.getElementById('exp-extra-live');
+    if (expander) expander.remove();
+  }
 }
 
 function ensureSelectOption(id, value) {
@@ -3106,14 +3136,13 @@ async function resolveRunSaveTarget(name, wasNew, expectedVersion, config) {
 }
 
 async function saveConfig() {
-  var runtimeI18n = typeof PBGuiI18n === 'undefined' ? { t: function(key) { return key; }, serverMsg: function(value) { return value; } } : PBGuiI18n;
   var btnSave = document.getElementById('btn-save');
   if (_configLoadFailed) {
     toast('Config was not loaded. Saving is disabled to prevent overwriting the instance with an empty configuration.', 'err');
     return;
   }
   btnSave.disabled = true;
-  btnSave.innerHTML = '<span class="spinner"></span> ' + runtimeI18n.t('v7run.saving');
+  btnSave.innerHTML = '<span class="spinner"></span> Saving...';
   try {
     if (_editorInitPromise) await _editorInitPromise;
     await _symbolsAndTagsLoadPromise;
@@ -3128,7 +3157,7 @@ async function saveConfig() {
     var wasNew = IS_NEW === 'true';
     var name = wasNew ? runEditorAdapter.newInstanceName(config) : INSTANCE_NAME;
     if (!name) {
-      toast(runtimeI18n.t('v7run.userRequired'), 'err');
+      toast('User is required.', 'err');
       return;
     }
     var overrideSnapshot = runEditorAdapter.isV8 && typeof coinOvSnapshotPendingFiles === 'function'
@@ -3146,12 +3175,12 @@ async function saveConfig() {
       var detail = data.detail || resp.statusText;
       if (resp.status === 409 && String(detail || '').indexOf('Update your VPS first') === 0) {
         window.PBGuiDialogs.alert({
-          title: runtimeI18n.t('v7run.saveBlocked'),
-          message: runtimeI18n.serverMsg(detail),
-          confirmText: runtimeI18n.t('common.ok')
+          title: 'Save blocked',
+          message: detail,
+          confirmText: 'OK'
         });
       } else {
-        toast(runtimeI18n.t('v7run.saveFailed') + ': ' + runtimeI18n.serverMsg(detail), 'err');
+        toast('Save failed: ' + detail, 'err');
       }
       return;
     }
@@ -3179,18 +3208,18 @@ async function saveConfig() {
     var syncOk = (data.sync && data.sync.ok) || 0;
     var syncFail = (data.sync && data.sync.failed) || 0;
     var syncMsg = '';
-    if (syncOk > 0) syncMsg = runtimeI18n.t('v7run.sshSyncOk', { count: syncOk });
-    else if (data.sync && data.sync.pending) syncMsg = ' | Activation pending';
-    else if (syncFail > 0) syncMsg = runtimeI18n.t('v7run.sshSyncFailed', { count: syncFail });
+    if (data.sync && data.sync.pending) syncMsg = ' | Activation pending';
+    else if (syncOk > 0) syncMsg = ' | SSH sync: ' + syncOk + ' host(s) OK';
+    else if (syncFail > 0) syncMsg = ' | SSH sync: ' + syncFail + ' failed';
 
-    toast(runtimeI18n.t('v7run.savedVersion', { label: runEditorAdapter.label, version: data.version }) + syncMsg, 'ok');
+    toast('Saved ' + runEditorAdapter.label + ' v' + data.version + syncMsg, 'ok');
     dirty = false;
   } catch (e) {
-    toast(runtimeI18n.t('v7run.saveError') + ': ' + e.message, 'err');
+    toast('Save error: ' + e.message, 'err');
     console.error(e);
   } finally {
     btnSave.disabled = _configLoadFailed;
-    btnSave.innerHTML = '💾 ' + runtimeI18n.t('common.save');
+    btnSave.innerHTML = '💾 Save';
   }
 }
 
@@ -3205,8 +3234,8 @@ function openCopyUserModal() {
   if (IS_NEW === 'true') {
     window.PBGuiEditorShared.setInlineStatusError(errEl, {
       baseClassName: 'field-status field-status-inline',
-      summary: PBGuiI18n.t('v7run.copyUnavailable'),
-      message: PBGuiI18n.t('v7run.saveNewBeforeCopy')
+      summary: 'Copy unavailable',
+      message: 'Save this new instance before copying it to another user.'
     });
     btn.disabled = true;
   } else {
@@ -3222,13 +3251,13 @@ function openCopyUserModal() {
     if (sel.options.length === 0) {
       window.PBGuiEditorShared.setInlineStatusError(errEl, {
         baseClassName: 'field-status field-status-inline',
-        summary: PBGuiI18n.t('v7run.noTargetUser'),
-        message: PBGuiI18n.t('v7run.addUserBeforeCopy', { label: runEditorAdapter.label })
+        summary: 'No target user available',
+        message: 'Add another ' + runEditorAdapter.label + ' user before copying this config.'
       });
     }
   }
 
-  btn.innerHTML = PBGuiI18n.t('v7run.copy');
+  btn.innerHTML = 'Copy';
   window.PBGuiEditorShared.openModal('copy-user-modal');
 }
 
@@ -3244,16 +3273,16 @@ async function doCopyToUser() {
   var targetUser = document.getElementById('copy-user').value;
   window.PBGuiEditorShared.clearInlineStatus(errEl, 'field-status field-status-inline');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> ' + PBGuiI18n.t('v7run.copying');
+  btn.innerHTML = '<span class="spinner"></span> Copying...';
   try {
     if (IS_NEW === 'true') {
-      throw new Error(PBGuiI18n.t('v7run.saveNewBeforeCopy'));
+      throw new Error('Save this new instance before copying it to another user.');
     }
     if (!targetUser) {
-      throw new Error(PBGuiI18n.t('v7run.selectTargetUser'));
+      throw new Error('Select a target user.');
     }
     if (targetUser === getVal('f-user')) {
-      throw new Error(PBGuiI18n.t('v7run.targetUserDifferent'));
+      throw new Error('Target user must be different from the source user.');
     }
     await _symbolsAndTagsLoadPromise;
     if (!ensureRawJsonValidForSave()) return;
@@ -3281,18 +3310,18 @@ async function doCopyToUser() {
     var data = {};
     try { data = await resp.json(); } catch (e) { data = {}; }
     if (!resp.ok) {
-      var detail = data.detail || resp.statusText || PBGuiI18n.t('v7run.copyFailed');
+      var detail = data.detail || resp.statusText || 'Copy failed';
       if (resp.status === 409 && String(detail || '').indexOf('Update your VPS first') === 0) {
         window.PBGuiDialogs.alert({
-          title: PBGuiI18n.t('v7run.copyBlocked'),
-          message: PBGuiI18n.serverMsg(detail),
-          confirmText: PBGuiI18n.t('common.ok')
+          title: 'Copy blocked',
+          message: detail,
+          confirmText: 'OK'
         });
       } else {
         window.PBGuiEditorShared.setInlineStatusError(errEl, {
           baseClassName: 'field-status field-status-inline',
-          summary: PBGuiI18n.t('v7run.copyFailed'),
-          message: PBGuiI18n.serverMsg(detail)
+          summary: 'Copy failed',
+          message: detail
         });
       }
       return;
@@ -3301,26 +3330,26 @@ async function doCopyToUser() {
     var syncOk = (data.sync && data.sync.ok) || 0;
     var syncFail = (data.sync && data.sync.failed) || 0;
     var suffix = '';
-    if (syncOk > 0) suffix = PBGuiI18n.t('v7run.sshSyncOk', { count: syncOk });
-    else if (syncFail > 0) suffix = PBGuiI18n.t('v7run.sshSyncFailed', { count: syncFail });
+    if (syncOk > 0) suffix = ' | SSH sync: ' + syncOk + ' host(s) OK';
+    else if (syncFail > 0) suffix = ' | SSH sync: ' + syncFail + ' failed';
     var copiedOverrides = (data.override_copy && data.override_copy.copied || []).length;
     var missingOverrides = (data.override_copy && data.override_copy.missing || []).length;
-    if (copiedOverrides > 0) suffix += PBGuiI18n.t('v7run.overridesCount', { count: copiedOverrides });
+    if (copiedOverrides > 0) suffix += ' | overrides: ' + copiedOverrides;
     closeCopyUserModal();
     if (missingOverrides > 0) {
-      toast(PBGuiI18n.t('v7run.copiedWithMissingOverrides', { user: targetUser, missing: missingOverrides }) + suffix, 'err');
+      toast('Copied disabled config to ' + targetUser + ', but ' + missingOverrides + ' override file(s) were missing' + suffix, 'err');
     } else {
-      toast(PBGuiI18n.t('v7run.copiedDisabledVersion', { user: targetUser, version: data.version }) + suffix, 'ok');
+      toast('Copied disabled config to ' + targetUser + ' v' + data.version + suffix, 'ok');
     }
   } catch (e) {
     window.PBGuiEditorShared.setInlineStatusError(errEl, {
       baseClassName: 'field-status field-status-inline',
-      summary: PBGuiI18n.t('v7run.copyFailed'),
+      summary: 'Copy failed',
       message: e.message || String(e)
     });
   } finally {
     btn.disabled = IS_NEW === 'true' || document.getElementById('copy-user').options.length === 0;
-    btn.innerHTML = PBGuiI18n.t('v7run.copy');
+    btn.innerHTML = 'Copy';
   }
 }
 
@@ -3347,7 +3376,7 @@ function renderImportUserOptions(showAll) {
   if (!matches.length) {
     var empty = document.createElement('div');
     empty.className = 'user-combobox-empty';
-    empty.textContent = PBGuiI18n.t('v7run.noMatchingUsers');
+    empty.textContent = 'No matching users';
     options.appendChild(empty);
   } else {
     matches.forEach(function(user) {
@@ -3439,7 +3468,6 @@ function closeImportModal() {
 }
 
 async function doImport() {
-  var runtimeI18n = typeof PBGuiI18n === 'undefined' ? { t: function(key) { return key; }, serverMsg: function(value) { return value; } } : PBGuiI18n;
   var jsonEl = document.getElementById('import-json');
   var errEl = document.getElementById('import-error');
   var validation = validateJsonFieldTextarea(jsonEl);
@@ -3455,8 +3483,8 @@ async function doImport() {
   if (!matchedUser) {
     window.PBGuiEditorShared.setInlineStatusError(errEl, {
       baseClassName: 'field-status field-status-inline',
-      summary: runtimeI18n.t('v7run.importFailed'),
-      message: runtimeI18n.t('v7run.selectConfiguredUser')
+      summary: 'Import failed',
+      message: 'Select a configured user from the search suggestions.'
     });
     return;
   }
@@ -3487,8 +3515,8 @@ async function doImport() {
   } catch (e) {
     window.PBGuiEditorShared.setInlineStatusError(errEl, {
       baseClassName: 'field-status field-status-inline',
-      summary: runtimeI18n.t('v7run.importFailed'),
-      message: e.message || runtimeI18n.t('v7run.unableToPrepareImport')
+      summary: 'Import failed',
+      message: e.message || 'Unable to prepare imported config'
     });
     return;
   }
@@ -3498,7 +3526,7 @@ async function doImport() {
   populateForm();
   queueSymbolsAndTagsLoad(cfg, { preferConfigValues: true });
   closeImportModal();
-  toast(runtimeI18n.t('v7run.configImported'), 'ok');
+  toast('Config imported', 'ok');
 }
 
 
@@ -3574,7 +3602,7 @@ async function openLogPanel() {
     _runLogViewer.open();
   }
 
-  badge.textContent = PBGuiI18n.t('v7run.searching');
+  badge.textContent = 'searching...';
   badge.className = 'disabled';
   if (runEditorAdapter.isV8) {
     apiFetch('/instances/' + encodeURIComponent(INSTANCE_NAME) + '/log-smart?lines=1')
@@ -3671,7 +3699,7 @@ async function fetchDynamicIgnorePreview() {
     document.getElementById('di-approved').textContent = 'approved_symbols: [' + (data.approved || []).join(', ') + ']';
     document.getElementById('di-ignored').textContent = 'ignored_symbols: [' + (data.ignored || []).join(', ') + ']';
   } catch (e) {
-    document.getElementById('di-approved').textContent = PBGuiI18n.t('common.error') + ': ' + e.message;
+    document.getElementById('di-approved').textContent = 'Error: ' + e.message;
   }
 }
 
@@ -3830,9 +3858,9 @@ function _applyBotJsonHighlight(ta, sideStatus) {
       var lineEsc = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       var styles = ['display:block'];
       if (status === 'neutralized') {
-        styles.push('background:color-mix(in srgb,#e0a458 16%,transparent)', 'border-radius:2px');
+        styles.push('background:color-mix(in srgb,#f0a500 16%,transparent)', 'border-radius:2px');
       } else if (status === 'pb_default' || status === 'review') {
-        styles.push('background:color-mix(in srgb,#e5615c 16%,transparent)', 'border-radius:2px');
+        styles.push('background:color-mix(in srgb,#e05252 16%,transparent)', 'border-radius:2px');
       }
       if (validationErrorLine === index + 1) {
         styles.push('box-shadow:inset 3px 0 0 rgba(255,75,75,0.95)', 'background:rgba(255,75,75,0.16)', 'border-radius:2px');
@@ -3925,7 +3953,7 @@ var _runMsController = window.PBGuiEditorShared.createMultiselectController({
   counterpartMap: msCounterpart,
   coinIds: msCoinIds,
   formatTagLabel: function(ctx) {
-    if (ctx.value === 'all') return PBGuiI18n.t('v7run.starAll');
+    if (ctx.value === 'all') return '★ all';
     if (ctx.meta && ctx.meta.status === 'invalid') return '? ' + (ctx.meta.raw || ctx.value);
     return pb8MarketLabels[ctx.value] || (ctx.meta && ctx.meta.normalized) || ctx.value;
   },
@@ -3936,17 +3964,17 @@ var _runMsController = window.PBGuiEditorShared.createMultiselectController({
   formatTagTitle: function(ctx) {
     if (!ctx.meta) return '';
     if (ctx.meta.status === 'invalid') {
-      return (ctx.meta.changed ? PBGuiI18n.t('v7run.normalizedFrom', { raw: ctx.meta.raw, normalized: ctx.meta.normalized }) : '') +
-        (runEditorAdapter.isV8 ? PBGuiI18n.t('v7run.pb8CannotResolveMarketId') : PBGuiI18n.t('v7run.coinDataCannotResolveEntry'));
+      return (ctx.meta.changed ? ('Normalized from ' + ctx.meta.raw + ' to ' + ctx.meta.normalized + '. ') : '') +
+        (runEditorAdapter.isV8 ? 'PB8 could not resolve this market identifier for the current exchange.' : 'CoinData could not resolve this entry to an active coin for the current exchange.');
     }
     if (ctx.meta.changed) {
-      return PBGuiI18n.t('v7run.normalizedFrom', { raw: ctx.meta.raw, normalized: ctx.meta.normalized });
+      return 'Normalized from ' + ctx.meta.raw + ' to ' + ctx.meta.normalized + '.';
     }
     return '';
   },
   statusSummaryBuilder: function(ctx) {
     return {
-      html: '<span class="err">' + PBGuiI18n.t('v7run.invalidCount', { count: ctx.invalidCount }) + '</span>',
+      html: '<span class="err">' + ctx.invalidCount + ' invalid</span>',
       display: 'block'
     };
   },
@@ -3982,11 +4010,11 @@ function getCoinTagLabel(value, meta) {
 function getCoinTagTitle(value, meta) {
   if (!meta) return '';
   if (meta.status === 'invalid') {
-    return (meta.changed ? PBGuiI18n.t('v7run.normalizedFrom', { raw: meta.raw, normalized: meta.normalized }) : '') +
-      (runEditorAdapter.isV8 ? PBGuiI18n.t('v7run.pb8CannotResolveMarketId') : PBGuiI18n.t('v7run.coinDataCannotResolveEntry'));
+    return (meta.changed ? ('Normalized from ' + meta.raw + ' to ' + meta.normalized + '. ') : '') +
+      (runEditorAdapter.isV8 ? 'PB8 could not resolve this market identifier for the current exchange.' : 'CoinData could not resolve this entry to an active coin for the current exchange.');
   }
   if (meta.changed) {
-    return PBGuiI18n.t('v7run.normalizedFrom', { raw: meta.raw, normalized: meta.normalized });
+    return 'Normalized from ' + meta.raw + ' to ' + meta.normalized + '.';
   }
   return '';
 }
@@ -4020,7 +4048,7 @@ async function refreshCoinStatuses(exchange, requestSeq) {
       body: JSON.stringify({ exchanges: [exchange], coins: coins })
     });
     var data = await resp.json();
-    if (!resp.ok) throw new Error(PBGuiI18n.serverMsg((data && data.detail) || resp.statusText || PBGuiI18n.t('v7run.failedResolveCoinStatus')));
+    if (!resp.ok) throw new Error((data && data.detail) || resp.statusText || 'Failed to resolve coin status');
     if (requestSeq != null && requestSeq !== _symbolsAndTagsLoadSeq) return;
     Object.keys(data.statuses || {}).forEach(function(identifier) {
       var status = data.statuses[identifier];
@@ -4086,7 +4114,7 @@ function bcApply() {
     scheduleStructuredEditorSync();
   }
   document.getElementById('bc-modal').classList.remove('open');
-  toast(PBGuiI18n.t('v7run.balanceOverrideSet', { value: _bcRecommended }), 'ok');
+  toast('balance_override set to ' + _bcRecommended, 'ok');
 }
 
 async function calculateBalance() {
@@ -4105,7 +4133,7 @@ async function calculateBalance() {
   var exchange = getSelectedUserExchange();
   if (!exchange) {
     loadingEl.style.display = 'none';
-    errorEl.textContent = PBGuiI18n.t('v7run.cannotDetermineExchange');
+    errorEl.textContent = 'Cannot determine exchange — please select a user first.';
     errorEl.style.display = 'block';
     return;
   }
@@ -4120,7 +4148,7 @@ async function calculateBalance() {
     loadingEl.style.display = 'none';
 
     if (data.error) {
-      errorEl.textContent = PBGuiI18n.serverMsg(data.error);
+      errorEl.textContent = data.error;
       errorEl.style.display = 'block';
       return;
     }
@@ -4134,16 +4162,16 @@ async function calculateBalance() {
     if (rec) {
       _bcRecommended = rec.recommended_balance;
       recEl.innerHTML =
-        '\u2705 ' + PBGuiI18n.t('v7run.bcRecommendation', { side: rec.side }) + ' — <strong>' + exchangeLabel + '</strong>' +
-        '<br><strong>' + PBGuiI18n.t('v7run.bcLimitingSymbol') + '</strong> ' + rec.symbol +
-        '<br><strong>' + PBGuiI18n.t('v7run.bcMinOrderPrice') + '</strong> ' + rec.min_order_price +
-        '<br><strong>' + PBGuiI18n.t('v7run.bcTwe') + '</strong> ' + rec.total_wallet_exposure_limit +
-        ' &nbsp; <strong>' + PBGuiI18n.t('v7run.bcNpositions') + '</strong> ' + rec.n_positions +
-        ' &nbsp; <strong>' + PBGuiI18n.t('v7run.bcEntryInitialQty') + '</strong> ' + rec.entry_initial_qty_pct +
-        '<br><strong>' + PBGuiI18n.t('v7run.bcCalculatedBalance') + '</strong> ' + rec.calculated_balance + ' USDT' +
-        '<br><strong style="color:var(--green)">' + PBGuiI18n.t('v7run.bcRecommendedBalance') + ' ' + rec.recommended_balance + ' USDT</strong>';
+        '\u2705 Recommendation (' + rec.side + ') — <strong>' + exchangeLabel + '</strong>' +
+        '<br><strong>Limiting symbol:</strong> ' + rec.symbol +
+        '<br><strong>Min order price:</strong> ' + rec.min_order_price +
+        '<br><strong>TWE:</strong> ' + rec.total_wallet_exposure_limit +
+        ' &nbsp; <strong>n_positions:</strong> ' + rec.n_positions +
+        ' &nbsp; <strong>entry_initial_qty_pct:</strong> ' + rec.entry_initial_qty_pct +
+        '<br><strong>Calculated balance needed:</strong> ' + rec.calculated_balance + ' USDT' +
+        '<br><strong style="color:var(--green)">Recommended balance: ' + rec.recommended_balance + ' USDT</strong>';
     } else {
-      recEl.innerHTML = '\u26a0\ufe0f ' + PBGuiI18n.t('v7run.bcNoRecommendation', { exchange: exchangeLabel });
+      recEl.innerHTML = '\u26a0\ufe0f No recommendation (' + exchangeLabel + ') — check that n_positions, TWE and entry_initial_qty_pct are set.';
     }
 
     // Show top 5 most restrictive coins per side
@@ -4151,18 +4179,18 @@ async function calculateBalance() {
     var bl = data.balance_long || [];
     var bs = data.balance_short || [];
     if (bl.length) {
-      details += '<br><strong>' + PBGuiI18n.t('v7run.bcTopCoinsLong') + '</strong><br>';
+      details += '<br><strong>Top coins by balance needed (long):</strong><br>';
       bl.slice(0, 5).forEach(function(r) { details += '&nbsp;&nbsp;' + r.coin + ': ' + r.balance + ' USDT<br>'; });
     }
     if (bs.length) {
-      details += '<br><strong>' + PBGuiI18n.t('v7run.bcTopCoinsShort') + '</strong><br>';
+      details += '<br><strong>Top coins by balance needed (short):</strong><br>';
       bs.slice(0, 5).forEach(function(r) { details += '&nbsp;&nbsp;' + r.coin + ': ' + r.balance + ' USDT<br>'; });
     }
     detEl.innerHTML = details;
 
   } catch (e) {
     loadingEl.style.display = 'none';
-    errorEl.textContent = PBGuiI18n.t('v7run.requestFailed') + ': ' + e.message;
+    errorEl.textContent = 'Request failed: ' + e.message;
     errorEl.style.display = 'block';
   }
 }
@@ -4188,9 +4216,6 @@ async function calculateBalance() {
 /* ─── Init ─────────────────────────────────────────────────── */
 bindStructuredEditorSync();
 _editorInitPromise = init();
-document.title = PBGuiI18n.t(runEditorAdapter.isV8 ? 'v7run.titleEditV8' : 'v7run.titleEdit');
-var _sbTitle = document.querySelector('.sb-title');
-if (_sbTitle) _sbTitle.textContent = PBGuiI18n.t(runEditorAdapter.isV8 ? 'v7run.editPb8Instance' : 'v7run.editInstance');
 function visibleRunLogLines(limit) {
   if (!_logPanelOpen || !_runLogViewer || typeof _runLogViewer._q !== 'function') return [];
   var terminal = _runLogViewer._q('terminal');
@@ -4311,7 +4336,6 @@ window.PBGUI_NAV_CONFIG = {
   var helpFilter  = document.getElementById('help-toc-filter');
   var helpLangEN  = document.getElementById('help-lang-en');
   var helpLangDE  = document.getElementById('help-lang-de');
-  var helpLangZH  = document.getElementById('help-lang-zh');
   var helpDragHandle = document.getElementById('help-drag-handle');
 
   var helpLang   = 'EN';
@@ -4410,18 +4434,13 @@ window.PBGUI_NAV_CONFIG = {
 
   helpLangEN.addEventListener('click', function () {
     if (helpLang === 'EN') return;
-    helpLang = 'EN'; helpLangEN.classList.add('active'); helpLangDE.classList.remove('active'); helpLangZH.classList.remove('active');
-    _topicCache = {}; helpSel = 0; loadHelpIndex(helpKeyword);
+    helpLang = 'EN'; helpLangEN.classList.add('active'); helpLangDE.classList.remove('active');
+    _topicCache = {}; loadHelpIndex((helpTopics[helpSel] && helpTopics[helpSel].file) || (helpKeyword));
   });
   helpLangDE.addEventListener('click', function () {
     if (helpLang === 'DE') return;
-    helpLang = 'DE'; helpLangDE.classList.add('active'); helpLangEN.classList.remove('active'); helpLangZH.classList.remove('active');
-    _topicCache = {}; helpSel = 0; loadHelpIndex(helpKeyword);
-  });
-  helpLangZH.addEventListener('click', function () {
-    if (helpLang === 'ZH') return;
-    helpLang = 'ZH'; helpLangZH.classList.add('active'); helpLangEN.classList.remove('active'); helpLangDE.classList.remove('active');
-    _topicCache = {}; helpSel = 0; loadHelpIndex(helpKeyword);
+    helpLang = 'DE'; helpLangDE.classList.add('active'); helpLangEN.classList.remove('active');
+    _topicCache = {}; loadHelpIndex((helpTopics[helpSel] && helpTopics[helpSel].file) || (helpKeyword));
   });
 
   document.getElementById('help-close').addEventListener('click', function () {
