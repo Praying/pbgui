@@ -54,7 +54,7 @@ describe('Cluster Sync Vue page', () => {
     await flushPromises();
     expect(wrapper.find('.app-shell').exists()).toBe(true);
     expect(wrapper.get('[role="status"]').text()).toContain('OK');
-    expect(wrapper.get('.workspace-header__actions button').find('svg').exists()).toBe(true);
+    expect(wrapper.find('.workspace-header__actions button').exists()).toBe(false);
     expect(wrapper.get('[data-section="overview"]').text()).toContain('cluster-1');
     await wrapper.get('[data-testid="rail-section-nodes"]').trigger('click');
     expect(wrapper.text()).toContain('node-remote');

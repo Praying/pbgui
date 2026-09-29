@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import {
-  PhArrowClockwise,
   PhArrowsLeftRight,
   PhDesktopTower,
   PhGear,
@@ -85,6 +84,7 @@ const settingsForm = ref({ remote_pbgui_dir: '', sync_mode: 'reachable', ssh_hos
 const retentionDays = ref(7);
 const retentionMode = ref('report_only');
 const selfJoinForm = ref({ hostname: '', remote_pbgui_dir: '', ssh_host: '', ssh_user: '', ssh_port: 22, reset: false });
+let refreshTimer: number | null = null;
 
 const SYNC_MODE_LABEL_KEYS: Record<string, string> = {
   reachable: 'sysmon.reachable',
@@ -200,7 +200,15 @@ async function rewrapCredentials(): Promise<void> { await post('/credentials/rew
 async function rotateCredentialKey(): Promise<void> { await post('/credentials/rotate-local-key', { method: 'POST' }); }
 async function startSelfJoin(): Promise<void> { await post('/self-join/start', { method: 'POST', body: JSON.stringify({ hostname: selfJoinForm.value.hostname, remote_pbgui_dir: selfJoinForm.value.remote_pbgui_dir, ssh_host: selfJoinForm.value.ssh_host, ssh_user: selfJoinForm.value.ssh_user, ssh_port: Number(selfJoinForm.value.ssh_port), reset_existing: selfJoinForm.value.reset }) }); }
 
-onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll(); });
+onMounted(() => {
+  document.title = t('sysmon.clusterSyncTitle');
+  refreshTimer = window.setInterval(() => { if (!document.hidden && !loading.value) void loadAll(); }, 5000);
+  void loadAll();
+});
+
+onUnmounted(() => {
+  if (refreshTimer !== null) window.clearInterval(refreshTimer);
+});
 </script>
 
 <template>
@@ -218,10 +226,6 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
         :value="loading ? t('common.loading') : notice ? notice.text : t('common.ok')"
         :tone="loading ? 'warning' : notice?.kind === 'err' ? 'danger' : notice?.kind === 'warn' ? 'warning' : 'success'"
       />
-    </template>
-
-    <template #header-actions>
-      <Button variant="info" type="button" @click="loadAll"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</Button>
     </template>
 
     <div class="flex min-h-0 flex-1 flex-col bg-page text-primary">

@@ -1,5 +1,11 @@
 # Unreleased
 
+## 合并远端 main v2.07-v2.07.1 并补齐 Vue 3 前端适配
+
+- 合并远端 v2.07 与 v2.07.1 的凭据运行时、API Keys、Cluster、服务生命周期、任务队列、VPS 与安全回归修复，保留发布文档和测试更新，并同步 API serial。
+- 在 Vue 3 + Tailwind CSS v4.3 页面适配 AI provider 连接保护、Hyperliquid 共享私钥账户预览与批量更新确认、Transfers 自动轮询、Cluster 自动状态更新，以及 Services Monitor worker summary/详情请求分流。
+- 保留遗留 HTML/JS 页面作为兼容回退，合并共享导航/sidebar 资源；移除受影响 Vue 页面上的手动 Refresh 控件，改为自动更新并保留当前导航上下文。
+
 ## 合并远端 main v2.06.1-v2.06.7 并补齐 Vue 3 前端适配
 
 - 合并远端 v2.06.1 至 v2.06.7 的 AI、OpenRouter、Jev 数据传输确认、Vast GPU 校准、PB8 队列、VPS、日志及运行时修复，并同步 API serial 至 3013。

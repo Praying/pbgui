@@ -257,6 +257,10 @@ export function useAiChat(t: Translate) {
     if (!connected.some(([id]) => id === current)) providerId.value = connected[0]?.[0] || '';
   }
 
+  function selectedProviderIsConnected(): boolean {
+    return Boolean(providerId.value && (providers.value[providerId.value] || {}).connected);
+  }
+
   async function loadModels(preferredModel?: string): Promise<void> {
     const provider = providerId.value;
     const generation = ++requestGeneration;
@@ -265,6 +269,11 @@ export function useAiChat(t: Translate) {
     modelsById.value = {};
     if (!provider) {
       modelId.value = '';
+      return;
+    }
+    if (!(providers.value[provider] || {}).connected) {
+      modelId.value = '';
+      setNotice(t('ai.chat.providerNotConnected'), true);
       return;
     }
     try {
@@ -451,14 +460,20 @@ export function useAiChat(t: Translate) {
     delete retryMessages.value.__new__;
     proposals.value = [];
     resolvingProposalIds.value = new Set();
-    setNotice('', false);
+    if (modelId.value) showSelectedModelNotice();
+    else if (!selectedProviderIsConnected()) setNotice(t('ai.chat.providerNotConnected'), true);
+    else setNotice('', false);
     if (!keepTransition) transitioning.value = false;
   }
 
   /* ── Turn lifecycle ── */
-  async function sendMessage(retryText?: string): Promise<void> {
+async function sendMessage(retryText?: string): Promise<void> {
     const message = String(retryText == null ? draft.value : retryText).trim();
     if (!message || busy.value) return;
+    if (!selectedProviderIsConnected() || !modelId.value) {
+      setNotice(t('ai.chat.providerNotConnected'), true);
+      return;
+    }
     const generation = chatGeneration;
     const retryKey = conversationId.value || '__new__';
     busy.value = true;

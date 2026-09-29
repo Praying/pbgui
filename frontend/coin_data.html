@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Coin Data - PBGui</title>
-  <link rel="stylesheet" href="/app/css/sidebar.css?v=4">
-  <script src="/app/js/sidebar_resize.js?v=1"></script>
+  <link rel="stylesheet" href="/app/css/sidebar.css?v=6">
+  <link rel="stylesheet" href="/app/css/sidebar_controls.css?v=2">
   <style>
     :root {
       --bg: #0e1117;
@@ -49,28 +49,8 @@
       overflow: hidden;
     }
 
-    #sidebar {
-      flex-shrink: 0;
-      background: #0e1117;
-      border-right: 1px solid #1e2736;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
 
-    #sidebar-sticky {
-      padding: 0.5rem 0.5rem 0;
-      flex-shrink: 0;
-    }
 
-    #sidebar-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.3rem 0.25rem 0.5rem;
-      gap: var(--sp-xs);
-      flex-wrap: wrap;
-    }
 
     .sb-title {
       font-size: var(--fs-sm);
@@ -90,13 +70,6 @@
       font-weight: 600;
     }
 
-    #sidebar-toolbar {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-      padding: 0.2rem 0.1rem 0.6rem;
-      border-bottom: 1px solid #1e2736;
-    }
 
     .sb-sep {
       border: none;
@@ -143,11 +116,6 @@
     }
     .sb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    #sidebar-meta {
-      padding: 0.7rem 0.6rem 0.9rem;
-      display: grid;
-      gap: 0.55rem;
-    }
 
     .meta-card {
       background: #121826;
@@ -1411,18 +1379,7 @@
     }
 
     @media (max-width: 980px) {
-      #page-body { flex-direction: column; }
       #main-content { overflow-y: auto; }
-      #sidebar {
-        width: auto;
-        min-width: 0;
-        max-width: none;
-        border-right: none;
-        border-bottom: 1px solid #1e2736;
-      }
-      #sidebar-resize {
-        display: none;
-      }
       #main-panel,
       details.panel[open] {
         flex: 0 0 auto;
@@ -1470,6 +1427,8 @@
       }
     }
   </style>
+  <script src="/app/js/sidebar_resize.js?v=3"></script>
+  <link rel="stylesheet" href="/app/css/sidebar_layout.css?v=4">
 </head>
 <body>
   <nav id="topnav"></nav>
@@ -1786,6 +1745,8 @@
     var loadStateController = null;
     var busyJobPollTimer = 0;
     var busyJobId = '';
+    var busyPollGeneration = 0;
+    var busyPollController = null;
     var sortState = {
       main: { key: 'market_cap', dir: 'desc' },
       unmatched: { key: 'coin', dir: 'asc' },
@@ -1901,10 +1862,13 @@
 
     function stopBusyPolling() {
       if (busyJobPollTimer) {
-        window.clearInterval(busyJobPollTimer);
+        window.clearTimeout(busyJobPollTimer);
         busyJobPollTimer = 0;
       }
       busyJobId = '';
+      busyPollGeneration += 1;
+      if (busyPollController) busyPollController.abort();
+      busyPollController = null;
     }
 
     function showBusy(title, subtle) {
@@ -2060,8 +2024,8 @@
         });
     }
 
-    function pollRefreshJob(jobId, okFallback) {
-      return fetch(buildRefreshJobUrl(jobId), { cache: 'no-store', credentials: 'same-origin' })
+    function pollRefreshJob(jobId, okFallback, generation, signal) {
+      return fetch(buildRefreshJobUrl(jobId), { cache: 'no-store', credentials: 'same-origin', signal: signal })
         .then(function (response) {
           if (!response.ok) {
             return response.json().catch(function () { return {}; }).then(function (payload) {
@@ -2072,7 +2036,7 @@
         })
         .then(function (payload) {
           var job = payload.job || {};
-          if (busyJobId !== jobId) return;
+          if (busyJobId !== jobId || generation !== busyPollGeneration) return;
           updateBusyProgress(Number(job.percent || 0), job.message || 'Working...');
           if (job.status === 'completed' || job.status === 'partial') {
             if (job.state) applyServerState(job.state);
@@ -2091,21 +2055,28 @@
     function startRefreshJobPolling(jobId, okFallback) {
       stopBusyPolling();
       busyJobId = jobId;
-      pollRefreshJob(jobId, okFallback)
-        .catch(function (error) {
-          if (busyJobId !== jobId) return;
-          setActionStatus(error.message, true);
-          hideBusy();
-        });
-      busyJobPollTimer = window.setInterval(function () {
-        pollRefreshJob(jobId, okFallback)
+      var generation = busyPollGeneration;
+      busyPollController = new AbortController();
+      var signal = busyPollController.signal;
+      function nextPoll() {
+        if (generation !== busyPollGeneration || busyJobId !== jobId) return;
+        busyJobPollTimer = 0;
+        pollRefreshJob(jobId, okFallback, generation, signal)
+          .then(function () {
+            if (generation !== busyPollGeneration || busyJobId !== jobId) return;
+            var visible = document.getElementById('busy-overlay').classList.contains('visible');
+            var delay = document.hidden ? 5000 : (visible ? 750 : 2500);
+            busyJobPollTimer = window.setTimeout(nextPoll, delay);
+          })
           .catch(function (error) {
-            if (busyJobId !== jobId) return;
+            if (generation !== busyPollGeneration || busyJobId !== jobId) return;
             setActionStatus(error.message, true);
             hideBusy();
           });
-      }, 350);
+      }
+      nextPoll();
     }
+    window.addEventListener('pagehide', stopBusyPolling);
 
     var refreshPending = false;
     function runRefresh(path, busyTitle, okFallback) {
@@ -3134,7 +3105,7 @@
 
     loadUiState();
     loadFiltersFromQuery();
-    window.PBGuiSidebarResize.init({ sidebarId: 'sidebar', handleId: 'sidebar-resize', minWidth: 140, maxWidth: 300 });
+    window.PBGuiSidebarResize.init();
     initNumberSteppers();
     bindControls();
     loadState();

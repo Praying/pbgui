@@ -49,7 +49,6 @@
  * └─────────────────────┴────────┴────────────────────────────────────────────────────┘
  */
 import { computed, onMounted, onUnmounted, ref, watch, type ComponentPublicInstance } from 'vue';
-import { PhArrowClockwise } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { getBoot, pageOrigin } from '@/shared/boot';
@@ -353,10 +352,13 @@ const statusPolling = usePolling(fetchStatus, STATUS_POLL_INTERVAL_MS);
 /** Legacy scheduleWorkers timeout. */
 const WORKERS_POLL_INTERVAL_MS = 5000;
 
-/** Legacy fetchWorkers: GET /workers/status, keep the last payload on failure. */
+/** Load only worker counts outside the Workers panel; fetch details on demand. */
 async function fetchWorkers(): Promise<void> {
   try {
-    workers.value = await apiFetch<WorkersStatus>(`${apiBase()}/workers/status`);
+    const endpoint = activePanel.value === 'workers' ? '/workers/status' : '/workers/summary';
+    const payload = await apiFetch<WorkersStatus>(`${apiBase()}${endpoint}`);
+    if (activePanel.value === 'workers') workers.value = payload;
+    else workers.value = { ...workers.value, counts: payload.counts };
     workersLoadError.value = false;
   } catch {
     workersLoadError.value = true;
@@ -366,11 +368,8 @@ async function fetchWorkers(): Promise<void> {
 /** Legacy poll arm: the timer only runs while the workers panel is visible. */
 const workersPolling = usePolling(fetchWorkers, WORKERS_POLL_INTERVAL_MS);
 
-/** Header refresh: services + worker status in one go (the workers strip no longer carries its own button). */
-function refreshAll(): void {
-  void fetchStatus();
-  void fetchWorkers();
-}
+/** Keep migration state current without a page-level manual refresh control. */
+const migrationPolling = usePolling(() => loadMigrationStatus(false), STATUS_POLL_INTERVAL_MS);
 
 /* ── CMC pool (legacy loadCmcPool + _cmcLoad* state) ── */
 
@@ -658,7 +657,7 @@ onMounted(() => {
   document.title = t('sysmon.servicesTitle');
   statusPolling.start();
   void fetchWorkers(); // legacy fired fetchWorkers(false) once on load
-  void loadMigrationStatus(false); // legacy init loadMigrationStatus(false)
+  migrationPolling.start();
   if (activePanel.value === 'workers') workersPolling.start(); // legacy selectPanel('workers')
   if (activePanel.value === 'pbcoindata') void loadCmcPool(); // legacy restoreFromHash -> selectPanel
   // legacy restoreFromHash -> switchTab('settings') loads the settings once
@@ -670,6 +669,7 @@ onMounted(() => {
 onUnmounted(() => {
   statusPolling.stop();
   workersPolling.stop();
+  migrationPolling.stop();
   clearTimeout(migrationRestartTimer);
 });
 </script>
@@ -691,10 +691,6 @@ onUnmounted(() => {
         :value="statusLoadError ? t('common.error') : t('common.loading')"
         :tone="statusLoadError ? 'danger' : 'warning'"
       />
-    </template>
-
-    <template #header-actions>
-      <Button type="button" size="sm" @click="refreshAll"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</Button>
     </template>
 
   <div id="page-body">
@@ -732,7 +728,6 @@ onUnmounted(() => {
           :status="migrationStatus"
           :loading="migrationLoading"
           :busy="migrationBusy"
-          @refresh="loadMigrationStatus(true)"
           @test="testSystemdMigration"
           @run="runSystemdMigration"
         />
@@ -750,7 +745,7 @@ onUnmounted(() => {
         >
           <!-- Legacy #cmc-status-bar sits between the ctrl strip and the tab bar. -->
           <template v-if="panel.id === 'pbcoindata'" #above-tabs>
-            <CmcStatusBar :status="cmcStatus" :load-error="cmcLoadError" :pool="cmcPool" @refresh="loadCmcPool" />
+            <CmcStatusBar :status="cmcStatus" :load-error="cmcLoadError" :pool="cmcPool" />
           </template>
           <template v-if="panel.id === 'pbcoindata'" #tab-pool>
             <CmcPoolPanel

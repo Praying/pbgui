@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch, ApiError } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
@@ -14,7 +14,7 @@ import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
-import { PhArrowClockwise, PhArrowRight, PhArrowsLeftRight, PhWarning } from '@phosphor-icons/vue';
+import { PhArrowRight, PhArrowsLeftRight, PhWarning } from '@phosphor-icons/vue';
 
 interface TransferUser { name: string; exchange?: string; account_type?: string }
 interface TransferRoute {
@@ -104,6 +104,8 @@ const loading = ref(false);
 const actionPending = ref(false);
 const errorMessage = ref('');
 const statusMessage = ref('');
+let accountRequestGeneration = 0;
+let refreshTimer: number | null = null;
 
 const filteredUsers = computed(() => {
   const query = search.value.trim().toLowerCase();
@@ -198,6 +200,7 @@ async function loadUsers(): Promise<void> {
 }
 async function loadAccount(name: string): Promise<void> {
   if (!users.value.some((user) => user.name === name)) return;
+  const generation = ++accountRequestGeneration;
   selectedUser.value = name;
   preview.value = null;
   operations.value = [];
@@ -208,6 +211,7 @@ async function loadAccount(name: string): Promise<void> {
       apiFetch<TransferPreview>(`${apiBase}/transfers/preview/${encodeURIComponent(name)}`),
       apiFetch<{ operations?: TransferOperation[] }>(`${apiBase}/transfers/operations/${encodeURIComponent(name)}`),
     ]);
+    if (generation !== accountRequestGeneration || selectedUser.value !== name) return;
     preview.value = nextPreview;
     operations.value = operationResponse.operations || [];
     selectRequestedRoute(nextPreview.routes || []);
@@ -216,6 +220,15 @@ async function loadAccount(name: string): Promise<void> {
   } finally {
     actionPending.value = false;
   }
+}
+
+function refreshSelectedAccount(): void {
+  if (document.hidden || actionPending.value || !selectedUser.value) return;
+  void loadAccount(selectedUser.value);
+}
+
+function handleVisibilityChange(): void {
+  if (!document.hidden) refreshSelectedAccount();
 }
 async function reviewTransfer(): Promise<void> {
   const route = selectedRoute.value;
@@ -268,13 +281,23 @@ watch(selectedRouteId, () => {
 });
 
 useAiPageContext({ id: 'transfers', getContext: () => ({ section: 'internal-transfer', entities: selectedUser.value ? [{ kind: 'exchange_account', name: selectedUser.value }] : [] }) });
-onMounted(() => { document.title = t('transfers.title'); void loadUsers(); });
+onMounted(() => {
+  document.title = t('transfers.title');
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  refreshTimer = window.setInterval(refreshSelectedAccount, 5000);
+  void loadUsers();
+});
+
+onUnmounted(() => {
+  if (refreshTimer !== null) window.clearInterval(refreshTimer);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  accountRequestGeneration += 1;
+});
 </script>
 
 <template>
   <AppShell page-key="system_transfers" :page-title="t('transfers.title')" :page-description="t('transfers.pageDescription')" class="transfers-shell">
     <template v-if="loading || errorMessage" #status><StatusStrip :label="t('shared.status')" :value="loading ? t('common.loading') : t('common.error')" :tone="errorMessage ? 'danger' : 'warning'" /></template>
-    <template #header-actions><Button size="sm" :disabled="loading || actionPending" @click="loadUsers"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</Button></template>
     <div class="flex min-h-0 flex-1 gap-4 overflow-hidden p-4 max-[900px]:flex-col">
       <aside class="w-72 shrink-0 overflow-auto rounded-lg border border-border-default bg-panel p-3 max-[900px]:w-full max-[900px]:max-h-52">
         <div class="mb-3 flex items-center justify-between"><h2 class="text-base font-semibold text-primary">{{ t('transfers.accounts') }}</h2><span class="text-xs text-secondary">{{ filteredUsers.length }}/{{ users.length }}</span></div>

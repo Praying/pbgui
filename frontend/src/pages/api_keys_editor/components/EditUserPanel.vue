@@ -6,7 +6,7 @@
  * validation, rename+save, delete, and connection testing.
  * Legacy logic :1493-2259.
  */
-import { computed, reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import {
   PhArrowClockwise,
   PhCaretDown,
@@ -37,7 +37,7 @@ import { confirmDialog } from '../lib/dialogs';
 import { hasSavedValue, maskedFieldValue, newMaskedField } from '../lib/masked';
 import { injectToasts } from '../composables/useToasts';
 import type { ApiKeysStore } from '../composables/useApiKeysStore';
-import type { BybitExpiryInfo, ConnectionTestResult, HlExpiryInfo, UserDetail, UserSaveData } from '../types';
+import type { BybitExpiryInfo, ConnectionTestResult, HlExpiryInfo, SharedKeyPreview, UserDetail, UserSaveData } from '../types';
 
 const props = defineProps<{ store: ApiKeysStore }>();
 
@@ -99,6 +99,13 @@ const hlRateLimit = ref<{ visible: boolean; used: number | null; cap: number | n
 const hlCreditAmount = ref(6000);
 const hlCreditBusy = ref(false);
 const hlCreditStatus = ref('');
+const sharedKeyPreview = ref<SharedKeyPreview | null>(null);
+const sharedKeyApplyAll = ref(false);
+const sharedKeyLoading = ref(false);
+const sharedKeyError = ref('');
+let sharedKeyGeneration = 0;
+let sharedKeyTimer: ReturnType<typeof setTimeout> | null = null;
+let sharedKeyController: AbortController | null = null;
 
 function formatRequestCount(value: number): string {
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, "'");
@@ -112,6 +119,13 @@ const title = computed(() => (isEdit.value ? t('misc.apikeys.editPrefix', { name
 const lockedByInUse = computed(() => isEdit.value && Boolean(panelUser.value?.in_use));
 const deleteVisible = computed(() => isEdit.value && !panelUser.value?.in_use);
 const savedLeaveBlank = computed(() => t('misc.apikeys.savedLeaveBlank'));
+const sharedKeyEligible = computed(() =>
+  isEdit.value
+  && Boolean(editingName.value)
+  && exchange.value === 'hyperliquid'
+  && originalExchange.value === 'hyperliquid'
+  && Boolean(privateKeyField.masked || maskedFieldValue(privateKeyField)),
+);
 
 defineExpose({
   openEdit,
@@ -184,6 +198,7 @@ function showPanel(user: UserDetail): void {
   balance.value = { visible: false, success: false, value: null, error: '' };
   hlRateLimit.value = { visible: false, used: null, cap: null, sampledAt: null, error: '' };
   hlCreditStatus.value = '';
+  stopSharedKeyPreview(true);
 
   if (user.exchange === 'hyperliquid' && isEdit.value) {
     const cached = store.hlExpiryData.value[user.name ?? ''];
@@ -227,6 +242,72 @@ function showPanel(user: UserDetail): void {
   }
 
   onExchangeChange();
+  scheduleSharedKeyPreview();
+}
+
+function stopSharedKeyPreview(clear = false): void {
+  sharedKeyGeneration += 1;
+  if (sharedKeyTimer) clearTimeout(sharedKeyTimer);
+  sharedKeyTimer = null;
+  sharedKeyController?.abort();
+  sharedKeyController = null;
+  sharedKeyLoading.value = false;
+  if (clear) {
+    sharedKeyPreview.value = null;
+    sharedKeyApplyAll.value = false;
+    sharedKeyError.value = '';
+  }
+}
+
+function scheduleSharedKeyPreview(): void {
+  stopSharedKeyPreview(true);
+  if (!sharedKeyEligible.value || saving.value) return;
+  sharedKeyTimer = setTimeout(() => void loadSharedKeyPreview(), 250);
+}
+
+async function loadSharedKeyPreview(): Promise<void> {
+  stopSharedKeyPreview();
+  if (!sharedKeyEligible.value || !editingName.value || document.hidden) return;
+  const generation = ++sharedKeyGeneration;
+  const requestedName = editingName.value;
+  const controller = new AbortController();
+  sharedKeyController = controller;
+  sharedKeyLoading.value = true;
+  try {
+    const result = await pageFetch<SharedKeyPreview>('/hyperliquid/shared-key/preview', {
+      method: 'POST',
+      body: JSON.stringify({ name: requestedName }),
+      signal: controller.signal,
+      cache: 'no-store',
+    });
+    if (generation !== sharedKeyGeneration || editingName.value !== requestedName || !sharedKeyEligible.value) return;
+    const accountListChanged = JSON.stringify(sharedKeyPreview.value?.accounts || []) !== JSON.stringify(result.accounts || []);
+    if (accountListChanged) sharedKeyApplyAll.value = false;
+    sharedKeyPreview.value = result;
+    sharedKeyError.value = '';
+  } catch (error) {
+    if (generation !== sharedKeyGeneration || controller.signal.aborted) return;
+    sharedKeyError.value = serverMsg(error instanceof Error ? error.message : '');
+    sharedKeyPreview.value = sharedKeyPreview.value ? { ...sharedKeyPreview.value, preview_token: null } : null;
+    sharedKeyApplyAll.value = false;
+  } finally {
+    if (generation === sharedKeyGeneration) {
+      sharedKeyLoading.value = false;
+      sharedKeyController = null;
+      if (sharedKeyEligible.value && !document.hidden && !saving.value) {
+        sharedKeyTimer = setTimeout(() => void loadSharedKeyPreview(), 5000);
+      }
+    }
+  }
+}
+
+function sharedKeyAccountLabel(account: SharedKeyPreview['accounts'][number]): string {
+  return `${account.name} - ${account.is_vault ? t('misc.apikeys.vault') : t('misc.apikeys.mainAccount')} - ${account.wallet_address || t('misc.apikeys.noWalletAddress')}`;
+}
+
+function onVisibilityChange(): void {
+  if (document.hidden) stopSharedKeyPreview();
+  else scheduleSharedKeyPreview();
 }
 
 async function loadHlRateLimit(userName: string): Promise<void> {
@@ -291,6 +372,7 @@ function onExchangeChange(): void {
     wallet.value = '';
     isVault.value = false;
   }
+  scheduleSharedKeyPreview();
 }
 
 /* ── inline expiry checks (:1629-1709) ── */
@@ -409,6 +491,11 @@ function onKeyInput(): void {
   keyField.revealed = false;
 }
 
+function onPrivateKeyInput(): void {
+  formDirty.value = true;
+  scheduleSharedKeyPreview();
+}
+
 /* ── save (:1822-1954) ── */
 
 async function save(): Promise<void> {
@@ -488,7 +575,25 @@ async function save(): Promise<void> {
     extra,
   };
 
+  const bulkRequested = sharedKeyApplyAll.value;
+  const bulkPreview = sharedKeyPreview.value;
+  if (bulkRequested) {
+    if (!sharedKeyEligible.value || !bulkPreview?.preview_token || bulkPreview.accounts.length < 2) {
+      toasts.showToast(t('misc.apikeys.sharedKeyUnavailable'), 'error');
+      return;
+    }
+    const confirmed = await confirmDialog({
+      title: t('misc.apikeys.sharedKeyConfirmTitle'),
+      message: t('misc.apikeys.sharedKeyConfirmMessage', { count: bulkPreview.accounts.length }),
+      detail: bulkPreview.accounts.map(sharedKeyAccountLabel).join('\n'),
+      confirmText: t('misc.apikeys.sharedKeyConfirmButton', { count: bulkPreview.accounts.length }),
+    });
+    if (!confirmed) return;
+    data.shared_private_key_preview = bulkPreview.preview_token;
+  }
+
   saving.value = true;
+  stopSharedKeyPreview();
   try {
     if (editMode.value === 'create') {
       await pageFetch('/', { method: 'POST', body: JSON.stringify({ name: userName, data }) });
@@ -527,6 +632,12 @@ async function save(): Promise<void> {
     saving.value = false;
   }
 }
+
+onMounted(() => document.addEventListener('visibilitychange', onVisibilityChange));
+onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', onVisibilityChange);
+  stopSharedKeyPreview(true);
+});
 
 /* ── delete (:1956-1988) ── */
 
@@ -723,7 +834,23 @@ async function testConnection(): Promise<void> {
           </div>
           <div class="form-group flex min-w-0 flex-col gap-1.5">
             <Label for="editPrivateKey">{{ t('misc.apikeys.privateKey') }}</Label>
-            <Input id="editPrivateKey" v-model="privateKeyField.value" type="password" :placeholder="privateKeyField.masked ? '••••••••••• ' + savedLeaveBlank : ''" />
+            <Input id="editPrivateKey" v-model="privateKeyField.value" type="password" :placeholder="privateKeyField.masked ? '••••••••••• ' + savedLeaveBlank : ''" @input="onPrivateKeyInput" />
+          </div>
+          <div v-if="sharedKeyEligible && (sharedKeyPreview?.accounts.length || sharedKeyLoading || sharedKeyError)" class="col-span-2 rounded-md border border-secondary/12 bg-secondary/5 px-3 py-2.5 max-[640px]:col-span-1" data-test="shared-key-panel" aria-live="polite">
+            <div class="flex items-start gap-2">
+              <Checkbox id="sharedKeyApplyAll" v-model="sharedKeyApplyAll" :disabled="sharedKeyLoading || !sharedKeyPreview?.preview_token || (sharedKeyPreview?.accounts.length || 0) < 2" />
+              <div class="min-w-0 flex-1">
+                <Label for="sharedKeyApplyAll" class="text-sm font-medium text-primary">
+                  {{ t('misc.apikeys.sharedKeyUpdateAll', { count: sharedKeyPreview?.accounts.length || 0 }) }}
+                </Label>
+                <p v-if="sharedKeyLoading" class="mt-1 text-xs text-secondary">{{ t('common.loading') }}</p>
+                <p v-else-if="sharedKeyError" class="mt-1 text-xs text-danger">{{ t('misc.apikeys.sharedKeyUnavailableDetail', { error: sharedKeyError }) }}</p>
+                <p v-else class="mt-1 text-xs text-secondary">{{ t('misc.apikeys.sharedKeyOnlyPrivateKey') }}</p>
+                <ul v-if="sharedKeyApplyAll && sharedKeyPreview" class="mt-2 max-h-40 space-y-1 overflow-auto pl-4 text-xs text-secondary">
+                  <li v-for="account in sharedKeyPreview.accounts" :key="account.name">{{ sharedKeyAccountLabel(account) }}</li>
+                </ul>
+              </div>
+            </div>
           </div>
           <label class="form-checkbox col-span-2 flex cursor-pointer items-center gap-2 rounded-md border border-secondary/12 bg-secondary/5 px-3 py-2.5 text-sm text-primary max-[640px]:col-span-1">
             <Checkbox id="editIsVault" :model-value="isVault" @update:model-value="isVault = $event === true; formDirty = true" />

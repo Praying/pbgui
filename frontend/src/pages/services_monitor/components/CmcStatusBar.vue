@@ -6,10 +6,7 @@
  * comes from App (legacy loadCmcPool / renderCmcPool bar updates).
  */
 import { computed } from 'vue';
-import { PhArrowClockwise } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
-import PbIcon from '@/shared/components/PbIcon.vue';
-import { Button } from '@/shared/components/ui/button';
 import { cmcNumber } from '../cmc';
 import type { CmcPool } from '../types';
 
@@ -27,8 +24,6 @@ const props = withDefaults(defineProps<Props>(), {
   loadError: '',
   pool: () => ({}),
 });
-
-const emit = defineEmits<{ refresh: [] }>();
 
 const { t } = useI18n();
 
@@ -49,7 +44,6 @@ const statusText = computed(() => {
 
 <template>
   <div class="cmc-status-bar" :class="statusBarClass" id="cmc-status-bar">
-    <Button class="cmc-refresh-btn text-current opacity-70 hover:bg-transparent hover:text-current hover:opacity-100" variant="ghost" size="icon" type="button" :title="t('common.refresh')" :aria-label="t('common.refresh')" @click="emit('refresh')"><PbIcon :icon="PhArrowClockwise" /></Button>
     <span class="cmc-status-text" id="cmc-status-text">{{ statusText }}</span>
   </div>
 </template>

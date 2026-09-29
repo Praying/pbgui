@@ -16,6 +16,8 @@ DOCUMENTED_SCRIPT_DIRS = {
 PRINT_ALLOWLIST = {
     "frontend/codemod_colors.py": "One-off color-token migration CLI for the palette rework.",
     "frontend/codemod_type_scale.py": "One-off typography-token migration CLI for the type-scale rework.",
+    "setup/vast_gpu_benchmark/resolve_local_inception.py": "Isolated resolver returns machine-readable candle metadata to its parent on stdout.",
+    "setup/vast_gpu_benchmark/sync_input.py": "Remote input-sync helper returns a JSON manifest on stdout to its caller.",
     "setup/vast_gpu_benchmark/cloud_worker.py": "Remote worker stdout is the machine-readable SSH control protocol.",
     "setup/vast_gpu_benchmark/prepare.py": "Isolated benchmark preparation CLI reports its export path.",
     "setup/vast_gpu_benchmark/sync_input.py": "Remote worker stdout is the machine-readable input publication protocol.",
@@ -83,7 +85,9 @@ HUMAN_LOG_SERVICE_MODULES = {
     "hyperliquid_aws.py", "tradfi_sync.py", "api/live.py",
 }
 TIER_3_SERVICES = {
-    "AIChat",
+    "PB7Bridge",
+    "TaskQueue",
+    "AIChat", "OptimizerWorkload",
     "ApiKeyState", "ApiKeys", "ApiLogging", "Auth", "BacktestQueueAPI",
     "BalanceCalc", "BitgetUTA", "Cluster", "CoinDataUI", "Config", "Dashboard", "DbTools",
     "HyperliquidAWS", "LiveSession", "MarketDataAPI", "PB7OhlcvAPI", "PBV7UI",

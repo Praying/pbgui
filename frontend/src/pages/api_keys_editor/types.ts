@@ -34,6 +34,17 @@ export interface UserDetail extends UserSummary {
   extra?: unknown;
 }
 
+export interface SharedKeyAccount {
+  name: string;
+  wallet_address?: string | null;
+  is_vault?: boolean;
+}
+
+export interface SharedKeyPreview {
+  accounts: SharedKeyAccount[];
+  preview_token?: string | null;
+}
+
 export type ExpiryStatusKind =
   | 'ok'
   | 'expiring_soon'
@@ -150,6 +161,7 @@ export interface UserSaveData {
   quote: string | null;
   options: unknown;
   extra: unknown;
+  shared_private_key_preview?: string;
 }
 
 /** Translator matching the legacy t(key, params) helper. */

@@ -2003,6 +2003,24 @@
       }
     });
 
+    function vastRestartContext(status, services) {
+      var hasVast = services.some(function (item) {
+        return item && (item.service === 'VastPool' || item.service === 'VastSupervisor');
+      });
+      if (!hasVast) return '';
+      var activity = status && status.vast_activity;
+      if (!activity || activity.state === 'unknown') {
+        return ' Vast activity could not be verified. This entry describes local service code, not a GPU rental.';
+      }
+      if (activity.state === 'active') {
+        return ' Active Vast.ai GPU rentals continue on their remote hosts. Local monitoring and result sync may pause briefly during restart.';
+      }
+      if (activity.state === 'queued') {
+        return ' Local queue records show no active GPU rentals. Queued cloud jobs remain queued while the local scheduler restarts.';
+      }
+      return ' Local queue records show no active GPU rentals or queued cloud jobs. Idle Vast controllers will also be updated without starting a rental.';
+    }
+
     /* Restart button */
     var restartBtn = document.getElementById('pbgui-restart-btn');
     if (restartBtn) {
@@ -2171,6 +2189,13 @@
 
     /* First probe after PBGUI_RESTART_DELAY (3s) + a small buffer */
     setTimeout(probe, 4000);
+  }
+
+  function visibleRestartServices(status, services) {
+    if (!status || !status.vast_activity || status.vast_activity.state !== 'idle') return services;
+    return services.filter(function (item) {
+      return item && item.service !== 'VastPool' && item.service !== 'VastSupervisor';
+    });
   }
 
   function updateRestartButtonState(state) {
