@@ -13,7 +13,6 @@ import {
   panelCardClass,
   panelHeadClass,
   settingsFieldClass,
-  settingsGridWideClass,
   stackClass,
 } from '../../lib/uiClasses';
 import type { UseTiingo } from '../../composables/useTiingo';
@@ -58,23 +57,22 @@ const { t } = useI18n();
     <div :class="calloutClass(false)" id="settings-tiingo-credential-status">
       {{ tiingo.configured.value ? t('market.tiingoActiveProfile') : t('market.tiingoNoProfile') }}
     </div>
-    <div :class="settingsGridWideClass">
-      <label :class="settingsFieldClass">
+    <div class="settings-tiingo-token-row mt-3 flex flex-wrap items-end gap-3">
+      <label :class="[settingsFieldClass, 'min-w-[240px] max-w-[640px] flex-1']">
         <span :class="fieldLabelClass">{{ t('market.newTiingoApiToken') }}</span>
         <TokenRevealField :tiingo="tiingo" />
       </label>
-      <div :class="[settingsFieldClass, 'self-end']">
-        <Button
-          variant="primary"
-          id="btn-save-tiingo-token"
-          type="button"
-          :disabled="tiingo.saveLoading.value"
-          @click="tiingo.saveToken()"
-        >{{ t('market.saveTokenToVault') }}</Button>
-      </div>
+      <Button
+        class="flex-none"
+        variant="primary"
+        id="btn-save-tiingo-token"
+        type="button"
+        :disabled="tiingo.saveLoading.value"
+        @click="tiingo.saveToken()"
+      >{{ t('market.saveTokenToVault') }}</Button>
     </div>
-    <div :class="noteClass">{{ t('market.tiingoEyeNote') }}</div>
-    <div id="settings-tiingo-usage" :class="stackClass">
+    <div :class="[noteClass, 'mt-2']">{{ t('market.tiingoEyeNote') }}</div>
+    <div id="settings-tiingo-usage" :class="[stackClass, 'mt-3']">
       <UsagePanel :usage="tiingo.usage.value" :configured="tiingo.usageConfigured.value" />
     </div>
   </article>

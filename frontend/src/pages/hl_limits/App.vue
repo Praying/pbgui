@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhArrowsClockwise, PhRobot, PhWallet } from '@phosphor-icons/vue';
 import { apiFetch } from '@/shared/api';
 import AppShell from '@/shared/components/AppShell.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
+import ErrorState from '@/shared/components/ErrorState.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import { Input } from '@/shared/components/ui/input';
+import { ChartFrame, MetricBlock } from '@/shared/components/ui/workbench-primitives';
+import { EmptyRow, ListFooter, ListWrap, Table, Th } from '@/shared/components/ui/table';
 
 const { t } = useI18n();
 
@@ -30,6 +37,17 @@ let refreshTimer: number | null = null;
 let requestGeneration = 0;
 let historyGeneration = 0;
 
+const columns = [
+  { key: 'account', align: 'left' },
+  { key: 'runningBots', align: 'left' },
+  { key: 'used', align: 'right' },
+  { key: 'cap', align: 'right' },
+  { key: 'remaining', align: 'right' },
+  { key: 'usage', align: 'right' },
+  { key: 'lastSample', align: 'left' },
+  { key: 'status', align: 'left' },
+] as const;
+
 const filteredAccounts = computed(() => {
   const filter = filterText.value.trim().toLowerCase();
   if (!filter) return accounts.value;
@@ -41,7 +59,25 @@ const filteredAccounts = computed(() => {
 });
 
 const activeWalletCount = computed(() => accounts.value.filter((account) => (account.bots || []).length > 0).length);
+const idleWalletCount = computed(() => accounts.value.length - activeWalletCount.value);
 const selected = computed(() => accounts.value.find((account) => (account.users || []).includes(selectedAccount.value)) || null);
+
+/* 24-hour chart drops before the first sample arrives; the frame state drives
+   the shared chart chrome while the panel body owns the actual content. */
+const historyState = computed<'ready' | 'loading' | 'empty'>(() => {
+  if (historyLoading.value) return 'loading';
+  return historySamples.value.length ? 'ready' : 'empty';
+});
+
+const historySummary = computed(() => (
+  historySamples.value.length
+    ? t('misc.hlLimits.sampleSummary', {
+        count: historySamples.value.length,
+        first: formatTime(historySamples.value[0]?.sampled_at),
+        last: formatTime(historySamples.value[historySamples.value.length - 1]?.sampled_at),
+      })
+    : undefined
+));
 
 function formatRequestCount(value: unknown): string {
   if (!Number.isInteger(value)) return '—';
@@ -50,6 +86,55 @@ function formatRequestCount(value: unknown): string {
 
 function formatTime(value: unknown): string {
   return Number.isInteger(value) && Number(value) > 0 ? new Date(Number(value) * 1000).toLocaleString() : '—';
+}
+
+function accountUsers(account: HyperliquidAccount): string {
+  return (account.users || []).join(', ') || t('misc.hlLimits.unknown');
+}
+
+function accountKey(account: HyperliquidAccount): string {
+  return (account.users || []).join('|');
+}
+
+function isAccountSelected(account: HyperliquidAccount): boolean {
+  return Boolean(selectedAccount.value && (account.users || []).includes(selectedAccount.value));
+}
+
+function botSummary(account: HyperliquidAccount): string {
+  return (account.bots || [])
+    .map((bot) => `${bot.pb_version === '8' ? 'PB8' : 'PB7'} ${bot.name || ''} · ${bot.host || ''}`.trim())
+    .join('; ');
+}
+
+function remainingRequestCount(account: HyperliquidAccount): string {
+  if (account.used === undefined || account.cap === undefined) return '—';
+  return formatRequestCount(Math.max(0, account.cap - account.used));
+}
+
+function isCapacityExhausted(account: HyperliquidAccount): boolean {
+  return account.used !== undefined && account.cap !== undefined && account.used >= account.cap;
+}
+
+function usageRatio(account: HyperliquidAccount): number | null {
+  if (account.used === undefined || !account.cap) return null;
+  return Math.min(1, Math.max(0, account.used / account.cap));
+}
+
+function usageText(account: HyperliquidAccount): string {
+  const ratio = usageRatio(account);
+  return ratio === null ? '—' : `${(100 * ratio).toFixed(1)}%`;
+}
+
+function usageBarWidth(account: HyperliquidAccount): string {
+  return `${((usageRatio(account) ?? 0) * 100).toFixed(1)}%`;
+}
+
+function usageBarTone(account: HyperliquidAccount): string {
+  const ratio = usageRatio(account);
+  if (ratio === null) return 'bg-border-strong';
+  if (ratio >= 1) return 'bg-danger';
+  if (ratio >= 0.8) return 'bg-warning';
+  return 'bg-accent';
 }
 
 function updateUrl(): void {
@@ -149,49 +234,133 @@ onUnmounted(() => {
 
 <template>
   <AppShell page-key="info_hl_limits" :page-title="t('misc.hlLimits.title')" class="data-page-shell data-page-shell--hl-limits">
-    <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-[var(--page-padding)]">
-      <p class="m-0 max-w-4xl text-sm leading-relaxed text-secondary">{{ t('misc.hlLimits.description') }}</p>
-      <div class="flex flex-wrap gap-2">
-        <span class="rounded-full border border-border-default bg-card px-3 py-1.5 text-sm text-secondary">{{ t('misc.hlLimits.walletCount', { count: accounts.length }) }}</span>
-        <span class="rounded-full border border-border-default bg-card px-3 py-1.5 text-sm text-secondary">{{ t('misc.hlLimits.activeCount', { count: activeWalletCount }) }}</span>
-        <span class="rounded-full border border-border-default bg-card px-3 py-1.5 text-sm text-secondary">{{ t('misc.hlLimits.idleCount', { count: accounts.length - activeWalletCount }) }}</span>
+    <div class="flex min-h-0 w-full flex-1 flex-col gap-[var(--component-gap)] overflow-y-auto p-[var(--page-padding)]">
+
+      <p class="m-0 max-w-[72ch] text-sm leading-relaxed text-secondary">{{ t('misc.hlLimits.description') }}</p>
+
+      <div class="grid w-full max-w-[760px] grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[720px]:grid-cols-1">
+        <MetricBlock :label="t('misc.hlLimits.walletsLabel')" :value="accounts.length" tone="info" />
+        <MetricBlock :label="t('misc.hlLimits.activeLabel')" :value="activeWalletCount" tone="success" />
+        <MetricBlock :label="t('misc.hlLimits.idleLabel')" :value="idleWalletCount" />
       </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <Input v-model="filterText" :placeholder="t('misc.hlLimits.filterPlaceholder')" :aria-label="t('misc.hlLimits.filterLabel')" class="w-full max-w-md" @input="updateUrl" />
-        <span class="text-xs text-secondary">{{ t('misc.hlLimits.autoUpdate') }}</span>
-      </div>
-      <div v-if="loading" class="h-48 animate-pulse rounded-lg border border-border-default bg-card" />
-      <div v-else-if="errorMessage" class="rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm text-danger">{{ errorMessage }}</div>
-      <div v-else class="overflow-auto rounded-lg border border-border-default">
-        <table class="min-w-[900px] w-full border-separate border-spacing-0 text-sm">
-          <thead class="sticky top-0 z-10 bg-page"><tr>
-            <th v-for="heading in ['account', 'runningBots', 'used', 'cap', 'remaining', 'usage', 'lastSample', 'status']" :key="heading" class="border-b-2 border-border-default px-3 py-2 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t(`misc.hlLimits.${heading}`) }}</th>
-          </tr></thead>
-          <tbody>
-            <tr v-for="account in filteredAccounts" :key="(account.users || []).join('|')" class="cursor-pointer hover:bg-secondary/5" :class="selectedAccount && (account.users || []).includes(selectedAccount) ? 'bg-accent/10' : ''" tabindex="0" @click="selectAccount(String((account.users || [])[0] || ''))" @keydown.enter="selectAccount(String((account.users || [])[0] || ''))">
-              <td class="border-b border-border-subtle px-3 py-2.5 align-top"><strong class="text-primary">{{ (account.users || []).join(', ') || t('misc.hlLimits.unknown') }}</strong><div class="mt-1 text-xs text-secondary">{{ (account.bots || []).length ? t('misc.hlLimits.sharedWallet') : t('misc.hlLimits.noRunningBot') }}</div></td>
-              <td class="border-b border-border-subtle px-3 py-2.5 align-top">{{ (account.bots || []).map((bot) => `${bot.pb_version === '8' ? 'PB8' : 'PB7'} ${bot.name || ''} · ${bot.host || ''}`).join('; ') || '—' }}</td>
-              <td class="border-b border-border-subtle px-3 py-2.5 align-top">{{ formatRequestCount(account.used) }}</td>
-              <td class="border-b border-border-subtle px-3 py-2.5 align-top">{{ formatRequestCount(account.cap) }}</td>
-              <td class="border-b border-border-subtle px-3 py-2.5 align-top" :class="account.used !== undefined && account.cap !== undefined && account.used >= account.cap ? 'text-danger' : 'text-success'">{{ account.used !== undefined && account.cap !== undefined ? formatRequestCount(Math.max(0, account.cap - account.used)) : '—' }}</td>
-              <td class="border-b border-border-subtle px-3 py-2.5 align-top">{{ account.used !== undefined && account.cap ? `${(100 * account.used / account.cap).toFixed(1)}%` : '—' }}</td>
-              <td class="border-b border-border-subtle px-3 py-2.5 align-top">{{ formatTime(account.sampled_at) }}</td>
-              <td class="border-b border-border-subtle px-3 py-2.5 align-top" :class="getStatusClass(account)">{{ getStatus(account) }}</td>
-            </tr>
-            <tr v-if="filteredAccounts.length === 0"><td colspan="8" class="px-3 py-8 text-center text-sm text-secondary">{{ accounts.length ? t('misc.hlLimits.noMatches') : t('misc.hlLimits.noWallets') }}</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <section v-if="selected" class="rounded-lg border border-border-default bg-panel p-4">
-        <h2 class="m-0 text-md font-semibold tracking-tight text-primary">{{ selectedAccount }} · {{ t('misc.hlLimits.historyTitle') }}</h2>
-        <p v-if="historyLoading" class="mb-0 mt-2 text-sm text-secondary">{{ t('misc.hlLimits.loadingHistory') }}</p>
-        <p v-else-if="!historySamples.length" class="mb-0 mt-2 text-sm text-secondary">{{ t('misc.hlLimits.noHistory') }}</p>
-        <template v-else>
-          <p class="mb-2 mt-1 text-xs text-secondary">{{ t('misc.hlLimits.sampleSummary', { count: historySamples.length, first: formatTime(historySamples[0]?.sampled_at), last: formatTime(historySamples[historySamples.length - 1]?.sampled_at) }) }}</p>
-          <svg viewBox="0 0 900 220" class="h-56 w-full rounded-md bg-page" role="img" :aria-label="t('misc.hlLimits.historyTitle')"><polyline :points="historyPoints('cap')" fill="none" stroke="var(--warning-soft)" stroke-width="3" /><polyline :points="historyPoints('used')" fill="none" stroke="var(--accent-soft)" stroke-width="3" /></svg>
-          <div class="mt-2 flex gap-5 text-xs text-secondary"><span class="text-accent-soft">{{ t('misc.hlLimits.used') }}</span><span class="text-warning-soft">{{ t('misc.hlLimits.cap') }}</span></div>
-        </template>
+
+      <LoadingSkeleton v-if="loading" :label="t('common.loading')" :lines="5" />
+
+      <ErrorState
+        v-else-if="errorMessage"
+        :title="t('misc.hlLimits.loadFailed')"
+        :message="errorMessage"
+      />
+
+      <section v-else class="flex min-h-0 w-full flex-col overflow-hidden rounded-lg border border-border-default bg-panel">
+        <div class="pbgui-list-toolbar flex flex-wrap items-center gap-3 border-b border-border-subtle px-3 py-2.5">
+          <Input
+            v-model="filterText"
+            :placeholder="t('misc.hlLimits.filterPlaceholder')"
+            :aria-label="t('misc.hlLimits.filterLabel')"
+            class="w-full max-w-[420px]"
+            @input="updateUrl"
+          />
+          <span class="ml-auto inline-flex items-center gap-1.5 text-xs text-muted">
+            <PbIcon :icon="PhArrowsClockwise" :size="14" />
+            {{ t('misc.hlLimits.autoUpdate') }}
+          </span>
+        </div>
+
+        <ListWrap class="min-h-[220px] max-h-[min(62dvh,760px)] overflow-auto">
+          <Table class="min-w-[1040px]">
+            <thead>
+              <tr>
+                <Th
+                  v-for="column in columns"
+                  :key="column.key"
+                  :align="column.align"
+                >{{ t(`misc.hlLimits.${column.key}`) }}</Th>
+              </tr>
+            </thead>
+            <tbody>
+              <EmptyRow
+                v-if="!filteredAccounts.length"
+                size="inline"
+                :colspan="columns.length"
+                :icon="PhWallet"
+                :title="accounts.length ? t('misc.hlLimits.noMatches') : t('misc.hlLimits.noWallets')"
+              />
+              <tr
+                v-for="account in filteredAccounts"
+                v-else
+                :key="accountKey(account)"
+                class="cursor-pointer"
+                :class="{ selected: isAccountSelected(account) }"
+                tabindex="0"
+                @click="selectAccount(String((account.users || [])[0] || ''))"
+                @keydown.enter="selectAccount(String((account.users || [])[0] || ''))"
+                @keydown.space.prevent="selectAccount(String((account.users || [])[0] || ''))"
+              >
+                <td class="align-top">
+                  <strong class="text-primary">{{ accountUsers(account) }}</strong>
+                  <div class="mt-1 text-xs text-secondary">
+                    {{ (account.bots || []).length ? t('misc.hlLimits.sharedWallet') : t('misc.hlLimits.noRunningBot') }}
+                  </div>
+                </td>
+                <td class="align-top text-secondary">
+                  <span v-if="botSummary(account)" class="inline-flex flex-wrap items-center gap-1.5">
+                    <PbIcon :icon="PhRobot" :size="14" class="shrink-0 text-muted" />
+                    <span>{{ botSummary(account) }}</span>
+                  </span>
+                  <span v-else>—</span>
+                </td>
+                <td class="align-top text-right tabular-nums">{{ formatRequestCount(account.used) }}</td>
+                <td class="align-top text-right tabular-nums">{{ formatRequestCount(account.cap) }}</td>
+                <td
+                  class="align-top text-right font-medium tabular-nums"
+                  :class="isCapacityExhausted(account) ? 'text-danger' : 'text-success'"
+                >{{ remainingRequestCount(account) }}</td>
+                <td class="align-top">
+                  <div class="flex items-center justify-end gap-2">
+                    <span class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-border-subtle" aria-hidden="true">
+                      <span class="block h-full rounded-full" :class="usageBarTone(account)" :style="{ width: usageBarWidth(account) }" />
+                    </span>
+                    <span class="w-12 text-right tabular-nums">{{ usageText(account) }}</span>
+                  </div>
+                </td>
+                <td class="align-top whitespace-nowrap text-secondary">{{ formatTime(account.sampled_at) }}</td>
+                <td class="align-top whitespace-nowrap" :class="getStatusClass(account)">{{ getStatus(account) }}</td>
+              </tr>
+            </tbody>
+          </Table>
+        </ListWrap>
+
+        <ListFooter>
+          <span>{{ t('misc.hlLimits.walletCount', { count: filteredAccounts.length }) }}</span>
+          <span v-if="filteredAccounts.length !== accounts.length">{{ t('misc.hlLimits.walletCount', { count: accounts.length }) }}</span>
+        </ListFooter>
       </section>
+
+      <ChartFrame
+        v-if="selected"
+        :title="`${selectedAccount} · ${t('misc.hlLimits.historyTitle')}`"
+        :description="historySummary"
+        :state="historyState"
+      >
+        <LoadingSkeleton v-if="historyLoading" :label="t('misc.hlLimits.loadingHistory')" :lines="3" />
+        <EmptyState
+          v-else-if="!historySamples.length"
+          size="inline"
+          :title="t('misc.hlLimits.noHistory')"
+        />
+        <template v-else>
+          <svg viewBox="0 0 900 220" class="h-56 w-full rounded-md bg-page" role="img" :aria-label="t('misc.hlLimits.historyTitle')">
+            <polyline :points="historyPoints('cap')" fill="none" stroke="var(--warning-soft)" stroke-width="3" />
+            <polyline :points="historyPoints('used')" fill="none" stroke="var(--accent-soft)" stroke-width="3" />
+          </svg>
+          <div class="mt-2 flex gap-5 text-xs text-secondary">
+            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-accent-soft" aria-hidden="true" />{{ t('misc.hlLimits.used') }}</span>
+            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-warning-soft" aria-hidden="true" />{{ t('misc.hlLimits.cap') }}</span>
+          </div>
+        </template>
+      </ChartFrame>
+
     </div>
   </AppShell>
 </template>

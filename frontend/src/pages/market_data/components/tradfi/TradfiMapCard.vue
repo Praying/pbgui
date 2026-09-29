@@ -34,7 +34,7 @@ const buttons = computed(() => props.map.actionButtons.value);
     </div>
     <TradfiMapTable :map="map" />
     <div class="tradfi-actions-stack mt-3 grid gap-3">
-      <div class="tradfi-actions-grid grid gap-3 grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
+      <div class="tradfi-actions-grid flex flex-wrap gap-2">
         <Button variant="info" id="btn-tradfi-search-ticker" type="button" :disabled="buttons.searchTicker" @click="map.searchTicker()">
           {{ t('market.searchTicker') }}
         </Button>
@@ -51,7 +51,7 @@ const buttons = computed(() => props.map.actionButtons.value);
           {{ t('market.refreshSpec') }}
         </Button>
       </div>
-      <div class="tradfi-actions-grid grid gap-3 grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
+      <div class="tradfi-actions-grid flex flex-wrap gap-2">
         <Button variant="info" id="btn-tradfi-auto-map" type="button" :disabled="buttons.autoMap" @click="map.autoMap()">
           {{ t('market.autoMap') }}
         </Button>
