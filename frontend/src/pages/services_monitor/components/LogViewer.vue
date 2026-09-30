@@ -307,7 +307,7 @@ onUnmounted(() => {
   color: var(--text-secondary);
   padding: 10px 12px;
   border: 1px solid var(--bg-panel);
-  border-radius: 5px;
+  border-radius: var(--radius-md);
   white-space: pre-wrap;
   word-break: break-all;
   flex: 1;
@@ -343,7 +343,7 @@ onUnmounted(() => {
   gap: 6px;
   padding: 6px 8px;
   border: 1px solid rgb(var(--text-secondary-rgb) / 0.13);
-  border-radius: 9px;
+  border-radius: var(--radius-lg);
   background:
     linear-gradient(90deg, rgb(var(--bg-panel-rgb) / 0.76), rgb(var(--bg-page-rgb) / 0.72)),
     var(--surface-workspace);
@@ -353,7 +353,7 @@ onUnmounted(() => {
 /* Level-toggle state: the off-state dimming plus the per-level .on tones
    (the single copy — the legacy base + refinement duplicates are merged). */
 .lvp-lvl-btn {
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-weight: 700;
   opacity: 0.48;
 }
@@ -408,7 +408,7 @@ onUnmounted(() => {
   margin-left: auto;
   padding: 4px 9px;
   border: 1px solid rgb(var(--text-secondary-rgb) / 0.13);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: rgb(var(--bg-page-rgb) / 0.4);
   color: var(--text-secondary);
   font-size: var(--text-micro);
@@ -418,7 +418,7 @@ onUnmounted(() => {
 .lvp-terminal {
   padding: 14px 16px;
   border-color: rgb(var(--accent-rgb) / 0.16);
-  border-radius: 10px;
+  border-radius: var(--radius-xl);
   background:
     linear-gradient(180deg, rgb(var(--bg-page-rgb) / 0.98), rgb(var(--bg-page-rgb) / 0.98)),
     var(--bg-page);
@@ -434,7 +434,7 @@ onUnmounted(() => {
   padding: 1px 7px;
   border-left: 2px solid transparent;
   border-radius: 3px;
-  transition: background 0.12s ease;
+  transition: background-color var(--motion-fast) var(--ease-standard);
 }
 
 .lvp-terminal > div:hover {

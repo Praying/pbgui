@@ -276,7 +276,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
         <Button
           type="button"
           variant="primary"
-          class="px-6 py-2.5 font-medium shadow-md shadow-accent/20 hover:shadow-accent/30 transition-all gap-2"
+          class="px-6 py-2.5 font-medium shadow-md shadow-accent/20 hover:shadow-accent/30 transition-[color,background-color,border-color,box-shadow] duration-[var(--motion-fast)] ease-standard gap-2"
           data-testid="empty-add-user"
           @click="emit('create')"
         >
@@ -390,7 +390,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
             <div v-if="credsFor(u).length" class="credential-list">
               <span v-for="credential in credsFor(u)" :key="credential" class="credential-chip">{{ credential }}</span>
             </div>
-            <span v-else style="color:var(--danger);">{{ t('misc.apikeys.none') }}</span>
+            <span v-else class="text-danger">{{ t('misc.apikeys.none') }}</span>
           </td>
           <td class="border-b border-border-subtle px-3 py-2.5 text-base">
             <ExpiryBadge v-if="expiryFor(u)" :exp="expiryFor(u)!" />
@@ -513,7 +513,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
   border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
   background: var(--bg-panel);
-  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-panel);
   scrollbar-color: var(--border-strong) transparent;
   scrollbar-width: thin;
 }
@@ -622,17 +622,6 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-.table-state {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-}
-
-.table-state--error {
-  color: var(--danger-soft);
 }
 
 @media (max-width: 480px) {

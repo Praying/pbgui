@@ -23,7 +23,7 @@
 
 /** The former .panel-card rule (gradient card used by every panel body). */
 export const panelCardClass =
-  'panel-card rounded-[14px] border border-border-default bg-[linear-gradient(180deg,rgb(var(--bg-panel-rgb)_/_0.98),rgb(var(--bg-page-rgb)_/_0.98))] p-5 shadow-[0_18px_40px_rgba(5,8,14,0.28)]';
+  'panel-card rounded-xl border border-border-default bg-[linear-gradient(180deg,rgb(var(--bg-panel-rgb)_/_0.98),rgb(var(--bg-page-rgb)_/_0.98))] p-5 shadow-panel';
 
 /** The former .sb-sep rule (sidebar-block divider). */
 export const sbSepClass = 'sb-sep my-0.5 border-t border-border-subtle';

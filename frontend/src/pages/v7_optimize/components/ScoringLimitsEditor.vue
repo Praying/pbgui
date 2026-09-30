@@ -188,7 +188,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
 <template>
   <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
     <!-- Scoring section -->
-    <section class="flex flex-col rounded-xl border border-border-default/80 bg-card/60 p-4 shadow-sm">
+    <section class="flex flex-col rounded-xl border border-border-default/80 bg-card/60 p-4">
       <header class="mb-3.5 flex items-center justify-between border-b border-border-default/60 pb-3">
         <div class="flex items-center gap-2">
           <PbIcon :icon="PhTarget" class="text-accent" :size="18" />
@@ -197,7 +197,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
             {{ scoringRows.length }}
           </span>
         </div>
-        <Button type="button" variant="default" size="sm" class="h-8 gap-1 text-compact shadow-sm" @click="addScoring">
+        <Button type="button" variant="default" size="sm" class="h-8 gap-1 text-compact" @click="addScoring">
           <PbIcon :icon="PhPlus" :size="14" />
           {{ t('editor.suite.add') }}
         </Button>
@@ -208,7 +208,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
           <div
             v-for="(row, index) in scoringRows"
             :key="`score-${index}`"
-            class="opt-objective-row-advanced group relative rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 transition-all duration-150 hover:border-border-strong hover:bg-surface-deep/80"
+            class="opt-objective-row-advanced group relative rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard hover:border-border-strong hover:bg-surface-deep/80"
           >
             <!-- Primary Row: Metric + Goal + Delete -->
             <div class="flex items-center gap-2">
@@ -332,7 +332,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
     </section>
 
     <!-- Limits section -->
-    <section class="flex flex-col rounded-xl border border-border-default/80 bg-card/60 p-4 shadow-sm">
+    <section class="flex flex-col rounded-xl border border-border-default/80 bg-card/60 p-4">
       <header class="mb-3.5 flex items-center justify-between border-b border-border-default/60 pb-3">
         <div class="flex items-center gap-2">
           <PbIcon :icon="PhSliders" class="text-accent" :size="18" />
@@ -341,7 +341,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
             {{ limitRows.length }}
           </span>
         </div>
-        <Button type="button" variant="default" size="sm" class="h-8 gap-1 text-compact shadow-sm" @click="addLimit">
+        <Button type="button" variant="default" size="sm" class="h-8 gap-1 text-compact" @click="addLimit">
           <PbIcon :icon="PhPlus" :size="14" />
           {{ t('editor.suite.add') }}
         </Button>
@@ -352,7 +352,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
           <div
             v-for="(row, index) in limitRows"
             :key="`limit-${index}`"
-            class="opt-objective-row-advanced group relative rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 transition-all duration-150 hover:border-border-strong hover:bg-surface-deep/80"
+            class="opt-objective-row-advanced group relative rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard hover:border-border-strong hover:bg-surface-deep/80"
           >
             <!-- Primary Row: Enable toggle + Metric + Delete -->
             <div class="flex items-center gap-2">

@@ -53,11 +53,11 @@ const details = computed(() => {
 <style scoped>
 /* Ported from .mds-root .mds-progress-* (market_data_status.html:113-157). */
 .mds-progress-section {
-  margin-bottom: 0.75rem;
-  padding: 0.75rem;
-  background: var(--mds-bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--mds-border-color);
+  margin-bottom: var(--sp-md);
+  padding: var(--sp-md);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
   box-shadow: var(--shadow-panel);
 }
 
@@ -65,19 +65,19 @@ const details = computed(() => {
   position: relative;
   width: 100%;
   height: 20px;
-  background: var(--mds-bg-tertiary);
-  border-radius: 10px;
+  background: rgb(var(--text-secondary-rgb) / 0.16);
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  margin-bottom: 0.4rem;
+  margin-bottom: var(--sp-xs);
 }
 
 .mds-progress-bar {
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, var(--mds-accent-info), var(--mds-accent-success));
+  background: linear-gradient(90deg, var(--accent), var(--success));
   transform-origin: left center;
-  transition: transform 0.3s var(--ease-standard);
-  border-radius: 10px;
+  transition: transform var(--motion-slow) var(--ease-standard);
+  border-radius: var(--radius-xl);
 }
 
 .mds-progress-label {
@@ -91,13 +91,13 @@ const details = computed(() => {
   justify-content: center;
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--mds-text-primary);
-  text-shadow: 0 0 4px rgba(5, 8, 14, 0.8);
+  color: var(--text-primary);
+  text-shadow: 0 0 4px rgb(0 0 0 / 0.7);
   pointer-events: none;
 }
 
 .mds-progress-text {
   font-size: var(--text-sm);
-  color: var(--mds-text-secondary);
+  color: var(--text-secondary);
 }
 </style>

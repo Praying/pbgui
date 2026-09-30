@@ -650,11 +650,14 @@ onBeforeUnmount(() => {
     <div
       v-if="toast"
       :key="`${toast.kind}-${toast.message}`"
-      class="opt-toast-card fixed right-[18px] bottom-[18px] z-[1200] shadow-[var(--shadow-elevated)] cursor-pointer select-none"
+      class="opt-toast-card fixed right-[18px] bottom-[18px] z-[var(--z-toast)] shadow-[var(--shadow-elevated)] cursor-pointer select-none"
       :class="`opt-toast-card--${toast.kind}`"
       :role="toast.kind === 'error' ? 'alert' : 'status'"
       :aria-live="toast.kind === 'error' ? 'assertive' : 'polite'"
+      tabindex="0"
       @click="toast = null"
+      @keydown.enter="toast = null"
+      @keydown.space.prevent="toast = null"
     >
       <span class="opt-toast-card__icon" aria-hidden="true">
         <PbIcon :icon="toast.kind === 'success' ? PhCheckCircle : toast.kind === 'error' ? PhWarningCircle : PhInfo" :size="18" />
@@ -687,9 +690,8 @@ body { overflow: hidden; }
 }
 
 .opt-table tbody tr { cursor: pointer; transition: background-color var(--motion-fast) var(--ease-standard); }
-/* The empty placeholder row is not data — never tint it on hover. */
-.opt-table tbody tr:not([data-slot='empty-row']):hover td { background: rgb(var(--accent-rgb) / 0.055); }
-.opt-table tbody tr.selected td { background: rgb(var(--accent-rgb) / 0.12); }
+/* Selected-row fill lives in the state block further down; the first-child
+   accent bar stays here next to its padding compensation. */
 .opt-table tbody tr.selected td:first-child {
   border-left: 3px solid var(--accent);
   padding-left: 9px;
@@ -886,10 +888,6 @@ body { overflow: hidden; }
   background: var(--opt-table-surface);
 }
 
-.optimize-workspace .opt-table tbody tr:nth-child(even):not(:last-child):not(.selected) td {
-  background: rgb(255 255 255 / 0.018);
-}
-
 /* The sticky actions rail is owned by the shared list contract: it paints
    --bg-panel (== --surface-list) and follows the row's hover/selected accent
    tint. The former private #191f24/#1c272c/#1f3037 rail colours are retired
@@ -1016,23 +1014,11 @@ body { overflow: hidden; }
   height: auto;
 }
 
+/* Cell geometry (height, padding, separators) and header chrome come from
+   the .pbgui-list-table contract — restating them here would override the
+   contract's last-row finish rule. Only the opt-specific alignment stays. */
 .opt-table td {
-  min-height: 42px;
-  padding: 8px 12px;
-  border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
   vertical-align: middle;
-}
-
-.opt-table th {
-  height: 34px;
-  padding: 8px 12px;
-  background: rgb(var(--bg-page-rgb) / 0.85);
-  backdrop-filter: blur(8px);
-  border-bottom: 2px solid var(--border-default);
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: var(--tracking-label);
 }
 
 .opt-table th:hover {

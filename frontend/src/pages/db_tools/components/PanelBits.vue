@@ -57,7 +57,7 @@ const progressSteps = computed(() => (props.progress?.steps || []).slice(-20));
       <div class="text-sm text-secondary">{{ progress.completed || 0 }} / {{ progress.total || 0 }} ({{ progress.percent || 0 }}%)</div>
     </div>
     <div class="h-2 overflow-hidden bg-card">
-      <div class="h-full w-0 transition-[width] duration-200" :class="progress.status === 'error' ? 'bg-danger' : 'bg-[linear-gradient(90deg,var(--accent-deep),var(--accent-soft))]'" :style="{ width: (progress.percent || 0) + '%' }"></div>
+      <div class="h-full w-full origin-left transition-transform duration-[var(--motion-normal)] ease-standard" :class="progress.status === 'error' ? 'bg-danger' : 'bg-[linear-gradient(90deg,var(--accent-deep),var(--accent-soft))]'" :style="{ transform: `scaleX(${(progress.percent || 0) / 100})` }"></div>
     </div>
     <div class="border-b border-border-subtle px-[0.8rem] py-[0.65rem] text-sm text-secondary">{{ progress.current || '' }}</div>
     <div class="grid max-h-[170px] gap-1 overflow-auto pt-[0.45rem] pr-[0.8rem] pb-[0.7rem]">

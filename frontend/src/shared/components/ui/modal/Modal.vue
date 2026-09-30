@@ -61,11 +61,11 @@ function onOpenChange(open: boolean): void {
 <template>
   <DialogRoot :open="props.open" @update:open="onOpenChange">
     <DialogPortal>
-      <DialogOverlay class="fixed inset-0 z-[var(--z-modal)] bg-page/72" />
+      <DialogOverlay class="fixed inset-0 z-[var(--z-modal)] bg-backdrop" />
       <DialogContent
         :class="props.panelClass"
         aria-modal="true"
-        class="fixed top-1/2 left-1/2 z-[var(--z-modal)] flex max-h-[85dvh] min-h-0 flex-col -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[12px] border border-border-default bg-page shadow-[0_20px_70px_rgba(5,8,14,0.9)] focus:outline-none"
+        class="fixed top-1/2 left-1/2 z-[var(--z-modal)] flex max-h-[85dvh] min-h-0 flex-col -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-border-default bg-page shadow-modal focus:outline-none"
         @escape-key-down="!props.dismissable && $event.preventDefault()"
         @interact-outside="!(props.dismissable && props.backdropClose) && $event.preventDefault()"
         @pointer-down-outside="!(props.dismissable && props.backdropClose) && $event.preventDefault()"

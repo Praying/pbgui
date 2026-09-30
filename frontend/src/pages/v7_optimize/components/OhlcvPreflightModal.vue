@@ -9,6 +9,7 @@ import {
   PhX,
 } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import { Button } from '@/shared/components/ui/button';
 import { serverMsg } from '@/shared/i18n';
 
@@ -206,10 +207,7 @@ function entryTitle(entry: Record<string, unknown>): string {
       </header>
 
       <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5 max-[600px]:p-4 text-compact">
-        <div v-if="loading" class="flex flex-col items-center justify-center py-12 gap-3 text-secondary">
-          <PbIcon :icon="PhArrowClockwise" :size="24" class="animate-spin text-accent" />
-          <p class="text-compact font-medium text-secondary">{{ t('editor.preflight.running') }}</p>
-        </div>
+        <LoadingSkeleton v-if="loading" :label="t('editor.preflight.running')" />
 
         <div v-if="error" class="rounded-lg border border-danger/40 bg-danger/10 p-3.5 text-compact text-danger-soft leading-relaxed">
           {{ error }}

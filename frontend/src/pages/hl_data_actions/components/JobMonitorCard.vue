@@ -49,7 +49,7 @@ function tabClass(active: boolean): string {
 </script>
 
 <template>
-  <div class="hlda-jm mt-4 border-t border-elevated pt-3">
+  <div class="hlda-jm mt-4 border-t border-subtle pt-3">
     <div class="hlda-jm-title mb-2 flex items-center gap-2 text-sm font-semibold text-secondary">
       {{ t('market.jobMonitor') }}
       <span class="hlda-jm-badge pbgui-badge rounded-[3px] px-2 py-0.5 text-xs font-medium" :class="badgeClass(monitor.badge.value)">{{
@@ -60,13 +60,13 @@ function tabClass(active: boolean): string {
             : t('market.disconnected')
       }}</span>
     </div>
-    <div class="hlda-tabs pbgui-tab-bar mb-2.5 flex gap-0 border-b border-elevated">
+    <div class="hlda-tabs pbgui-tab-bar mb-2.5 flex gap-0 border-b border-subtle">
       <Button
         v-for="tab in TABS"
         :key="tab"
         type="button"
         variant="ghost"
-        class="hlda-tab pbgui-tab h-auto rounded-none border-0 border-b-2 bg-transparent px-4 py-1.5 font-normal duration-150 hover:bg-transparent"
+        class="hlda-tab pbgui-tab h-auto rounded-none border-0 border-b-2 bg-transparent px-4 py-1.5 font-normal duration-[var(--motion-fast)] hover:bg-transparent"
         :class="tabClass(monitor.currentTab.value === tab)"
         @click="monitor.switchTab(tab)"
       >{{ tab === 'running' ? t('market.activeTab') : tab === 'done' ? t('market.done') : t('market.failed') }}</Button>

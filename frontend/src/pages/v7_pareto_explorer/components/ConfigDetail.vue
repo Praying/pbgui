@@ -13,6 +13,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import JsonViewer from '@/shared/components/JsonViewer.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import { detailViewModel } from '../lib/viewModels';
 import { metricTooltip } from '../lib/metricDocs';
 import type { ParetoStore } from '../composables/useParetoSession';
@@ -39,7 +40,7 @@ const vm = computed(() => detailViewModel(detail.value, (key, params) => t(key, 
           <div>
             <h4 class="mb-2">{{ t('v7explore.metrics') }}</h4>
             <div id="detail-top-metrics" class="mini-grid grid grid-cols-2 gap-2">
-              <div v-if="!vm.topMetrics.length" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" style="min-height: 120px" role="status">{{ store.state.detailLoading ? t('common.loading') : t('v7explore.selectChampionToPopulate') }}</div>
+              <EmptyState v-if="!vm.topMetrics.length" class="placeholder-panel min-h-[120px]" size="inline" :title="store.state.detailLoading ? t('common.loading') : t('v7explore.selectChampionToPopulate')" />
               <div v-for="metric in vm.topMetrics" :key="metric.name" class="mini-metric rounded-lg border border-border-default bg-white/2 p-2">
                 <div class="label mb-1 text-xs text-secondary">{{ metric.name }}</div>
                 <div class="value font-bold">{{ metric.value }}</div>
@@ -49,7 +50,7 @@ const vm = computed(() => detailViewModel(detail.value, (key, params) => t(key, 
           <div>
             <h4 class="mb-2">{{ t('v7explore.tradingStyle') }}</h4>
             <div id="detail-style-panel" class="detail-list flex flex-col gap-2">
-              <div v-if="!detail" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" style="min-height: 120px" role="status">{{ store.state.detailLoading ? t('common.loading') : t('v7explore.tradingStyleWillAppear') }}</div>
+              <EmptyState v-if="!detail" class="placeholder-panel min-h-[120px]" size="inline" :title="store.state.detailLoading ? t('common.loading') : t('v7explore.tradingStyleWillAppear')" />
               <div v-for="(row, index) in vm.styleRows" :key="index" class="detail-item rounded-xl border border-border-default bg-white/2 p-2.5">
                 <div class="detail-head mb-1 flex items-center justify-between gap-3"><strong>{{ row.strong }}</strong><span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-label text-secondary">{{ row.chip }}</span></div>
               </div>
@@ -58,14 +59,14 @@ const vm = computed(() => detailViewModel(detail.value, (key, params) => t(key, 
           <div>
             <h4 class="mb-2">{{ t('v7explore.robustness') }}</h4>
             <div id="detail-risk-profile" class="mini-grid grid grid-cols-2 gap-2">
-              <div v-if="!vm.riskProfile.length" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" style="min-height: 120px">{{ t('v7explore.riskMetricsWillAppear') }}</div>
+              <EmptyState v-if="!vm.riskProfile.length" class="placeholder-panel min-h-[120px]" size="inline" :title="t('v7explore.riskMetricsWillAppear')" />
               <div v-for="metric in vm.riskProfile" :key="metric.name" class="mini-metric rounded-lg border border-border-default bg-white/2 p-2">
                 <div class="label mb-1 text-xs text-secondary">{{ metric.name }}</div>
                 <div class="value font-bold">{{ metric.value }}</div>
               </div>
             </div>
-            <div id="detail-robustness-panel" class="detail-list flex flex-col gap-2" style="margin-top: 8px">
-              <div v-if="!detail" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" style="min-height: 80px">{{ t('v7explore.robustnessDetailsWillAppear') }}</div>
+            <div id="detail-robustness-panel" class="detail-list mt-2 flex flex-col gap-2">
+              <EmptyState v-if="!detail" class="placeholder-panel min-h-[80px]" size="inline" :title="t('v7explore.robustnessDetailsWillAppear')" />
               <div v-else class="stats-table grid gap-2">
                 <div class="stats-row grid grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-lg border border-border-default bg-white/2 px-2.5 py-2">
                   <span class="stats-key text-secondary">{{ t('v7explore.robustnessScore') }}</span>
@@ -94,17 +95,17 @@ const vm = computed(() => detailViewModel(detail.value, (key, params) => t(key, 
         <details class="expander-card group">
           <summary class="cursor-pointer font-bold group-open:mb-3">{{ t('v7explore.fullConfiguration') }}</summary>
           <!-- M-v7-7: the preset generator section (:1559-1623) lands here -->
-          <div id="detail-full-config-panel" style="margin-top: 12px">
+          <div id="detail-full-config-panel" class="mt-3">
             <JsonViewer v-if="detail && detail.full_config" id="detail-full-config" :data="detail.full_config" />
-            <pre v-else id="detail-full-config" class="json-pre whitespace-pre-wrap break-words font-mono text-xs text-success" data-collapsed-height="400px">{{ vm.fullConfigText }}</pre>
+            <pre v-else id="detail-full-config" class="json-pre whitespace-pre-wrap break-words font-mono text-xs text-secondary" data-collapsed-height="400px">{{ vm.fullConfigText }}</pre>
           </div>
         </details>
       </section>
       <section class="detail-block half panel-card col-span-6 rounded-xl border border-border-default bg-panel p-3.5 max-[1100px]:col-span-12">
         <details class="expander-card group">
           <summary class="cursor-pointer font-bold group-open:mb-3">{{ t('v7explore.allMetricsStatistics') }}</summary>
-          <div id="detail-all-metrics" class="detail-list flex flex-col gap-2" style="margin-top: 12px">
-            <div v-if="!vm.hasAllMetrics" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" style="min-height: 120px">{{ t('v7explore.allMetricsWillBeListed') }}</div>
+          <div id="detail-all-metrics" class="detail-list mt-3 flex flex-col gap-2">
+            <EmptyState v-if="!vm.hasAllMetrics" class="placeholder-panel min-h-[120px]" size="inline" :title="t('v7explore.allMetricsWillBeListed')" />
             <div v-for="metric in vm.allMetrics" :key="metric.name" class="detail-item rounded-xl border border-border-default bg-white/2 p-2.5">
               <div class="detail-head mb-1 flex items-center justify-between gap-3"><strong :data-tip="metricTooltip(metric.name) || undefined">{{ metric.name }}</strong><span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-label text-secondary">{{ metric.value }}</span></div>
             </div>

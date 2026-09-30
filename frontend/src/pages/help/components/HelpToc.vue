@@ -36,7 +36,7 @@ const { t } = useI18n();
    tests assert. */
 function tocItemClass(isActive: boolean): string {
   return [
-    'toc-item block cursor-pointer truncate border-l-[3px] py-[0.42rem] px-[0.9rem] text-sm transition-all duration-100',
+    'toc-item block cursor-pointer truncate border-l-[3px] py-[0.42rem] px-[0.9rem] text-sm transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard',
     isActive
       ? 'active border-l-accent-soft bg-accent/7 font-semibold text-accent-soft'
       : 'border-l-transparent text-secondary hover:bg-elevated hover:text-primary',

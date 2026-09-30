@@ -38,7 +38,7 @@ function onChangeSource(): void {
 <template>
   <section
     id="shared-analysis-controls"
-    class="pbgui-card border border-accent/16 rounded-[11px] bg-panel bg-[linear-gradient(90deg,rgb(var(--bg-panel-rgb)/0.76),rgb(var(--bg-page-rgb)/0.72))] py-3.25 px-3.5 shadow-[var(--shadow-panel)]"
+    class="pbgui-card border border-accent/16 rounded-xl bg-panel bg-[linear-gradient(90deg,rgb(var(--bg-panel-rgb)/0.76),rgb(var(--bg-page-rgb)/0.72))] py-3.25 px-3.5 shadow-[var(--shadow-panel)]"
   >
     <div class="grid items-end gap-2.25 grid-cols-[minmax(170px,1.2fr)_minmax(120px,0.8fr)_minmax(120px,0.8fr)_minmax(130px,0.8fr)_minmax(105px,0.6fr)_minmax(120px,0.7fr)_minmax(100px,0.6fr)_minmax(150px,0.9fr)] max-[1250px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[1180px]:grid-cols-[repeat(4,minmax(0,1fr))] max-[640px]:grid-cols-[repeat(2,minmax(0,1fr))]">
       <div class="flex flex-col gap-0.75">
@@ -80,7 +80,7 @@ function onChangeSource(): void {
         <div class="relative">
           <Input id="start-date-input" class="pr-7" v-model="store.controls.startDate" type="text" placeholder="YYYY-MM-DD" :data-tip="t('v7explore.startDateTip')" />
           <!-- ui-migration: blocked — legacy window.__dp datepicker bridge (lib/datePicker.ts); the trigger stays raw -->
-          <button type="button" class="absolute right-0.5 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-0.75 py-0 text-sm leading-none text-primary" data-dp="start-date-input" :title="t('v7explore.openCalendar')" :aria-label="t('v7explore.openCalendar')" @click="openDatePicker('start-date-input', $event.currentTarget as HTMLElement)"><PbIcon :icon="PhCalendar" :size="14" /></button>
+          <button type="button" class="absolute right-0.5 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-0.75 py-0 text-sm leading-none text-secondary transition-colors duration-[var(--motion-fast)] ease-standard hover:text-primary" data-dp="start-date-input" :title="t('v7explore.openCalendar')" :aria-label="t('v7explore.openCalendar')" @click="openDatePicker('start-date-input', $event.currentTarget as HTMLElement)"><PbIcon :icon="PhCalendar" :size="14" /></button>
         </div>
       </div>
       <div class="flex flex-col gap-0.75">

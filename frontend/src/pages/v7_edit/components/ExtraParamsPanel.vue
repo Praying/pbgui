@@ -25,7 +25,7 @@ const page = useEditPageContext();
         v-for="field in page.extraLive.value"
         :key="field.key"
         class="form-group"
-        :style="field.kind === 'json' ? 'grid-column: span 3' : undefined"
+        :class="{ 'col-span-3': field.kind === 'json' }"
       >
         <label>{{ field.key }}</label>
         <div v-if="field.kind === 'boolean'" class="chk-row">

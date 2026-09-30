@@ -187,7 +187,7 @@ function onQueueRowKeydown(event: KeyboardEvent, queueFilename: string): void {
                   </div>
                   <div v-if="isRunning(row) || Boolean(row.progress && progressLabel(row))" class="mt-0.5 max-w-[240px]">
                     <div class="h-1.5 w-full overflow-hidden rounded-full bg-border-default">
-                      <div class="h-full bg-accent rounded-full transition-all duration-300" :style="{ width: `${progressWidth(row)}%` }"></div>
+                      <div class="h-full w-full origin-left rounded-full bg-accent transition-transform duration-[var(--motion-slow)] ease-standard" :style="{ transform: `scaleX(${progressWidth(row) / 100})` }"></div>
                     </div>
                     <div class="mt-1 text-xs tabular-nums text-muted flex items-center justify-between gap-1" data-test="queue-progress">
                       <span>{{ progressLabel(row) }}</span>

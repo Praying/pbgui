@@ -57,7 +57,7 @@ function statusBadgeClass(status: string): string {
 </script>
 
 <template>
-  <div class="hlda-jc mb-2 rounded-md border border-elevated bg-workspace px-3 py-2.5">
+  <div class="hlda-jc mb-2 rounded-md border border-subtle bg-workspace px-3 py-2.5">
     <div class="hlda-jh flex flex-wrap items-center justify-between gap-1.5">
       <div class="hlda-ji flex flex-wrap items-center gap-2">
         <span class="jid break-all text-xs font-semibold text-primary">{{ job.id }}</span>

@@ -63,29 +63,29 @@ function rowClass(kind: DiffRow['kind']): string {
 </script>
 
 <template>
-  <div id="diffModal" class="diff-modal fixed inset-0 z-[calc(var(--z-modal)-1)] flex flex-col overflow-hidden bg-page" v-show="data">
+  <div id="diffModal" class="diff-modal fixed inset-0 z-[var(--z-modal)] flex flex-col overflow-hidden bg-page" v-show="data">
     <div class="diff-modal-header flex shrink-0 items-center justify-between border-b border-border-subtle bg-panel px-4 py-2.5">
-      <div style="display:flex; align-items:center; gap:12px;">
+      <div class="flex items-center gap-3">
         <Button type="button" variant="secondary" size="sm" @click="emit('close')">&#8592; {{ t('misc.apikeys.back') }}</Button>
-        <span id="diffTitle" style="font-size:var(--text-sm); color:var(--text-secondary); font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw;">
+        <span id="diffTitle" class="max-w-[60vw] truncate font-mono text-sm text-secondary">
           {{ data ? backupLabel(data.filename1) + '  →  ' + backupLabel(data.filename2) : '' }}
         </span>
       </div>
-      <div style="display:flex; gap:6px;">
+      <div class="flex gap-1.5">
         <Button type="button" :variant="mode === 'unified' ? 'info' : 'secondary'" size="sm" id="btnDiffUnified" @click="mode = 'unified'">{{ t('misc.apikeys.unified') }}</Button>
         <Button type="button" :variant="mode === 'side' ? 'info' : 'secondary'" size="sm" id="btnDiffSide" @click="mode = 'side'">{{ t('misc.apikeys.sideBySide') }}</Button>
       </div>
     </div>
     <div class="diff-legend flex shrink-0 gap-3 border-b border-border-subtle bg-card px-3.5 py-1.25 text-xs">
-      <span style="color:var(--success-soft);">&#9608; {{ t('misc.apikeys.added') }}</span>
-      <span style="color:var(--danger-soft);">&#9608; {{ t('misc.apikeys.removed') }}</span>
-      <span style="color:var(--text-secondary);">&#9608; {{ t('misc.apikeys.unchanged') }}</span>
+      <span class="text-success-soft">&#9608; {{ t('misc.apikeys.added') }}</span>
+      <span class="text-danger-soft">&#9608; {{ t('misc.apikeys.removed') }}</span>
+      <span class="text-secondary">&#9608; {{ t('misc.apikeys.unchanged') }}</span>
     </div>
-    <div id="diffContent" style="flex:1; overflow:auto;">
-      <div v-if="identical" style="text-align:center;padding:40px 20px;color:var(--success);font-size:var(--text-md);">
-        <span style="font-size:var(--text-xl);">&#10003;</span><br />
+    <div id="diffContent" class="flex-1 overflow-auto">
+      <div v-if="identical" class="px-5 py-10 text-center text-md text-success">
+        <span class="text-xl">&#10003;</span><br />
         <strong>{{ t('misc.apikeys.filesIdentical') }}</strong><br />
-        <span style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:6px;display:block;">
+        <span class="mt-1.5 block text-sm text-secondary">
           {{ data ? t('misc.apikeys.identicalContent', { lines: data.lines1.length }) : '' }}
         </span>
       </div>

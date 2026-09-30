@@ -180,7 +180,7 @@ onBeforeUnmount(() => {
       />
     </template>
 
-    <div id="page-body" class="relative flex h-[calc(100dvh_-_var(--nav-height))] min-h-0 overflow-hidden select-none bg-[linear-gradient(135deg,rgb(var(--bg-page-rgb)/0.98),rgb(var(--bg-panel-rgb)/0.96))]">
+    <div id="page-body" class="relative flex min-h-0 overflow-hidden select-none bg-[linear-gradient(135deg,rgb(var(--bg-page-rgb)/0.98),rgb(var(--bg-panel-rgb)/0.96))]">
     <div class="workbench-page-content pbgui-ambient min-w-0 min-h-0 flex-1 overflow-y-auto select-text bg-page p-[var(--page-padding)]">
       <div id="banner" class="banner mb-3 rounded-lg py-3 px-3.5 text-base leading-[1.5]" :class="bannerClass(store.banner.value.message, store.banner.value.kind)">
         {{ store.banner.value.message }}
@@ -188,10 +188,10 @@ onBeforeUnmount(() => {
 
       <!-- Overview -->
       <section id="section-overview" class="page-section grid w-[min(100%,1440px)] gap-4.5 mx-auto mb-5 scroll-mt-4" data-section="overview" :hidden="store.activeSection.value !== 'overview'">
-        <div class="panel pbgui-panel overview-panel relative grid gap-4.5 overflow-hidden rounded-xl border border-border-subtle bg-[radial-gradient(circle_at_right_top,rgb(var(--accent-rgb)/0.1),transparent_34%),linear-gradient(180deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-[0_4px_14px_rgba(0,0,0,0.12)] p-5 max-[640px]:p-4">
+        <div class="panel pbgui-panel overview-panel relative grid gap-4.5 overflow-hidden rounded-xl border border-border-subtle bg-[radial-gradient(circle_at_right_top,rgb(var(--accent-rgb)/0.1),transparent_34%),linear-gradient(180deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-panel p-5 max-[640px]:p-4">
           <div class="overview-header flex items-start justify-between gap-5 pb-5 border-b border-b-secondary/14 max-[980px]:flex-col">
             <div class="overview-heading min-w-0">
-              <h1 class="overview-title m-0 max-w-none text-[clamp(28px,3vw,36px)] leading-[1.15] tracking-display">{{ t('misc.welcome.systemOverview') }}</h1>
+              <h1 class="overview-title m-0 max-w-none text-3xl leading-[1.15] tracking-display">{{ t('misc.welcome.systemOverview') }}</h1>
               <p class="overview-copy mt-2.5 max-w-[58ch] text-primary leading-[1.5]">{{ t('misc.welcome.overviewCopy') }}</p>
             </div>
             <div class="meta-strip flex min-w-0 flex-wrap justify-end gap-1.5 m-0 max-[980px]:justify-start max-[640px]:grid max-[640px]:w-full max-[640px]:grid-cols-1" :aria-label="t('misc.welcome.runtimeMetadata')">
@@ -201,12 +201,12 @@ onBeforeUnmount(() => {
             </div>
           </div>
           <div class="summary-grid grid grid-cols-4 gap-3 max-[1400px]:grid-cols-2 max-[640px]:grid-cols-1">
-            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.authTone}`" :data-tone="store.summaryView.value.authTone">
+            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[var(--motion-normal)] ease-standard" :class="`summary-card--${store.summaryView.value.authTone}`" :data-tone="store.summaryView.value.authTone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-label">{{ t('misc.welcome.session') }}</span>
               <strong id="summary-auth" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.auth }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-auth-copy">{{ store.summaryView.value.authCopy }}</p>
             </div>
-            <div class="summary-card summary-card--actionable relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease] flex flex-col items-start" :class="`summary-card--${store.summaryView.value.pb7Tone}`" :data-tone="store.summaryView.value.pb7Tone">
+            <div class="summary-card summary-card--actionable relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[var(--motion-normal)] ease-standard flex flex-col items-start" :class="`summary-card--${store.summaryView.value.pb7Tone}`" :data-tone="store.summaryView.value.pb7Tone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-label">PB7</span>
               <strong id="summary-pb7" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.pb7 }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-pb7-copy">{{ store.summaryView.value.pb7Copy }}</p>
@@ -219,12 +219,12 @@ onBeforeUnmount(() => {
                 @click="store.focusSection('setup')"
               >{{ t('misc.welcome.configurePb7') }}</Button>
             </div>
-            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.pb8Tone}`" :data-tone="store.summaryView.value.pb8Tone">
+            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[var(--motion-normal)] ease-standard" :class="`summary-card--${store.summaryView.value.pb8Tone}`" :data-tone="store.summaryView.value.pb8Tone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-label">PB8</span>
               <strong id="summary-pb8" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.pb8 }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-pb8-copy">{{ store.summaryView.value.pb8Copy }}</p>
             </div>
-            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.identityTone}`" :data-tone="store.summaryView.value.identityTone">
+            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[var(--motion-normal)] ease-standard" :class="`summary-card--${store.summaryView.value.identityTone}`" :data-tone="store.summaryView.value.identityTone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-label">{{ t('misc.welcome.identity') }}</span>
               <strong id="summary-identity" :title="store.summaryView.value.identity" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.identity }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-role">{{ store.summaryView.value.roleText }}</p>
@@ -241,7 +241,7 @@ onBeforeUnmount(() => {
             <section v-for="group in statusGroups" :key="group.key" class="status-group grid gap-2" :data-group="group.key">
               <h3 class="status-group-title m-0 text-muted text-xs font-bold uppercase tracking-label">{{ group.label }}</h3>
               <div class="status-group-rows grid gap-2">
-                <div v-for="row in group.rows" :key="row.label" class="status-row grid grid-cols-[130px_110px_minmax(0,1fr)] gap-2.5 items-center rounded-[10px] border border-secondary/12 bg-page/35 px-3.75 py-3.25 transition-[background,border-color] duration-[0.18s] ease-[ease] hover:border-accent/20 hover:bg-panel/48 max-[980px]:grid-cols-[minmax(120px,0.45fr)_minmax(0,1fr)] max-[640px]:grid-cols-1">
+                <div v-for="row in group.rows" :key="row.label" class="status-row grid grid-cols-[130px_110px_minmax(0,1fr)] gap-2.5 items-center rounded-[10px] border border-secondary/12 bg-page/35 px-3.75 py-3.25 transition-[background,border-color] duration-[var(--motion-normal)] ease-standard hover:border-accent/20 hover:bg-panel/48 max-[980px]:grid-cols-[minmax(120px,0.45fr)_minmax(0,1fr)] max-[640px]:grid-cols-1">
                   <div class="status-label text-primary font-bold">{{ row.label }}</div>
                   <div class="status-value status-badge w-fit min-w-[72px] px-2 py-1 rounded-full text-center text-sm font-bold uppercase tracking-label" :class="[`status-badge--${row.tone}`, statusBadgeToneClass(row.tone)]" :data-tone="row.tone">{{ row.state }}</div>
                   <div class="status-detail text-secondary min-w-0 [overflow-wrap:anywhere] max-[980px]:col-span-full max-[640px]:col-auto">{{ row.detail }}</div>
@@ -279,7 +279,7 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="runtime-groups grid grid-cols-2 gap-4 mt-5.5 max-[980px]:grid-cols-1">
-            <section class="runtime-group runtime-group--pb7 relative min-w-0 overflow-hidden rounded-lg border border-secondary/13 bg-page/44 p-4.5 max-[640px]:p-4 shadow-[0_10px_24px_rgba(0,0,0,0.12)]" aria-labelledby="pb7-group-title">
+            <section class="runtime-group runtime-group--pb7 relative min-w-0 overflow-hidden rounded-lg border border-secondary/13 bg-page/44 p-4.5 max-[640px]:p-4 shadow-panel" aria-labelledby="pb7-group-title">
               <div class="group-heading flex items-center gap-2.5 mb-4.5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-1.75">
                 <h3 id="pb7-group-title" class="group-title m-0 text-primary text-md leading-[1.3] tracking-tight">PB7</h3>
                 <span class="group-caption px-1.75 py-0.75 rounded-full border border-secondary/12 bg-secondary/6 text-muted text-xs">{{ t('misc.welcome.passivbotV7') }}</span>
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
               </div>
             </section>
 
-            <section class="runtime-group runtime-group--pb8 relative min-w-0 overflow-hidden rounded-lg border border-secondary/13 bg-page/44 p-4.5 max-[640px]:p-4 shadow-[0_10px_24px_rgba(0,0,0,0.12)]" aria-labelledby="pb8-group-title">
+            <section class="runtime-group runtime-group--pb8 relative min-w-0 overflow-hidden rounded-lg border border-secondary/13 bg-page/44 p-4.5 max-[640px]:p-4 shadow-panel" aria-labelledby="pb8-group-title">
               <div class="group-heading flex items-center gap-2.5 mb-4.5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-1.75">
                 <h3 id="pb8-group-title" class="group-title m-0 text-primary text-md leading-[1.3] tracking-tight">PB8</h3>
                 <span class="group-caption px-1.75 py-0.75 rounded-full border border-secondary/12 bg-secondary/6 text-muted text-xs">{{ t('misc.welcome.passivbotV8Optional') }}</span>

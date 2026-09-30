@@ -34,7 +34,7 @@ function onDragEnd(): void {
       <div
         v-for="type in PALETTE_TYPES"
         :key="type"
-        class="palette-item flex cursor-grab select-none items-center gap-[0.3rem] rounded-md border border-secondary bg-border-default px-[0.6rem] py-[0.3rem] text-sm whitespace-nowrap text-primary [transition:border-color_.15s,background_.15s,transform_.1s,box-shadow_.15s] hover:border-accent-soft hover:bg-elevated hover:-translate-y-px hover:shadow-[0_2px_8px_rgb(var(--accent-rgb)/0.15)] active:cursor-grabbing"
+        class="palette-item flex cursor-grab select-none items-center gap-[0.3rem] rounded-md border border-secondary bg-border-default px-[0.6rem] py-[0.3rem] text-sm whitespace-nowrap text-primary [transition:border-color_var(--motion-fast)_var(--ease-standard),background-color_var(--motion-fast)_var(--ease-standard),transform_var(--motion-fast)_var(--ease-standard),box-shadow_var(--motion-fast)_var(--ease-standard)] hover:border-accent-soft hover:bg-elevated hover:-translate-y-px hover:shadow-[0_2px_8px_rgb(var(--accent-rgb)/0.15)] active:cursor-grabbing"
         :class="draggingType === type ? 'dragging opacity-40' : ''"
         draggable="true"
         :data-widget-type="type"

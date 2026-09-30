@@ -317,27 +317,27 @@ onUnmounted(() => {
           <div class="space-y-4 p-4">
             <div v-if="!preview && actionPending" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-busy="true" aria-live="polite">
               <span class="sr-only">{{ t('common.loading') }}</span>
-              <div class="h-[76px] rounded-lg border border-border-default bg-field p-3 sm:col-span-2" aria-hidden="true"><span class="pbgui-skeleton block h-3 w-16" /><span class="pbgui-skeleton mt-2.5 block h-5 w-44" /></div>
-              <div class="h-[76px] rounded-lg border border-border-default bg-field p-3" aria-hidden="true"><span class="pbgui-skeleton block h-3 w-16" /><span class="pbgui-skeleton mt-2.5 block h-5 w-28" /></div>
-              <div v-for="n in 3" :key="n" class="h-[76px] rounded-lg border border-border-default bg-field p-3" aria-hidden="true"><span class="pbgui-skeleton block h-3 w-20" /><span class="pbgui-skeleton mt-2.5 block h-5 w-32" /></div>
+              <div class="h-[76px] rounded-lg border border-border-default bg-card p-3 sm:col-span-2" aria-hidden="true"><span class="pbgui-skeleton block h-3 w-16" /><span class="pbgui-skeleton mt-2.5 block h-5 w-44" /></div>
+              <div class="h-[76px] rounded-lg border border-border-default bg-card p-3" aria-hidden="true"><span class="pbgui-skeleton block h-3 w-16" /><span class="pbgui-skeleton mt-2.5 block h-5 w-28" /></div>
+              <div v-for="n in 3" :key="n" class="h-[76px] rounded-lg border border-border-default bg-card p-3" aria-hidden="true"><span class="pbgui-skeleton block h-3 w-20" /><span class="pbgui-skeleton mt-2.5 block h-5 w-32" /></div>
             </div>
             <EmptyState v-else-if="!preview && !selectedUser" :title="t('transfers.selectAccount')" class="py-8!" />
             <template v-else>
               <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <article class="min-w-0 rounded-lg border border-border-default bg-field p-3 sm:col-span-2">
+                <article class="min-w-0 rounded-lg border border-border-default bg-card p-3 sm:col-span-2">
                   <p class="text-xs uppercase tracking-label text-muted">{{ t('transfers.route') }}</p>
                   <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-lg font-semibold text-primary"><span class="break-words">{{ formatValue(selectedRoute?.source) }}</span><PbIcon :icon="PhArrowRight" aria-hidden="true" class="shrink-0 text-accent" /><span class="break-words">{{ formatValue(selectedRoute?.destination) }}</span></p>
                 </article>
-                <article class="min-w-0 rounded-lg border border-border-default bg-field p-3 sm:col-span-2 lg:col-span-1">
+                <article class="min-w-0 rounded-lg border border-border-default bg-card p-3 sm:col-span-2 lg:col-span-1">
                   <p class="text-xs uppercase tracking-label text-muted">{{ t('transfers.available') }}</p>
                   <p class="mt-1 break-words text-xl font-semibold tabular-nums text-primary">{{ selectedRoute ? selectedRoute.max_transferable : '-' }} <span class="text-xs font-normal text-secondary">{{ selectedRoute?.asset || 'USDC' }}</span></p>
                 </article>
-                <article v-for="item in [{ label: t('transfers.minimum'), value: selectedRoute ? `${selectedRoute.minimum_amount} ${selectedRoute.asset || 'USDC'}` : '-' }, { label: t('transfers.sourceBalance'), value: selectedRoute ? `${selectedRoute.source_balance} ${selectedRoute.asset || 'USDC'}` : '-' }, { label: t('transfers.destinationBalance'), value: selectedRoute?.destination_balance ? `${selectedRoute.destination_balance} ${selectedRoute.asset || 'USDC'}` : '-' }]" :key="item.label" class="min-w-0 rounded-lg border border-border-default bg-field p-3"><p class="text-xs uppercase tracking-label text-muted">{{ item.label }}</p><p class="mt-1 break-words text-base font-semibold tabular-nums text-primary">{{ formatValue(item.value) }}</p></article>
+                <article v-for="item in [{ label: t('transfers.minimum'), value: selectedRoute ? `${selectedRoute.minimum_amount} ${selectedRoute.asset || 'USDC'}` : '-' }, { label: t('transfers.sourceBalance'), value: selectedRoute ? `${selectedRoute.source_balance} ${selectedRoute.asset || 'USDC'}` : '-' }, { label: t('transfers.destinationBalance'), value: selectedRoute?.destination_balance ? `${selectedRoute.destination_balance} ${selectedRoute.asset || 'USDC'}` : '-' }]" :key="item.label" class="min-w-0 rounded-lg border border-border-default bg-card p-3"><p class="text-xs uppercase tracking-label text-muted">{{ item.label }}</p><p class="mt-1 break-words text-base font-semibold tabular-nums text-primary">{{ formatValue(item.value) }}</p></article>
               </div>
               <section v-if="isVault" class="border-t border-border-default pt-4">
                 <h3 class="mb-3 text-sm font-semibold text-primary">{{ t('transfers.vaultSection') }}</h3>
                 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  <article v-for="item in [{ label: t('transfers.vaultEquity'), value: preview?.your_vault_equity }, { label: t('transfers.vaultAccountValue'), value: preview?.vault_account_value }, { label: t('transfers.maxWithdrawable'), value: preview?.user_max_withdrawable }]" :key="item.label" class="min-w-0 rounded-lg border border-border-default bg-field p-3"><p class="text-xs uppercase tracking-label text-muted">{{ item.label }}</p><p class="mt-1 break-words text-base font-semibold tabular-nums text-primary">{{ formatValue(item.value) }}</p></article>
+                  <article v-for="item in [{ label: t('transfers.vaultEquity'), value: preview?.your_vault_equity }, { label: t('transfers.vaultAccountValue'), value: preview?.vault_account_value }, { label: t('transfers.maxWithdrawable'), value: preview?.user_max_withdrawable }]" :key="item.label" class="min-w-0 rounded-lg border border-border-default bg-card p-3"><p class="text-xs uppercase tracking-label text-muted">{{ item.label }}</p><p class="mt-1 break-words text-base font-semibold tabular-nums text-primary">{{ formatValue(item.value) }}</p></article>
                 </div>
               </section>
             </template>

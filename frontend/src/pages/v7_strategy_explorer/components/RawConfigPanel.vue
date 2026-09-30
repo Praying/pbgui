@@ -282,7 +282,7 @@ onBeforeUnmount(() => {
 
         <!-- Real-time status indicator tag -->
         <div
-          class="raw-config-status-tag inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs transition-colors duration-150"
+          class="raw-config-status-tag inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs transition-colors duration-[var(--motion-fast)]"
           :class="statusTone === 'danger'
             ? 'border-danger/40 bg-danger/10 text-danger-soft'
             : statusTone === 'recalc'

@@ -113,7 +113,7 @@ function coinRowClass(selected: boolean): string {
       <span class="hlda-picker-meta whitespace-nowrap text-xs text-muted">{{ t('market.visibleCount', { visible: visibleCount }) }}</span>
     </div>
     <div
-      class="hlda-coin-grid content-start mt-3 grid grid-cols-8 gap-1 border-t border-elevated pt-3 max-[1500px]:grid-cols-6 max-[1180px]:grid-cols-4 max-[760px]:grid-cols-2"
+      class="hlda-coin-grid content-start mt-3 grid grid-cols-8 gap-1 border-t border-subtle pt-3 max-[1500px]:grid-cols-6 max-[1180px]:grid-cols-4 max-[760px]:grid-cols-2"
       :id="'opts-' + ns"
       @keydown="onGridKeydown"
     >

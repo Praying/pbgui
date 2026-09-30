@@ -89,6 +89,31 @@
     transform: translateY(0);
   }
 
+  /* ── Full-bleed data / operations shells ───────────────────────
+     Data-dense pages (market_data, coin_data, db_tools, api_keys_editor,
+     balance_calc, ai_chat, profit_sweep) and operations monitors
+     (cluster_sync, logging_monitor, vps_monitor, vps_manager) drop the
+     workspace's centred max-width + padding so their own panels and
+     toolbars own the rhythm. Previously copy-pasted per page as scoped
+     :deep() overrides — one home here. */
+  .data-page-shell .app-shell__main,
+  .operations-shell .app-shell__main {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    min-height: 0;
+    padding: 0;
+  }
+
+  .data-page-shell .app-shell__primary,
+  .operations-shell .app-shell__primary {
+    min-height: 0;
+  }
+
+  .operations-shell .app-shell__main {
+    flex: 1;
+  }
+
   /* ── Core workbench shell (fixed-height pages) ───────────────── */
 
   /*
@@ -1323,6 +1348,26 @@
     min-width: 0;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
+  }
+
+  /* ── data-tip tooltip affordance ─────────────────────────────
+     Canonical dotted-underline hint for every [data-tip] element (field
+     labels, metric names, CoinOverridesPanel spans). Previously copied
+     verbatim into v7_edit, v7_pareto_explorer, v7_strategy_explorer and
+     market_data — one home here. The floating #data-tip-tooltip layer
+     stays page-owned. */
+  [data-tip] {
+    cursor: help;
+    border-bottom: none;
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: var(--text-muted);
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+  }
+
+  button[data-tip] {
+    text-decoration: none;
   }
 
   /* ── Buttons ────────────────────────────────────────────────── */

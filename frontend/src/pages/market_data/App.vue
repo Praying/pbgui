@@ -601,20 +601,6 @@ body {
   flex-direction: column;
 }
 
-/* ── data-tip tooltip affordance (panels-status.css) ───────────
-   Attribute selector spanning every component that emits data-tip
-   (SshForm field labels; the shared CoinOverridesPanel renders
-   [data-tip] spans too), and the shared DataTipTooltip.vue root
-   carries no classes — same pattern as v7_backtest/v7_edit. */
-[data-tip] {
-  cursor: help;
-  text-decoration-line: underline;
-  text-decoration-style: dotted;
-  text-decoration-color: var(--text-muted);
-  text-underline-offset: 2px;
-  text-decoration-thickness: 1px;
-}
-
 #data-tip-tooltip {
   display: none;
   position: fixed;
@@ -622,7 +608,7 @@ body {
   background: var(--bg-card);
   color: var(--text-primary);
   border: 1px solid var(--border-strong);
-  border-radius: 5px;
+  border-radius: var(--radius-md);
   font-size: var(--text-xs);
   font-weight: 400;
   padding: 6px 10px;
@@ -645,14 +631,4 @@ input::placeholder {
 /* Page-level AppShell overrides — ported from panels-shell.css at the
    Tailwind migration. The :deep() rules target AppShell internals, so
    they stay as CSS instead of utilities (coin_data pattern). */
-.data-page-shell--market-data :deep(.app-shell__main) {
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  padding: 0;
-}
-
-.data-page-shell--market-data :deep(.app-shell__primary) {
-  min-height: 0;
-}
 </style>

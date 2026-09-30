@@ -110,7 +110,7 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
             </SelectContent>
           </SelectRoot>
           <Input id="legacy-results-filter" v-model="store.textFilter.value" type="text" class="w-auto max-w-[200px]" :placeholder="t('v7backtest.searchName')" />
-          <span style="flex: 1"></span>
+          <span class="flex-1"></span>
           <Button type="button" variant="default" class="act-btn h-auto" data-test="legacy-select-all" :title="t('v7backtest.selectAllVisible')" @click="store.selectAll(store.visible.value.map((row) => row.path))">
             {{ t('v7backtest.selectAll') }}
           </Button>
@@ -119,11 +119,10 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
             id="legacy-results-pin-btn"
             type="button"
             variant="default"
-            class="act-btn h-auto"
+            class="act-btn h-auto px-1.5 text-base"
             :class="pinned ? '' : 'unpinned opacity-40'"
             :title="t('v7backtest.pinTable')"
             :aria-label="t('v7backtest.pinTable')"
-            style="font-size: var(--text-base); padding: 0 6px"
             @click="pinned = !pinned"
           >
             <PbIcon :icon="PhPushPin" :size="18" />

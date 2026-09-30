@@ -15,21 +15,26 @@ import type { ToastItem } from '../types';
 defineProps<{ toasts: ToastItem[] }>();
 defineEmits<{ (e: 'dismiss', id: number): void }>();
 
+/* Level → shared tonal toast classes (components.css `.toast-*`): elevated
+   surface + status-coloured rail. The solid bright fills are retired — the
+   near-white text on them failed contrast badly. The contract ships no
+   warning tone, so warn/warning recolour the rail via a utility. */
 const TOAST_TONE: Record<string, string> = {
-  success: 'bg-success/96 border-success-soft/28 text-primary',
-  error: 'bg-danger/96 border-danger-soft/28 text-primary',
-  info: 'bg-accent/96 border-accent-soft/28 text-primary',
-  warn: 'bg-warning/96 border-warning-soft/28 text-card',
-  warning: 'bg-warning/96 border-warning-soft/28 text-card',
+  success: 'toast-success',
+  error: 'toast-error',
+  info: 'toast-info',
+  warn: '[border-left-color:var(--warning)]',
+  warning: '[border-left-color:var(--warning)]',
 };
 
-/** The former .toast + .toast.{level} + .toast.is-leaving rules. */
+/** The former .toast + .toast.{level} + .toast.is-leaving rules. 'toast' and
+    the level stay as inert anchors — the suite selects `.toast.success`. */
 function toastClass(toast: ToastItem): string {
   const tone = TOAST_TONE[toast.level] ?? TOAST_TONE.info;
   const animation = toast.leaving
     ? 'is-leaving animate-[toast-slide-out_0.22s_ease_forwards]'
     : 'animate-[toast-slide-in_0.22s_ease]';
-  return `toast ${toast.level} pointer-events-auto rounded-[10px] border px-3 py-2 text-base leading-[1.45] break-words shadow-[0_18px_40px_rgba(5,8,14,0.28)] cursor-pointer select-none ${tone} ${animation}`;
+  return `toast ${toast.level} cursor-pointer break-words select-none ${tone} ${animation}`;
 }
 </script>
 
@@ -42,7 +47,11 @@ function toastClass(toast: ToastItem): string {
       v-for="toast in toasts"
       :key="toast.id"
       :class="toastClass(toast)"
+      role="status"
+      tabindex="0"
       @click="$emit('dismiss', toast.id)"
+      @keydown.enter="$emit('dismiss', toast.id)"
+      @keydown.space.prevent="$emit('dismiss', toast.id)"
     >{{ toast.message }}</div>
   </div>
 </template>

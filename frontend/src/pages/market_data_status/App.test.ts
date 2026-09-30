@@ -114,14 +114,14 @@ describe('App shell (legacy mds-root)', () => {
     expect(app.find('.app-shell').exists()).toBe(false);
     expect(app.find('.mds-root').exists()).toBe(true);
     expect(app.find('.migration-watermark').exists()).toBe(false);
-    expect(app.find('.mds-empty-state').text()).toContain('Waiting for market data status...');
+    expect(app.find('.pbgui-empty-state').text()).toContain('Waiting for market data status...');
   });
 
 
   it('replaces content with the warning when the exchange is missing', () => {
     const app = mountApp({ exchange: '' });
 
-    expect(app.find('.mds-empty-state').text()).toContain('Missing token or exchange parameter');
+    expect(app.find('.pbgui-empty-state').text()).toContain('Missing token or exchange parameter');
     expect(FakeWebSocket.instances).toHaveLength(0);
   });
 
@@ -182,7 +182,7 @@ describe('status-driven UI (legacy updateUI)', () => {
     FakeWebSocket.instances[0]!.message(statusMessage());
     await nextTick();
 
-    expect(app.find('.mds-empty-state').text()).toContain('No coin status available yet');
+    expect(app.find('.pbgui-empty-state').text()).toContain('No coin status available yet');
   });
 
   it('ignores error-bearing and foreign messages', async () => {
@@ -192,14 +192,14 @@ describe('status-driven UI (legacy updateUI)', () => {
     FakeWebSocket.instances[0]!.message(JSON.stringify({ type: 'other', queued: true }));
     await nextTick();
 
-    expect(app.find('.mds-empty-state').text()).toContain('Waiting for market data status...');
+    expect(app.find('.pbgui-empty-state').text()).toContain('Waiting for market data status...');
   });
 
   it('localizes the shell in zh', () => {
     const app = mountApp({ lang: 'zh' });
 
     expect(app.find('.mds-btn').text()).toContain('立即刷新');
-    expect(app.find('.mds-empty-state').text()).toContain('正在等待行情数据状态...');
+    expect(app.find('.pbgui-empty-state').text()).toContain('正在等待行情数据状态...');
   });
 });
 
@@ -351,7 +351,7 @@ describe('toasts (legacy showToast)', () => {
 
       vi.advanceTimersByTime(4000);
       await nextTick();
-      expect((app.find('.mds-toast').element as HTMLElement).style.animation).toBe('mds-slideOut 0.3s ease');
+      expect((app.find('.mds-toast').element as HTMLElement).style.animation).toContain('mds-slideOut');
 
       vi.advanceTimersByTime(300);
       await nextTick();
@@ -376,7 +376,7 @@ describe('toasts (legacy showToast)', () => {
     expect(app.find('.mds-toast').exists()).toBe(false);
   });
 
-  it('colors success and error toasts with the legacy accents', async () => {
+  it('tones success and error toasts with the shared rail classes', async () => {
     actionsResolve({ success: true });
     const app = mountApp();
     FakeWebSocket.instances[0]!.message(statusMessage());
@@ -384,14 +384,14 @@ describe('toasts (legacy showToast)', () => {
     await app.find('.mds-btn').trigger('click');
     await flushPromises();
 
-    expect((app.find('.mds-toast').element as HTMLElement).style.background).toBe('var(--mds-accent-success)');
+    expect(app.find('.mds-toast').classes()).toContain('toast-success');
 
     actionsResolve({ success: false, error: 'x' });
     await app.findAll('.mds-btn')[0]!.trigger('click');
     await flushPromises();
 
     expect(app.findAll('.mds-toast')).toHaveLength(2);
-    expect((app.findAll('.mds-toast')[1]!.element as HTMLElement).style.background).toBe('var(--mds-accent-danger)');
+    expect(app.findAll('.mds-toast')[1]!.classes()).toContain('toast-error');
   });
 });
 

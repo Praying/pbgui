@@ -667,19 +667,6 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.operations-shell--cluster :deep(.app-shell__main) {
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  flex: 1;
-  padding: 0;
-}
-
-.operations-shell--cluster :deep(.app-shell__primary) {
-  display: flex;
-  min-height: 0;
-  flex-direction: column;
-}
 
 .cluster-nodes-workbench {
   color: var(--text-primary);

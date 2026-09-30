@@ -1105,7 +1105,7 @@ function preflight(): void {
 </script>
 
 <template>
-  <div v-if="open && local" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop p-4 max-[600px]:p-0">
+  <div v-if="open && local" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop p-4 max-[600px]:p-0">
     <section class="opt-editor-modal flex w-[min(1240px,96vw)] h-[min(88vh,860px)] h-[min(88dvh,860px)] flex-col overflow-hidden rounded-xl border border-border-default bg-panel shadow-[var(--shadow-modal)] max-[600px]:h-full max-[600px]:max-h-full max-[600px]:rounded-none" role="dialog" aria-modal="true" aria-labelledby="opt-editor-title">
       <header class="opt-editor-header flex shrink-0 items-center justify-between gap-4 border-b border-border-default bg-surface-deep/40 px-5 py-2.5 max-[600px]:px-3.5">
         <div class="flex min-w-0 items-center gap-3">
@@ -1149,7 +1149,7 @@ function preflight(): void {
                   </div>
                   <div v-if="ohlcvJob" class="mt-1.5 grid gap-1" data-test="ohlcv-start-progress" role="status" aria-live="polite">
                     <div class="h-1.5 overflow-hidden rounded-full bg-white/10">
-                      <div class="h-full bg-accent transition-[width]" :style="{ width: `${Math.max(0, Math.min(100, Number(ohlcvJob.progress?.percent || 0)))}%` }"></div>
+                      <div class="h-full w-full origin-left bg-accent transition-transform duration-[var(--motion-fast)] ease-standard" :style="{ transform: `scaleX(${Math.max(0, Math.min(100, Number(ohlcvJob.progress?.percent || 0))) / 100})` }"></div>
                     </div>
                     <div class="flex items-center justify-between gap-2 text-xs text-secondary">
                       <span>{{ ohlcvJob.progress?.message || t('v7optimize.ohlcvStartDateWorking') }}</span>
@@ -1293,7 +1293,7 @@ function preflight(): void {
                   <label
                     v-for="exchange in availableExchanges"
                     :key="exchange"
-                    class="flex items-center gap-2 rounded-md px-3 py-1.5 text-compact cursor-pointer select-none transition-all border shadow-2xs"
+                    class="flex items-center gap-2 rounded-md px-3 py-1.5 text-compact cursor-pointer select-none transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard border"
                     :class="isExchangeSelected(exchange) ? 'bg-accent/15 border-accent/40 text-accent-soft font-semibold' : 'bg-surface-deep/60 border-border-default/60 text-secondary hover:text-primary hover:border-border-default'"
                   >
                     <Checkbox
@@ -1348,7 +1348,7 @@ function preflight(): void {
         </section>
 
         <section v-else-if="tab === 'bot-long'" class="opt-tab-panel flex min-h-0 flex-col gap-3">
-          <div class="rounded-xl border border-border-default/80 bg-card/60 p-4 shadow-sm">
+          <div class="rounded-xl border border-border-default/80 bg-card/60 p-4">
             <div class="mb-3 flex items-center justify-between border-b border-border-default/60 pb-2">
               <span class="text-compact font-semibold text-primary">{{ t('v7optimize.botCoreSettings') }}</span>
               <span class="rounded bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent-soft">Long Side</span>
@@ -1372,7 +1372,7 @@ function preflight(): void {
         </section>
 
         <section v-else-if="tab === 'bot-short'" class="opt-tab-panel flex min-h-0 flex-col gap-3">
-          <div class="rounded-xl border border-border-default/80 bg-card/60 p-4 shadow-sm">
+          <div class="rounded-xl border border-border-default/80 bg-card/60 p-4">
             <div class="mb-3 flex items-center justify-between border-b border-border-default/60 pb-2">
               <span class="text-compact font-semibold text-primary">{{ t('v7optimize.botCoreSettings') }}</span>
               <span class="rounded bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent-soft">Short Side</span>
@@ -1397,7 +1397,7 @@ function preflight(): void {
 
         <section v-else-if="tab === 'bounds'" class="opt-tab-panel flex flex-col gap-3">
           <!-- Toolbar: Search + Category Filters + Add Bound -->
-          <div class="flex flex-col gap-2.5 rounded-xl border border-border-default/80 bg-card/60 p-3 shadow-sm">
+          <div class="flex flex-col gap-2.5 rounded-xl border border-border-default/80 bg-card/60 p-3">
             <div class="flex flex-wrap items-center justify-between gap-2.5">
               <!-- Search Input -->
               <div class="relative min-w-[200px] flex-1">
@@ -1450,7 +1450,7 @@ function preflight(): void {
                 type="button"
                 data-test="bound-filter-all"
                 class="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-compact font-medium transition-colors cursor-pointer"
-                :class="boundCategoryFilter === 'all' ? 'border-accent/45 bg-accent/15 text-accent-soft font-semibold shadow-2xs' : 'border-border-default/40 bg-surface-deep/50 text-secondary hover:border-accent/40 hover:text-accent-soft hover:bg-surface-deep'"
+                :class="boundCategoryFilter === 'all' ? 'border-accent/45 bg-accent/15 text-accent-soft font-semibold' : 'border-border-default/40 bg-surface-deep/50 text-secondary hover:border-accent/40 hover:text-accent-soft hover:bg-surface-deep'"
                 @click="boundCategoryFilter = 'all'"
               >
                 <span>{{ t('v7optimize.filterAll') }}</span>
@@ -1461,7 +1461,7 @@ function preflight(): void {
                 type="button"
                 data-test="bound-filter-long"
                 class="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-compact font-medium transition-colors cursor-pointer"
-                :class="boundCategoryFilter === 'long' ? 'border-success/45 bg-success/15 text-success-soft font-semibold shadow-2xs' : 'border-border-default/40 bg-surface-deep/50 text-secondary hover:border-success/40 hover:text-success-soft hover:bg-surface-deep'"
+                :class="boundCategoryFilter === 'long' ? 'border-success/45 bg-success/15 text-success-soft font-semibold' : 'border-border-default/40 bg-surface-deep/50 text-secondary hover:border-success/40 hover:text-success-soft hover:bg-surface-deep'"
                 @click="boundCategoryFilter = 'long'"
               >
                 <span>{{ t('v7optimize.filterLong') }}</span>
@@ -1472,7 +1472,7 @@ function preflight(): void {
                 type="button"
                 data-test="bound-filter-short"
                 class="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-compact font-medium transition-colors cursor-pointer"
-                :class="boundCategoryFilter === 'short' ? 'border-danger/45 bg-danger/15 text-danger-soft font-semibold shadow-2xs' : 'border-border-default/40 bg-surface-deep/50 text-secondary hover:border-danger/40 hover:text-danger-soft hover:bg-surface-deep'"
+                :class="boundCategoryFilter === 'short' ? 'border-danger/45 bg-danger/15 text-danger-soft font-semibold' : 'border-border-default/40 bg-surface-deep/50 text-secondary hover:border-danger/40 hover:text-danger-soft hover:bg-surface-deep'"
                 @click="boundCategoryFilter = 'short'"
               >
                 <span>{{ t('v7optimize.filterShort') }}</span>
@@ -1483,7 +1483,7 @@ function preflight(): void {
                 type="button"
                 data-test="bound-filter-fixed"
                 class="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-compact font-medium transition-colors cursor-pointer"
-                :class="boundCategoryFilter === 'fixed' ? 'border-warning/45 bg-warning/15 text-warning-soft font-semibold shadow-2xs' : 'border-border-default/40 bg-surface-deep/50 text-secondary hover:border-warning/40 hover:text-warning-soft hover:bg-surface-deep'"
+                :class="boundCategoryFilter === 'fixed' ? 'border-warning/45 bg-warning/15 text-warning-soft font-semibold' : 'border-border-default/40 bg-surface-deep/50 text-secondary hover:border-warning/40 hover:text-warning-soft hover:bg-surface-deep'"
                 @click="boundCategoryFilter = 'fixed'"
               >
                 <span>{{ t('v7optimize.filterFixed') }}</span>
@@ -1497,7 +1497,7 @@ function preflight(): void {
           </div>
 
           <!-- Table Container -->
-          <div class="overflow-hidden rounded-xl border border-border-default/80 bg-card/40 shadow-sm">
+          <div class="overflow-hidden rounded-xl border border-border-default/80 bg-card/40">
             <!-- Sticky Table Header -->
             <div class="grid grid-cols-[minmax(180px,1.5fr)_minmax(140px,1fr)_minmax(80px,0.6fr)_80px_48px] items-center gap-3 border-b border-border-default bg-surface-deep/80 px-3.5 py-2 text-xs font-semibold text-secondary">
               <div :data-tip="t('v7optimize.tip.boundsParam')">{{ t('v7optimize.boundsTableHeaderParam') }}</div>
@@ -2011,7 +2011,7 @@ function preflight(): void {
   font-weight: 500;
   padding: 0 14px;
   white-space: nowrap;
-  transition: all var(--motion-fast) var(--ease-standard);
+  transition: color var(--motion-fast) var(--ease-standard), background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
 }
 
 .opt-editor-tabs button:hover {
@@ -2052,11 +2052,11 @@ function preflight(): void {
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 3000;
+  z-index: var(--z-tooltip);
   max-width: 480px;
   padding: 6px 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 5px;
+  border-radius: var(--radius-md);
   background: var(--bg-card);
   box-shadow: var(--shadow-elevated);
   color: var(--text-primary);

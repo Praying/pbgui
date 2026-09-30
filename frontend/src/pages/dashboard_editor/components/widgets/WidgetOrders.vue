@@ -367,7 +367,7 @@ const icon = WIDGET_META.ORDERS.icon;
         {{ dashT('dash.noCandleSymbol', 'No candle data for this symbol.') }}
       </div>
       <div v-else ref="chartWrapEl" :class="chartWrapClass(fs.isFullscreen.value)">
-        <div class="do-chart-toolbar absolute left-1 top-1 z-[20] hidden gap-0.5 rounded-[5px] border border-border-default bg-page/85 px-1 py-0.75 group-hover:flex">
+        <div class="do-chart-toolbar absolute left-1 top-1 z-[20] hidden gap-0.5 rounded-[5px] border border-border-default bg-page/85 px-1 py-0.75 group-hover:flex group-focus-within:flex">
           <Button
             type="button"
             variant="ghost"

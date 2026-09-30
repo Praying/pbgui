@@ -113,12 +113,12 @@ function onQuickReply(actionId: string, value: string): void {
 </script>
 
 <template>
-  <AppShell class="ai-chat-shell" page-key="info_ai_chat" :page-title="t('ai.chat.title')">
+  <AppShell class="data-page-shell ai-chat-shell" page-key="info_ai_chat" :page-title="t('ai.chat.title')">
     <template #status>
       <span class="text-xs text-secondary">{{ store.notice.value.message }}</span>
     </template>
 
-    <div class="pbgui-ambient grid h-[calc(100dvh-64px)] grid-cols-[minmax(260px,330px)_1fr] gap-4 bg-workspace p-[var(--page-padding)] font-sans max-[780px]:grid-cols-1 max-[780px]:grid-rows-[auto_1fr]">
+    <div class="pbgui-ambient grid h-[calc(100dvh-var(--header-height))] grid-cols-[minmax(260px,330px)_1fr] gap-4 bg-workspace p-[var(--page-padding)] font-sans max-[780px]:grid-cols-1 max-[780px]:grid-rows-[auto_1fr]">
       <!-- Left pane: providers + conversations -->
       <aside class="min-h-0 overflow-y-auto rounded-lg border border-border-subtle bg-sidebar p-4 shadow-panel max-[780px]:max-h-[min(220px,35dvh)]">
         <ProviderPanel
@@ -235,14 +235,4 @@ function onQuickReply(actionId: string, value: string): void {
 
 <style scoped>
 /* Full-height chat column inside AppShell's padded main region. */
-.ai-chat-shell :deep(.app-shell__main) {
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  padding: 0;
-}
-
-.ai-chat-shell :deep(.app-shell__primary) {
-  min-height: 0;
-}
 </style>

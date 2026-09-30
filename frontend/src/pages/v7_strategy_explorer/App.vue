@@ -304,7 +304,7 @@ onBeforeUnmount(() => {
       />
     </template>
 
-    <div id="data-tip-tooltip" class="pointer-events-none fixed left-0 top-0 z-[var(--z-help)] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[var(--shadow-elevated)] [will-change:transform]"></div>
+    <div id="data-tip-tooltip" class="pointer-events-none fixed left-0 top-0 z-[var(--z-tooltip)] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[var(--shadow-elevated)] [will-change:transform]"></div>
     <div id="page-body" class="flex min-h-0 flex-1 h-[calc(100dvh_-_var(--nav-height))]">
     <div
       class="workbench-page-content pbgui-ambient flex min-w-0 flex-1 flex-col gap-[var(--component-gap)] overflow-auto overscroll-contain [scrollbar-gutter:stable] p-[var(--page-padding)] bg-page"
@@ -377,15 +377,6 @@ body {
     var(--bg);
 }
 
-[data-tip] {
-  cursor: help;
-  text-decoration-line: underline;
-  text-decoration-style: dotted;
-  text-decoration-color: var(--text-muted);
-  text-underline-offset: 2px;
-  text-decoration-thickness: 1px;
-}
-
 /* ── Order/stat tables (.orders) ───────────────────────────────
    The shared chrome (header weight/tracking, separators, padding, hover
    tint) comes from the pbgui-list-table contract in components.css;
@@ -439,6 +430,14 @@ body {
   position: sticky;
   top: 0;
   z-index: 1;
+}
+
+.accordion-head {
+  transition: background-color var(--motion-fast) var(--ease-standard);
+}
+
+.accordion-head:hover {
+  background: var(--surface-hover);
 }
 
 .accordion-head::before {

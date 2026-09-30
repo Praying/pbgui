@@ -152,8 +152,8 @@ function onDelete(): void {
 </script>
 
 <template>
-  <div v-if="!data && !error" class="db-status border-b border-b-card bg-page px-[0.75rem] py-[0.15rem] text-micro text-muted">{{ dashT('dash.loading', 'Loading…') }}</div>
-  <div v-else-if="error" class="db-status border-b border-b-card bg-page px-[0.75rem] py-[0.15rem] text-micro text-muted">{{ dashT('dash.dataUnavailable', '⚠ Data unavailable') }}</div>
+  <div v-if="!data && !error" class="db-status border-b border-b-card bg-page px-[0.75rem] py-[0.2rem] text-micro leading-[1.1] text-muted">{{ dashT('dash.loading', 'Loading…') }}</div>
+  <div v-else-if="error" class="db-status border-b border-b-card bg-page px-[0.75rem] py-[0.2rem] text-micro leading-[1.1] text-muted">{{ dashT('dash.dataUnavailable', '⚠ Data unavailable') }}</div>
   <div v-else ref="rootEl" class="db-root bg-page font-sans text-compact text-primary">
     <div
       class="db-header flex flex-nowrap items-center justify-start gap-[0.5rem] rounded-t-md border-b border-b-border-default bg-card px-[0.75rem] py-[0.5rem]"
@@ -192,19 +192,19 @@ function onDelete(): void {
         <PbIcon :icon="PhTrash" :size="14" />
       </Button>
     </div>
-    <div class="db-status border-b border-b-card bg-page px-[0.75rem] py-[0.15rem] text-micro text-muted" :style="{ color: displayStatusColor }">{{ displayStatus }}</div>
-    <div v-if="rows.length === 0" class="db-nodata p-[1.5rem] text-center text-compact text-border-strong">
+    <div class="db-status border-b border-b-card bg-page px-[0.75rem] py-[0.2rem] text-micro leading-[1.1] text-muted" :style="{ color: displayStatusColor }">{{ displayStatus }}</div>
+    <div v-if="rows.length === 0" class="db-nodata p-[1.5rem] text-center text-compact text-muted">
       {{ dashT('dash.noBalanceData', 'No balance data.') }}
     </div>
     <div v-else class="db-table-wrap overflow-x-auto">
       <table class="db-table w-full border-collapse">
         <thead>
           <tr>
-            <th class="cursor-pointer select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-micro font-medium uppercase tracking-label text-secondary hover:text-primary">{{ dashT('dash.user', 'User') }}</th>
-            <th class="cursor-pointer select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-micro font-medium uppercase tracking-label text-secondary hover:text-primary">{{ dashT('dash.date', 'Date') }}</th>
-            <th class="cursor-pointer select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-micro font-medium uppercase tracking-label text-secondary hover:text-primary">{{ dashT('dash.balanceUsdt', 'Balance USDT') }}</th>
-            <th class="cursor-pointer select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-micro font-medium uppercase tracking-label text-secondary hover:text-primary">{{ dashT('dash.upnl', 'uPnl') }}</th>
-            <th class="cursor-pointer select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-micro font-medium uppercase tracking-label text-secondary hover:text-primary">{{ dashT('dash.twePct', 'TWE %') }}</th>
+            <th class="select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-micro font-medium uppercase tracking-label text-secondary">{{ dashT('dash.user', 'User') }}</th>
+            <th class="select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-micro font-medium uppercase tracking-label text-secondary">{{ dashT('dash.date', 'Date') }}</th>
+            <th class="select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-micro font-medium uppercase tracking-label text-secondary">{{ dashT('dash.balanceUsdt', 'Balance USDT') }}</th>
+            <th class="select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-micro font-medium uppercase tracking-label text-secondary">{{ dashT('dash.upnl', 'uPnl') }}</th>
+            <th class="select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-micro font-medium uppercase tracking-label text-secondary">{{ dashT('dash.twePct', 'TWE %') }}</th>
           </tr>
         </thead>
         <tbody>

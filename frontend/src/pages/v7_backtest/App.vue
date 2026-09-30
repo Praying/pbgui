@@ -118,11 +118,12 @@ const bannerClass = computed(() => 'conn-' + store.banner.value);
 const bannerText = computed(() =>
   store.banner.value === 'ok' ? t('v7backtest.connected') : store.banner.value === 'lost' ? t('v7backtest.connectionLost') : t('v7backtest.connecting')
 );
-/* Toast tone (the former .toast-ok/.toast-err/.toast-info rules). */
+/* Toast tone — the shared tonal contract (components.css `.toast-*`): an
+   elevated surface with a status-coloured rail, matching badges/notices. */
 function toastToneClass(kind: string): string {
-  if (kind === 'ok') return 'bg-success text-accent-contrast';
-  if (kind === 'err') return 'bg-danger text-accent-contrast';
-  return 'bg-accent text-accent-contrast';
+  if (kind === 'ok') return 'toast-success';
+  if (kind === 'err') return 'toast-error';
+  return 'toast-info';
 }
 /* Connection success is quiet: a transient toast, while the persistent banner
    only appears on disconnect/error (the header status strip covers the ok
@@ -881,11 +882,14 @@ watch(
     <div
       v-for="item in store.toasts.value"
       :key="item.id"
-      class="toast-msg pointer-events-auto animate-[bt-fade-in_0.2s] rounded-md px-4 py-2.5 text-sm font-medium cursor-pointer select-none transition-opacity hover:opacity-85"
-      :class="['toast-' + item.kind, toastToneClass(item.kind)]"
+      class="toast toast-msg pointer-events-auto animate-[bt-fade-in_var(--motion-normal)] cursor-pointer select-none transition-opacity hover:opacity-85"
+      :class="toastToneClass(item.kind)"
       role="status"
+      tabindex="0"
       data-test="toast-msg"
       @click="store.toast.dismiss(item.id)"
+      @keydown.enter="store.toast.dismiss(item.id)"
+      @keydown.space.prevent="store.toast.dismiss(item.id)"
     >
       {{ item.msg }}
     </div>
@@ -1102,7 +1106,7 @@ body {
 
 /* Action buttons — shared with CoinOverridesPanel */
 .act-btn { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim);
-           cursor: pointer; padding: 3px 8px; font-size: var(--text-xs); transition: all .15s; }
+           cursor: pointer; padding: 3px 8px; font-size: var(--text-xs); transition: color var(--motion-fast) var(--ease-standard), background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard); }
 .act-btn:hover { color: var(--text); border-color: var(--accent); }
 .act-btn-danger:hover { color: var(--red); border-color: var(--red); }
 .act-btn:disabled { opacity: .45; cursor: not-allowed; }
@@ -1165,7 +1169,7 @@ body {
 .core-workbench-shell--backtest .ms-tag .ms-x { color: var(--text-dim); font-size: var(--text-xs); line-height: 1; cursor: pointer; }
 .ms-tag .ms-x:hover { color: var(--red); }
 .ms-dropdown {
-  position: absolute; z-index: 100; top: 100%; right: 0; left: 0; display: none;
+  position: absolute; z-index: var(--z-dropdown); top: 100%; right: 0; left: 0; display: none;
   max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 0 0 4px 4px; background: var(--bg-input);
 }
 .ms-dropdown.open { display: block; }
@@ -1451,7 +1455,7 @@ body {
   background: linear-gradient(90deg, rgb(var(--warning-rgb) / 0.76), transparent 68%);
 }
 .config-editor-section:nth-of-type(5)::before {
-  background: linear-gradient(90deg, rgb(155 142 222 / 0.76), transparent 68%);
+  background: linear-gradient(90deg, rgb(var(--accent-deep-rgb) / 0.76), transparent 68%);
 }
 
 /* ── Container queries: the editor trading grids ─────────────── */

@@ -210,12 +210,12 @@ onBeforeUnmount(() => {
     <template #header-actions>
       <div class="flex items-center gap-2 max-[720px]:flex-wrap">
         <!-- Search bar -->
-        <div id="help-search-wrap" class="flex items-center gap-1 bg-surface rounded-md px-2 py-0.5 border border-border-default">
+        <div id="help-search-wrap" class="flex items-center gap-1 rounded-md border border-border-default bg-card px-2 py-0.5 transition-colors duration-[var(--motion-fast)] ease-standard focus-within:border-accent">
           <Input
             id="help-search"
             v-model="searchTermRaw"
             type="text"
-            class="h-7 w-44 max-[720px]:w-32 text-xs border-0 bg-transparent focus-visible:ring-0 shadow-none px-1"
+            class="h-7 w-44 max-[720px]:w-32 text-xs border-0 bg-transparent px-1 shadow-none focus-visible:shadow-none focus-visible:outline-none"
             :placeholder="searchPlaceholder"
             autocomplete="off"
             @keydown="onSearchKeydown"
@@ -249,7 +249,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Language Switcher Pill -->
-        <div class="lang-pill flex border border-border-default rounded-md overflow-hidden shrink-0 bg-surface">
+        <div class="lang-pill flex border border-border-default rounded-md overflow-hidden shrink-0 bg-card">
           <Button id="help-lang-en" type="button" variant="ghost" size="sm" class="h-7 px-2.5 text-xs rounded-none" :class="store.lang.value === 'EN' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('EN')">EN</Button>
           <Button id="help-lang-de" type="button" variant="ghost" size="sm" class="h-7 px-2.5 text-xs rounded-none border-l border-border-subtle" :class="store.lang.value === 'DE' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('DE')">DE</Button>
           <Button id="help-lang-zh" type="button" variant="ghost" size="sm" class="h-7 px-2.5 text-xs rounded-none border-l border-border-subtle" :title="t('misc.help.chineseDocs')" :class="store.lang.value === 'ZH' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('ZH')">中文</Button>
@@ -282,7 +282,7 @@ onBeforeUnmount(() => {
                 <div
                   v-for="result in globalResults"
                   :key="result.idx"
-                  class="gs-item w-full bg-card hover:bg-elevated border border-border-default hover:border-secondary rounded-lg p-4 cursor-pointer transition-all duration-150 shadow-sm"
+                  class="gs-item w-full cursor-pointer rounded-lg border border-border-default bg-card p-4 transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard hover:border-border-strong hover:bg-elevated"
                   :data-idx="result.idx"
                   @click="openGlobalResult(result.idx)"
                 >
@@ -457,10 +457,10 @@ onBeforeUnmount(() => {
 }
 
 #help-content pre {
-  background: var(--bg-surface);
+  background: var(--bg-card);
   border: 1px solid var(--border-default);
-  border-radius: 8px;
-  padding: 1rem 1.2rem;
+  border-radius: var(--radius-lg);
+  padding: var(--sp-xl) var(--sp-lg);
   overflow-x: auto;
   margin: 1rem 0;
   width: 100% !important;
@@ -552,22 +552,5 @@ onBeforeUnmount(() => {
 </style>
 
 <style scoped>
-.support-page-shell :deep(.app-shell__main) {
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-}
-
-.support-page-shell :deep(.app-shell__primary) {
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-}
+/* Layout: core-workbench-shell (components.css) owns the full-height flex chain. */
 </style>

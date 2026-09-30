@@ -582,7 +582,7 @@ async function deleteSelectedCmcKey(): Promise<void> {
 .cmc-lease-title { margin-top: 1rem; }
 .cmc-leases-wrap .cmc-table { min-width: 1050px; }
 .cmc-leases-wrap tbody tr { cursor: default; }
-.cmc-state { display: inline-flex; align-items: center; padding: 0.1rem 0.42rem; border-radius: 999px; border: 1px solid var(--border-default); color: var(--text-secondary); font-weight: 700; text-transform: uppercase; }
+.cmc-state { display: inline-flex; align-items: center; padding: 0.1rem 0.42rem; border-radius: var(--radius-full); border: 1px solid var(--border-default); color: var(--text-secondary); font-weight: 700; text-transform: uppercase; }
 .cmc-state.active { color: var(--success); border-color: rgb(var(--success-rgb) / 0.45); background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); }
 .cmc-state.disabled, .cmc-state.invalid { color: var(--danger-soft); border-color: var(--danger-deep); background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); }
 .form-section-title { font-size: var(--text-sm); font-weight: 700; color: var(--text-secondary); margin: 0 0 0.5rem; }

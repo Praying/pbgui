@@ -89,16 +89,16 @@ function clear(): void {
       <span class="ms-label-actions">
         <!-- The .ms-* hook classes carry live page CSS (App.vue); the Button
              chrome is neutralized by those unlayered rules + h-auto p-0. -->
-        <Button v-if="allowAll" type="button" variant="ghost" class="ms-all-btn h-auto p-0" :title="t('v7backtest.selectAll')" :aria-label="t('v7backtest.selectAll')" :aria-pressed="model.includes('all')" style="border: 0; background: transparent; font: inherit; cursor: pointer" @click="setAll">all</Button>
-        <Button v-else-if="selectAllButton" type="button" variant="ghost" class="ms-all-btn h-auto p-0" :title="t('v7backtest.selectAll')" :aria-label="t('v7backtest.selectAll')" :aria-pressed="model.length === props.options.length - (props.options.includes('all') ? 1 : 0)" style="border: 0; background: transparent; font: inherit; cursor: pointer" @click="selectAll">all</Button>
-        <Button v-if="model.length" type="button" variant="ghost" class="ms-clear-btn h-auto p-0" :title="t('v7backtest.clearAll')" :aria-label="t('v7backtest.clearAll')" style="border: 0; background: transparent; font: inherit; cursor: pointer" @click="clear"><PbIcon :icon="PhX" /></Button>
+        <Button v-if="allowAll" type="button" variant="ghost" class="ms-all-btn h-auto p-0" :title="t('v7backtest.selectAll')" :aria-label="t('v7backtest.selectAll')" :aria-pressed="model.includes('all')" @click="setAll">all</Button>
+        <Button v-else-if="selectAllButton" type="button" variant="ghost" class="ms-all-btn h-auto p-0" :title="t('v7backtest.selectAll')" :aria-label="t('v7backtest.selectAll')" :aria-pressed="model.length === props.options.length - (props.options.includes('all') ? 1 : 0)" @click="selectAll">all</Button>
+        <Button v-if="model.length" type="button" variant="ghost" class="ms-clear-btn h-auto p-0" :title="t('v7backtest.clearAll')" :aria-label="t('v7backtest.clearAll')" @click="clear"><PbIcon :icon="PhX" /></Button>
       </span>
     </label>
     <div :id="id" class="ms-wrap" @focusin="open = true" @focusout="open = false">
       <span v-for="value in model" :key="value" class="ms-tag" :class="{ 'ms-tag-all': value === 'all' }">
         <template v-if="value === 'all'">★ all</template>
         <template v-else>{{ display(value) }}</template>
-        <Button type="button" variant="ghost" class="ms-x h-auto p-0" :aria-label="`Remove ${value === 'all' ? 'all' : display(value)}`" :title="`Remove ${value === 'all' ? 'all' : display(value)}`" style="border: 0; background: transparent; padding: 0; font: inherit; cursor: pointer" @mousedown.prevent @click.stop="toggle(value)"><PbIcon :icon="PhX" /></Button>
+        <Button type="button" variant="ghost" class="ms-x h-auto p-0" :aria-label="`Remove ${value === 'all' ? 'all' : display(value)}`" :title="`Remove ${value === 'all' ? 'all' : display(value)}`" @mousedown.prevent @click.stop="toggle(value)"><PbIcon :icon="PhX" /></Button>
       </span>
       <Input v-model="filter" :id="id + '-input'" class="ms-input" :placeholder="placeholder || t('v7backtest.typeToSearch')" autocomplete="off" @keydown.enter.prevent="filtered.length ? toggle(filtered[0]!) : undefined" />
       <div :id="id + '-dd'" class="ms-dropdown" :class="{ open }">
@@ -106,7 +106,7 @@ function clear(): void {
         <!-- mousedown.prevent keeps focus on the search input so focusout
              cannot close the dropdown before the click lands (macOS
              browsers never move focus to buttons on click). -->
-        <Button v-for="option in filtered" :key="option" type="button" variant="ghost" class="ms-option block h-auto w-full justify-start rounded-none" :aria-label="`Select ${option === 'all' ? 'all' : display(option)}`" style="border: 0; background: transparent; text-align: left; font: inherit; cursor: pointer" @mousedown.prevent @click="toggle(option)">
+        <Button v-for="option in filtered" :key="option" type="button" variant="ghost" class="ms-option block h-auto w-full justify-start rounded-none" :aria-label="`Select ${option === 'all' ? 'all' : display(option)}`" @mousedown.prevent @click="toggle(option)">
           {{ option === 'all' ? '★ all' : display(option) }}
         </Button>
       </div>

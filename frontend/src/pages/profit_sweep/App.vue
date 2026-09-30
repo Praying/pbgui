@@ -214,7 +214,7 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
 </script>
 
 <template>
-  <AppShell page-key="system_profit_sweep" :page-title="t('profitSweep.title')" class="profit-sweep-shell">
+  <AppShell page-key="system_profit_sweep" :page-title="t('profitSweep.title')" class="data-page-shell profit-sweep-shell">
     <template v-if="loading || errorMessage" #status><StatusStrip :label="t('shared.status')" :value="loading ? t('common.loading') : t('common.error')" :tone="errorMessage ? 'danger' : 'warning'" /></template>
     <template #header-actions><Button size="sm" :disabled="loading" @click="loadPage"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</Button></template>
     <div class="pbgui-ambient flex min-h-0 flex-1 gap-4 overflow-hidden p-4 max-[900px]:flex-col">
@@ -259,7 +259,7 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
           </div>
           <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div v-for="field in fieldsFor(activeTab)" :key="field" class="grid gap-1.5">
-              <Label :for="`profit-sweep-${field}`" class="text-xs font-semibold uppercase tracking-label text-secondary">
+              <Label :for="`profit-sweep-${field}`">
                 {{ fieldLabel(field) }}
               </Label>
               <SelectRoot
@@ -267,7 +267,7 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
                 :model-value="String(fieldValue(field) ?? '')"
                 @update:model-value="setField(field, $event)"
               >
-                <SelectTrigger :id="`profit-sweep-${field}`" class="h-9 rounded-md bg-field text-primary">
+                <SelectTrigger :id="`profit-sweep-${field}`" class="h-9 rounded-md bg-card text-primary">
                   <span :class="fieldValue(field) ? undefined : 'text-placeholder'">
                     {{ fieldLabel(String(fieldValue(field) ?? '')) }}
                   </span>
@@ -285,7 +285,7 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
               <Label
                 v-else-if="typeof fieldValue(field) === 'boolean'"
                 :for="`profit-sweep-${field}`"
-                class="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-border-default bg-field px-2.5 text-sm font-normal normal-case tracking-normal text-primary hover:border-border-strong"
+                class="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-border-default bg-card px-2.5 text-sm font-normal normal-case tracking-normal text-primary hover:border-border-strong"
               >
                 <Checkbox
                   :id="`profit-sweep-${field}`"
@@ -297,7 +297,7 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
               <Input
                 v-else
                 :id="`profit-sweep-${field}`"
-                class="h-9 rounded-md bg-field"
+                class="h-9 rounded-md bg-card"
                 :type="typeof fieldValue(field) === 'number' ? 'number' : 'text'"
                 :value="String(fieldValue(field) ?? '')"
                 @input="setInputField(field, $event)"
@@ -309,13 +309,11 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
             <Button variant="primary" :disabled="!record || schema.live_available !== true || actionPending" @click="enableLive"><PbIcon :icon="PhWarning" /> {{ t('profitSweep.enableLive') }}</Button>
           </div>
         </section>
-        <section v-else class="mt-4 grid gap-4"><div class="rounded-lg border border-border-default bg-panel p-4"><div class="mb-3 flex items-center justify-between"><h2 class="text-lg font-semibold text-primary">{{ t('profitSweep.journal') }}</h2><Button size="sm" @click="loadAccount(selectedUser)">{{ t('common.refresh') }}</Button></div><div class="overflow-auto"><table class="w-full min-w-[720px] text-left text-sm"><thead><tr class="border-b border-border-default text-xs uppercase text-secondary"><th class="p-2">{{ t('profitSweep.time') }}</th><th class="p-2">{{ t('profitSweep.decision') }}</th><th class="p-2">{{ t('profitSweep.amount') }}</th><th class="p-2">{{ t('profitSweep.netPnl') }}</th><th class="p-2">{{ t('profitSweep.due') }}</th></tr></thead><tbody><tr v-for="entry in journal" :key="`${entry.created_at}-${entry.amount}`" class="border-b border-border-subtle"><td class="p-2">{{ formatTime(entry.created_at) }}</td><td class="p-2" :class="Number(entry.amount) > 0 ? 'text-warning' : 'text-primary'">{{ Number(entry.amount) > 0 ? t('profitSweep.wouldTransfer') : fieldLabel(String(entry.reason || '-')) }}</td><td class="p-2">{{ formatValue(entry.amount) }}</td><td class="p-2">{{ formatValue(entry.net_pnl) }}</td><td class="p-2">{{ formatValue(entry.due_after) }}</td></tr><tr v-if="!journal.length"><td colspan="5" class="p-6 text-center text-secondary">{{ t('profitSweep.noJournal') }}</td></tr></tbody></table></div></div><div class="rounded-lg border border-border-default bg-panel p-4"><h2 class="mb-3 text-lg font-semibold text-primary">{{ t('profitSweep.intents') }}</h2><div class="overflow-auto"><table class="w-full min-w-[720px] text-left text-sm"><thead><tr class="border-b border-border-default text-xs uppercase text-secondary"><th class="p-2">{{ t('profitSweep.operation') }}</th><th class="p-2">{{ t('profitSweep.state') }}</th><th class="p-2">{{ t('profitSweep.route') }}</th><th class="p-2">{{ t('profitSweep.amount') }}</th><th class="p-2">{{ t('profitSweep.action') }}</th></tr></thead><tbody><tr v-for="intent in intents" :key="intent.operation_id" class="border-b border-border-subtle"><td class="p-2">{{ intent.operation_id }}</td><td class="p-2">{{ fieldLabel(String(intent.state || 'unknown')) }}</td><td class="p-2">{{ formatValue(intent.route) }}</td><td class="p-2">{{ formatValue(intent.reserved_amount) }}</td><td class="p-2"><Button v-if="intent.can_reconcile" size="sm" variant="warning" :disabled="reconcilePending" @click="reconcile(intent)">{{ t('profitSweep.reconcile') }}</Button><span v-else>-</span></td></tr><tr v-if="!intents.length"><td colspan="5" class="p-6 text-center text-secondary">{{ t('profitSweep.noIntents') }}</td></tr></tbody></table></div></div></section>
+        <section v-else class="mt-4 grid gap-4"><div class="rounded-lg border border-border-default bg-panel p-4"><div class="mb-3 flex items-center justify-between"><h2 class="text-lg font-semibold text-primary">{{ t('profitSweep.journal') }}</h2><Button size="sm" @click="loadAccount(selectedUser)">{{ t('common.refresh') }}</Button></div><div class="overflow-auto"><table class="w-full min-w-[720px] text-left text-sm"><thead><tr class="border-b border-border-default text-xs font-semibold uppercase tracking-label text-secondary"><th class="p-2">{{ t('profitSweep.time') }}</th><th class="p-2">{{ t('profitSweep.decision') }}</th><th class="p-2">{{ t('profitSweep.amount') }}</th><th class="p-2">{{ t('profitSweep.netPnl') }}</th><th class="p-2">{{ t('profitSweep.due') }}</th></tr></thead><tbody><tr v-for="entry in journal" :key="`${entry.created_at}-${entry.amount}`" class="border-b border-border-subtle"><td class="p-2">{{ formatTime(entry.created_at) }}</td><td class="p-2" :class="Number(entry.amount) > 0 ? 'text-warning' : 'text-primary'">{{ Number(entry.amount) > 0 ? t('profitSweep.wouldTransfer') : fieldLabel(String(entry.reason || '-')) }}</td><td class="p-2">{{ formatValue(entry.amount) }}</td><td class="p-2">{{ formatValue(entry.net_pnl) }}</td><td class="p-2">{{ formatValue(entry.due_after) }}</td></tr><tr v-if="!journal.length"><td colspan="5" class="p-6 text-center text-secondary">{{ t('profitSweep.noJournal') }}</td></tr></tbody></table></div></div><div class="rounded-lg border border-border-default bg-panel p-4"><h2 class="mb-3 text-lg font-semibold text-primary">{{ t('profitSweep.intents') }}</h2><div class="overflow-auto"><table class="w-full min-w-[720px] text-left text-sm"><thead><tr class="border-b border-border-default text-xs font-semibold uppercase tracking-label text-secondary"><th class="p-2">{{ t('profitSweep.operation') }}</th><th class="p-2">{{ t('profitSweep.state') }}</th><th class="p-2">{{ t('profitSweep.route') }}</th><th class="p-2">{{ t('profitSweep.amount') }}</th><th class="p-2">{{ t('profitSweep.action') }}</th></tr></thead><tbody><tr v-for="intent in intents" :key="intent.operation_id" class="border-b border-border-subtle"><td class="p-2">{{ intent.operation_id }}</td><td class="p-2">{{ fieldLabel(String(intent.state || 'unknown')) }}</td><td class="p-2">{{ formatValue(intent.route) }}</td><td class="p-2">{{ formatValue(intent.reserved_amount) }}</td><td class="p-2"><Button v-if="intent.can_reconcile" size="sm" variant="warning" :disabled="reconcilePending" @click="reconcile(intent)">{{ t('profitSweep.reconcile') }}</Button><span v-else>-</span></td></tr><tr v-if="!intents.length"><td colspan="5" class="p-6 text-center text-secondary">{{ t('profitSweep.noIntents') }}</td></tr></tbody></table></div></div></section>
       </main>
     </div>
   </AppShell>
 </template>
 
 <style scoped>
-.profit-sweep-shell :deep(.app-shell__main) { min-width: 0; width: 100%; max-width: none; padding: 0; }
-.profit-sweep-shell :deep(.app-shell__primary) { min-height: 0; }
 </style>

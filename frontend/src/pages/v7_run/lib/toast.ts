@@ -11,13 +11,14 @@ export type ToastKind = 'ok' | 'err' | 'info';
 export { TOAST_VISIBLE_MS };
 export const TOAST_FADE_MS = 300;
 
-/** Kind → Tailwind colour utilities (v7_edit/lib/toast.ts parity). The static
- *  positioning utilities on the toast element stay untouched — classes are
- *  added, never replaced. */
+/** Kind → shared tonal toast classes (components.css `.toast-*`): elevated
+ *  surface + status-coloured rail, matching the badge/notice language. The
+ *  static positioning utilities on the toast element stay untouched —
+ *  classes are added, never replaced. */
 const TOAST_CLASSES: Record<ToastKind, string[]> = {
-  ok: ['bg-success', 'text-accent-contrast'],
-  err: ['bg-danger', 'text-[#f2f5fb]'],
-  info: ['bg-accent', 'text-[#f2f5fb]'],
+  ok: ['toast-success'],
+  err: ['toast-error'],
+  info: ['toast-info'],
 };
 
 const TOAST_COLOUR_CLASSES = [...new Set(Object.values(TOAST_CLASSES).flat())];

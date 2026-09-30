@@ -86,7 +86,7 @@ const errorText = computed(() => (props.statusError ? props.statusError : logErr
   <section class="grid shrink-0 gap-2.5 border-b border-border-default bg-panel px-4 py-3" data-test="optimize-log-dashboard">
     <div class="flex flex-wrap items-center gap-3" data-test="log-progress">
       <div class="h-1.5 min-w-40 flex-1 overflow-hidden rounded-full bg-border-default">
-        <div class="h-full rounded-full bg-accent transition-[width] duration-300" :style="{ width: `${percent}%` }"></div>
+        <div class="h-full w-full origin-left rounded-full bg-accent transition-transform duration-[var(--motion-slow)] ease-standard" :style="{ transform: `scaleX(${percent / 100})` }"></div>
       </div>
       <span class="text-xs tabular-nums text-secondary" data-test="log-progress-label">{{ progressText }}</span>
       <span class="whitespace-nowrap text-xs text-muted" data-test="log-updated">{{ updatedText }}</span>

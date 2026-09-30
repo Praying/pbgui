@@ -276,8 +276,8 @@ function messageClass(level: string): string {
    accent wash when selected, rather than a bright solid accent fill. */
 function deepTabClass(active: boolean): string {
   return active
-    ? 'deep-tab-btn active h-8 cursor-pointer rounded-lg border border-accent/35 bg-accent/14 px-3 py-0 text-accent-soft transition-all duration-150 hover:border-accent hover:bg-accent/20'
-    : 'deep-tab-btn h-8 cursor-pointer rounded-lg border border-border-default bg-elevated px-3 py-0 text-secondary transition-all duration-150 hover:border-border-strong hover:bg-border-default hover:text-primary';
+    ? 'deep-tab-btn active h-8 cursor-pointer rounded-lg border border-accent/35 bg-accent/14 px-3 py-0 text-accent-soft transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard hover:border-accent hover:bg-accent/20'
+    : 'deep-tab-btn h-8 cursor-pointer rounded-lg border border-border-default bg-elevated px-3 py-0 text-secondary transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard hover:border-border-strong hover:bg-border-default hover:text-primary';
 }
 
 const fullLoadBarStyle = computed(() => ({ width: String(store.progress.fullLoad.display) + '%' }));
@@ -385,7 +385,7 @@ onBeforeUnmount(() => {
 
 <template>
   <MigrationWatermark />
-  <DataTipTooltip class="pointer-events-none fixed z-[var(--z-tooltip)] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[0_4px_12px_rgba(5,8,14,0.5)]" />
+  <DataTipTooltip class="pointer-events-none fixed z-[var(--z-tooltip)] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[var(--shadow-elevated)]" />
   <AppShell
     class="core-workbench-shell core-workbench-shell--explorer"
     :page-key="paretoPageKey"
@@ -524,7 +524,7 @@ onBeforeUnmount(() => {
           </div>
           <div v-if="store.progress.fullLoad.stage === 'loading' || store.progress.fullLoad.stage === 'error'" class="metric-inline-status mt-2.5 flex flex-col gap-2" id="metric-full-load-panel">
             <div id="metric-full-load-text" class="load-status-text min-h-[34px] text-sm text-secondary">{{ store.progress.fullLoad.text }}</div>
-            <div class="load-status-progress h-2 overflow-hidden rounded-full bg-white/8"><div id="metric-full-load-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-200 ease-[ease]" :style="fullLoadBarStyle"></div></div>
+            <div class="load-status-progress h-2 overflow-hidden rounded-full bg-white/8"><div id="metric-full-load-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-[var(--motion-normal)] ease-standard" :style="fullLoadBarStyle"></div></div>
           </div>
         </div>
       </section>
@@ -550,8 +550,7 @@ onBeforeUnmount(() => {
                   <option v-for="option in LOAD_STRATEGY_OPTIONS" :key="option" :value="option">{{ option }}</option>
                 </select>
               </div>
-              <div class="form-field col-span-4 flex flex-col gap-1.5 max-[900px]:col-span-12">
-                <label class="text-xs text-secondary uppercase tracking-label">&nbsp;</label>
+              <div class="form-field col-span-4 flex flex-col justify-end gap-1.5 max-[900px]:col-span-12">
                 <div class="check-row flex min-h-8 items-center gap-2 text-secondary">
                   <Checkbox id="persist-defaults-toggle" v-model="store.state.persistDefaults" />
                   <label for="persist-defaults-toggle" class="text-xs text-secondary uppercase tracking-label cursor-pointer">{{ t('v7explore.persistDefaults') }}</label>
@@ -573,7 +572,7 @@ onBeforeUnmount(() => {
                   <div id="full-load-status-text" class="load-status-text text-sm text-secondary">
                     {{ store.progress.fullLoad.text || t('v7explore.scanToSelectCandidates') }}
                   </div>
-                  <div class="load-status-progress h-2 overflow-hidden rounded-full bg-white/8"><div id="full-load-status-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-200 ease-[ease]" :style="fullLoadBarStyle"></div></div>
+                  <div class="load-status-progress h-2 overflow-hidden rounded-full bg-white/8"><div id="full-load-status-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-[var(--motion-normal)] ease-standard" :style="fullLoadBarStyle"></div></div>
                 </div>
               </div>
             </div>
@@ -641,19 +640,6 @@ body {
   overflow: hidden;
 }
 
-[data-tip] {
-  cursor: help;
-  text-decoration-line: underline;
-  text-decoration-style: dotted;
-  text-decoration-color: var(--text-muted);
-  text-underline-offset: 2px;
-  text-decoration-thickness: 1px;
-}
-
-button[data-tip] {
-  text-decoration: none;
-}
-
 .chart-wrap:fullscreen {
   background: var(--bg-page);
   display: flex;
@@ -673,7 +659,7 @@ button[data-tip] {
    their gaps without changing the shared panel component contract. */
 .core-workbench-shell--explorer .workbench-page-content {
   gap: 16px;
-  padding: 20px 24px 32px !important;
+  padding: var(--sp-lg) var(--page-padding) var(--sp-3xl);
 }
 
 .core-workbench-shell--explorer .workbench-page-content > .page-toolbar {
@@ -700,7 +686,7 @@ button[data-tip] {
 @media (max-width: 700px) {
   .core-workbench-shell--explorer .workbench-page-content {
     gap: 12px;
-    padding: 12px 12px 20px !important;
+    padding: var(--sp-md) var(--sp-md) var(--sp-lg);
   }
 
   .core-workbench-shell--explorer .stage-grid,

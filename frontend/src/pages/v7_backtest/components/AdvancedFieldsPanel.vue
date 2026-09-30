@@ -165,7 +165,7 @@ const groupedMetrics = computed(() => {
                   @update:model-value="setCell(index, field, String($event ?? ''))"
                 />
               </td>
-              <td style="white-space: nowrap">
+              <td class="whitespace-nowrap">
                 <Button type="button" variant="danger" class="act-btn h-auto" @click="removeRow(index)">{{ t('v7backtest.delete') }}</Button>
               </td>
             </tr>
@@ -176,7 +176,7 @@ const groupedMetrics = computed(() => {
         <option v-for="coin in coins" :key="coin" :value="coin" />
       </datalist>
       <div class="field-status field-status-inline" data-test="market-settings-status">{{ marketError }}</div>
-      <Button type="button" variant="default" class="act-btn h-auto" style="margin-top: var(--sp-sm)" @click="addRow">{{ t('v7backtest.addOverride') }}</Button>
+      <Button type="button" variant="default" class="act-btn mt-2 h-auto" @click="addRow">{{ t('v7backtest.addOverride') }}</Button>
     </div>
   </div>
 

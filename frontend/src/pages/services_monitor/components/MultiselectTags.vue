@@ -73,7 +73,12 @@ function toggle(option: string): void {
       class="tag"
       :class="{ inactive: !modelValue.includes(option) }"
       :data-value="option"
+      role="button"
+      tabindex="0"
+      :aria-pressed="modelValue.includes(option)"
       @click="toggle(option)"
+      @keydown.enter="toggle(option)"
+      @keydown.space.prevent="toggle(option)"
     >{{ option }}</span>
   </div>
 </template>
@@ -81,9 +86,9 @@ function toggle(option: string): void {
 <!-- Styles ported from frontend/services_monitor.html (filter input + tag wrap). -->
 <style scoped>
 .multiselect-filter { margin-bottom: 0.35rem; width: 220px; }
-.multiselect-wrap { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: 5px; padding: 0.3rem; min-height: 36px; max-height: 160px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 4px; }
+.multiselect-wrap { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 0.3rem; min-height: 36px; max-height: 160px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 4px; }
 .multiselect-empty { color: var(--text-disabled); font-size: var(--text-xs); }
-.tag { display: inline-flex; align-items: center; background: rgb(var(--accent-rgb) / 0.18); border: 1px solid var(--accent); color: var(--accent-soft); border-radius: 4px; padding: 2px 8px; font-size: var(--text-xs); cursor: pointer; user-select: none; transition: all 0.1s; }
+.tag { display: inline-flex; align-items: center; background: rgb(var(--accent-rgb) / 0.18); border: 1px solid var(--accent); color: var(--accent-soft); border-radius: var(--radius-sm); padding: 2px 8px; font-size: var(--text-xs); cursor: pointer; user-select: none; transition: color var(--motion-fast) var(--ease-standard), background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard); }
 .tag:hover { background: var(--accent-deep); }
 .tag.inactive { background: transparent; border-color: var(--border-default); color: var(--text-muted); }
 .tag.inactive:hover { border-color: var(--border-strong); color: var(--text-secondary); }

@@ -89,7 +89,7 @@ function onStartStateChange(): void {
         <div class="flex flex-col gap-1 col-span-4 max-[1250px]:col-span-full"><Label for="sim-start-short-price-input">{{ t('v7explore.shortPrice') }}</Label><Input id="sim-start-short-price-input" v-model.number="store.controls.simStartShortPrice" type="number" min="0" step="0.000001" @input="store.invalidateSimulationRequest()" /></div>
       </div>
       <div id="simulation-progress" class="mt-2.5" :class="simulation.progress.value.pct >= 0 ? 'block' : 'hidden'">
-        <div class="h-2.5 overflow-hidden rounded-full border border-border-default bg-page"><div id="simulation-progress-fill" class="h-full w-0 bg-[linear-gradient(90deg,var(--accent),var(--success))] transition-[width] duration-200 ease-[ease]" :style="{ width: simulation.progress.value.pct + '%' }"></div></div>
+        <div class="h-2.5 overflow-hidden rounded-full border border-border-default bg-page"><div id="simulation-progress-fill" class="h-full w-full origin-left bg-[linear-gradient(90deg,var(--accent),var(--success))] transition-transform duration-[var(--motion-normal)] ease-standard" :style="{ transform: `scaleX(${(simulation.progress.value.pct || 0) / 100})` }"></div></div>
         <div id="simulation-progress-text" class="mt-1.5 text-secondary text-sm">{{ simulation.progress.value.message || t('v7explore.waiting') }}</div>
       </div>
     </section>

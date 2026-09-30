@@ -157,9 +157,9 @@ function submitReserve(): void {
         <div class="flex justify-between gap-2 text-xs text-secondary"><span>{{ progressLabel(job) }}</span></div>
         <div class="h-1.5 overflow-hidden rounded-full bg-border-default">
           <div
-            class="h-full rounded-full bg-accent transition-[width] duration-300"
-            :class="progressPercent(completedValue(preparation(job).progress!), totalValue(preparation(job).progress!)) === null ? 'w-full opacity-40' : ''"
-            :style="progressPercent(completedValue(preparation(job).progress!), totalValue(preparation(job).progress!)) === null ? undefined : { width: `${progressPercent(completedValue(preparation(job).progress!), totalValue(preparation(job).progress!))}%` }"
+            class="h-full w-full origin-left rounded-full bg-accent transition-transform duration-[var(--motion-slow)] ease-standard"
+            :class="progressPercent(completedValue(preparation(job).progress!), totalValue(preparation(job).progress!)) === null ? 'opacity-40' : ''"
+            :style="progressPercent(completedValue(preparation(job).progress!), totalValue(preparation(job).progress!)) === null ? undefined : { transform: `scaleX(${(progressPercent(completedValue(preparation(job).progress!), totalValue(preparation(job).progress!)) ?? 0) / 100})` }"
           ></div>
         </div>
       </div>

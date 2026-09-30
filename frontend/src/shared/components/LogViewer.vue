@@ -665,7 +665,7 @@ defineExpose({
           type="button"
           variant="ghost"
           size="sm"
-          class="h-6 px-1.5 font-mono text-micro font-bold transition-all"
+          class="h-6 px-1.5 font-mono text-micro font-bold transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard"
           :class="levelButtonClass(level)"
           :data-lvl="level"
           :aria-pressed="visibleLevels.has(level)"
@@ -910,8 +910,7 @@ defineExpose({
           data-test="scroll-bottom"
           @click="scrollToBottom"
         >
-          <PbIcon :icon="PhArrowDown" :size="12" />
-          <span aria-hidden="true">↓</span>
+          <PbIcon :icon="PhArrowDown" :size="14" />
         </Button>
       </div>
     </div>

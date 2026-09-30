@@ -8,8 +8,10 @@
  */
 import { nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhX } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
 import { formatCompact, formatPrice, formatRatio } from '../lib/format';
+import PbIcon from '@/shared/components/PbIcon.vue';
 
 const props = defineProps<{
   row: Record<string, unknown> | null;
@@ -312,12 +314,12 @@ defineExpose({ fitToContent, resetLayout });
     <div class="details-resize-handle corner corner-top-right" data-resize="top-right" @mousedown="onResizeMousedown($event, 'top-right')"></div>
     <div class="details-resize-handle corner corner-bottom-right" data-resize="bottom-right" @mousedown="onResizeMousedown($event, 'bottom-right')"></div>
     <div class="details-resize-handle corner corner-bottom-left" data-resize="bottom-left" @mousedown="onResizeMousedown($event, 'bottom-left')"></div>
-    <div ref="head" class="details-head flex items-center justify-between gap-2 py-[0.85rem] px-[1rem] border-b border-accent/16 shrink-0 cursor-move select-none" @mousedown="onHeadMousedown">
+    <div ref="head" class="details-head flex items-center justify-between gap-2 py-3 px-4 border-b border-accent/16 shrink-0 cursor-move select-none" @mousedown="onHeadMousedown">
       <div class="details-title text-md font-bold text-primary" id="selected-title">{{ title || t('market.selectedSymbol') }}</div>
       <div class="details-actions flex items-center gap-2 relative z-[1]">
         <a
           v-if="cmcLink"
-          class="details-link inline-flex items-center justify-center min-h-8 px-3 rounded-md border border-accent/28 bg-accent/8 text-accent-soft text-base font-semibold no-underline [transition:background_0.12s,border-color_0.12s,color_0.12s] hover:bg-accent/16 hover:border-accent/45 hover:text-accent-soft"
+          class="details-link inline-flex items-center justify-center min-h-8 px-3 rounded-md border border-accent/28 bg-accent/8 text-accent-soft text-base font-semibold no-underline [transition:background-color_var(--motion-fast)_var(--ease-standard),border-color_var(--motion-fast)_var(--ease-standard),color_var(--motion-fast)_var(--ease-standard)] hover:bg-accent/16 hover:border-accent/45 hover:text-accent-soft"
           id="selected-cmc-link"
           :href="cmcLink"
           target="_blank"
@@ -325,15 +327,15 @@ defineExpose({ fitToContent, resetLayout });
           :title="t('market.openOnCoinMarketCap')"
           @click="openCmcLink"
         >{{ t('market.openCmc') }}</a>
-        <Button class="details-close w-7 p-0" id="btn-close-details" type="button" variant="secondary" size="sm" :title="t('market.closeDetails')" @click="emit('close')">&#x2715;</Button>
+        <Button class="details-close w-7 p-0" id="btn-close-details" type="button" variant="secondary" size="sm" :title="t('market.closeDetails')" :aria-label="t('market.closeDetails')" @click="emit('close')"><PbIcon :icon="PhX" :size="13" /></Button>
       </div>
     </div>
-    <div ref="grid" class="details-grid grid pt-[0.95rem] px-[1rem] pb-[1rem] grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 overflow-auto flex-1 min-h-0 content-start max-[980px]:grid-cols-1" id="selected-grid">
-      <div v-for="field in fields" :key="field.label" class="grid gap-[0.2rem] min-w-0" :class="field.wide ? 'kv wide col-span-full' : 'kv'">
+    <div ref="grid" class="details-grid grid px-4 pt-3.5 pb-4 grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 overflow-auto flex-1 min-h-0 content-start max-[980px]:grid-cols-1" id="selected-grid">
+      <div v-for="field in fields" :key="field.label" class="grid gap-1 min-w-0" :class="field.wide ? 'kv wide col-span-full' : 'kv'">
         <div class="kv-label text-xs text-muted uppercase tracking-label">{{ field.label }}</div>
         <div class="text-base text-primary" :class="field.wrap ? 'kv-value wrap whitespace-normal overflow-visible text-clip break-words leading-[1.55]' : 'kv-value whitespace-nowrap overflow-hidden text-ellipsis'" :title="field.value">{{ field.value }}</div>
       </div>
-      <div v-if="notice" class="notice-box col-span-full border border-warning/28 bg-warning/8 rounded-[10px] px-[0.9rem] py-[0.75rem] text-warning-soft text-sm leading-[1.55] whitespace-pre-wrap"><strong>{{ t('market.notice') }}</strong><br>{{ notice }}</div>
+      <div v-if="notice" class="notice-box col-span-full border border-warning/28 bg-warning/8 rounded-[10px] px-3.5 py-3 text-warning-soft text-sm leading-[1.55] whitespace-pre-wrap"><strong>{{ t('market.notice') }}</strong><br>{{ notice }}</div>
     </div>
   </section>
 </template>

@@ -168,7 +168,11 @@ function statusTone(card: Card): 'neutral' | 'success' | 'warning' | 'danger' | 
       class="svc-card pbgui-card"
       :class="c.cls"
       :data-svc="c.svcId"
+      role="button"
+      tabindex="0"
       @click="emit('select', c.panelId)"
+      @keydown.enter="emit('select', c.panelId)"
+      @keydown.space.prevent="emit('select', c.panelId)"
     >
       <div class="card-name">{{ c.name }}</div>
       <StatusBadge
@@ -213,27 +217,9 @@ function statusTone(card: Card): 'neutral' | 'success' | 'warning' | 'danger' | 
   gap: var(--component-gap);
   align-content: start;
 }
-.svc-card {
-  background: var(--surface-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: var(--component-gap);
-  display: flex;
-  flex-direction: column;
-  gap: var(--control-gap);
-  cursor: pointer;
-  box-shadow: var(--shadow-panel);
-  transition:
-    background-color var(--motion-fast) var(--ease-standard),
-    border-color var(--motion-fast) var(--ease-standard),
-    transform var(--motion-fast) var(--ease-spring);
-}
-.svc-card:hover {
-  border-color: var(--border-default);
-  transform: translateY(-1px);
-}
-.svc-card.running { border-color: rgb(var(--success-rgb) / 0.45); }
-.svc-card.stopped { border-color: rgb(var(--danger-rgb) / 0.35); }
+/* Card chrome (surface, hover lift, status borders) is owned by the
+   page-level #overview-grid .svc-card rules in App.vue — restating them here
+   always lost the cascade, so the block was dead. */
 .card-name { font-size: var(--text-sm); font-weight: 700; color: var(--text-primary); }
 .card-status-row { display: flex; align-items: center; gap: 5px; font-size: var(--text-xs); color: var(--text-muted); }
 .card-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-disabled); flex-shrink: 0; }

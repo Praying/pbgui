@@ -320,7 +320,7 @@ onMounted(async () => {
       />
     </template>
 
-    <div id="page-body" class="flex h-[calc(100dvh-64px)] min-h-0 gap-[var(--component-gap)] overflow-hidden select-none">
+    <div id="page-body" class="flex h-[calc(100dvh-var(--header-height))] min-h-0 gap-[var(--component-gap)] overflow-hidden select-none">
       <div id="main-content" class="min-h-0 min-w-0 flex-1 select-text overflow-y-auto p-[var(--page-padding)]">
         <!-- User list -->
         <UserListTable v-show="view === 'list'" :store="store" @edit="onEditUser" @delete="onDeleteUser" @create="showCreateForm" />
@@ -556,14 +556,4 @@ body .pbgui-dialog-btn.danger:hover {
 /* Page-level AppShell overrides — ported from styles/api_keys_editor.css at
    the Tailwind migration. The :deep() rules target AppShell internals, so
    they stay as CSS instead of utilities. */
-.data-page-shell :deep(.app-shell__main) {
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  padding: 0;
-}
-
-.data-page-shell :deep(.app-shell__primary) {
-  min-height: 0;
-}
 </style>

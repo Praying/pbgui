@@ -225,7 +225,7 @@ const exportCodecLabel = computed(() => {
           <template v-else>{{ t('v7explore.generateMovieHint') }}</template>
         </div>
         <div id="movie-progress" class="mt-2.5" :class="movie.progress.value.pct >= 0 ? 'block' : 'hidden'">
-          <div class="h-2.5 overflow-hidden rounded-full border border-border-default bg-page"><div id="movie-progress-fill" class="h-full w-0 bg-[linear-gradient(90deg,var(--accent),var(--success))] transition-[width] duration-200 ease-[ease]" :style="{ width: movie.progress.value.pct + '%' }"></div></div>
+          <div class="h-2.5 overflow-hidden rounded-full border border-border-default bg-page"><div id="movie-progress-fill" class="h-full w-full origin-left bg-[linear-gradient(90deg,var(--accent),var(--success))] transition-transform duration-[var(--motion-normal)] ease-standard" :style="{ transform: `scaleX(${(movie.progress.value.pct || 0) / 100})` }"></div></div>
           <div id="movie-progress-text" class="mt-1.5 text-secondary text-sm">{{ movie.progress.value.message || t('v7explore.waiting') }}</div>
         </div>
         <div class="mt-3 p-3 border border-border-default rounded-md bg-white/[0.025]">

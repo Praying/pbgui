@@ -140,7 +140,7 @@ const heading = () => t('v7optimize.optimizeLogWithName', { name: props.title ||
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgb(15 15 15 / 0.78);
+  background: var(--bg-backdrop);
 }
 
 .optimize-log-dialog {

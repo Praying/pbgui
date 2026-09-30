@@ -94,7 +94,7 @@ function syncScroll(event: Event): void {
 </script>
 
 <template>
-  <div class="flex flex-col overflow-hidden rounded-xl border border-border-default bg-card shadow-sm">
+  <div class="flex flex-col overflow-hidden rounded-xl border border-border-default bg-card">
     <!-- Editor Header Toolbar -->
     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border-default/80 bg-surface-deep/70 px-3.5 py-2">
       <div class="flex items-center gap-2">

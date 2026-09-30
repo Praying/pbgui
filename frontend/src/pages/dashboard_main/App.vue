@@ -571,7 +571,7 @@ onUnmounted(() => {
           <span class="canvas-mode__label">{{ editMode ? t('dash.editMode') : frameVisible ? t('dash.dashboard') : t('common.ok') }}</span>
         </span>
       </header>
-      <div id="content-loading" :class="{ 'content-loading--empty': !frameSrc }" :style="{ display: frameLoading ? 'flex' : 'none' }" role="status" aria-live="polite">
+      <div id="content-loading" :class="{ 'content-loading--empty': !frameSrc }" v-show="frameLoading" role="status" aria-live="polite">
         <div class="content-loading__visual" aria-hidden="true">
           <span></span><span></span><span></span>
         </div>
@@ -634,12 +634,6 @@ body {
     var(--bg-page);
 }
 
-.data-page-shell .app-shell__main {
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  padding: 0;
-}
 
 .data-page-shell .app-shell__primary {
   min-height: 0;
@@ -1186,7 +1180,7 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: var(--z-toast);
+  z-index: var(--z-modal);
   width: min(760px, 88vw);
   height: min(760px, 84dvh);
   min-width: 360px;

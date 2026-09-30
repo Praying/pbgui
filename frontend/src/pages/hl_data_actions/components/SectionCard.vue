@@ -40,7 +40,7 @@ const headerStatus = computed(() => {
 
 <template>
   <div
-    class="hlda-section mb-3 overflow-visible rounded-lg border border-elevated"
+    class="hlda-section mb-3 overflow-visible rounded-lg border border-subtle"
     :id="'sec-' + id"
     :class="{ open }"
   >
@@ -48,10 +48,15 @@ const headerStatus = computed(() => {
       class="hlda-sh flex cursor-pointer select-none items-center gap-2 bg-workspace px-3.5 py-2.5 text-base font-medium hover:bg-accent/20"
       :id="'sh-' + id"
       :class="open ? 'rounded-t-lg' : 'rounded-lg'"
+      role="button"
+      tabindex="0"
+      :aria-expanded="open"
       @click="emit('toggle')"
+      @keydown.enter="emit('toggle')"
+      @keydown.space.prevent="emit('toggle')"
     >
       <span
-        class="hlda-arrow inline-block text-base text-secondary transition-transform duration-150"
+        class="hlda-arrow inline-block text-base text-secondary transition-transform duration-[var(--motion-fast)]"
         :id="'arrow-' + id"
         :class="open ? 'rotate-90' : ''"
       >&#9654;</span>

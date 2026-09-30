@@ -70,7 +70,7 @@ function submit(): void {
 </script>
 
 <template>
-  <div v-if="open" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop p-3">
+  <div v-if="open" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop p-3">
     <section
       class="flex max-h-full w-[min(720px,100%)] flex-col overflow-hidden rounded-xl border border-border-default bg-panel shadow-[var(--shadow-modal)]"
       role="dialog"
@@ -202,7 +202,7 @@ function submit(): void {
   font-weight: 500;
   padding: 0 14px;
   white-space: nowrap;
-  transition: all var(--motion-fast) var(--ease-standard);
+  transition: color var(--motion-fast) var(--ease-standard), background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
 }
 
 .opt-source-tabs button:hover {

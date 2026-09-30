@@ -12,6 +12,10 @@ const gapDetailsModalSource = readFileSync(
   'utf8',
 );
 const marketDataStyleSources = `${appSource}\n${integrityPanelSource}\n${gapDetailsModalSource}`;
+const sharedComponentsCss = readFileSync(
+  resolve(import.meta.dirname, '../../styles/components.css'),
+  'utf8',
+);
 
 describe('Market Data page style contracts', () => {
   it('inherits the shared typography while keeping page chrome behavior', () => {
@@ -22,9 +26,11 @@ describe('Market Data page style contracts', () => {
   });
 
   it('keeps the data-tip and tooltip contracts', () => {
-    expect(appSource).toContain('[data-tip]');
+    // The dotted-underline affordance moved to the shared components.css
+    // canonical block; the floating tip layer stays page-owned.
+    expect(sharedComponentsCss).toContain('[data-tip]');
+    expect(sharedComponentsCss).toContain('text-decoration-style: dotted;');
     expect(appSource).toContain('#data-tip-tooltip');
-    expect(appSource).toContain('text-decoration-style: dotted;');
     expect(appSource).toContain('box-shadow: var(--shadow-elevated);');
     expect(appSource).toContain('pointer-events: none;');
   });

@@ -319,7 +319,7 @@ onBeforeUnmount(() => {
     </template>
 
     <MigrationWatermark />
-    <div id="page-body" class="coin-data-page-body flex h-[calc(100dvh-64px)] overflow-hidden max-[980px]:flex-col">
+    <div id="page-body" class="coin-data-page-body flex h-[calc(100dvh-var(--header-height))] overflow-hidden max-[980px]:flex-col">
     <div id="main-content" ref="mainContent" class="coin-data-workspace pbgui-ambient flex min-w-0 min-h-0 flex-1 flex-col gap-[var(--component-gap)] overflow-hidden p-[var(--page-padding)] max-[980px]:overflow-y-auto">
       <div id="warning-box" class="warning-box rounded-xl border px-4 py-3 text-sm leading-[1.55]" :class="warnings.length ? 'flex' : 'hidden'">
         <PbIcon class="mt-0.5 shrink-0 text-warning" :icon="PhWarningCircle" :size="18" />
@@ -391,7 +391,7 @@ onBeforeUnmount(() => {
             <div class="panel-title text-md font-semibold text-primary" id="main-panel-title">{{ t('market.matchedSymbolsLowerCount', { count: counts.main }) }}</div>
             <span class="panel-meta text-sm text-secondary whitespace-nowrap overflow-hidden text-ellipsis max-w-[min(52vw,760px)]" id="main-panel-meta" :title="mainPanelMetaTitle">{{ mainPanelMeta }}</span>
           </div>
-          <span class="coin-data-sort-pill pill inline-flex items-center gap-[0.35rem] py-[0.28rem] px-[0.65rem] rounded-full border text-secondary text-sm whitespace-nowrap" id="main-sort-pill"><span aria-hidden="true">↕</span>{{ sortPill }}</span>
+          <span class="coin-data-sort-pill pill inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full border text-secondary text-sm whitespace-nowrap" id="main-sort-pill"><span aria-hidden="true">↕</span>{{ sortPill }}</span>
         </div>
         <SymbolTable
           table="main"
@@ -585,7 +585,7 @@ body {
   height: 24px;
   place-items: center;
   border: 1px solid rgb(var(--accent-rgb) / 0.35);
-  border-radius: 7px;
+  border-radius: var(--radius-lg);
   background: var(--accent-bg);
   color: var(--accent-soft);
   font-size: var(--text-sm);
@@ -603,16 +603,6 @@ body {
   }
 }
 
-.data-page-shell :deep(.app-shell__main) {
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  padding: 0;
-}
-
-.data-page-shell :deep(.app-shell__primary) {
-  min-height: 0;
-}
 
 /* details.panel summary chrome — the ::-webkit-details-marker hide, the
    ">" ::before arrow and its [open] rotation, and the [open]

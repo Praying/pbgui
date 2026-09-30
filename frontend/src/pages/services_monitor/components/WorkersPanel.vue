@@ -482,7 +482,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
 .worker-card {
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 10px;
+  border-radius: var(--radius-xl);
   padding: var(--sp-md);
   display: flex;
   flex-direction: column;
@@ -520,7 +520,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   align-items: center;
   gap: var(--sp-xs);
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   border: 1px solid var(--border-default);
   font-size: var(--text-xs);
   color: var(--text-secondary);
@@ -569,7 +569,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   align-items: center;
   gap: var(--sp-xs);
   padding: 4px 9px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   border: 1px solid var(--border-default);
   font-size: var(--text-xs);
   font-weight: 700;

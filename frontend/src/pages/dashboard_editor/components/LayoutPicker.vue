@@ -47,7 +47,11 @@ function pick(lt: LayoutPreset): void {
           :data-cols="lt.cols"
           :style="thumbStyle(lt)"
           :title="lt.cols + '×' + lt.rows"
+          role="button"
+          tabindex="0"
           @click="pick(lt)"
+          @keydown.enter="pick(lt)"
+          @keydown.space.prevent="pick(lt)"
         >
           <div
             v-for="i in lt.cols * lt.rows"
@@ -71,7 +75,11 @@ function pick(lt: LayoutPreset): void {
           :data-cols="lt.cols"
           :style="thumbStyle(lt)"
           :title="lt.cols + '×' + lt.rows"
+          role="button"
+          tabindex="0"
           @click="pick(lt)"
+          @keydown.enter="pick(lt)"
+          @keydown.space.prevent="pick(lt)"
         >
           <div
             v-for="i in lt.cols * lt.rows"
@@ -83,8 +91,8 @@ function pick(lt: LayoutPreset): void {
       </div>
     </div>
     <span
-      class="lt-dim h-[34px] w-[44px] items-center justify-center rounded-sm border border-warning-soft bg-warning/14 text-center text-micro font-semibold leading-[34px] text-warning-soft whitespace-nowrap"
-      :style="{ display: presetMatched ? 'none' : 'inline-flex' }"
+      class="lt-dim inline-flex h-[34px] w-[44px] items-center justify-center rounded-sm border border-warning-soft bg-warning/14 text-center text-micro font-semibold leading-[34px] text-warning-soft whitespace-nowrap"
+      v-show="!presetMatched"
     >
       {{ store.cols }}×{{ store.rows }}
     </span>

@@ -29,7 +29,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
     data-slot="switch"
     v-bind="forwarded"
     :class="cn(
-      'peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-border-default bg-white/10 transition-colors duration-[120ms] ease-standard data-[state=checked]:border-accent/50 data-[state=checked]:bg-accent/45 disabled:cursor-not-allowed disabled:opacity-45',
+      'peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-border-default bg-secondary/16 transition-colors duration-[120ms] ease-standard data-[state=checked]:border-accent/50 data-[state=checked]:bg-accent/45 disabled:cursor-not-allowed disabled:opacity-45',
       props.class,
     )"
   >

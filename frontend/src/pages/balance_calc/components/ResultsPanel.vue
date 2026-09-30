@@ -74,9 +74,9 @@ const recRows = computed(() => {
       <h3 class="mb-2 text-md text-accent">{{ t('misc.balance.balanceLong') }}</h3>
       <div class="max-h-[300px] overflow-y-auto rounded-md border border-border-default">
         <table class="w-full border-collapse text-sm">
-          <thead><tr class="group"><th class="sticky top-0 border-b-2 border-border-default bg-panel px-2 py-1 text-left font-bold text-secondary">{{ t('misc.balance.coin') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-panel px-2 py-1 text-left font-bold text-secondary">{{ t('misc.balance.requiredBalance') }}</th></tr></thead>
+          <thead><tr><th class="sticky top-0 border-b-2 border-border-default bg-panel px-2 py-1 text-left font-bold text-secondary">{{ t('misc.balance.coin') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-panel px-2 py-1 text-left font-bold text-secondary">{{ t('misc.balance.requiredBalance') }}</th></tr></thead>
           <tbody>
-            <tr v-for="row in results.balance_long" :key="row.coin">
+            <tr v-for="row in results.balance_long" :key="row.coin" class="group">
               <td class="border-b border-border-default px-2 py-1 group-hover:bg-accent/5">{{ row.coin }}</td>
               <td class="border-b border-border-default px-2 py-1 group-hover:bg-accent/5">{{ row.balance.toFixed(2) }}</td>
             </tr>
@@ -89,9 +89,9 @@ const recRows = computed(() => {
       <h3 class="mb-2 text-md text-accent">{{ t('misc.balance.balanceShort') }}</h3>
       <div class="max-h-[300px] overflow-y-auto rounded-md border border-border-default">
         <table class="w-full border-collapse text-sm">
-          <thead><tr class="group"><th class="sticky top-0 border-b-2 border-border-default bg-panel px-2 py-1 text-left font-bold text-secondary">{{ t('misc.balance.coin') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-panel px-2 py-1 text-left font-bold text-secondary">{{ t('misc.balance.requiredBalance') }}</th></tr></thead>
+          <thead><tr><th class="sticky top-0 border-b-2 border-border-default bg-panel px-2 py-1 text-left font-bold text-secondary">{{ t('misc.balance.coin') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-panel px-2 py-1 text-left font-bold text-secondary">{{ t('misc.balance.requiredBalance') }}</th></tr></thead>
           <tbody>
-            <tr v-for="row in results.balance_short" :key="row.coin">
+            <tr v-for="row in results.balance_short" :key="row.coin" class="group">
               <td class="border-b border-border-default px-2 py-1 group-hover:bg-accent/5">{{ row.coin }}</td>
               <td class="border-b border-border-default px-2 py-1 group-hover:bg-accent/5">{{ row.balance.toFixed(2) }}</td>
             </tr>
@@ -105,7 +105,7 @@ const recRows = computed(() => {
       <div class="max-h-[300px] overflow-y-auto rounded-md border border-border-default">
         <table class="w-full border-collapse text-sm">
           <thead>
-            <tr class="group">
+            <tr>
               <th class="sticky top-0 border-b-2 border-border-default bg-panel px-2 py-1 text-left font-bold text-secondary">{{ t('misc.balance.coin') }}</th>
               <th class="sticky top-0 border-b-2 border-border-default bg-panel px-2 py-1 text-left font-bold text-secondary">{{ t('misc.balance.price') }}</th>
               <th class="sticky top-0 border-b-2 border-border-default bg-panel px-2 py-1 text-left font-bold text-secondary">{{ t('misc.balance.contract') }}</th>
@@ -116,7 +116,7 @@ const recRows = computed(() => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="coin in results.coin_infos" :key="coin.coin">
+            <tr v-for="coin in results.coin_infos" :key="coin.coin" class="group">
               <td class="border-b border-border-default px-2 py-1 group-hover:bg-accent/5">{{ coin.coin }}</td>
               <td class="border-b border-border-default px-2 py-1 group-hover:bg-accent/5">{{ fmtPrice(coin.currentPrice) }}</td>
               <td class="border-b border-border-default px-2 py-1 group-hover:bg-accent/5">{{ coin.contractSize }}</td>

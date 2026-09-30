@@ -13,11 +13,11 @@ import { Modal } from '@/shared/components/ui/modal';
 const toasts = injectToasts();
 const { t } = useI18n();
 
-/* Kind → Tailwind utility mappings (the former .toast.success/.info fills and
-   the .alert-modal.<kind> rails). Each branch returns the complete colour set
-   so the static layout utilities never fight a dynamic colour. */
+/* Kind → shared tonal toast classes (components.css `.toast-*`): elevated
+   surface + status-coloured rail. The container positions the stack once, so
+   multiple toasts pile vertically instead of overlapping. */
 function toastClass(kind: 'success' | 'info'): string {
-  return kind === 'success' ? 'bg-success text-primary' : 'bg-accent-deep text-primary';
+  return kind === 'success' ? 'toast-success' : 'toast-info';
 }
 
 function alertBoxClass(kind: 'error' | 'warning' | 'success' | 'info'): string {
@@ -40,13 +40,17 @@ function alertTitleClass(kind: 'error' | 'warning' | 'success' | 'info'): string
 </script>
 
 <template>
-  <div id="toastContainer">
+  <div id="toastContainer" class="toast-container">
     <div
       v-for="toast in toasts.toasts.value"
       :key="toast.id"
-      class="fixed bottom-5 right-5 z-[var(--z-toast)] max-w-[400px] rounded-md px-5 py-3 text-base opacity-100 transition-opacity duration-300 cursor-pointer select-none"
+      class="toast max-w-[400px] cursor-pointer select-none"
       :class="toastClass(toast.kind)"
+      role="status"
+      tabindex="0"
       @click="toasts.dismissToast(toast.id)"
+      @keydown.enter="toasts.dismissToast(toast.id)"
+      @keydown.space.prevent="toasts.dismissToast(toast.id)"
     >
       {{ toast.message }}
     </div>

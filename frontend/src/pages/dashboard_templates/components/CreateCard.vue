@@ -187,7 +187,7 @@ onUnmounted(() => window.clearTimeout(msgTimer));
     <div v-if="templates.length === 0" class="tpl-empty">{{ t('dash.saveTemplateFirst') }}</div>
     <template v-else>
       <div class="tpl-label" id="tpl-select-label">{{ t('dash.template') }}</div>
-      <div style="margin-bottom:0.5rem">
+      <div class="mb-2">
         <SelectRoot v-model="tplSelect">
           <SelectTrigger id="tpl-select" aria-labelledby="tpl-select-label">
             <span :class="tplSelect ? undefined : 'text-placeholder'">{{ tplSelect || t('dash.selectTemplate') }}</span>
@@ -199,7 +199,7 @@ onUnmounted(() => window.clearTimeout(msgTimer));
       </div>
 
       <div class="tpl-label">{{ t('dash.users') }}</div>
-      <div id="users-msel" style="margin-bottom:0.5rem">
+      <div id="users-msel" class="mb-2">
         <MultiSelect uid="msel2" :options="users" v-model:selected="userSel" all-row count-label="dash.nUsers" />
       </div>
 

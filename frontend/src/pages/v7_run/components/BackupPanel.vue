@@ -15,12 +15,13 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
+import ErrorState from '@/shared/components/ErrorState.vue';
 import type { BackupGroup } from '../composables/useBackups';
 
 const props = defineProps<{
   retention: number;
   retentionSaved: number;
-  retentionMsg: { text: string; color: string } | null;
+  retentionMsg: { text: string; tone: 'success' | 'danger' } | null;
   filterText: string;
   groups: BackupGroup[];
   loading: boolean;
@@ -124,7 +125,7 @@ function onRetentionWheel(event: WheelEvent): void {
 </script>
 
 <template>
-  <div ref="panelEl" class="backup-panel fixed top-1/2 left-1/2 z-[var(--z-modal)] flex h-[min(580px,88dvh)] w-[min(660px,92vw)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_70px_rgba(5,8,14,0.8)]" id="backup-panel">
+  <div ref="panelEl" class="backup-panel fixed top-1/2 left-1/2 z-[var(--z-modal)] flex h-[min(580px,88dvh)] w-[min(660px,92vw)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)]" id="backup-panel">
     <div ref="dragEl" class="absolute top-0 left-0 right-10 z-[2] h-11 cursor-move" id="backup-drag" @mousedown="bindDragMove"></div>
     <div class="relative flex shrink-0 items-center justify-between rounded-t-lg border-b border-border-default bg-elevated px-3 py-2">
       <h3 class="m-0 text-lg">{{ t('v7run.instanceBackups') }}</h3>
@@ -146,7 +147,12 @@ function onRetentionWheel(event: WheelEvent): void {
         <Button type="button" class="h-[26px] w-6 shrink-0 p-0 leading-none" id="ret-plus" @click="$emit('step', 1)">+</Button>
       </div>
       <Button id="backup-retention-save" variant="outline" type="button" class="h-[26px] w-7 shrink-0 p-0" :title="t('v7run.saveRetentionLimit')" :aria-label="t('v7run.saveRetentionLimit')" @click="$emit('saveRetention')"><PbIcon :icon="PhFloppyDisk" :size="14" /></Button>
-      <span id="backup-retention-msg" v-if="retentionMsg" :style="{ marginLeft: '6px', fontSize: '0.85em', color: retentionMsg.color }">
+      <span
+        id="backup-retention-msg"
+        v-if="retentionMsg"
+        class="ml-1.5 text-xs"
+        :class="retentionMsg.tone === 'success' ? 'text-success' : 'text-danger'"
+      >
         {{ retentionMsg.text }}
       </span>
       <div class="ml-auto w-full min-w-[220px] max-w-[320px]">
@@ -161,7 +167,7 @@ function onRetentionWheel(event: WheelEvent): void {
       </div>
     </div>
     <div class="min-h-0 flex-1 overflow-y-auto p-3">
-      <div v-if="loadError" id="backup-content" class="p-3"><EmptyState size="inline" :icon="PhWarning" :title="loadError" /></div>
+      <div v-if="loadError" id="backup-content" class="p-3"><ErrorState :title="t('common.error')" :message="loadError" /></div>
       <div v-else-if="loading && !groups.length" id="backup-content" class="p-3"><EmptyState size="inline" :icon="PhHourglass" :title="t('v7run.loading')" /></div>
       <div v-else-if="!groups.length" id="backup-content" class="p-3">
         <EmptyState
@@ -210,7 +216,7 @@ function onRetentionWheel(event: WheelEvent): void {
         </div>
       </div>
     </div>
-    <div ref="gripEl" class="absolute right-0 bottom-0 z-[4] h-4 w-4 cursor-nwse-resize rounded-br-lg bg-[linear-gradient(135deg,transparent_30%,#a3adc2_30%_36%,transparent_36%_56%,#a3adc2_56%_62%,transparent_62%)] opacity-50 hover:opacity-100" id="backup-grip" @mousedown="bindGripResize"></div>
+    <div ref="gripEl" class="absolute right-0 bottom-0 z-[4] h-4 w-4 cursor-nwse-resize rounded-br-lg bg-[linear-gradient(135deg,transparent_30%,rgb(var(--text-secondary-rgb)/0.55)_30%_36%,transparent_36%_56%,rgb(var(--text-secondary-rgb)/0.55)_56%_62%,transparent_62%)] opacity-50 hover:opacity-100" id="backup-grip" @mousedown="bindGripResize"></div>
   </div>
 </template>
 

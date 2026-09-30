@@ -2,8 +2,11 @@
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import { PhX } from '@phosphor-icons/vue';
 import { useAiDrawer } from '@/shared/ai/useAiDrawer';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
 import { dialogsConfirm } from '@/pages/ai_chat/lib/dialogs';
 import { proposalActionLabel } from '@/pages/ai_chat/lib/proposal';
 import { useAiChat } from '@/pages/ai_chat/composables/useAiChat';
@@ -191,7 +194,7 @@ function onQuickReply(actionId: string, value: string): void {
       <Button type="button" size="sm" variant="danger" :disabled="!store.conversationId.value" @click="onDeleteChat">
         {{ t('ai.chat.delete') }}
       </Button>
-      <Button type="button" size="sm" :aria-label="drawerText('close')" @click="drawer.closeDrawer">X</Button>
+      <Button type="button" variant="ghost" size="sm" :aria-label="drawerText('close')" @click="drawer.closeDrawer"><PbIcon :icon="PhX" :size="14" /></Button>
     </header>
 
     <ChatToolbar
@@ -216,7 +219,7 @@ function onQuickReply(actionId: string, value: string): void {
 
     <div class="grid gap-2 border-b border-border-subtle bg-sidebar px-3 py-2 text-xs text-secondary">
       <label class="inline-flex items-center gap-2">
-        <input id="pai-context-toggle" v-model="store.includeContext.value" type="checkbox" class="accent-accent">
+        <Checkbox id="pai-context-toggle" v-model="store.includeContext.value" />
         <span>{{ drawerText('includeContext') }}</span>
       </label>
     </div>

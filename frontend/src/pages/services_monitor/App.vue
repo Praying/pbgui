@@ -859,7 +859,7 @@ onUnmounted(() => {
   z-index: var(--z-modal);
   background: var(--bg-page);
   border: 1px solid var(--border-subtle);
-  border-radius: 10px;
+  border-radius: var(--radius-xl);
   width: 720px;
   min-width: 320px;
   min-height: 160px;
@@ -892,7 +892,7 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 0.75rem 1rem;
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   color: var(--text-secondary);
   white-space: pre-wrap;
@@ -987,7 +987,7 @@ body {
   border-color: transparent;
   border-radius: 8px;
   color: var(--text-secondary);
-  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  transition: background var(--motion-normal) var(--ease-standard), border-color var(--motion-normal) var(--ease-standard), color var(--motion-normal) var(--ease-standard), transform var(--motion-normal) var(--ease-standard);
 }
 
 .sb-btn:hover {
@@ -1024,16 +1024,20 @@ body {
 
 #overview-grid .svc-card {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--control-gap);
   min-height: 132px;
-  padding: 17px;
+  padding: var(--component-gap);
   overflow: hidden;
   border-color: rgb(var(--text-secondary-rgb) / 0.14);
-  border-radius: 13px;
+  border-radius: var(--radius-xl);
   background:
     radial-gradient(circle at 100% 0%, rgb(var(--accent-rgb) / 0.07), transparent 68%),
     rgb(var(--bg-panel-rgb) / 0.82);
-  box-shadow: 0 14px 28px rgb(0 0 0 / 0.14), 0 1px rgb(255 255 255 / 0.025) inset;
-  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: var(--shadow-panel);
+  cursor: pointer;
+  transition: transform var(--motion-normal) var(--ease-standard), border-color var(--motion-normal) var(--ease-standard), background var(--motion-normal) var(--ease-standard), box-shadow var(--motion-normal) var(--ease-standard);
 }
 
 #overview-grid .svc-card::before {
@@ -1050,7 +1054,7 @@ body {
   background:
     radial-gradient(circle at 100% 0%, rgb(var(--accent-rgb) / 0.12), transparent 68%),
     rgb(var(--bg-panel-rgb) / 0.9);
-  box-shadow: 0 18px 34px rgb(0 0 0 / 0.22), 0 0 0 1px rgb(var(--accent-rgb) / 0.04);
+  box-shadow: var(--shadow-elevated);
 }
 
 #overview-grid .svc-card.running {
@@ -1093,7 +1097,7 @@ body {
 
 .result-modal {
   border-color: rgb(var(--accent-rgb) / 0.24);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: linear-gradient(145deg, var(--bg-panel), var(--bg-page));
   box-shadow: var(--shadow-modal);
 }
@@ -1128,11 +1132,6 @@ body {
   border: 1px solid rgb(var(--accent-rgb) / 0.46);
   border-radius: 8px;
   background: linear-gradient(135deg, var(--accent), var(--accent-deep));
-}
-
-button:focus-visible {
-  outline: 2px solid var(--accent-soft);
-  outline-offset: 2px;
 }
 
 @media (max-width: 980px) {

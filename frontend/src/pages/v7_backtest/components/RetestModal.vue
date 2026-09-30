@@ -111,7 +111,7 @@ function onCreateSchedule(): void {
     <div :class="modalBoxClass">
       <h3>{{ t('v7backtest.retestReplaceArchiveResult') }}</h3>
       <div class="min-h-0 flex-1 overflow-auto">
-        <div style="display: flex; flex-direction: column; gap: var(--sp-md); height: 100%; min-width: 0">
+        <div class="flex h-full min-w-0 flex-col gap-4">
           <p class="text-secondary m-0">The new backtest always ends at yesterday. Replacement happens only after the new result finished successfully; Git Push stays manual.</p>
           <div>
             <div class="text-xs uppercase tracking-label text-secondary" id="arr-date-mode-label">Date Mode</div>
@@ -134,12 +134,12 @@ function onCreateSchedule(): void {
             <div class="text-xs uppercase tracking-label text-secondary">{{ t('v7backtest.startingBalance') }}</div>
             <Input v-model="balance" class="text-right" type="number" min="1" step="100" data-test="arr-balance" />
           </div>
-          <div style="flex: 1; display: flex; flex-direction: column; min-height: 60px">
+          <div class="flex min-h-[60px] flex-1 flex-col">
             <div class="text-xs uppercase tracking-label text-secondary">{{ t('v7backtest.exchanges') }}</div>
             <!-- ui-migration: blocked — the reka listbox is single-value; the
                  legacy multi-select (ctrl-free toggle via useToggleMultiSelect)
                  stays native. -->
-            <select v-model="exchanges" class="sb-input" multiple style="flex: 1; height: auto; min-height: var(--input-h)" data-test="arr-exchanges" @mousedown="onToggleMultiSelectMousedown">
+            <select v-model="exchanges" class="sb-input h-auto min-h-[var(--input-h)] flex-1" multiple data-test="arr-exchanges" @mousedown="onToggleMultiSelectMousedown">
               <option v-for="exchange in ALL_EXCHANGES" :key="exchange" :value="exchange">{{ exchange }}</option>
             </select>
           </div>
@@ -152,7 +152,7 @@ function onCreateSchedule(): void {
             <label for="arr-skip-liquidated" class="text-sm cursor-pointer">Do not replace when the new result is liquidated</label>
           </div>
           <hr class="sb-sep" />
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-sm)">
+          <div class="grid grid-cols-2 gap-2">
             <div>
               <div class="text-xs uppercase tracking-label text-secondary" id="arr-cadence-label">Schedule</div>
               <SelectRoot v-model="cadence">

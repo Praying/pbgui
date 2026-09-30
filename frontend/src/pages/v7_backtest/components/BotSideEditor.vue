@@ -140,9 +140,9 @@ watch(model, (raw) => {
         <div v-if="jsonOpen" class="form-group">
           <label :data-tip="t('v7backtest.tip.fullConfigJson')">
             {{ t('v7backtest.fullConfigJson') }}
-            <span v-if="hasStatus" style="font-size: var(--fs-xs, 11px); font-weight: 400; opacity: 0.8">
+            <span v-if="hasStatus" class="text-xs font-normal opacity-80">
               ■ <span class="text-warning">{{ t('v7backtest.neutralized') }}</span>
-              &nbsp;■ <span style="color: var(--danger)">{{ t('v7backtest.review') }}</span>
+              &nbsp;■ <span class="text-danger">{{ t('v7backtest.review') }}</span>
             </span>
           </label>
           <div class="bot-json-highlight-wrap relative">

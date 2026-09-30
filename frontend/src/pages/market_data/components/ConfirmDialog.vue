@@ -50,7 +50,7 @@ watch(
     :class="dialog.visible.value ? 'visible flex' : 'hidden'"
     :aria-hidden="dialog.visible.value ? 'false' : 'true'"
   >
-    <div class="ovl-panel w-[min(520px,94vw)] overflow-hidden rounded-[12px] border border-border-default bg-page shadow-[0_20px_70px_rgba(5,8,14,0.9)]" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="ovl-panel w-[min(520px,94vw)] overflow-hidden rounded-xl border border-border-default bg-page shadow-[var(--shadow-modal)]" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
       <div class="ovl-header flex flex-shrink-0 items-center justify-between border-b border-border-subtle bg-card pt-[0.85rem] pr-[1.1rem] pb-[0.85rem] pl-[1.25rem]">
         <div class="ovl-header-title flex items-center gap-[0.5rem] text-md font-bold text-primary" id="confirm-title">{{ dialog.state.value.title }}</div>
         <div class="ovl-header-actions relative z-[3] flex items-center gap-[0.5rem]">

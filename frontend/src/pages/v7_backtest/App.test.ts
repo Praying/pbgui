@@ -1119,7 +1119,7 @@ describe('archive + legacy panels (M-v7-11)', () => {
     await nextTick();
     expect(wrapper.find('#panel-archive').classes()).toContain('active');
     expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/archives/mine/results'))).toBe(true);
-    expect(wrapper.find('[data-test="arc-tab-optimize"]').attributes('style')).toContain('opacity: 1');
+    expect(wrapper.find('[data-test="arc-tab-optimize"]').classes()).toContain('bg-accent/14');
     // the hash round-trips through the frozen view-state contract
     expect(window.location.hash).toBe('#archive:mine:optimize');
     expect(JSON.parse(localStorage.getItem('pbgui:v7_backtest:view_state')!)).toMatchObject({ panel: 'archive', archive: 'mine', archiveMode: 'optimize' });

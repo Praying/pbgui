@@ -161,7 +161,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     id="log-panel"
-    class="fixed top-[52px] right-0 bottom-0 z-[150] w-[min(560px,92vw)] flex-col overflow-hidden border-l border-border-default bg-panel shadow-[-6px_0_24px_rgba(5,8,14,0.5)]"
+    class="fixed top-[var(--header-height)] right-0 bottom-0 z-[var(--z-navigation)] w-[min(560px,92vw)] flex-col overflow-hidden border-l border-border-default bg-panel shadow-[-6px_0_24px_rgb(0_0_0/0.5)]"
     :class="open ? 'flex' : 'hidden'"
   >
     <div id="log-panel-header" class="flex shrink-0 items-center gap-2 border-b border-border-default bg-elevated px-3 py-2">

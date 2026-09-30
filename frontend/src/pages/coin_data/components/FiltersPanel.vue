@@ -82,7 +82,7 @@ function onExchangeSelect(value: unknown): void {
 
 <template>
   <section class="panel coin-filter-panel flex-none overflow-visible rounded-xl border" id="filters-panel">
-    <div class="panel-body p-[1rem] overflow-visible">
+    <div class="panel-body p-4 overflow-visible">
       <div class="filter-panel-heading flex items-center justify-between gap-3 mb-3">
         <div>
           <h2 class="filter-panel-title text-md font-semibold text-primary">{{ t('market.filterData') }}</h2>
@@ -104,7 +104,7 @@ function onExchangeSelect(value: unknown): void {
         </div>
       </div>
       <div class="filters-grid grid grid-cols-[minmax(180px,1fr)_minmax(130px,0.7fr)_minmax(130px,0.7fr)_minmax(240px,1.45fr)_auto] gap-3 items-end max-[1280px]:grid-cols-[repeat(3,minmax(0,1fr))] max-[980px]:grid-cols-1">
-        <label class="field grid gap-[0.35rem] min-w-0">
+        <label class="field grid gap-1.5 min-w-0">
           <span class="field-label text-sm text-secondary font-semibold" id="filter-exchange-label">{{ t('market.exchange') }}</span>
           <SelectRoot :model-value="exchange" @update:model-value="onExchangeSelect">
             <SelectTrigger id="filter-exchange" class="coin-filter-control" aria-labelledby="filter-exchange-label">
@@ -115,7 +115,7 @@ function onExchangeSelect(value: unknown): void {
             </SelectContent>
           </SelectRoot>
         </label>
-        <label class="field grid gap-[0.35rem] min-w-0">
+        <label class="field grid gap-1.5 min-w-0">
           <span class="field-label text-sm text-secondary font-semibold">market_cap</span>
           <div class="num-stepper flex items-center">
             <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-l-lg rounded-r-none border-r-0 p-0 text-md leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'market_cap', -1)">−</Button>
@@ -132,7 +132,7 @@ function onExchangeSelect(value: unknown): void {
             <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-r-lg rounded-l-none border-l-0 p-0 text-md leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'market_cap', 1)">+</Button>
           </div>
         </label>
-        <label class="field grid gap-[0.35rem] min-w-0">
+        <label class="field grid gap-1.5 min-w-0">
           <span class="field-label text-sm text-secondary font-semibold">vol/mcap</span>
           <div class="num-stepper flex items-center">
             <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-l-lg rounded-r-none border-r-0 p-0 text-md leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'vol_mcap', -1)">−</Button>
@@ -150,7 +150,7 @@ function onExchangeSelect(value: unknown): void {
             <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-r-lg rounded-l-none border-l-0 p-0 text-md leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'vol_mcap', 1)">+</Button>
           </div>
         </label>
-        <div class="field grid gap-[0.35rem] min-w-0">
+        <div class="field grid gap-1.5 min-w-0">
           <span class="field-label text-sm text-secondary font-semibold">{{ t('market.tags') }}</span>
           <TagMultiselect
             :options="tagOptions"

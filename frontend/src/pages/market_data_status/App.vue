@@ -43,6 +43,7 @@ import { computed, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PhArrowClockwise, PhWarning } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import { apiFetch } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
 import { serverMsg } from '@/shared/i18n';
@@ -126,10 +127,13 @@ onUnmounted(() => {
   toastTimers.clear();
 });
 
-function toastBackground(kind: ToastKind): string {
-  if (kind === 'success') return 'var(--mds-accent-success)';
-  if (kind === 'error') return 'var(--mds-accent-danger)';
-  return 'var(--mds-accent-info)';
+/* Kind → shared tonal toast classes (components.css `.toast-*`): elevated
+   surface + status-coloured rail. The solid accent fills are retired — the
+   near-white text on them failed contrast badly. */
+function toastToneClass(kind: ToastKind): string {
+  if (kind === 'success') return 'toast-success';
+  if (kind === 'error') return 'toast-error';
+  return 'toast-info';
 }
 
 /* ── actions (legacy callAPI + setupEventListeners) ── */
@@ -182,10 +186,11 @@ async function onStopRun(): Promise<void> {
 <template>
   <div class="mds-root">
     <MigrationWatermark />
-    <div v-if="!configOk" class="mds-empty-state">
-      <div class="mds-empty-state-icon flex justify-center"><PbIcon :icon="PhWarning" :size="42" /></div>
-      <div>{{ t('misc.mds.missingTokenOrExchange') }}</div>
-    </div>
+    <EmptyState
+      v-if="!configOk"
+      :icon="PhWarning"
+      :title="t('misc.mds.missingTokenOrExchange')"
+    />
     <div v-else class="mds-container">
       <div class="mds-content-wrapper">
         <div v-if="configOk && !connected" class="mb-2 inline-flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2.5 py-1 text-xs text-warning-soft" role="status" aria-live="polite"><PbIcon :icon="PhArrowClockwise" :size="12" class="animate-spin" />{{ t('misc.mds.reconnecting') }}</div>
@@ -194,17 +199,23 @@ async function onStopRun(): Promise<void> {
         <CoinTable :rows="coinRows" :received="received" />
       </div>
     </div>
-    <div
-      v-for="toast in toasts"
-      :key="toast.id"
-      class="mds-toast"
-      :style="{
-        background: toastBackground(toast.kind),
-        animation: toast.leaving ? 'mds-slideOut 0.3s ease' : undefined,
-      }"
-      @click="removeToast(toast.id)"
-    >
-      {{ toast.message }}
+    <div class="mds-toast-stack">
+      <div
+        v-for="toast in toasts"
+        :key="toast.id"
+        class="mds-toast toast"
+        :class="toastToneClass(toast.kind)"
+        :style="{
+          animation: toast.leaving ? 'mds-slideOut var(--motion-slow) ease' : undefined,
+        }"
+        role="status"
+        tabindex="0"
+        @click="removeToast(toast.id)"
+        @keydown.enter="removeToast(toast.id)"
+        @keydown.space.prevent="removeToast(toast.id)"
+      >
+        {{ toast.message }}
+      </div>
     </div>
   </div>
 </template>
@@ -214,18 +225,8 @@ async function onStopRun(): Promise<void> {
      .mds-* selector chain keeps everything page-local. -->
 <style scoped>
 .mds-root {
-  --mds-bg-primary: var(--bg-card);
-  --mds-bg-secondary: var(--bg-elevated);
-  --mds-bg-tertiary: var(--border-default);
-  --mds-text-primary: var(--text-primary);
-  --mds-text-secondary: var(--text-secondary);
-  --mds-border-color: var(--border-strong);
-  --mds-accent-info: var(--accent);
-  --mds-accent-success: var(--success);
-  --mds-accent-warning: var(--warning);
-  --mds-accent-danger: var(--danger);
   font-family: var(--font-sans);
-  color: var(--mds-text-primary);
+  color: var(--text-primary);
   line-height: 1.6;
   margin: 0;
   padding: 0;
@@ -259,28 +260,19 @@ async function onStopRun(): Promise<void> {
   flex-direction: column;
 }
 
-.mds-empty-state {
-  padding: 3rem;
-  text-align: center;
-  color: var(--mds-text-secondary);
-}
-
-.mds-empty-state-icon {
-  font-size: var(--text-3xl);
-  margin-bottom: 1rem;
-  opacity: 0.3;
-}
-
-.mds-toast {
+.mds-toast-stack {
   position: fixed;
   top: 20px;
   right: 20px;
-  padding: 1rem 1.5rem;
-  border-radius: 6px;
-  color: var(--text-primary);
-  font-weight: 500;
   z-index: var(--z-toast);
-  animation: mds-slideIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm);
+  width: min(420px, calc(100vw - 40px));
+}
+
+.mds-toast {
+  animation: mds-slideIn var(--motion-slow) var(--ease-standard);
   cursor: pointer;
   user-select: none;
 }

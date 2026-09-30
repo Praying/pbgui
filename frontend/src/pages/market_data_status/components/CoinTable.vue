@@ -10,7 +10,7 @@
  */
 import { useI18n } from 'vue-i18n';
 import { PhChartBar, PhHourglass } from '@phosphor-icons/vue';
-import PbIcon from '@/shared/components/PbIcon.vue';
+import { EmptyRow } from '@/shared/components/ui/table';
 import { formatNextRun, formatTimestamp, resultClass } from '../format';
 import type { CoinRow } from '../types';
 
@@ -40,14 +40,13 @@ function dashIfFalsy(value: string | number): string {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="rows.length === 0">
-            <td colspan="8" class="mds-empty-state">
-              <div v-if="!received" class="mds-empty-state-icon flex justify-center"><PbIcon :icon="PhHourglass" :size="42" /></div>
-              <div v-else class="mds-empty-state-icon flex justify-center"><PbIcon :icon="PhChartBar" :size="42" /></div>
-              <div v-if="!received">{{ t('misc.mds.waitingForStatus') }}</div>
-              <div v-else>{{ t('misc.mds.noCoinStatusAvailable') }}</div>
-            </td>
-          </tr>
+          <EmptyRow
+            v-if="rows.length === 0"
+            size="inline"
+            colspan="8"
+            :icon="received ? PhChartBar : PhHourglass"
+            :title="received ? t('misc.mds.noCoinStatusAvailable') : t('misc.mds.waitingForStatus')"
+          />
           <tr v-for="row in rows" v-else :key="row.coin">
             <td><strong>{{ row.coin }}</strong></td>
             <td>{{ formatTimestamp(row.last_fetch || '') }}</td>
@@ -68,9 +67,9 @@ function dashIfFalsy(value: string | number): string {
 /* Ported from .mds-root .mds-coin-table-container … (market_data_status.html:159-243). */
 .mds-coin-table-container {
   width: 100%;
-  background: var(--mds-bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--mds-border-color);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
   box-shadow: var(--shadow-panel);
   overflow: hidden;
   flex: 1 1 auto;
@@ -95,16 +94,16 @@ table {
 thead {
   position: sticky;
   top: 0;
-  background: var(--mds-bg-tertiary);
-  z-index: 10;
+  background: var(--bg-card);
+  z-index: 2;
 }
 
 th {
-  padding: 0.6rem 0.75rem;
+  padding: var(--sp-sm) var(--sp-md);
   text-align: left;
   font-weight: 600;
-  color: var(--mds-text-primary);
-  border-bottom: 2px solid var(--mds-border-color);
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-default);
   font-size: var(--text-sm);
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
@@ -112,23 +111,23 @@ th {
 }
 
 td {
-  padding: 0.6rem 0.75rem;
-  border-bottom: 1px solid var(--mds-border-color);
+  padding: var(--sp-sm) var(--sp-md);
+  border-bottom: 1px solid var(--border-subtle);
   font-size: var(--text-sm);
-  color: var(--mds-text-secondary);
+  color: var(--text-secondary);
 }
 
 tbody tr:hover {
-  background: var(--mds-bg-tertiary);
+  background: var(--surface-hover);
 }
 
 .mds-result-success {
-  color: var(--mds-accent-success);
+  color: var(--success);
   font-weight: 500;
 }
 
 .mds-result-error {
-  color: var(--mds-accent-danger);
+  color: var(--danger);
   font-weight: 500;
 }
 
@@ -138,18 +137,7 @@ tbody tr:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: var(--text-sm);
-  color: var(--mds-accent-warning);
+  color: var(--warning);
 }
 
-.mds-empty-state {
-  padding: 3rem;
-  text-align: center;
-  color: var(--mds-text-secondary);
-}
-
-.mds-empty-state-icon {
-  font-size: var(--text-3xl);
-  margin-bottom: 1rem;
-  opacity: 0.3;
-}
 </style>

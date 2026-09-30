@@ -191,7 +191,7 @@ function userOptionClass(active: boolean): string {
             >&#x25BE;</Button>
             <div
               v-if="optionsOpen"
-              class="absolute top-[calc(100%+4px)] left-0 right-0 z-30 max-h-[220px] overflow-y-auto rounded-md border border-border-default bg-panel p-1 shadow-[0_12px_30px_rgba(5,8,14,0.48)]"
+              class="absolute top-[calc(100%+4px)] left-0 right-0 z-30 max-h-[220px] overflow-y-auto rounded-md border border-border-default bg-panel p-1 shadow-[var(--shadow-elevated)]"
               id="import-user-options"
               role="listbox"
               @mousedown.prevent

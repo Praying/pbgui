@@ -102,7 +102,7 @@ describe('delete flow (:943-1001)', () => {
 
     expect(store.pendingDeleteName.value).toBeNull();
     expect(toastText()).toContain('v7run.cannotDeleteRunning');
-    expect(toastEl.classList.contains('bg-danger')).toBe(true);
+    expect(toastEl.classList.contains('toast-error')).toBe(true);
   });
 
   it('confirms, deletes, toasts the host summary and removes the row locally', async () => {
@@ -121,7 +121,7 @@ describe('delete flow (:943-1001)', () => {
     expect((fetchMock.mock.calls.at(-1)![1] as RequestInit).method).toBe('DELETE');
     expect(toastText()).toContain('v7run.instanceDeleted');
     expect(toastText()).toContain('v7run.vpsHostsOkWithFail');
-    expect(toastEl.classList.contains('bg-success')).toBe(true);
+    expect(toastEl.classList.contains('toast-success')).toBe(true);
   });
 
   it('a 409 surfaces the server detail as an error toast', async () => {
@@ -146,7 +146,7 @@ describe('forced-mode flow (:1030-1077)', () => {
 
     expect(store.pendingForced.value).toBeNull();
     expect(toastText()).toContain('v7run.forcedModeSynced');
-    expect(toastEl.classList.contains('bg-success')).toBe(true);
+    expect(toastEl.classList.contains('toast-success')).toBe(true);
     /* :1072 reloads the list right after the toast — the legacy
        loadInstances() fires immediately, so the snapshot GET is the call
        after the forced-mode POST ( spying on the store property cannot
@@ -178,7 +178,7 @@ describe('forced-mode flow (:1030-1077)', () => {
 
     expect(toastText()).toContain('v7run.forcedModeFailed');
     expect(toastText()).toContain('host unreachable');
-    expect(toastEl.classList.contains('bg-danger')).toBe(true);
+    expect(toastEl.classList.contains('toast-error')).toBe(true);
   });
 
   it('FORCED_MODES matches the legacy modal table (:1031-1035)', () => {

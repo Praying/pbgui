@@ -28,13 +28,13 @@ describe('CoinTable empty states', () => {
   it('shows the waiting state before the first status message', () => {
     const table = mountTable([], false);
 
-    expect(table.find('.mds-empty-state').text()).toContain('Waiting for market data status...');
+    expect(table.find('.pbgui-empty-state').text()).toContain('Waiting for market data status...');
   });
 
   it('shows the no-coin state after a status message with no rows', () => {
     const table = mountTable([], true);
 
-    expect(table.find('.mds-empty-state').text()).toContain('No coin status available yet');
+    expect(table.find('.pbgui-empty-state').text()).toContain('No coin status available yet');
   });
 
   it('renders the empty state across all eight columns', () => {
@@ -46,7 +46,7 @@ describe('CoinTable empty states', () => {
   it('localizes the waiting state in zh', () => {
     const table = mountTable([], false, 'zh');
 
-    expect(table.find('.mds-empty-state').text()).toContain('正在等待行情数据状态...');
+    expect(table.find('.pbgui-empty-state').text()).toContain('正在等待行情数据状态...');
   });
 });
 

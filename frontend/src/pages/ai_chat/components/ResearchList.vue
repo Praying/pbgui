@@ -33,12 +33,12 @@ const visibleItems = computed(() => props.items.filter((item) => /^[a-f0-9]{32}$
   <section
     v-for="item in visibleItems"
     :key="item.id"
-    class="ai-research-card mx-4 mb-3 rounded-lg border border-info/30 bg-info/8 p-3"
+    class="ai-research-card mx-4 mb-3 rounded-lg border border-accent/30 bg-accent/8 p-3"
     :data-research-id="item.id"
     aria-label="Web research"
   >
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <strong class="text-sm text-info-soft">{{ item.kind === 'jev' ? 'Jev research analysis' : 'Web research' }}</strong>
+      <strong class="text-sm text-accent-soft">{{ item.kind === 'jev' ? 'Jev research analysis' : 'Web research' }}</strong>
       <span class="text-xs text-secondary">{{ item.provider }} · {{ item.model }}</span>
     </div>
     <pre class="mt-2 max-h-32 overflow-auto whitespace-pre-wrap text-xs text-primary">{{ item.prompt }}</pre>

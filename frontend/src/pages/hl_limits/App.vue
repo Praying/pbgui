@@ -125,8 +125,8 @@ function usageText(account: HyperliquidAccount): string {
   return ratio === null ? '—' : `${(100 * ratio).toFixed(1)}%`;
 }
 
-function usageBarWidth(account: HyperliquidAccount): string {
-  return `${((usageRatio(account) ?? 0) * 100).toFixed(1)}%`;
+function usageBarScale(account: HyperliquidAccount): string {
+  return `scaleX(${(usageRatio(account) ?? 0).toFixed(3)})`;
 }
 
 function usageBarTone(account: HyperliquidAccount): string {
@@ -318,8 +318,8 @@ onUnmounted(() => {
                 >{{ remainingRequestCount(account) }}</td>
                 <td class="align-top">
                   <div class="flex items-center justify-end gap-2">
-                    <span class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-border-subtle" aria-hidden="true">
-                      <span class="block h-full rounded-full" :class="usageBarTone(account)" :style="{ width: usageBarWidth(account) }" />
+                    <span class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-secondary/16" aria-hidden="true">
+                      <span class="block h-full w-full origin-left rounded-full transition-transform duration-[var(--motion-normal)] ease-standard" :class="usageBarTone(account)" :style="{ transform: usageBarScale(account) }" />
                     </span>
                     <span class="w-12 text-right tabular-nums">{{ usageText(account) }}</span>
                   </div>

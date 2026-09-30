@@ -153,14 +153,4 @@ onMounted(() => {
 
 <style scoped>
 /* Page-level AppShell overrides — ported from styles/balance-calc.css. */
-.data-page-shell :deep(.app-shell__main) {
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  padding: 0;
-}
-
-.data-page-shell :deep(.app-shell__primary) {
-  min-height: 0;
-}
 </style>

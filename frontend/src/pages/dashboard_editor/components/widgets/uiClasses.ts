@@ -81,7 +81,7 @@ export const dtStatusClass =
   'dt-status min-h-[1.1em] px-[0.75rem] py-[0.2rem] text-micro text-muted';
 
 /** `.dt-nodata` / `.db-nodata` (identical legacy rules) */
-export const dtNodataClass = 'dt-nodata p-[1.5rem] text-center text-compact text-border-strong';
+export const dtNodataClass = 'dt-nodata p-[1.5rem] text-center text-compact text-muted';
 
 /** `.dt-daterange` */
 export const dtDaterangeClass =

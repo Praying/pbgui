@@ -52,7 +52,7 @@ describe('createToast (:1397-1407)', () => {
 
     expect(notify).toHaveBeenCalledWith('Deleted!', 'ok', expect.anything());
     expect(el.textContent).toBe('Deleted!');
-    expect(el.classList.contains('bg-success')).toBe(true);
+    expect(el.classList.contains('toast-success')).toBe(true);
     expect(el.style.display).toBe('block');
     expect(el.style.opacity).toBe('1');
   });
@@ -62,11 +62,11 @@ describe('createToast (:1397-1407)', () => {
     el.classList.add('fixed', 'bottom-5'); // the App.vue positioning utilities
 
     toast.show('one', 'ok');
-    expect(el.classList.contains('bg-success')).toBe(true);
+    expect(el.classList.contains('toast-success')).toBe(true);
 
     toast.show('two', 'err');
-    expect(el.classList.contains('bg-danger')).toBe(true);
-    expect(el.classList.contains('bg-success')).toBe(false);
+    expect(el.classList.contains('toast-error')).toBe(true);
+    expect(el.classList.contains('toast-success')).toBe(false);
     expect(el.classList.contains('fixed')).toBe(true);
     expect(el.classList.contains('bottom-5')).toBe(true);
   });

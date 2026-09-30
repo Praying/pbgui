@@ -287,7 +287,7 @@ const priceMarketLabel = computed(() => {
 <template>
   <div>
     <div v-if="showView">
-      <div v-if="result.liquidated" data-test="liquidation-warning" style="background: rgb(var(--danger-rgb) / 0.15); color: var(--red); padding: var(--sp-sm) var(--sp-md); border-radius: 4px; margin-bottom: var(--sp-sm); font-weight: 600">
+      <div v-if="result.liquidated" data-test="liquidation-warning" class="notice notice-error mb-2 font-semibold">
         ⚠ Backtest ended in liquidation ({{ liquidationReasons.join(', ') }})
       </div>
 

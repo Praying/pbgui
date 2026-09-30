@@ -144,13 +144,12 @@ onMounted(() => {
     <div class="tpl-title"><span class="icon"><PbIcon :icon="PhClipboard" :size="18" /></span> <span>{{ t('dash.dashboardTemplates') }}</span></div>
     <Button
       id="btn-close"
-      class="tpl-close"
+      class="tpl-close hidden"
       variant="outline"
       size="sm"
       type="button"
       :title="t('common.close')"
       :aria-label="t('common.close')"
-      style="display:none"
       @click="onClose"
     ><PbIcon :icon="PhX" /></Button>
   </div>

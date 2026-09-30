@@ -162,7 +162,7 @@ watch(
 <template>
   <section id="stage-pareto-playground" class="stage-view">
     <div class="compact-three-col grid items-start grid-cols-[1fr_1fr_340px] gap-3 max-[900px]:grid-cols-1">
-      <div class="chart-card panel-card min-w-0 rounded-xl border border-border-default bg-panel p-3.5" style="grid-column: span 2">
+      <div class="chart-card panel-card min-w-0 rounded-xl border border-border-default bg-panel p-3.5 col-span-2 max-[900px]:col-span-1">
         <div class="title-row flex flex-wrap items-center justify-between gap-3">
           <h3 class="mb-2">{{ t('v7explore.explorer') }}</h3>
           <label id="playground-projection-layout-wrap" v-show="isProjections" class="inline-flex cursor-pointer items-center gap-2.5 text-sm text-secondary select-none">
@@ -191,7 +191,7 @@ watch(
       </div>
       <div class="chart-card panel-card min-w-0 rounded-xl border border-border-default bg-panel p-3.5">
         <h3 class="mb-2">{{ t('v7explore.chartSettings') }}</h3>
-        <div class="form-grid grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3" style="margin-top: 12px">
+        <div class="form-grid mt-3 grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3">
           <div class="form-field full col-span-12 flex flex-col gap-1.5">
             <Label id="playground-viz-type-label">{{ t('v7explore.visualization') }}</Label>
             <SelectRoot :model-value="pg.vizType" @update:model-value="onVizTypeChange">
@@ -237,7 +237,7 @@ watch(
               <div class="load-status-head flex items-center justify-between gap-2">
                 <strong>{{ t('v7explore.customMetrics') }}</strong>
               </div>
-              <div id="playground-custom-filters" v-show="visibility.showFilters" class="stack flex flex-col gap-3" style="gap: 8px">
+              <div id="playground-custom-filters" v-show="visibility.showFilters" class="stack flex flex-col gap-2">
                 <div class="check-row flex min-h-8 items-center gap-2 text-secondary">
                   <Checkbox id="playground-allow-mixed-weighted" v-model="pg.allowMixedWeighted" @update:model-value="pg.quickView === 'Custom...' && surfaces.refreshPlaygroundFromSettings()" />
                   <Label for="playground-allow-mixed-weighted">{{ t('v7explore.allowMixedWeighted') }}</Label>
@@ -247,8 +247,8 @@ watch(
                   <Label for="playground-allow-mixed-currency">{{ t('v7explore.allowMixedCurrency') }}</Label>
                 </div>
               </div>
-              <div class="stack flex flex-col gap-3" style="gap: 10px; margin-top: 8px">
-                <div class="form-field full col-span-12 flex flex-col gap-1.5" style="gap: 6px">
+              <div class="stack mt-2 flex flex-col gap-2.5">
+                <div class="form-field full col-span-12 flex flex-col gap-1.5">
                   <Label id="playground-custom-x-metric-label">{{ t('v7explore.xAxis') }}</Label>
                   <SelectRoot :model-value="customX.value" @update:model-value="onCustomMetricChange('customXMetric', $event)">
                     <SelectTrigger id="playground-custom-x-metric" aria-labelledby="playground-custom-x-metric-label">
@@ -259,7 +259,7 @@ watch(
                     </SelectContent>
                   </SelectRoot>
                 </div>
-                <div class="form-field full col-span-12 flex flex-col gap-1.5" style="gap: 6px">
+                <div class="form-field full col-span-12 flex flex-col gap-1.5">
                   <Label id="playground-custom-y-metric-label">{{ t('v7explore.yAxis') }}</Label>
                   <SelectRoot :model-value="customY.value" @update:model-value="onCustomMetricChange('customYMetric', $event)">
                     <SelectTrigger id="playground-custom-y-metric" aria-labelledby="playground-custom-y-metric-label">
@@ -270,7 +270,7 @@ watch(
                     </SelectContent>
                   </SelectRoot>
                 </div>
-                <div id="playground-custom-z-wrap" v-show="visibility.showZ" class="form-field full col-span-12 flex flex-col gap-1.5" style="gap: 6px">
+                <div id="playground-custom-z-wrap" v-show="visibility.showZ" class="form-field full col-span-12 flex flex-col gap-1.5">
                   <Label id="playground-custom-z-metric-label">{{ t('v7explore.zAxis') }}</Label>
                   <SelectRoot :model-value="customZ.value" @update:model-value="onCustomMetricChange('customZMetric', $event)">
                     <SelectTrigger id="playground-custom-z-metric" aria-labelledby="playground-custom-z-metric-label">
@@ -312,7 +312,7 @@ watch(
           </div>
           <div class="form-field full col-span-12 flex flex-col gap-1.5"><div class="button-row flex flex-wrap gap-2"></div></div>
         </div>
-        <div style="margin-top: 12px">
+        <div class="mt-3">
           <h4 class="mb-2">{{ t('v7explore.bestMatch') }}</h4>
           <p class="muted-line text-secondary" id="playground-best-match">{{ bestMatchLine }}</p>
         </div>

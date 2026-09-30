@@ -14,6 +14,7 @@ import { Table } from '@/shared/components/ui/table';
 import { columnsForTable, type ColumnDef } from '../lib/columns';
 import { formatCompact, formatPrice, formatRatio, rowKey } from '../lib/format';
 import type { SortState, TableViewName } from '../types';
+import EmptyState from '@/shared/components/EmptyState.vue';
 
 const DEFAULT_SORT_STATE: SortState = { key: 'market_cap', dir: 'desc' };
 
@@ -51,7 +52,7 @@ function tableClass(): string {
 function tableWrapClass(): string {
   const base = 'coin-data-table-wrap flex-1 min-h-0 [scrollbar-width:thin] [scrollbar-color:var(--border-strong)_transparent] max-[980px]:flex-none max-[980px]:max-h-none';
   return props.table === 'hip3'
-    ? `${base} overflow-x-auto overflow-y-scroll overscroll-contain [scrollbar-gutter:stable_both-edges] pt-0 px-[1rem] pb-[1rem]`
+    ? `${base} overflow-x-auto overflow-y-scroll overscroll-contain [scrollbar-gutter:stable_both-edges] pt-0 px-4 pb-4`
     : `${base} overflow-auto`;
 }
 
@@ -124,7 +125,7 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
           <th
             v-for="column in columns"
             :key="column.key"
-            class="coin-table-header sortable sticky top-0 z-[2] text-secondary text-sm uppercase tracking-label font-bold text-left px-[0.65rem] py-[0.6rem] leading-[1.05] border-b whitespace-nowrap"
+            class="coin-table-header sortable sticky top-0 z-[2] px-3 py-2 text-left text-xs font-semibold uppercase tracking-label text-secondary leading-[1.05] border-b whitespace-nowrap"
             :class="column.centered ? 'text-center' : column.numeric ? 'text-right' : ''"
             :data-table="table"
             :data-key="column.key"
@@ -158,19 +159,19 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
           @click="emit('select', table, rowKey(row, table))"
           @keydown="onRowKeydown($event, rowKey(row, table))"
         >
-          <td v-for="column in columns" :key="column.key" class="coin-table-cell px-[0.65rem] py-[0.38rem] border-b text-primary leading-[1.12] align-middle overflow-hidden text-ellipsis whitespace-nowrap" :class="[column.mono ? 'mono text-sm' : 'text-md', column.centered ? 'text-center' : column.numeric ? 'text-right' : '']" :title="cellText(row, column)">
+          <td v-for="column in columns" :key="column.key" class="coin-table-cell px-3 py-1.5 border-b text-primary leading-[1.12] align-middle overflow-hidden text-ellipsis whitespace-nowrap" :class="[column.mono ? 'mono text-sm' : 'text-md', column.centered ? 'text-center' : column.numeric ? 'text-right' : '']" :title="cellText(row, column)">
             <template v-if="column.render === 'cpt'">
-              <span v-if="row[column.key]" class="badge pbgui-badge badge-success ok inline-flex items-center justify-center min-w-[22px] py-[0.03rem] px-[0.35rem] rounded-full border text-xs font-bold leading-none bg-success/15 border-success/30 text-success">{{ t('common.yes') }}</span>
-              <span v-else class="badge pbgui-badge badge-muted dim inline-flex items-center justify-center min-w-[22px] py-[0.03rem] px-[0.35rem] rounded-full border text-xs font-bold leading-none bg-secondary/12 border-secondary/20 text-primary">{{ t('common.no') }}</span>
+              <span v-if="row[column.key]" class="badge pbgui-badge badge-success ok inline-flex items-center justify-center min-w-[22px] py-px px-1.5 rounded-full border text-xs font-bold leading-none bg-success/15 border-success/30 text-success">{{ t('common.yes') }}</span>
+              <span v-else class="badge pbgui-badge badge-muted dim inline-flex items-center justify-center min-w-[22px] py-px px-1.5 rounded-full border text-xs font-bold leading-none bg-secondary/12 border-secondary/20 text-primary">{{ t('common.no') }}</span>
             </template>
             <template v-else-if="column.render === 'notice'">
-              <span v-if="row[column.key]" class="badge pbgui-badge badge-warning warn inline-flex items-center justify-center min-w-[22px] py-[0.03rem] px-[0.35rem] rounded-full border text-xs font-bold leading-none bg-warning/14 border-warning/28 text-warning-soft" :title="String(row[column.key])">{{ t('market.notice') }}</span>
-              <span v-else class="badge pbgui-badge badge-muted dim inline-flex items-center justify-center min-w-[22px] py-[0.03rem] px-[0.35rem] rounded-full border text-xs font-bold leading-none bg-secondary/12 border-secondary/20 text-primary">-</span>
+              <span v-if="row[column.key]" class="badge pbgui-badge badge-warning warn inline-flex items-center justify-center min-w-[22px] py-px px-1.5 rounded-full border text-xs font-bold leading-none bg-warning/14 border-warning/28 text-warning-soft" :title="String(row[column.key])">{{ t('market.notice') }}</span>
+              <span v-else class="badge pbgui-badge badge-muted dim inline-flex items-center justify-center min-w-[22px] py-px px-1.5 rounded-full border text-xs font-bold leading-none bg-secondary/12 border-secondary/20 text-primary">-</span>
             </template>
             <template v-else-if="column.render === 'tags'">
               <div v-if="rowTags(row, column).length" class="tags-cell flex flex-nowrap items-center gap-1 whitespace-nowrap overflow-hidden min-w-0" :title="rowTags(row, column).join(', ')">
-                <span v-for="tag in rowTags(row, column).slice(0, 3)" :key="tag" class="tag-chip inline-flex items-center flex-none max-w-[82px] py-[0.02rem] px-[0.34rem] rounded-full bg-secondary/12 border border-secondary/16 text-primary text-xs leading-none overflow-hidden text-ellipsis whitespace-nowrap" :title="tag">{{ tag }}</span>
-                <span v-if="rowTags(row, column).length > 3" class="tag-chip inline-flex items-center flex-none max-w-[82px] py-[0.02rem] px-[0.34rem] rounded-full bg-secondary/12 border border-secondary/16 text-primary text-xs leading-none overflow-hidden text-ellipsis whitespace-nowrap" :title="rowTags(row, column).join(', ')">+{{ rowTags(row, column).length - 3 }}</span>
+                <span v-for="tag in rowTags(row, column).slice(0, 3)" :key="tag" class="tag-chip inline-flex items-center flex-none max-w-[82px] py-px px-1.5 rounded-full bg-secondary/12 border border-secondary/16 text-primary text-xs leading-none overflow-hidden text-ellipsis whitespace-nowrap" :title="tag">{{ tag }}</span>
+                <span v-if="rowTags(row, column).length > 3" class="tag-chip inline-flex items-center flex-none max-w-[82px] py-px px-1.5 rounded-full bg-secondary/12 border border-secondary/16 text-primary text-xs leading-none overflow-hidden text-ellipsis whitespace-nowrap" :title="rowTags(row, column).join(', ')">+{{ rowTags(row, column).length - 3 }}</span>
               </div>
               <template v-else>-</template>
             </template>
@@ -180,12 +181,13 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
       </tbody>
     </Table>
   </div>
-  <div class="coin-table-empty empty-state flex flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center" :id="table + '-empty'" :class="rows.length > 0 ? 'hidden' : ''">
-    <span class="grid h-12 w-12 place-items-center rounded-xl border text-secondary">
-      <PbIcon :icon="PhDatabase" :size="23" />
-    </span>
-    <span class="max-w-[46ch] text-sm leading-relaxed text-muted">{{ emptyMessage() }}</span>
-  </div>
+  <EmptyState
+    :id="table + '-empty'"
+    class="coin-table-empty empty-state flex-1"
+    :class="rows.length > 0 ? 'hidden' : ''"
+    :icon="PhDatabase"
+    :title="emptyMessage()"
+  />
 </template>
 
 <style scoped>

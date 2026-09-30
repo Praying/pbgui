@@ -180,7 +180,7 @@ function onResizeMousedown(event: MouseEvent, dir: string): void {
   <div
     ref="panel"
     id="dbtools-log-panel"
-    class="fixed bottom-0 right-0 z-[950] hidden h-[62vh] w-1/2 min-w-[360px] min-h-[260px] flex-col overflow-hidden rounded-t-md border-2 border-accent bg-page"
+    class="fixed bottom-0 right-0 z-[var(--z-modal)] hidden h-[62vh] w-1/2 min-w-[360px] min-h-[260px] flex-col overflow-hidden rounded-t-md border-2 border-accent bg-page"
     :class="visible ? 'flex' : 'hidden'"
   >
     <div class="lp-resize lp-resize-n" data-dir="n" @mousedown="onResizeMousedown($event, 'n')"></div>

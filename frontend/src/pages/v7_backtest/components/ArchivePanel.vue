@@ -398,18 +398,19 @@ defineExpose({
       <div id="archive-results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[var(--shadow-panel)]">
         <div id="archive-layout-status" class="pt-2 text-sm text-secondary" data-test="archive-layout-status">{{ store.statusLine.value }}</div>
         <div id="archive-results-toolbar" class="mb-3 flex flex-wrap items-center gap-2 pt-2">
-          <Button type="button" variant="default" class="act-btn h-auto" data-test="arc-tab-backtests" :style="{ opacity: isBacktests ? '1' : '.55' }" @click="store.setMode('backtests')">
+          <Button type="button" variant="default" class="act-btn h-auto" data-test="arc-tab-backtests" :class="isBacktests ? 'border-accent/35 bg-accent/14 text-accent-soft' : 'opacity-60'" @click="store.setMode('backtests')">
             {{ t('v7backtest.backtestResults') }}
           </Button>
-          <Button type="button" variant="default" class="act-btn h-auto" data-test="arc-tab-optimize" :style="{ opacity: isOptimize ? '1' : '.55' }" @click="store.setMode('optimize')">
+          <Button type="button" variant="default" class="act-btn h-auto" data-test="arc-tab-optimize" :class="isOptimize ? 'border-accent/35 bg-accent/14 text-accent-soft' : 'opacity-60'" @click="store.setMode('optimize')">
             {{ t('v7backtest.optimizeSettings') }}
           </Button>
           <Button
+            v-show="store.isOwn.value"
             type="button"
             variant="default"
             class="act-btn h-auto"
             data-test="arc-tab-schedules"
-            :style="{ display: store.isOwn.value ? '' : 'none', opacity: store.mode.value === 'schedules' ? '1' : '.55' }"
+            :class="store.mode.value === 'schedules' ? 'border-accent/35 bg-accent/14 text-accent-soft' : 'opacity-60'"
             @click="store.setMode('schedules')"
           >
             {{ t('v7backtest.retestSchedules') }}
@@ -437,7 +438,7 @@ defineExpose({
           </SelectRoot>
           <Input v-show="isBacktests" id="arc-results-filter" v-model="store.textFilter.value" type="text" class="w-auto max-w-[200px]" :placeholder="textPlaceholder" />
           <span v-show="isBacktests" id="archive-results-count-label" class="whitespace-nowrap text-sm text-secondary">{{ countLabel }}</span>
-          <span style="flex: 1"></span>
+          <span class="flex-1"></span>
           <Button v-show="isBacktests" type="button" variant="default" class="act-btn h-auto" data-test="arc-btn-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">
             {{ t('v7backtest.selectAll') }}
           </Button>
@@ -448,11 +449,10 @@ defineExpose({
             id="archive-results-pin-btn"
             type="button"
             variant="default"
-            class="act-btn h-auto"
+            class="act-btn h-auto px-1.5 text-base"
             :class="pinned ? '' : 'unpinned opacity-40'"
             :title="t('v7backtest.pinTable')"
             :aria-label="t('v7backtest.pinTable')"
-            style="font-size: var(--text-base); padding: 0 6px"
             @click="pinned = !pinned"
           >
             <PbIcon :icon="PhPushPin" :size="18" />

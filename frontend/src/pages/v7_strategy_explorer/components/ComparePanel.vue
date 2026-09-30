@@ -100,7 +100,7 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
         <template v-else>{{ t('v7explore.configureCompareHint') }}</template>
       </div>
       <div id="compare-progress" class="mt-2.5" :class="compare.progress.value.pct >= 0 ? 'block' : 'hidden'">
-        <div class="h-2.5 overflow-hidden rounded-full border border-border-default bg-page"><div id="compare-progress-fill" class="h-full w-0 bg-[linear-gradient(90deg,var(--accent),var(--success))] transition-[width] duration-200 ease-[ease]" :style="{ width: compare.progress.value.pct + '%' }"></div></div>
+        <div class="h-2.5 overflow-hidden rounded-full border border-border-default bg-page"><div id="compare-progress-fill" class="h-full w-full origin-left bg-[linear-gradient(90deg,var(--accent),var(--success))] transition-transform duration-[var(--motion-normal)] ease-standard" :style="{ transform: `scaleX(${(compare.progress.value.pct || 0) / 100})` }"></div></div>
         <div id="compare-progress-text" class="mt-1.5 text-secondary text-sm">{{ compare.progress.value.message || t('v7explore.waiting') }}</div>
       </div>
       <div id="compare-result" class="mt-3" v-if="data && data.ok">

@@ -147,7 +147,7 @@ onUnmounted(() => window.clearTimeout(msgTimer));
     <div v-if="templates.length === 0" class="tpl-empty">{{ t('dash.noTemplatesSaved') }}</div>
     <template v-else>
       <div class="tpl-mgmt-row">
-        <div id="tpl-manage-msel" style="flex:1">
+        <div id="tpl-manage-msel" class="flex-1">
           <MultiSelect uid="msel1" :options="templates" v-model:selected="selTpl" />
         </div>
         <Button
@@ -173,7 +173,7 @@ onUnmounted(() => window.clearTimeout(msgTimer));
           @click="deleteTemplates"
         ><PbIcon :icon="PhTrash" /></Button>
       </div>
-      <div id="rename-wrap" v-show="renameRowVisible" style="margin-top:0.5rem">
+      <div id="rename-wrap" v-show="renameRowVisible" class="mt-2">
         <div class="input-row">
           <Input
             ref="renameInput"

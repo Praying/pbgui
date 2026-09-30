@@ -7,6 +7,7 @@
  */
 import PlotlyDiv from './PlotlyDiv.vue';
 import type { PlotlyLayout, PlotlyTrace } from '../lib/plotlyVendor';
+import EmptyState from '@/shared/components/EmptyState.vue';
 
 withDefaults(
   defineProps<{
@@ -22,10 +23,8 @@ withDefaults(
 </script>
 
 <template>
-  <div :id="areaId" :style="open && traces.length > 0 ? '' : 'display: none'">
-    <div v-if="open && traces.length === 0" style="text-align: center; padding: var(--sp-lg); color: var(--text-dim)">
-      No equity data found for the selected results.
-    </div>
+  <div v-show="open && traces.length > 0" :id="areaId">
+    <EmptyState v-if="open && traces.length === 0" size="inline" title="No equity data found for the selected results." />
     <div v-else-if="open" class="chart-wrap">
       <PlotlyDiv :plot-id="plotId" :traces="traces" :layout="layout" />
     </div>

@@ -50,7 +50,7 @@ const hasChart = computed(() => !!(props.spec && Array.isArray(props.spec.traces
 const chartClass = computed(() =>
   hasChart.value
     ? 'small-chart min-h-[420px]'
-    : 'placeholder-chart small-chart flex min-h-[420px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary'
+    : 'placeholder-chart small-chart flex min-h-[420px] items-center justify-center rounded-xl border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary'
 );
 
 function layout(): PlotlyLayout {

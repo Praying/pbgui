@@ -30,7 +30,7 @@ const calloutText = computed<string>(() => {
 
 /** The former .usage-card rule (legacy :2173+). */
 const usageCardClass =
-  'usage-card grid gap-1 rounded-[10px] border border-elevated bg-page/45 p-3';
+  'usage-card grid gap-1 rounded-[10px] border border-subtle bg-page/45 p-3';
 </script>
 
 <template>

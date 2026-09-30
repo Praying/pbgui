@@ -19,9 +19,9 @@ const rows = computed(() => sortByPanelOrder(props.data, bybitPanelOrder));
 
 <template>
   <div id="bybitExpiryPanel" class="hl-expiry-panel mx-auto mb-5 w-[min(100%,1500px)] rounded-lg border border-border-subtle bg-panel p-4 max-[768px]:p-3">
-    <div class="border-b border-border-subtle pb-3" style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+    <div class="mb-3 flex items-center gap-3 border-b border-border-subtle pb-3">
       <BackButton @back="emit('back')" />
-      <h3 class="text-lg tracking-tight text-primary" style="margin:0;">{{ t('misc.apikeys.bybitApiKeyExpiry') }}</h3>
+      <h3 class="m-0 text-lg tracking-tight text-primary">{{ t('misc.apikeys.bybitApiKeyExpiry') }}</h3>
     </div>
     <table class="hl-expiry-table w-full overflow-hidden rounded-md border border-border-subtle border-separate border-spacing-0">
       <thead>
@@ -35,7 +35,7 @@ const rows = computed(() => sortByPanelOrder(props.data, bybitPanelOrder));
       </thead>
       <tbody id="bybitExpiryBody">
         <tr v-if="rows.length === 0">
-          <td colspan="5" class="border-b border-border-subtle px-2.5 py-2 text-sm" style="text-align:center;color:var(--text-secondary);">{{ t('misc.apikeys.noBybitUsersFound') }}</td>
+          <td colspan="5" class="border-b border-border-subtle px-2.5 py-2 text-center text-sm text-secondary">{{ t('misc.apikeys.noBybitUsersFound') }}</td>
         </tr>
         <tr v-else v-for="exp in rows" :key="exp.name">
           <td class="border-b border-border-subtle px-2.5 py-2 text-sm"><strong class="text-primary">{{ exp.name }}</strong></td>
@@ -44,9 +44,9 @@ const rows = computed(() => sortByPanelOrder(props.data, bybitPanelOrder));
           <td class="border-b border-border-subtle px-2.5 py-2 text-sm"><ExpiryBadge :exp="exp" /></td>
           <td class="border-b border-border-subtle px-2.5 py-2 text-sm">
             <template v-if="exp.ips && exp.ips.length > 0">
-              <span v-for="ip in exp.ips" :key="ip" style="font-family:monospace;font-size:var(--text-xs);margin-right:8px;">{{ ip }}</span>
+              <span v-for="ip in exp.ips" :key="ip" class="mr-2 font-mono text-xs">{{ ip }}</span>
             </template>
-            <span v-else style="color:var(--text-secondary);font-size:var(--text-xs);">{{ t('misc.apikeys.noneUnrestricted') }}</span>
+            <span v-else class="text-xs text-secondary">{{ t('misc.apikeys.noneUnrestricted') }}</span>
           </td>
         </tr>
       </tbody>

@@ -25,8 +25,8 @@ defineProps<{
         v-for="item in items"
         :key="'ctx-' + item.panel"
         :id="'ctx-' + item.panel"
+        v-show="item.panel === active"
         class="ctx-actions"
-        :style="{ display: item.panel === active ? '' : 'none' }"
       >
         <slot :name="'ctx-' + item.panel" />
       </div>

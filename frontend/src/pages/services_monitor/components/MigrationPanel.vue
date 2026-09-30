@@ -303,8 +303,8 @@ const notReadyUnitsText = computed(() =>
 .migration-section { background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem; }
 .migration-section-title { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; color: var(--text-primary); font-weight: 700; font-size: var(--text-md); margin-bottom: 0.55rem; }
 .migration-note { color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.45; }
-.migration-warn { background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card)); border: 1px solid rgb(var(--warning-rgb) / 0.5); color: var(--warning-soft); border-radius: 7px; padding: 0.55rem 0.7rem; margin: 0.45rem 0; font-size: var(--text-sm); }
-.migration-ok { background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); border: 1px solid rgb(var(--success-deep-rgb) / 0.7); color: var(--success); border-radius: 7px; padding: 0.55rem 0.7rem; margin: 0.45rem 0; font-size: var(--text-sm); }
+.migration-warn { background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card)); border: 1px solid rgb(var(--warning-rgb) / 0.5); color: var(--warning-soft); border-radius: var(--radius-lg); padding: 0.55rem 0.7rem; margin: 0.45rem 0; font-size: var(--text-sm); }
+.migration-ok { background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); border: 1px solid rgb(var(--success-deep-rgb) / 0.7); color: var(--success); border-radius: var(--radius-lg); padding: 0.55rem 0.7rem; margin: 0.45rem 0; font-size: var(--text-sm); }
 .migration-table-wrap { overflow-x: auto; }
 .migration-table { width: 100%; border-collapse: collapse; font-size: var(--text-xs); }
 .migration-table th { background: var(--surface-workspace); color: var(--text-muted); padding: 0.4rem 0.55rem; text-align: left; border-bottom: 1px solid var(--border-subtle); white-space: nowrap; }

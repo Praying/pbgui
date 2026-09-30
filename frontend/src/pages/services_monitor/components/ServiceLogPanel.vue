@@ -229,7 +229,7 @@ watch(
   font-size: var(--text-sm);
   font-family: inherit;
   border-bottom: 2px solid transparent;
-  transition: all 0.12s;
+  transition: color var(--motion-fast) var(--ease-standard), background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
 }
 .tab-btn :deep(svg) {
   display: block;
@@ -326,7 +326,7 @@ watch(
   padding: 0 12px;
   border: 1px solid transparent;
   border-bottom: 2px solid transparent;
-  border-radius: 7px 7px 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   color: var(--text-muted);
   transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }

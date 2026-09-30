@@ -51,7 +51,7 @@ export interface UseBackups {
   panelOpen: Ref<boolean>;
   retention: Ref<number>;
   retentionSaved: Ref<number>;
-  retentionMsg: Ref<{ text: string; color: string } | null>;
+  retentionMsg: Ref<{ text: string; tone: 'success' | 'danger' } | null>;
   backups: Ref<BackupEntry[]>;
   filterText: Ref<string>;
   groups: Ref<BackupGroup[]>;
@@ -105,7 +105,7 @@ export function useBackups(options: {
   const panelOpen = ref(false);
   const retention = ref(50);
   const retentionSaved = ref(50); // _retSavedVal :1215
-  const retentionMsg = ref<{ text: string; color: string } | null>(null);
+  const retentionMsg = ref<{ text: string; tone: 'success' | 'danger' } | null>(null);
   const backups = ref<BackupEntry[]>([]);
   const filterText = ref('');
   const loading = ref(false);
@@ -158,12 +158,12 @@ export function useBackups(options: {
       })) as { max_versions?: number };
       retentionSaved.value = data.max_versions ?? val; // :1263
       retention.value = retentionSaved.value;
-      retentionMsg.value = { text: t('v7run.saved'), color: 'var(--success)' }; // :1266
+      retentionMsg.value = { text: t('v7run.saved'), tone: 'success' }; // :1266
       setTimeout(() => {
         retentionMsg.value = null;
       }, 2000); // :1267
     } catch (error) {
-      retentionMsg.value = { text: t('common.error') + ': ' + String(error), color: 'var(--danger)' }; // :1269
+      retentionMsg.value = { text: t('common.error') + ': ' + String(error), tone: 'danger' }; // :1269
     }
   }
 

@@ -233,7 +233,7 @@ onBeforeUnmount(() => store.teardown());
       />
     </template>
 
-  <div id="page-body" class="flex h-[calc(100dvh-64px)] overflow-hidden max-[760px]:flex-col">
+  <div id="page-body" class="flex h-[calc(100dvh-var(--header-height))] overflow-hidden max-[760px]:flex-col">
     <div id="main-content" class="pbgui-ambient min-w-0 flex-1 overflow-y-auto p-[var(--page-padding)]">
       <!-- Cleanup -->
       <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" id="panel-cleanup" :class="store.activePanel.value === 'cleanup' ? 'active block' : 'hidden'">
@@ -244,7 +244,7 @@ onBeforeUnmount(() => store.teardown());
         <div class="grid gap-5 p-5">
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             <div class="grid gap-1.5">
-              <span id="cleanup-target-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.targetMaster') }}</span>
+              <span id="cleanup-target-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.targetMaster') }}</span>
               <SelectRoot :model-value="store.cleanupTarget.value" @update:model-value="store.cleanupTarget.value = $event; store.cleanupPreview.value = null; store.loadUsers(store.cleanupTarget.value, 'cleanup')">
                 <SelectTrigger id="cleanup-target" aria-labelledby="cleanup-target-label">
                   <span :class="store.cleanupTarget.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.cleanupTarget.value) }}</span>
@@ -255,7 +255,7 @@ onBeforeUnmount(() => store.teardown());
               </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <span id="cleanup-mode-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.cleanupMode') }}</span>
+              <span id="cleanup-mode-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.cleanupMode') }}</span>
               <SelectRoot v-model="store.cleanupMode.value">
                 <SelectTrigger id="cleanup-mode" aria-labelledby="cleanup-mode-label">
                   <span>{{ store.cleanupMode.value === 'older' ? t('misc.dbtools.removeOlderThan') : t('misc.dbtools.removeAllData') }}</span>
@@ -267,7 +267,7 @@ onBeforeUnmount(() => store.teardown());
               </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <span id="cleanup-date-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.cutoffDate') }}</span>
+              <span id="cleanup-date-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.cutoffDate') }}</span>
               <div class="date-input-wrap flex items-center gap-1">
                 <Input id="cleanup-date" v-model="store.cleanupDate.value" type="text" placeholder="YYYY-MM-DD" autocomplete="off" aria-labelledby="cleanup-date-label" />
                 <Button type="button" variant="ghost" size="icon" class="calendar-trigger shrink-0" :title="t('misc.dbtools.openCalendar')" :aria-label="t('misc.dbtools.openCalendar')" @click="openCleanupCalendar"><PbIcon :icon="PhCalendar" /></Button>
@@ -308,7 +308,7 @@ onBeforeUnmount(() => store.teardown());
         <div class="grid gap-5 p-5">
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             <div class="grid gap-1.5">
-              <span id="users-source-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
+              <span id="users-source-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
               <SelectRoot :model-value="store.usersSource.value" @update:model-value="store.usersSource.value = $event; onTargetChange('users', 'source')">
                 <SelectTrigger id="users-source" aria-labelledby="users-source-label">
                   <span :class="store.usersSource.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.usersSource.value) }}</span>
@@ -319,7 +319,7 @@ onBeforeUnmount(() => store.teardown());
               </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <span id="users-target-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.targetMaster') }}</span>
+              <span id="users-target-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.targetMaster') }}</span>
               <SelectRoot :model-value="store.usersTarget.value" @update:model-value="store.usersTarget.value = $event; onTargetChange('users', 'target')">
                 <SelectTrigger id="users-target" aria-labelledby="users-target-label">
                   <span :class="store.usersTarget.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.usersTarget.value) }}</span>
@@ -330,7 +330,7 @@ onBeforeUnmount(() => store.teardown());
               </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <span id="users-mode-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.copyMode') }}</span>
+              <span id="users-mode-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.copyMode') }}</span>
               <SelectRoot v-model="store.usersMode.value">
                 <SelectTrigger id="users-mode" aria-labelledby="users-mode-label">
                   <span>{{ store.usersMode.value === 'replace' ? t('misc.dbtools.replaceUserData') : t('misc.dbtools.addOnlyMissing') }}</span>
@@ -378,7 +378,7 @@ onBeforeUnmount(() => store.teardown());
           <div class="rounded-[10px] border border-warning-deep/45 bg-warning/14 p-3 text-sm leading-[1.45] text-warning-soft" v-html="t('misc.dbtools.copyDbNotice')"></div>
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             <div class="grid gap-1.5">
-              <span id="db-source-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
+              <span id="db-source-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
               <SelectRoot :model-value="store.dbSource.value" @update:model-value="store.dbSource.value = $event; onTargetChange('db', 'source')">
                 <SelectTrigger id="db-source" aria-labelledby="db-source-label">
                   <span :class="store.dbSource.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.dbSource.value) }}</span>
@@ -389,7 +389,7 @@ onBeforeUnmount(() => store.teardown());
               </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <span id="db-target-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.targetMaster') }}</span>
+              <span id="db-target-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.targetMaster') }}</span>
               <SelectRoot :model-value="store.dbTarget.value" @update:model-value="store.dbTarget.value = $event; onTargetChange('db', 'target')">
                 <SelectTrigger id="db-target" aria-labelledby="db-target-label">
                   <span :class="store.dbTarget.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.dbTarget.value) }}</span>
@@ -441,11 +441,11 @@ onBeforeUnmount(() => store.teardown());
                 <span>{{ t('misc.dbtools.users') }}</span>
                 <span>{{ t('misc.dbtools.log') }}</span>
               </div>
-              <div v-if="!syncJobRows.length" class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-white/3" aria-disabled="true">{{ t('misc.dbtools.noSyncJobsConfigured') }}</div>
+              <div v-if="!syncJobRows.length" class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-secondary/5" aria-disabled="true">{{ t('misc.dbtools.noSyncJobsConfigured') }}</div>
               <div
                 v-for="row in syncJobRows"
                 :key="row.job.id"
-                :class="[syncGridClass, 'w-full min-h-[44px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent px-3 py-2 text-left text-primary font-inherit hover:bg-white/3', row.job.id === store.syncJobId.value ? 'selected bg-accent/12 text-primary shadow-[inset_3px_0_0_var(--accent)] pl-2' : '']"
+                :class="[syncGridClass, 'w-full min-h-[44px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent px-3 py-2 text-left text-primary font-inherit hover:bg-secondary/5', row.job.id === store.syncJobId.value ? 'selected bg-accent/12 text-primary shadow-[inset_3px_0_0_var(--accent)] pl-2' : '']"
                 role="button"
                 tabindex="0"
                 :data-job-id="row.job.id"
@@ -474,11 +474,11 @@ onBeforeUnmount(() => store.teardown());
             </div>
             <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
               <div class="grid gap-1.5">
-                <label class="text-sm font-bold text-secondary" for="sync-name">{{ t('misc.dbtools.jobName') }}</label>
+                <label class="text-xs font-semibold uppercase tracking-label text-secondary" for="sync-name">{{ t('misc.dbtools.jobName') }}</label>
                 <Input id="sync-name" v-model="store.syncName.value" type="text" placeholder="e.g. manibot01 to replicas" />
               </div>
               <div class="grid gap-1.5">
-                <span id="sync-source-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
+                <span id="sync-source-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
                 <SelectRoot :model-value="store.syncSource.value" @update:model-value="store.syncSource.value = $event; store.loadUsers(store.syncSource.value, 'sync')">
                   <SelectTrigger id="sync-source" aria-labelledby="sync-source-label">
                     <span :class="store.syncSource.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.syncSource.value) }}</span>
@@ -489,11 +489,11 @@ onBeforeUnmount(() => store.teardown());
                 </SelectRoot>
               </div>
               <div class="grid gap-1.5">
-                <label class="text-sm font-bold text-secondary" for="sync-interval">{{ t('misc.dbtools.intervalSeconds') }}</label>
+                <label class="text-xs font-semibold uppercase tracking-label text-secondary" for="sync-interval">{{ t('misc.dbtools.intervalSeconds') }}</label>
                 <Input id="sync-interval" v-model="store.syncInterval.value" type="number" min="30" step="30" />
               </div>
               <div class="grid gap-1.5">
-                <label>{{ t('misc.dbtools.status') }}</label>
+                <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.status') }}</label>
                 <label class="inline-flex min-h-8 cursor-pointer items-center gap-2 font-bold text-primary">
                   <Checkbox id="sync-enabled" v-model="store.syncEnabled.value" />
                   <span>{{ t('common.enabled') }}</span>
@@ -546,7 +546,7 @@ onBeforeUnmount(() => store.teardown());
       </section>
 
       <!-- Backups -->
-      <section id="panel-backups" class="min-h-[calc(100dvh-var(--header-height)-var(--nav-height))] overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" :class="store.activePanel.value === 'backups' ? 'active block' : 'hidden'">
+      <section id="panel-backups" class="min-h-[calc(100dvh-var(--header-height))] overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" :class="store.activePanel.value === 'backups' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
           <div class="text-lg font-bold">{{ t('misc.dbtools.backupManager') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.backupManagerDesc') }}</div>
@@ -555,7 +555,7 @@ onBeforeUnmount(() => store.teardown());
           <div class="rounded-[10px] border border-warning-deep/45 bg-warning/14 p-3 text-sm leading-[1.45] text-warning-soft">{{ t('misc.dbtools.restoreNotice') }}</div>
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             <div class="grid gap-1.5">
-              <span id="backup-target-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.backupMaster') }}</span>
+              <span id="backup-target-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.backupMaster') }}</span>
               <SelectRoot :model-value="store.backupTarget.value" @update:model-value="store.backupTarget.value = $event; store.loadBackups()">
                 <SelectTrigger id="backup-target" aria-labelledby="backup-target-label">
                   <span :class="store.backupTarget.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.backupTarget.value) }}</span>
@@ -583,12 +583,12 @@ onBeforeUnmount(() => store.teardown());
                 <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('size')">{{ t('misc.dbtools.size') }}<PbIcon v-if="store.backupSort.value.key === 'size'" :icon="store.backupSort.value.dir === 'asc' ? PhCaretUp : PhCaretDown" :size="12" /></Button>
                 <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('name')">{{ t('misc.dbtools.backupName') }}<PbIcon v-if="store.backupSort.value.key === 'name'" :icon="store.backupSort.value.dir === 'asc' ? PhCaretUp : PhCaretDown" :size="12" /></Button>
               </div>
-              <div v-if="!backupRows.length" class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-white/3" aria-disabled="true">{{ t('misc.dbtools.noBackupsFound') }}</div>
+              <div v-if="!backupRows.length" class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-secondary/5" aria-disabled="true">{{ t('misc.dbtools.noBackupsFound') }}</div>
               <Button
                 v-for="row in backupRows"
                 :key="row.name"
                 variant="ghost"
-                :class="[backupsGridClass, 'backup-row min-h-[42px] w-full justify-start rounded-none border-0 border-b border-border-subtle bg-transparent px-3 py-2 text-left font-normal text-primary font-inherit hover:bg-white/3', store.backupSelected.value.includes(row.name) ? 'selected bg-accent/12 text-primary shadow-[inset_3px_0_0_var(--accent)] pl-2' : '']"
+                :class="[backupsGridClass, 'backup-row min-h-[42px] w-full justify-start rounded-none border-0 border-b border-border-subtle bg-transparent px-3 py-2 text-left font-normal text-primary font-inherit hover:bg-secondary/5', store.backupSelected.value.includes(row.name) ? 'selected bg-accent/12 text-primary shadow-[inset_3px_0_0_var(--accent)] pl-2' : '']"
                 type="button"
                 :data-value="row.name"
                 :aria-pressed="store.backupSelected.value.includes(row.name) ? 'true' : 'false'"
@@ -626,7 +626,7 @@ onBeforeUnmount(() => store.teardown());
         <div class="grid gap-5 p-5">
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             <div class="grid gap-1.5">
-              <span id="dash-source-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
+              <span id="dash-source-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
               <SelectRoot :model-value="store.dashSource.value" @update:model-value="store.dashSource.value = $event; onTargetChange('dash', 'source'); store.loadDashboards()">
                 <SelectTrigger id="dash-source" aria-labelledby="dash-source-label">
                   <span :class="store.dashSource.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.dashSource.value) }}</span>
@@ -637,7 +637,7 @@ onBeforeUnmount(() => store.teardown());
               </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <span id="dash-target-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.targetMaster') }}</span>
+              <span id="dash-target-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.targetMaster') }}</span>
               <SelectRoot :model-value="store.dashTarget.value" @update:model-value="store.dashTarget.value = $event; onTargetChange('dash', 'target')">
                 <SelectTrigger id="dash-target" aria-labelledby="dash-target-label">
                   <span :class="store.dashTarget.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.dashTarget.value) }}</span>
@@ -648,7 +648,7 @@ onBeforeUnmount(() => store.teardown());
               </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <span id="dash-mode-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.copyMode') }}</span>
+              <span id="dash-mode-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.copyMode') }}</span>
               <SelectRoot v-model="store.dashMode.value">
                 <SelectTrigger id="dash-mode" aria-labelledby="dash-mode-label">
                   <span>{{ store.dashMode.value === 'replace_all' ? t('misc.dbtools.replaceAllSelected') : t('misc.dbtools.addOnlyMissing') }}</span>
@@ -711,15 +711,5 @@ body {
 
 <style scoped>
 /* Page-level AppShell overrides — ported from styles/db-tools.css. */
-.data-page-shell :deep(.app-shell__main) {
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  padding: 0;
-}
-
-.data-page-shell :deep(.app-shell__primary) {
-  min-height: 0;
-}
 
 </style>

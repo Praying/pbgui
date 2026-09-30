@@ -58,7 +58,7 @@ describe('LayoutPicker', () => {
     const store = useDashboardStore();
     store.setLayout(2, 2);
     const w = mount(LayoutPicker);
-    expect(w.get('.lt-dim').attributes('style')).toContain('display: none');
+    expect(w.get('.lt-dim').isVisible()).toBe(false);
   });
 
   it('shows the cols×rows dim badge only for custom sizes (editor:2552-2559)', async () => {
@@ -66,7 +66,7 @@ describe('LayoutPicker', () => {
     store.setLayout(7, 2);
     const w = mount(LayoutPicker);
     const dim = w.get('.lt-dim');
-    expect(dim.attributes('style')).toContain('inline-flex');
+    expect(dim.attributes('style') ?? '').not.toContain('display: none');
     expect(dim.text()).toBe('2×7');
     /* and the badge hides again once a preset is chosen */
     await w.findAll('.lt-thumb')[8]!.trigger('click'); // 2×4 preset

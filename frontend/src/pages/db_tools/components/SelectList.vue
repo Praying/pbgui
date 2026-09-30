@@ -130,7 +130,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
     <div class="block max-h-[300px] select-none overflow-auto p-0" :id="id">
-      <div v-if="!rows.length" class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-white/3" aria-disabled="true">{{ t('misc.dbtools.noItemsFound') }}</div>
+      <div v-if="!rows.length" class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-secondary/5" aria-disabled="true">{{ t('misc.dbtools.noItemsFound') }}</div>
       <div v-if="rows.length === 1 && rows[0]!.loading" class="select-row w-full min-h-[34px] appearance-none cursor-wait border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left italic text-secondary" aria-disabled="true">{{ rows[0]!.loading }}</div>
       <template v-else>
         <!-- Rows keep `block` (not the Button inline-flex): the legacy row
@@ -140,7 +140,7 @@ onBeforeUnmount(() => {
           v-for="row in rows"
           :key="row.value"
           variant="ghost"
-          class="select-row block w-full min-h-[34px] rounded-none border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left font-normal whitespace-normal text-primary hover:bg-white/3 active:scale-100"
+          class="select-row block w-full min-h-[34px] rounded-none border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left font-normal whitespace-normal text-primary hover:bg-secondary/5 active:scale-100"
           type="button"
           :class="isSelected(row.value) ? 'selected bg-accent/12 text-primary shadow-[inset_3px_0_0_var(--accent)]' : ''"
           :data-value="row.value"

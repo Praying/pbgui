@@ -232,7 +232,7 @@ onBeforeUnmount(() => {
       />
     </template>
 
-    <div id="page-body" class="flex h-[calc(100dvh-52px)] flex-col overflow-hidden">
+    <div id="page-body" class="flex h-[calc(100dvh-var(--nav-height))] flex-col overflow-hidden">
     <!-- Main content (:568). The legacy sidebar column (:545-565) became a
          top strip (v7_run precedent): same buttons, ids and gating; the
          drag-resize handle left with the column. -->
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
   <ImportModal ref="importModal" v-model="importOpen" />
   <BalanceCalcModal ref="balanceModal" v-model="balanceOpen" />
 
-  <div ref="toastEl" id="toast" class="fixed bottom-5 right-5 z-[var(--z-toast)] hidden rounded-md px-5 py-2 text-sm font-semibold transition-opacity duration-300"></div>
+  <div ref="toastEl" id="toast" class="toast fixed bottom-5 right-5 z-[var(--z-toast)] hidden transition-opacity duration-300"></div>
   <DataTipLayer />
 </template>
 
@@ -370,7 +370,7 @@ body {
    This is intentionally limited to the editor instead of changing shared
    panels used by other workbenches. */
 .core-workbench-shell--edit .workbench-page-content {
-  padding: 20px 24px 32px !important;
+  padding: var(--sp-lg) var(--page-padding) var(--sp-3xl);
 }
 
 .core-workbench-shell--edit .edit-section-card,
@@ -413,7 +413,7 @@ body {
 
 @media (max-width: 700px) {
   .core-workbench-shell--edit .workbench-page-content {
-    padding: 12px 12px 20px !important;
+    padding: var(--sp-md) var(--sp-md) var(--sp-lg);
   }
 
   .core-workbench-shell--edit .edit-section-card__header,
@@ -447,18 +447,6 @@ body {
    defaults; utilities must therefore not fight these on the same
    properties (the reason #cfg-raw-json and .user-combobox input
    tweaks live here too). */
-
-/* data-tip tooltip affordance — attribute selector, and the shared
-   CoinOverridesPanel also renders [data-tip] spans. */
-[data-tip] {
-  cursor: help;
-  border-bottom: none;
-  text-decoration-line: underline;
-  text-decoration-style: dotted;
-  text-decoration-color: var(--text-muted);
-  text-underline-offset: 2px;
-  text-decoration-thickness: 1px;
-}
 
 /* Form grid */
 .form-row {
@@ -547,7 +535,7 @@ body {
 }
 .expander-header:active { transform: translateY(1px); }
 .expander-header .arrow {
-  transition: transform 0.18s ease; color: var(--text-dim);
+  transition: transform var(--motion-normal) var(--ease-standard); color: var(--text-dim);
   font-size: var(--text-micro); flex-shrink: 0;
 }
 .expander.open .expander-header .arrow { transform: rotate(90deg); color: var(--accent); }

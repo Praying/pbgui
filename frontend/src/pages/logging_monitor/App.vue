@@ -287,19 +287,6 @@ html, body, #app {
   overflow: hidden;
 }
 
-.operations-shell--logging :deep(.app-shell__main) {
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  flex: 1;
-  padding: 0;
-}
-
-.operations-shell--logging :deep(.app-shell__primary) {
-  display: flex;
-  min-height: 0;
-  flex-direction: column;
-}
 
 /* Keep settings cards at the same elevation as the shared workbench panels. */
 .operations-shell--logging article {

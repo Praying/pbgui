@@ -489,7 +489,7 @@ onUnmounted(stopPolling);
                       <td><span :class="countCls(metrics!.budgets![ex]!.waits_count, 'pm-warn')">{{ metrics!.budgets![ex]!.waits_count || 0 }}</span></td>
                       <td><span :class="!metrics!.budgets![ex]!.total_waited_ms ? 'pm-muted' : ''">{{ waitText(metrics!.budgets![ex]!.total_waited_ms) }}</span></td>
                     </tr>
-                    <tr v-for="op in budgetOperations(metrics!.budgets![ex]!)" :key="op" style="font-size: 0.85em; opacity: 0.8">
+                    <tr v-for="op in budgetOperations(metrics!.budgets![ex]!)" :key="op" class="text-compact opacity-80">
                       <td style="padding-left: 1.6em" class="pm-muted"><PbIcon :icon="PhArrowElbowDownRight" :size="12" class="align-[-1px] inline-block" /> {{ op }}</td>
                       <td></td><td></td><td></td><td></td>
                       <td>{{ metrics!.budgets![ex]!.per_operation![op]!.consumed || 0 }}</td>

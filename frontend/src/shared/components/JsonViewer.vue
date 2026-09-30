@@ -217,7 +217,7 @@ onBeforeUnmount(() => {
 
 :deep(.vjs-tree-node.dark.is-highlight),
 :deep(.vjs-tree-node.dark:hover) {
-  background-color: rgba(77, 166, 255, 0.12);
+  background-color: rgb(var(--accent-rgb) / 0.12);
   border-radius: 4px;
 }
 
