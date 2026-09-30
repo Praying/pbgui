@@ -46,7 +46,10 @@
     }
 
     .workbench-rail--persistent-expanded {
-      position: relative;
+      /* sticky (not relative): the rail keeps its in-flow layout role AND
+         stays pinned while body-scrolling pages (transfers, profit_sweep…)
+         move past its 100dvh edge — relative left a void under the rail. */
+      position: sticky;
       width: var(--rail-expanded-width);
       box-shadow: none;
       transform: none;
@@ -802,7 +805,7 @@
 
   @media (min-width: 721px) {
     .workbench-rail--floating-expanded.workbench-rail--persistent-expanded {
-      position: relative;
+      position: sticky;
       width: var(--rail-expanded-width);
       box-shadow: none;
     }

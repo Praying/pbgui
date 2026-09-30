@@ -296,10 +296,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AppShell page-key="system_transfers" :page-title="t('transfers.title')" :page-description="t('transfers.pageDescription')" class="transfers-shell">
+  <AppShell page-key="system_transfers" :page-title="t('transfers.title')" :page-description="t('transfers.pageDescription')" class="data-page-shell transfers-shell">
     <template v-if="loading || errorMessage" #status><StatusStrip :label="t('shared.status')" :value="loading ? t('common.loading') : t('common.error')" :tone="errorMessage ? 'danger' : 'warning'" /></template>
-    <div class="pbgui-ambient flex min-h-0 flex-1 gap-4 overflow-hidden p-4 max-[900px]:flex-col">
-      <aside class="w-72 shrink-0 overflow-auto rounded-lg border border-border-default bg-panel p-3 max-[900px]:w-full max-[900px]:max-h-52">
+    <div class="pbgui-ambient flex min-h-0 flex-1 gap-4 p-[var(--page-padding)] max-[900px]:flex-col">
+      <aside class="w-72 shrink-0 self-start overflow-auto rounded-lg border border-border-default bg-panel p-3 min-[901px]:sticky min-[901px]:top-[var(--page-padding)] min-[901px]:max-h-[calc(100dvh-var(--header-height)-2*var(--page-padding))] max-[900px]:w-full max-[900px]:max-h-52">
         <div class="mb-3 flex items-center justify-between"><h2 class="text-base font-semibold text-primary">{{ t('transfers.accounts') }}</h2><span class="text-xs text-secondary">{{ filteredUsers.length }}/{{ users.length }}</span></div>
         <Input v-model="search" class="mb-2" :placeholder="t('transfers.searchAccounts')" />
         <div class="grid gap-1">

@@ -148,7 +148,9 @@ describe('WorkbenchRail responsive CSS contracts', () => {
       'var(--rail-expanded-width) minmax(0, 1fr)',
     );
     expect_declaration(expanded_rail_slot, 'width', 'var(--rail-expanded-width)');
-    expect_declaration(persistent_rail, 'position', 'relative');
+    // sticky (not relative): body-scrolling pages scroll past a relative
+    // rail's 100dvh edge and show a void under the navigation.
+    expect_declaration(persistent_rail, 'position', 'sticky');
     expect(transition?.value ?? '').not.toContain('grid-template-columns');
   });
 
