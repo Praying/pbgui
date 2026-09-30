@@ -60,7 +60,7 @@ describe('VPS Manager Vue page', () => {
     const wrapper = mountApp();
     expect(wrapper.find('.app-shell').exists()).toBe(true);
     expect(wrapper.get('[role="status"]').text()).toContain('Connecting');
-    expect(wrapper.get('[data-action="refresh"]').find('svg').exists()).toBe(true);
+    expect(wrapper.find('[data-action="refresh"]').exists()).toBe(false);
     const ws = WebSocketMock.instances[0]!;
     ws.message({ type: 'state', data: overviewState });
     await wrapper.vm.$nextTick();
@@ -76,13 +76,11 @@ describe('VPS Manager Vue page', () => {
     expect(wrapper.find('[data-secret="session"]').exists()).toBe(false);
   });
 
-  it('sends refresh, setup and deploy actions, and loads metric history through authenticated APIs', async () => {
+  it('loads metric history and sends setup and deploy actions through authenticated APIs', async () => {
     const wrapper = mountApp();
     const ws = WebSocketMock.instances[0]!;
     ws.message({ type: 'state', data: overviewState });
     await wrapper.vm.$nextTick();
-    await wrapper.get('[data-action="refresh"]').trigger('click');
-    expect(JSON.parse(ws.sent.at(-1)!)).toMatchObject({ cmd: 'refresh' });
     await wrapper.get('[data-action="select-vps"][data-host="alpha"]').trigger('click');
     ws.message({ type: 'detail', data: vpsDetail, context_generation: 1 });
     await wrapper.vm.$nextTick();

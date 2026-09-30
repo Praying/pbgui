@@ -21,6 +21,7 @@ import ConversationList from './components/ConversationList.vue';
 import MessageList from './components/MessageList.vue';
 import ProviderPanel from './components/ProviderPanel.vue';
 import ProposalList from './components/ProposalList.vue';
+import ResearchList from './components/ResearchList.vue';
 
 const { t } = useI18n();
 
@@ -62,7 +63,19 @@ async function onResolveProposal(proposal: Parameters<typeof store.resolvePropos
     void store.resolveProposal(proposal, false);
     return;
   }
-  const preview = proposal.preview || {};
+  let reviewedProposal = proposal;
+  let reviewToken = '';
+  if (proposal.preview?.action === 'reviewed_config_change') {
+    try {
+      const reviewed = await store.reviewProposal(proposal);
+      reviewedProposal = reviewed.proposal;
+      reviewToken = reviewed.reviewToken;
+    } catch (error) {
+      store.setNotice(error instanceof Error ? error.message : String(error), true);
+      return;
+    }
+  }
+  const preview = reviewedProposal.preview || {};
   const approvalDetail =
     preview.action === 'python_analysis'
       ? t('ai.proposal.approvePythonDetail')
@@ -73,7 +86,11 @@ async function onResolveProposal(proposal: Parameters<typeof store.resolvePropos
     detail: approvalDetail,
     confirmText: t('ai.proposal.approve'),
   });
-  if (confirmed) void store.resolveProposal(proposal, true);
+  if (confirmed) void store.resolveProposal(reviewedProposal, true, reviewToken);
+}
+
+function onResearchAction(id: string, action: 'start' | 'cancel'): void {
+  void store.actResearch(id, action);
 }
 
 async function onCopy(text: string): Promise<void> {
@@ -169,6 +186,8 @@ function onQuickReply(actionId: string, value: string): void {
           @rewind="onRewind"
           @quick-reply="onQuickReply"
         />
+
+        <ResearchList :items="store.researchItems.value" @action="onResearchAction" />
 
         <ProposalList :proposals="store.visibleProposals.value" @resolve="onResolveProposal" />
 

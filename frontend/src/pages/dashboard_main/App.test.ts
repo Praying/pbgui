@@ -226,13 +226,12 @@ describe('initial current dashboard', () => {
 });
 
 describe('view toolbar', () => {
-  it('renders refresh, new and templates buttons in view mode', async () => {
+  it('renders automatic-update navigation controls without a manual refresh button', async () => {
     dashboardsApi(['a', 'B']);
     const wrapper = mountApp();
     await flushPromises();
 
-    expect(wrapper.find('#sb-refresh').exists()).toBe(true);
-    expect(wrapper.find('#sb-refresh').attributes('title')).toBe('Refresh list');
+    expect(wrapper.find('#sb-refresh').exists()).toBe(false);
     expect(wrapper.find('#sb-new').exists()).toBe(true);
     expect(wrapper.find('#sb-templates').exists()).toBe(true);
     // No edit-mode controls and no edit/delete targets without a current dashboard
@@ -257,19 +256,6 @@ describe('view toolbar', () => {
     expect(wrapper.find('#sb-del').attributes('title')).toBe('Delete selected dashboard');
   });
 
-  it('refreshes the list from the refresh button', async () => {
-    const list = ['a'];
-    dashboardsApi(list);
-    const wrapper = mountApp();
-    await flushPromises();
-    expect(wrapper.findAll('.sb-item')).toHaveLength(1);
-
-    list.push('b');
-    await wrapper.find('#sb-refresh').trigger('click');
-    await flushPromises();
-
-    expect(wrapper.findAll('.sb-item')).toHaveLength(2);
-  });
 });
 
 describe('view loading', () => {

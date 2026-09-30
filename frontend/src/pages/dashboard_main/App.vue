@@ -47,7 +47,6 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import {
   PhArchive,
-  PhArrowClockwise,
   PhFloppyDisk,
   PhMagnifyingGlass,
   PhPencilSimple,
@@ -79,10 +78,18 @@ function initialCurrent(): string {
   return new URLSearchParams(window.location.search).get('current') ?? '';
 }
 
+function initialQuery(): string {
+  return new URLSearchParams(window.location.search).get('filter') ?? '';
+}
+
+function initialEditMode(): boolean {
+  return new URLSearchParams(window.location.search).get('mode') === 'edit';
+}
+
 const dashboards = ref<string[]>([]);
-const query = ref('');
+const query = ref(initialQuery());
 const currentDash = ref(initialCurrent());
-const editMode = ref(false);
+const editMode = ref(initialEditMode());
 const viewDirty = ref(false);
 /** Legacy selectedDashboards. */
 const selected = ref<string[]>(currentDash.value ? [currentDash.value] : []);
@@ -134,17 +141,32 @@ const showViewSave = computed(() => viewDirty.value && !editMode.value && curren
 
 /** Legacy contentFrame.onload was only attached inside loadView/loadEditor. */
 let frameStarted = false;
+let listGeneration = 0;
+
+function persistNavigation(): void {
+  const url = new URL(window.location.href);
+  if (currentDash.value) url.searchParams.set('current', currentDash.value);
+  else url.searchParams.delete('current');
+  if (editMode.value) url.searchParams.set('mode', 'edit');
+  else url.searchParams.delete('mode');
+  if (query.value) url.searchParams.set('filter', query.value);
+  else url.searchParams.delete('filter');
+  window.history.replaceState(window.history.state, '', url);
+}
 
 /* ── List + selection (legacy refreshList/prune/getDeleteTargets/set/select) ── */
 
 /** Legacy refreshList: replace the list, prune selection, run the callback. */
 async function refreshList(thenLoad?: () => void): Promise<void> {
+  const generation = ++listGeneration;
   try {
     const data = await apiFetch<DashboardsResponse>(dashboardsUrl());
+    if (generation !== listGeneration) return;
     dashboards.value = [...(data.dashboards ?? [])].sort((a, b) =>
       a.toLowerCase().localeCompare(b.toLowerCase())
     );
   } catch (error) {
+    if (generation !== listGeneration) return;
     // legacy: non-ok responses cleared the list, network failures kept it
     if (error instanceof ApiError) dashboards.value = [];
   }
@@ -188,6 +210,7 @@ function loadView(name: string, forceReload = false): void {
   currentDash.value = name;
   if (selected.value.length <= 1) selected.value = [name];
   editMode.value = false;
+  persistNavigation();
   viewDirty.value = false;
   frameLoading.value = true;
   frameVisible.value = false;
@@ -199,6 +222,7 @@ function loadView(name: string, forceReload = false): void {
 function loadEditor(name: string): void {
   currentDash.value = name || '';
   editMode.value = true;
+  persistNavigation();
   frameLoading.value = true;
   frameVisible.value = false;
   frameStarted = true;
@@ -393,7 +417,10 @@ onMounted(() => {
   document.addEventListener('mouseup', onSidebarResizeUp);
   // Legacy initial render: refreshList(() => { if (CURRENT in list) loadView(CURRENT) })
   void refreshList(() => {
-    if (currentDash.value && dashboards.value.includes(currentDash.value)) loadView(currentDash.value);
+    if (currentDash.value && dashboards.value.includes(currentDash.value)) {
+      if (editMode.value) loadEditor(currentDash.value);
+      else loadView(currentDash.value);
+    }
   });
 });
 
@@ -470,7 +497,6 @@ onUnmounted(() => {
           <template v-else>
             <div class="toolbar-group toolbar-group--primary">
               <Button variant="primary" size="sm" id="sb-new" :title="t('dash.newDashboard')" :aria-label="t('dash.newDashboard')" @click="newDialogVisible = true"><PbIcon :icon="PhPlus" /><span class="text-xs whitespace-nowrap">{{ t('dash.newDashboard') }}</span></Button>
-              <Button variant="ghost" size="icon" id="sb-refresh" :title="t('dash.refreshList')" :aria-label="t('dash.refreshList')" @click="refreshList()"><PbIcon :icon="PhArrowClockwise" /></Button>
             </div>
             <div v-if="currentDash" class="toolbar-group toolbar-group--contextual">
               <Button

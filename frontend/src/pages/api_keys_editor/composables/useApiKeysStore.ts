@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, ref } from 'vue';
 import { serverMsg } from '@/shared/i18n';
 import { pageFetch } from '../lib/pageApi';
 import { userExpirySortValue } from '../lib/expiry';
@@ -32,6 +32,9 @@ export function useApiKeysStore(t: Translator, toasts: ReturnType<typeof injectT
   const filterText = ref('');
   const sortCol = ref<SortColumn>('');
   const sortDir = ref(1);
+  let usersRequestGeneration = 0;
+  let usersRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+  let removeVisibilityListener: (() => void) | null = null;
 
   const inUseCount = computed(() => users.value.filter((u) => u.in_use).length);
 
@@ -53,17 +56,57 @@ export function useApiKeysStore(t: Translator, toasts: ReturnType<typeof injectT
     }
   }
 
-  async function loadUsers(): Promise<void> {
-    usersState.value = 'loading';
+  async function loadUsers(silent = false): Promise<void> {
+    const generation = ++usersRequestGeneration;
+    if (!silent) usersState.value = 'loading';
     try {
-      users.value = await pageFetch<UserSummary[]>('/');
+      const loadedUsers = await pageFetch<UserSummary[]>('/');
+      if (generation !== usersRequestGeneration) return;
+      users.value = loadedUsers;
       usersState.value = 'ready';
       void loadApiMeta();
     } catch (e) {
+      if (generation !== usersRequestGeneration) return;
       usersState.value = 'error';
       usersError.value = serverMsg(e instanceof Error ? e.message : '');
     }
   }
+
+  function stopLiveRefresh(): void {
+    if (usersRefreshTimer) clearTimeout(usersRefreshTimer);
+    usersRefreshTimer = null;
+    usersRequestGeneration += 1;
+    removeVisibilityListener?.();
+    removeVisibilityListener = null;
+  }
+
+  function scheduleLiveRefresh(): void {
+    if (document.hidden) return;
+    if (usersRefreshTimer) clearTimeout(usersRefreshTimer);
+    usersRefreshTimer = setTimeout(async () => {
+      await loadUsers(true);
+      scheduleLiveRefresh();
+    }, 15000);
+  }
+
+  function startLiveRefresh(): void {
+    stopLiveRefresh();
+    const onVisibilityChange = (): void => {
+      if (document.hidden) {
+        if (usersRefreshTimer) clearTimeout(usersRefreshTimer);
+        usersRefreshTimer = null;
+        usersRequestGeneration += 1;
+      } else {
+        void loadUsers(true);
+        scheduleLiveRefresh();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    removeVisibilityListener = () => document.removeEventListener('visibilitychange', onVisibilityChange);
+    scheduleLiveRefresh();
+  }
+
+  onBeforeUnmount(stopLiveRefresh);
 
   /* ── filter + sort with URL persistence (:1115-1137) ── */
 
@@ -134,8 +177,8 @@ export function useApiKeysStore(t: Translator, toasts: ReturnType<typeof injectT
           va = (a.exchange || '').toLowerCase();
           vb = (b.exchange || '').toLowerCase();
         } else if (col === 'status') {
-          va = a.in_use ? 0 : 1;
-          vb = b.in_use ? 0 : 1;
+          va = runtimeBadgeSortValue(a);
+          vb = runtimeBadgeSortValue(b);
         } else {
           va = userExpirySortValue(a, hlExpiryData.value, bybitExpiryData.value);
           vb = userExpirySortValue(b, hlExpiryData.value, bybitExpiryData.value);
@@ -147,6 +190,14 @@ export function useApiKeysStore(t: Translator, toasts: ReturnType<typeof injectT
     }
     return list;
   });
+
+  function runtimeBadgeSortValue(user: UserSummary): string {
+    const runtimes = Array.isArray(user.bot_runtime) ? user.bot_runtime : [];
+    if (!runtimes.length) return user.in_use ? 'Unknown' : 'Unused';
+    const running = runtimes.filter((runtime) => (runtime.running_on || []).length > 0);
+    const visible = running.length ? running : runtimes;
+    return visible.map((runtime) => (runtime.running_on || []).join(',') || runtime.status || 'Unknown').join(', ');
+  }
 
   /** Drop cached expiry data for one user after a credential change (:1931-1935). */
   function clearExpiryFor(name: string): void {
@@ -180,6 +231,8 @@ export function useApiKeysStore(t: Translator, toasts: ReturnType<typeof injectT
     filteredSortedUsers,
     loadExchanges,
     loadUsers,
+    startLiveRefresh,
+    stopLiveRefresh,
     loadApiMeta,
     restoreUrlParams,
     setSort,

@@ -12,7 +12,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import ExpiryBadge from './ExpiryBadge.vue';
 import type { ApiKeysStore } from '../composables/useApiKeysStore';
-import type { BybitExpiryInfo, HlExpiryInfo, UserSummary } from '../types';
+import type { BotRuntime, BybitExpiryInfo, HlExpiryInfo, UserSummary } from '../types';
 
 const props = defineProps<{ store: ApiKeysStore }>();
 
@@ -69,6 +69,35 @@ function credsFor(u: UserSummary): string[] {
     if (u.has_secret) creds.push('secret');
   }
   return creds;
+}
+
+interface RuntimeBadge {
+  text: string;
+  active: boolean;
+  title: string;
+}
+
+function runtimeBadges(user: UserSummary): RuntimeBadge[] {
+  const labels: Record<string, string> = {
+    disabled: t('misc.apikeys.runtimeDisabled'),
+    tombstoned: t('misc.apikeys.runtimeDisabled'),
+    activate_needed: t('misc.apikeys.runtimeStopped'),
+    collecting: t('misc.apikeys.runtimeCollecting'),
+    blocked: t('misc.apikeys.runtimeBlocked'),
+    conflicted: t('misc.apikeys.runtimeConflict'),
+    config_error: t('misc.apikeys.runtimeConfigError'),
+  };
+  const runtimes: BotRuntime[] = Array.isArray(user.bot_runtime) ? user.bot_runtime : [];
+  if (!runtimes.length) return [{ text: user.in_use ? t('misc.apikeys.inUse') : t('misc.apikeys.unused'), active: false, title: t('misc.apikeys.runtimeStatus') }];
+  const running = runtimes.filter((runtime) => (runtime.running_on || []).length > 0);
+  const visible = running.length ? running : runtimes;
+  return visible.flatMap<RuntimeBadge>((runtime) => {
+    const hosts = Array.isArray(runtime.running_on) ? runtime.running_on : [];
+    const runtimeLabel = `PB${String(runtime.pb_version || '')}`;
+    return hosts.length
+      ? hosts.map((host) => ({ text: String(host), active: true, title: `${runtimeLabel} ${t('misc.apikeys.runtimeRunningOn')} ${host}` }))
+      : [{ text: labels[runtime.status || ''] || t('misc.apikeys.runtimeUnknown'), active: false, title: runtimeLabel }];
+  });
 }
 
 /** Expiry shown in the table: live data first, stored fallback (:1382-1406). */
@@ -368,7 +397,13 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
             <template v-else>-</template>
           </td>
           <td class="border-b border-border-subtle px-3 py-2.5 text-base">
-            <span class="badge-in-use inline-block rounded-full border px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="u.in_use ? 'border-success/30 bg-success/10 text-success' : 'border border-secondary/14 bg-secondary/7 text-secondary'">{{ u.in_use ? t('misc.apikeys.inUse') : t('misc.apikeys.unused') }}</span>
+            <span
+              v-for="badge in runtimeBadges(u)"
+              :key="badge.text + badge.title"
+              class="badge-in-use mr-1 inline-block rounded-full border px-2 py-0.5 text-xs font-semibold whitespace-nowrap"
+              :class="badge.active ? 'border-success/30 bg-success/10 text-success' : 'border border-secondary/14 bg-secondary/7 text-secondary'"
+              :title="badge.title"
+            >{{ badge.text }}</span>
           </td>
           <td class="border-b border-border-subtle px-3 py-2.5 text-base">
             <div class="action-group">

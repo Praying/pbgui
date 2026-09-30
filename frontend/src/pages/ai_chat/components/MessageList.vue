@@ -3,6 +3,7 @@ import { nextTick, ref, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { detectedQuickReplies } from '../lib/proposal';
+import { renderAiMarkdown } from '../lib/aiMarkdown';
 import type { ChatMessage, UiAction } from '../composables/useAiChat';
 
 interface MessageListProps {
@@ -59,13 +60,16 @@ function onQuickReply(actionId: string, value: string): void {
       :key="index"
       class="mb-4 flex items-start gap-1"
       :class="{ 'justify-end': message.role === 'user' }"
+      :data-message-index="index"
     >
       <div
         class="max-w-[min(760px,88%)] whitespace-pre-wrap break-anywhere rounded-lg border border-border-subtle p-3 shadow-panel"
         :class="message.role === 'user'
           ? 'border-accent/35 bg-accent/14 text-primary rounded-tr-sm'
           : 'bg-panel rounded-tl-sm'"
-      >{{ message.content }}
+      >
+        <template v-if="message.role === 'user'">{{ message.content }}</template>
+        <div v-else class="ai-markdown" v-html="renderAiMarkdown(message.content || '')"></div>
         <div v-if="message.role !== 'user' && quickReplies(message.content).length" class="mt-2 flex flex-wrap gap-1 opacity-100">
           <Button
             v-for="choice in quickReplies(message.content)"

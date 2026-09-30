@@ -18,6 +18,13 @@ interface BootInfo {
 declare const __BOOT__: BootInfo | undefined;
 
 interface Window {
+  marked?: {
+    parse(source: string): string;
+    setOptions?(options: Record<string, unknown>): void;
+  };
+  DOMPurify?: {
+    sanitize(source: string): string;
+  };
   /** Legacy frontend/i18n.js engine, loaded during the Vue migration transition. */
   PBGuiI18n?: {
     lang: 'en' | 'zh';

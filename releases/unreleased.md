@@ -1,5 +1,10 @@
 # Unreleased
 
+## 合并远端 main v2.07.2-v2.07.3 并补齐 Vue 3 前端适配
+
+- 合并远端 v2.07.2 与 v2.07.3 的 AI research、reviewed config change、数据库同步、API Keys、Dashboard、VPS Manager 与安全回归修复，并保留远端发布文档和测试更新。
+- 将远端遗留 HTML/JS 前端新增行为适配到 Vue 3 + Tailwind CSS v4.3 页面，覆盖 AI Chat / AI Drawer、API Keys runtime 状态、Dashboard 导航恢复与 VPS Linux 更新分类。
+
 ## 合并远端 main v2.07-v2.07.1 并补齐 Vue 3 前端适配
 
 - 合并远端 v2.07 与 v2.07.1 的凭据运行时、API Keys、Cluster、服务生命周期、任务队列、VPS 与安全回归修复，保留发布文档和测试更新，并同步 API serial。

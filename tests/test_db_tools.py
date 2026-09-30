@@ -215,12 +215,69 @@ def test_incremental_sync_helpers_copy_append_rows_and_replace_state(tmp_path: P
     assert history_stats == {"fetched": 2, "inserted": 1, "skipped": 1, "deleted": 0, "inserted_users": ["alice"]}
     assert repeated_history_stats == {"fetched": 2, "inserted": 0, "skipped": 2, "deleted": 0, "inserted_users": []}
     assert execution_stats == {"fetched": 2, "inserted": 1, "skipped": 1, "deleted": 0, "inserted_users": ["alice"]}
-    assert balance_stats == {"fetched": 1, "inserted": 1, "skipped": 0, "deleted": 1, "inserted_users": ["alice"]}
+    assert balance_stats == {"fetched": 1, "inserted": 1, "skipped": 0, "deleted": 0, "inserted_users": ["alice"]}
     with sqlite3.connect(target[db_tools.MAIN_DB_NAME]) as conn:
         assert conn.execute("SELECT COUNT(*) FROM history WHERE user='alice'").fetchone()[0] == 2
-        assert conn.execute("SELECT timestamp, balance FROM balances WHERE user='alice'").fetchone() == (2000, 1000.0)
+        assert conn.execute("SELECT id, timestamp, balance FROM balances WHERE user='alice'").fetchone() == (1, 2000, 1000.0)
     with sqlite3.connect(target[db_tools.TRADES_DB_NAME]) as conn:
         assert conn.execute("SELECT COUNT(*) FROM executions WHERE user='alice'").fetchone()[0] == 2
+
+
+def test_balance_sync_preserves_local_ids_and_removes_only_missing_selected_users(tmp_path: Path) -> None:
+    """Remote rowid collisions must not erase a selected local balance."""
+    source = _bundle(tmp_path, "source-balances")
+    target = _bundle(tmp_path, "target-balances")
+    with sqlite3.connect(source[db_tools.MAIN_DB_NAME]) as conn:
+        conn.execute("INSERT INTO balances(id,timestamp,balance,user) VALUES(1,200,20,'alice')")
+    with sqlite3.connect(target[db_tools.MAIN_DB_NAME]) as conn:
+        conn.executemany(
+            "INSERT INTO balances(id,timestamp,balance,user) VALUES(?,?,?,?)",
+            [(1, 100, 10, "bob"), (2, 100, 10, "alice"), (3, 100, 10, "charlie")],
+        )
+    spec = next(spec for spec in db_tools.TABLE_SPECS if spec.table == "balances")
+    payload = db_tools._fetch_sync_rows_from_paths(source, spec, ["alice", "charlie"], "state")
+    result = db_tools._apply_sync_rows_to_paths(target, spec, ["alice", "charlie"], "state", payload)
+    assert result == {"fetched": 1, "inserted": 1, "skipped": 0, "deleted": 1, "inserted_users": ["alice"]}
+    with sqlite3.connect(target[db_tools.MAIN_DB_NAME]) as conn:
+        assert conn.execute("SELECT id,timestamp,balance,user FROM balances ORDER BY id").fetchall() == [
+            (1, 100, 10.0, "bob"), (2, 200, 20.0, "alice"),
+        ]
+
+
+def test_sync_verification_allows_extra_append_history_but_requires_current_state(monkeypatch) -> None:
+    """Extra local history survives append sync without masking stale state."""
+    history = db_tools.MAIN_TABLES[0]
+    balances = db_tools.MAIN_TABLES[4]
+    monkeypatch.setattr(db_tools, "TABLE_SPECS", (history, balances))
+    history_key = db_tools._sync_table_key(history)
+    balance_key = db_tools._sync_table_key(balances)
+    source = {"tables": {
+        history_key: {"count": 2, "max_timestamp": 200},
+        balance_key: {"count": 1, "max_timestamp": 300},
+    }}
+    target = {"tables": {
+        history_key: {"count": 3, "max_timestamp": 200},
+        balance_key: {"count": 1, "max_timestamp": 300},
+    }}
+
+    async def stats_for_target(name, users):
+        return source if name == "source" else target
+
+    monkeypatch.setattr(db_tools, "_sync_table_stats_for_target", stats_for_target)
+    verified = asyncio.run(db_tools._verify_sync_target("source", "target", ["alice"]))
+    assert verified["ok"] is True
+    assert verified["tables"][history_key]["ok"] is True
+
+    target["tables"][balance_key]["max_timestamp"] = 299
+    verified = asyncio.run(db_tools._verify_sync_target("source", "target", ["alice"]))
+    assert verified["ok"] is False
+    assert verified["tables"][balance_key]["ok"] is False
+
+    target["tables"][balance_key]["max_timestamp"] = 300
+    target["tables"][history_key]["max_timestamp"] = 199
+    verified = asyncio.run(db_tools._verify_sync_target("source", "target", ["alice"]))
+    assert verified["ok"] is False
+    assert verified["tables"][history_key]["ok"] is False
 
 
 def test_write_json_item_honors_add_missing_and_replace_modes(tmp_path: Path, monkeypatch) -> None:
@@ -903,6 +960,44 @@ def test_assert_known_target_uses_monitor_state(monkeypatch) -> None:
             raise AssertionError("unknown target was not rejected")
     finally:
         monkeypatch.setattr(db_tools, "_monitor", original_monitor)
+
+
+def test_connected_master_without_monitor_role_is_verified_read_only(monkeypatch) -> None:
+    """A connected master remains usable while monitor role metadata is temporarily absent."""
+    from fastapi import HTTPException
+
+    class FakePool:
+        """Expose one configured and connected remote host."""
+
+        def get_connection(self, hostname: str):
+            return object() if hostname == "manibot02" else None
+
+        def connected_hosts(self) -> list[str]:
+            return ["manibot02"]
+
+    calls = []
+
+    async def probe(hostname: str):
+        """Return a read-only confirmation of the remote role."""
+        calls.append(hostname)
+        return {"id": hostname, "role": "master"}
+
+    monkeypatch.setattr(db_tools, "_monitor", SimpleNamespace(pool=FakePool(), store=SimpleNamespace(host_meta={})))
+    monkeypatch.setattr(db_tools, "_monitor_host_meta", lambda: {})
+    monkeypatch.setattr(db_tools, "_probe_remote_master", probe)
+    asyncio.run(db_tools._assert_known_target("manibot02"))
+    assert calls == ["manibot02"]
+
+    async def unverified(hostname: str):
+        """Simulate an unavailable or non-master role probe."""
+        calls.append(hostname)
+        return None
+
+    monkeypatch.setattr(db_tools, "_probe_remote_master", unverified)
+    with pytest.raises(HTTPException) as exc_info:
+        asyncio.run(db_tools._assert_known_target("manibot02"))
+    assert exc_info.value.status_code == 503
+    assert "could not be verified" in exc_info.value.detail
 
 
 def test_known_targets_falls_back_to_monitor_snapshot(tmp_path: Path, monkeypatch) -> None:

@@ -21,6 +21,14 @@ export interface UserSummary {
   bybit_expiry_status?: string | null;
   bybit_days_remaining?: number | null;
   bybit_expires_at_iso?: string | null;
+  bot_runtime?: BotRuntime[];
+}
+
+export interface BotRuntime {
+  pb_version?: string | number;
+  status?: string;
+  enabled_on?: string;
+  running_on?: string[];
 }
 
 export interface UserDetail extends UserSummary {

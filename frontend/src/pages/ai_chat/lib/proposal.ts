@@ -14,6 +14,9 @@ export interface ProposalChange {
 
 export interface ProposalPreview {
   action?: string;
+  version?: string;
+  kind?: string;
+  effect?: string;
   name?: string;
   changes?: ProposalChange[];
   may_start_immediately?: boolean;
@@ -46,6 +49,8 @@ export interface AnalysisResult {
 
 export function proposalActionLabel(action: string | undefined, t: (key: string) => string): string {
   switch (action) {
+    case 'reviewed_config_change':
+      return t('ai.proposal.actionReviewedConfigChange');
     case 'save':
       return t('ai.proposal.actionSave');
     case 'save_and_queue':
@@ -68,6 +73,14 @@ export function proposalActionLabel(action: string | undefined, t: (key: string)
 }
 
 export function proposalDetail(preview: ProposalPreview, t: (key: string, params?: Record<string, unknown>) => string): string {
+  if (preview.action === 'reviewed_config_change') {
+    return t('ai.proposal.detailReviewedConfigChange', {
+      version: String(preview.version || ''),
+      kind: String(preview.kind || ''),
+      effect: String(preview.effect || ''),
+      count: String(preview.changed_count || 0),
+    });
+  }
   if (preview.action === 'python_analysis') {
     return t('ai.proposal.detailPython', {
       codeBytes: String(preview.code_bytes || 0),

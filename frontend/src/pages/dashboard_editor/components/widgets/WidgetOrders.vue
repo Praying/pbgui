@@ -118,6 +118,7 @@ const payload = shallowRef<OrdersData | null>(null);
 let selectedPosition: PositionRow | null = null;
 const currentTimeframe = ref<string>(DEFAULT_TIMEFRAME);
 let tfFetchId = 0;
+let emptyRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let disposed = false;
 
 const fetchKey = 'ord_' + pos;
@@ -149,7 +150,10 @@ async function buildChart(data: OrdersData): Promise<void> {
   ctrl.value = null;
   upnl.initFromPosition(data.position);
   const wrap = chartWrapEl.value;
-  if (!wrap) return; // empty-candle payload → the nodata placeholder
+  if (!wrap) {
+    scheduleEmptyRetry();
+    return;
+  }
   const created = useOrdersChart(wrap, data, {
     timeframe: currentTimeframe.value,
     onLoadMore,
@@ -173,6 +177,8 @@ async function buildChart(data: OrdersData): Promise<void> {
 
 async function loadOrders(): Promise<void> {
   tfFetchId++;
+  if (emptyRetryTimer) clearTimeout(emptyRetryTimer);
+  emptyRetryTimer = null;
   if (!selectedPosition) {
     statusMessage.value = dashT('dash.selectPositionLinked', 'Select a position in the linked Positions widget');
     payload.value = null;
@@ -191,6 +197,16 @@ async function loadOrders(): Promise<void> {
   if (fetchState.data.value === prevData) {
     statusMessage.value = dashT('dash.dataUnavailable', '⚠ Data unavailable');
   }
+}
+
+function scheduleEmptyRetry(): void {
+  if (emptyRetryTimer || disposed || !selectedPosition) return;
+  const requestedPosition = selectedPosition;
+  const requestedTimeframe = currentTimeframe.value;
+  emptyRetryTimer = setTimeout(() => {
+    emptyRetryTimer = null;
+    if (!disposed && selectedPosition === requestedPosition && currentTimeframe.value === requestedTimeframe) void loadOrders();
+  }, 5000);
 }
 
 watch(fetchState.data, (d) => {
@@ -297,6 +313,8 @@ const fs = useOrdersFullscreen({
 
 onScopeDispose(() => {
   disposed = true;
+  if (emptyRetryTimer) clearTimeout(emptyRetryTimer);
+  emptyRetryTimer = null;
   ctrl.value?.destroy();
   ctrl.value = null;
 });

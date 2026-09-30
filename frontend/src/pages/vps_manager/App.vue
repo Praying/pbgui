@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
-import { PhArrowClockwise, PhCaretDown, PhCaretUp, PhFile, PhFolder, PhX } from '@phosphor-icons/vue';
+import { PhCaretDown, PhCaretUp, PhFile, PhFolder, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { useAiPageContext } from '@/shared/ai/context';
 import { apiFetch } from '@/shared/api';
@@ -107,6 +107,13 @@ const overviewSort = ref({ field: 'hostname', direction: 'asc' });
 const overviewDrag = ref({ active: false, anchor: '', mode: true, pointerHandled: false });
 const visibleColumns = ref<Record<string, boolean>>({ status: true, ip: true, cpu: true, memory: true, disk: true, pbgui: true, pb7: true, pb8: true, updates: true, actions: true });
 
+interface PackageUpdateSummary {
+  total: number | null;
+  security: number | null;
+  normal: number | null;
+  note: string;
+}
+
 const rows = computed(() => Array.isArray(state.value.overview?.rows) ? state.value.overview.rows : []);
 const vpsRows = computed(() => rows.value.filter((row: JsonRecord) => row.nav === 'vps'));
 const selectedRow = computed(() => rows.value.find((row: JsonRecord) => String(row.hostname) === hostname.value) || null);
@@ -173,6 +180,59 @@ const branchState = computed(() => {
 const vpsLogging = computed(() => loggingConfig.value.services || config.value.vps_logging?.services || []);
 const deployActions = computed(() => deploySettings.value.actions || config.value.vps_deploy?.actions || []);
 const deployModes = computed(() => deploySettings.value.modes || config.value.vps_deploy?.modes || []);
+
+function packageUpdateSummary(row: JsonRecord): PackageUpdateSummary {
+  const packageStatus = row.package_status || {};
+  const totalValue = packageStatus.available === true ? Number(packageStatus.upgrades) : NaN;
+  const total = Number.isInteger(totalValue) && totalValue >= 0 ? totalValue : null;
+  let securityValue = packageStatus.security_updates == null ? NaN : Number(packageStatus.security_updates);
+  let splitKnown = total !== null && packageStatus.classification_complete === true;
+  const packages = Array.isArray(packageStatus.packages) ? packageStatus.packages : [];
+  const upgrades = packages.filter((item: JsonRecord) => !item.removed && String(item.installed_version || '').trim());
+  if (splitKnown && (Number(packageStatus.new_installs || 0) > 0 || Number(packageStatus.removals || 0) > 0)) {
+    splitKnown = upgrades.length === total;
+    securityValue = upgrades.filter((item: JsonRecord) => item.security === true).length;
+  }
+  splitKnown = splitKnown && Number.isInteger(securityValue) && securityValue >= 0 && securityValue <= (total || 0);
+  if (total === 0) {
+    splitKnown = true;
+    securityValue = 0;
+  }
+  let unclassified = 0;
+  const deferred = Number(packageStatus.deferred_updates || 0);
+  if (!splitKnown && total !== null && Number.isInteger(deferred) && deferred > 0 && deferred < total && packageStatus.details_truncated !== true) {
+    if (upgrades.length === total - deferred && upgrades.every((item: JsonRecord) => typeof item.security === 'boolean')) {
+      securityValue = upgrades.filter((item: JsonRecord) => item.security === true).length;
+      splitKnown = true;
+      unclassified = deferred;
+    }
+  }
+  if (total === null) return { total: null, security: null, normal: null, note: '' };
+  if (!splitKnown) return { total, security: null, normal: null, note: `${total} pending; classification unavailable` };
+  return {
+    total,
+    security: securityValue,
+    normal: total - unclassified - securityValue,
+    note: unclassified ? `${unclassified} deferred update${unclassified === 1 ? '' : 's'} unclassified` : '',
+  };
+}
+
+function packageUpdateLabel(row: JsonRecord): string {
+  const summary = packageUpdateSummary(row);
+  if (summary.total === null) return display(row.updates);
+  if (summary.security === null) return `${summary.total} · ? / ?`;
+  return `${summary.total} · ${summary.security} / ${summary.normal}`;
+}
+
+function packageUpdateTitle(row: JsonRecord): string {
+  const summary = packageUpdateSummary(row);
+  if (summary.security === null) return 'Classification unavailable. Show Linux update details.';
+  return `${summary.security} security / ${summary.normal} normal. Show Linux update details.`;
+}
+
+function hasPackageUpdates(row: JsonRecord): boolean {
+  return (packageUpdateSummary(row).total || 0) > 0;
+}
 const modalTitle = computed(() => {
   const titles: Record<string, string> = {
     confirm: t('vpsmgr.confirmAction'), history: t('vpsmgr.metricHistory'), 'host-key': t('vpsmgr.reviewSshHostKey'),
@@ -397,7 +457,6 @@ function handleResult(message: JsonRecord): void {
 }
 function structuredCloneSafe(value: unknown): JsonRecord { try { return JSON.parse(JSON.stringify(value || {})) as JsonRecord; } catch { return {}; } }
 
-function refresh(): void { send({ cmd: 'refresh' }); }
 const OVERVIEW_PREFS_KEY = 'pbgui-vps-manager-overview';
 function saveOverviewPrefs(): void { try { localStorage.setItem(OVERVIEW_PREFS_KEY, JSON.stringify({ selectedHosts: [...selectedHosts.value], sort: { ...overviewSort.value }, columns: { ...visibleColumns.value } })); } catch { /* unavailable in test/private mode */ } }
 function loadOverviewPrefs(): void { try { const saved = JSON.parse(localStorage.getItem(OVERVIEW_PREFS_KEY) || '{}') as JsonRecord; if (Array.isArray(saved.selectedHosts)) deploy.value.selectedHosts = saved.selectedHosts.map(String); if (saved.sort?.field) overviewSort.value = { field: String(saved.sort.field), direction: saved.sort.direction === 'desc' ? 'desc' : 'asc' }; if (saved.columns && typeof saved.columns === 'object') visibleColumns.value = { ...visibleColumns.value, ...saved.columns }; } catch { /* unavailable or invalid */ } }
@@ -467,7 +526,7 @@ function acceptExistingHostKey(): void {
   existingImport.value.accepted_host_key_fingerprint = String(hostKey.fingerprint || '');
   void probeExistingImport();
 }
-async function saveExistingImport(): Promise<void> { try { await apiFetch<JsonRecord>(`${apiBase}/import/save`, { method: 'POST', body: JSON.stringify({ ...existingImport.value }) }); showNotice(t('vpsmgr.vpsSaved')); refresh(); } catch (error) { showNotice(error, 'err'); } }
+async function saveExistingImport(): Promise<void> { try { await apiFetch<JsonRecord>(`${apiBase}/import/save`, { method: 'POST', body: JSON.stringify({ ...existingImport.value }) }); showNotice(t('vpsmgr.vpsSaved')); send({ cmd: 'refresh' }); } catch (error) { showNotice(error, 'err'); } }
 function openExistingImport(): void { setModal('existing-import', { probe: null }); }
 async function openClusterImport(): Promise<void> { setModal('cluster-import', { loading: true }); try { const preview = await apiFetch<JsonRecord>(`${apiBase}/cluster-import/preview`); clusterImport.value.preview = preview; const items = Array.isArray(preview.items) ? preview.items : []; clusterImport.value.selected = Object.fromEntries(items.map((item: JsonRecord) => [String(item.hostname || ''), item.action !== 'skip'])); modalData.value = { preview, loading: false }; } catch (error) { showNotice(error, 'err'); closeModal(); } }
 async function applyClusterImport(): Promise<void> { try { const preview = clusterImport.value.preview || {}; const selected = (preview.items || []).filter((item: JsonRecord) => clusterImport.value.selected[item.hostname]); const result = await apiFetch<JsonRecord>(`${apiBase}/cluster-import/apply`, { method: 'POST', body: JSON.stringify({ selected, passwords: clusterImport.value.passwords, local_sudo_pw: clusterImport.value.local_sudo_pw }) }); closeModal(); pollClusterImport(String(result.job_id || '')); } catch (error) { showNotice(error, 'err'); } }
@@ -717,7 +776,6 @@ onUnmounted(() => {
     </template>
 
     <template #header-actions>
-      <Button type="button" variant="info" data-action="refresh" @click="refresh"><PbIcon :icon="PhArrowClockwise" /> {{ t('vpsmgr.refresh') }}</Button>
       <Button
         v-for="item in monitorItems.filter((entry) => hyperliquidAccountForBot(entry))"
         :key="`hl-limit-${historyBotName(item)}`"
@@ -738,7 +796,7 @@ onUnmounted(() => {
         <section v-if="view === 'overview'" class="grid gap-3.5">
           <article class="mb-3.5 min-w-0 overflow-hidden rounded-[9px] border border-border-default bg-panel">
             <div class="flex items-center justify-between gap-2.5 border-b border-border-default bg-panel/46 px-3.25 py-2.75"><span class="font-bold">{{ t('vpsmgr.overview') }}</span><div class="flex flex-wrap items-center justify-end gap-1.75 max-[680px]:justify-start"><Button type="button" variant="default" size="sm" data-action="select-all-vps" @click="selectAllVps">{{ t('vpsmgr.selectAll') }}</Button><Button type="button" variant="default" size="sm" data-action="clear-selected-vps" @click="clearSelectedVps">{{ t('vpsmgr.clearSelection') }}</Button><Button type="button" variant="default" size="sm" data-action="open-columns" @click="setModal('files', { columns: true })">{{ t('vpsmgr.columns') }}</Button></div></div>
-            <div class="overflow-auto p-3.25"><table class="manager-table w-full border-collapse text-xs"><thead><tr><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-pointer" data-sort="hostname" :aria-sort="sortAria('hostname')" @click="sortOverview('hostname')">{{ t('vpsmgr.hostname') }}<PbIcon v-if="overviewSort.field === 'hostname'" :icon="overviewSort.direction === 'asc' ? PhCaretUp : PhCaretDown" :size="10" class="ml-0.5 inline-block align-[-1px]" /></th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.status">{{ t('vpsmgr.status') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.ip" @click="sortOverview('ip')" :aria-sort="sortAria('ip')">{{ t('vpsmgr.ipLabel') }}<PbIcon v-if="overviewSort.field === 'ip'" :icon="overviewSort.direction === 'asc' ? PhCaretUp : PhCaretDown" :size="10" class="ml-0.5 inline-block align-[-1px]" /></th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.cpu">CPU</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.memory">RAM</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.disk">{{ t('vpsmgr.disk') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.pbgui">PBGui</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.pb7">PB7</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.pb8">PB8</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.updates">{{ t('vpsmgr.updates') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.actions">{{ t('vpsmgr.action') }}</th></tr></thead><tbody><tr class="cursor-pointer" v-for="row in sortedRows()" :key="row.hostname" :data-row-host="row.hostname" :class="{ selected: selectedHosts.includes(String(row.hostname || '')) }" @pointerdown="startOverviewDrag(row, $event)" @pointerenter="moveOverviewDrag(row)" @click="handleOverviewRowClick(row)"><td class="border-b border-border-default px-1.75 py-2 text-left align-top">{{ display(row.name || row.hostname) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.status"><span class="inline-block rounded-full px-1.75 py-0.5 text-micro" :class="statusClass(row.online ? 'online' : 'offline')">{{ row.online ? t('vpsmgr.online') : t('vpsmgr.offline') }}</span><small v-if="row.ssh_host_key_status"> {{ display(row.ssh_host_key_status) }}</small></td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.ip">{{ display(row.ip) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.cpu">{{ formatPercent(row.cpu) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.memory">{{ formatPercent(row.memory_percent ?? row.memory?.percent) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.disk">{{ formatPercent(row.disk_percent ?? row.disk?.percent) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.pbgui">{{ display(row.pbgui) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.pb7">{{ display(row.pb7_branch) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.pb8">{{ display(row.pb8_branch) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.updates">{{ display(row.updates) }}<span v-if="row.task_current_label" class="block text-secondary leading-[1.45]">{{ row.task_current_label }}</span></td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.actions"><Button v-if="row.nav === 'vps'" type="button" variant="default" size="sm" data-action="select-vps" :data-host="row.hostname" @pointerdown.stop @click.stop="selectHost(row)">{{ t('common.view') }}</Button><Button v-else type="button" variant="default" size="sm" @pointerdown.stop @click.stop="selectHost(row)">{{ t('common.view') }}</Button></td></tr></tbody></table><LoadingSkeleton v-if="!stateLoaded" :label="t('common.loading')" /><div v-else-if="!rows.length" class="p-4.5 text-center text-secondary">{{ t('common.noData') }}</div></div>
+            <div class="overflow-auto p-3.25"><table class="manager-table w-full border-collapse text-xs"><thead><tr><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-pointer" data-sort="hostname" :aria-sort="sortAria('hostname')" @click="sortOverview('hostname')">{{ t('vpsmgr.hostname') }}<PbIcon v-if="overviewSort.field === 'hostname'" :icon="overviewSort.direction === 'asc' ? PhCaretUp : PhCaretDown" :size="10" class="ml-0.5 inline-block align-[-1px]" /></th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.status">{{ t('vpsmgr.status') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.ip" @click="sortOverview('ip')" :aria-sort="sortAria('ip')">{{ t('vpsmgr.ipLabel') }}<PbIcon v-if="overviewSort.field === 'ip'" :icon="overviewSort.direction === 'asc' ? PhCaretUp : PhCaretDown" :size="10" class="ml-0.5 inline-block align-[-1px]" /></th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.cpu">CPU</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.memory">RAM</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.disk">{{ t('vpsmgr.disk') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.pbgui">PBGui</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.pb7">PB7</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.pb8">PB8</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.updates">{{ t('vpsmgr.updates') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-card px-1.75 py-2 text-left align-top text-primary whitespace-nowrap cursor-default" v-if="visibleColumns.actions">{{ t('vpsmgr.action') }}</th></tr></thead><tbody><tr class="cursor-pointer" v-for="row in sortedRows()" :key="row.hostname" :data-row-host="row.hostname" :class="{ selected: selectedHosts.includes(String(row.hostname || '')) }" @pointerdown="startOverviewDrag(row, $event)" @pointerenter="moveOverviewDrag(row)" @click="handleOverviewRowClick(row)"><td class="border-b border-border-default px-1.75 py-2 text-left align-top">{{ display(row.name || row.hostname) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.status"><span class="inline-block rounded-full px-1.75 py-0.5 text-micro" :class="statusClass(row.online ? 'online' : 'offline')">{{ row.online ? t('vpsmgr.online') : t('vpsmgr.offline') }}</span><small v-if="row.ssh_host_key_status"> {{ display(row.ssh_host_key_status) }}</small></td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.ip">{{ display(row.ip) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.cpu">{{ formatPercent(row.cpu) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.memory">{{ formatPercent(row.memory_percent ?? row.memory?.percent) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.disk">{{ formatPercent(row.disk_percent ?? row.disk?.percent) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.pbgui">{{ display(row.pbgui) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.pb7">{{ display(row.pb7_branch) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.pb8">{{ display(row.pb8_branch) }}</td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.updates"><Button v-if="hasPackageUpdates(row)" type="button" variant="ghost" size="sm" class="h-auto min-h-0 whitespace-nowrap px-1 py-0.5 text-xs" :title="packageUpdateTitle(row)" @click.stop="selectHost(row); openPackageUpdates()">{{ packageUpdateLabel(row) }}</Button><span v-else>{{ packageUpdateLabel(row) }}</span><span v-if="packageUpdateSummary(row).note" class="block text-secondary leading-[1.45]">{{ packageUpdateSummary(row).note }}</span><span v-if="row.task_current_label" class="block text-secondary leading-[1.45]">{{ row.task_current_label }}</span></td><td class="border-b border-border-default px-1.75 py-2 text-left align-top" v-if="visibleColumns.actions"><Button v-if="row.nav === 'vps'" type="button" variant="default" size="sm" data-action="select-vps" :data-host="row.hostname" @pointerdown.stop @click.stop="selectHost(row)">{{ t('common.view') }}</Button><Button v-else type="button" variant="default" size="sm" @pointerdown.stop @click.stop="selectHost(row)">{{ t('common.view') }}</Button></td></tr></tbody></table><LoadingSkeleton v-if="!stateLoaded" :label="t('common.loading')" /><div v-else-if="!rows.length" class="p-4.5 text-center text-secondary">{{ t('common.noData') }}</div></div>
           </article>
           <article v-if="selectedHosts.length" class="mb-3.5 min-w-0 overflow-hidden rounded-[9px] border border-border-default bg-panel"><div class="flex items-center justify-between gap-2.5 border-b border-border-default bg-panel/46 px-3.25 py-2.75"><span class="font-bold">{{ t('vpsmgr.bulkActions') }}</span></div><div class="p-3.25"><p class="block text-secondary leading-[1.45]">{{ selectedHosts.length }} {{ t('vpsmgr.selectedLower') }}</p><div class="flex flex-wrap items-center justify-end gap-1.75 max-[680px]:justify-start"><Button type="button" variant="info" data-action="open-view" data-view="deploys-vps-logging" @click="setContext('deploys-vps-logging')">{{ t('vpsmgr.deploy') }}</Button><Button type="button" variant="default" data-action="deploy-logging" @click="deployLogging">{{ t('vpsmgr.deployLogging') }}</Button></div></div></article>
         </section>

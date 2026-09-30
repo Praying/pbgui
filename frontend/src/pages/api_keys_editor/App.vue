@@ -298,6 +298,7 @@ onMounted(async () => {
     await store.loadUsers();
     focusFilter();
   }
+  store.startLiveRefresh();
 });
 </script>
 

@@ -70,6 +70,30 @@ export interface ChatMessage {
   content?: string;
 }
 
+export interface ResearchItem {
+  id: string;
+  digest?: string;
+  kind?: string;
+  status?: string;
+  phase?: string;
+  revision?: number;
+  provider?: string;
+  model?: string;
+  prompt?: string;
+  instructions?: string;
+  answer?: string;
+  jev_answer?: string;
+  jev_questions?: unknown;
+  jev_max_cost_usd?: number;
+  jev_estimated_cost_usd?: number;
+  jev_previous_budget_usd?: number;
+  summary?: string;
+  error?: string;
+  jev_error?: string;
+  summary_error?: string;
+  resume_jev?: boolean;
+}
+
 export interface UiAction {
   type: string;
   action_id: string;
@@ -92,6 +116,8 @@ export interface ConversationSummary {
   messages?: ChatMessage[];
   ui_actions?: UiAction[];
   retry_message?: string;
+  analysis_only?: boolean;
+  research_items?: ResearchItem[];
 }
 
 export interface Notice {
@@ -155,6 +181,7 @@ export function useAiChat(t: Translate) {
   let chatGeneration = 0;
   let loginGeneration = 0;
   let goGeneration = 0;
+  const researchTimers = new Map<string, ReturnType<typeof setTimeout>>();
   let loginTimer: ReturnType<typeof setTimeout> | null = null;
   let activityTimer: ReturnType<typeof setTimeout> | null = null;
   let loginDeadline = 0;
@@ -185,12 +212,18 @@ export function useAiChat(t: Translate) {
     return rows;
   });
   const quickReplyAction = computed(() =>
-    (conversation.value?.ui_actions || []).find((item) => item && item.type === 'chat.quick_replies') || null,
+    conversation.value?.analysis_only
+      ? null
+      : (conversation.value?.ui_actions || []).find((item) => item && item.type === 'chat.quick_replies') || null,
   );
   /** ProposalList binds this — cards in flight are hidden until they resolve or error. */
   const visibleProposals = computed(() =>
-    proposals.value.filter((proposal) => !resolvingProposalIds.value.has(proposal.proposal_id)),
+    proposals.value.filter((proposal) =>
+      !resolvingProposalIds.value.has(proposal.proposal_id) &&
+      (!conversation.value?.analysis_only || proposal.preview?.action === 'reviewed_config_change'),
+    ),
   );
+  const researchItems = computed(() => conversation.value?.research_items || []);
   const retryMessage = computed(() => retryMessages.value[conversationId.value || '__new__'] || '');
   const reasoningSummary = computed(() => String(conversation.value?.reasoning_summary || ''));
   const activityHistory = computed(() =>
@@ -353,6 +386,7 @@ export function useAiChat(t: Translate) {
   function applyConversationSnapshot(snapshot: ConversationSummary | null): void {
     if (!snapshot || snapshot.conversation_id !== conversationId.value) return;
     conversation.value = snapshot;
+    (snapshot.research_items || []).forEach(scheduleResearchPolling);
     busy.value = Boolean(snapshot.busy);
     if (!busy.value) {
       pendingMessage.value = '';
@@ -360,7 +394,7 @@ export function useAiChat(t: Translate) {
     }
     if (snapshot.retry_message) retryMessages.value[snapshot.conversation_id] = snapshot.retry_message;
     if (snapshot.busy) setNotice(snapshot.activity || t('ai.chat.modelWorking'), false, true);
-    else setNotice(snapshot.last_error || '', Boolean(snapshot.last_error), false);
+    else setNotice(snapshot.last_error || (snapshot.analysis_only ? t('ai.chat.analysisOnly') : ''), Boolean(snapshot.last_error), false);
     const summary = conversations.value.find((item) => item.conversation_id === snapshot.conversation_id);
     if (summary) Object.assign(summary, snapshot);
     if (!snapshot.busy && !snapshot.last_error) delete retryMessages.value[snapshot.conversation_id];
@@ -386,6 +420,56 @@ export function useAiChat(t: Translate) {
       }
     } catch (error) {
       if (id === conversationId.value) setNotice((error as Error).message, true);
+    }
+  }
+
+  function clearResearchTimer(id: string): void {
+    const timer = researchTimers.get(id);
+    if (timer) clearTimeout(timer);
+    researchTimers.delete(id);
+  }
+
+  function scheduleResearchPolling(item: ResearchItem): void {
+    clearResearchTimer(item.id);
+    if (item.status !== 'running' || item.id === '') return;
+    researchTimers.set(item.id, setTimeout(() => { void refreshResearchItem(item.id); }, 1500));
+  }
+
+  async function refreshResearchItem(id: string): Promise<void> {
+    if (!id || !conversationId.value) return;
+    const generation = chatGeneration;
+    try {
+      const item = await api<ResearchItem>('/research/' + encodeURIComponent(id));
+      if (generation !== chatGeneration || !conversation.value || conversation.value.conversation_id !== conversationId.value) return;
+      const items = (conversation.value.research_items || []).map((current) => current.id === id ? item : current);
+      conversation.value = { ...conversation.value, research_items: items };
+      if (item.status === 'running') scheduleResearchPolling(item);
+      else clearResearchTimer(id);
+    } catch (error) {
+      clearResearchTimer(id);
+      setNotice((error as Error).message, true);
+    }
+  }
+
+  async function actResearch(id: string, action: 'start' | 'cancel'): Promise<void> {
+    const item = researchItems.value.find((candidate) => candidate.id === id);
+    if (!item) return;
+    clearResearchTimer(id);
+    try {
+      const updated = await api<ResearchItem>('/research/' + encodeURIComponent(id) + '/' + action, {
+        method: 'POST',
+        body: JSON.stringify(action === 'start' ? { digest: item.digest } : {}),
+      });
+      if (conversation.value) {
+        conversation.value = {
+          ...conversation.value,
+          research_items: (conversation.value.research_items || []).map((current) => current.id === id ? updated : current),
+        };
+      }
+      scheduleResearchPolling(updated);
+    } catch (error) {
+      setNotice((error as Error).message, true);
+      if (action === 'start') scheduleResearchPolling({ ...item, status: 'running' });
     }
   }
 
@@ -614,7 +698,7 @@ async function sendMessage(retryText?: string): Promise<void> {
   }
 
   /* ── Proposal approval ── */
-  async function resolveProposal(proposal: AiProposal, approve: boolean): Promise<void> {
+  async function resolveProposal(proposal: AiProposal, approve: boolean, reviewToken = ''): Promise<void> {
     const preview = (proposal.preview || {}) as ProposalPreview;
     const id = conversationId.value;
     // v1.99.9 (ai_chat.html / ai_drawer.js): hide the card and show a working
@@ -629,7 +713,7 @@ async function sendMessage(retryText?: string): Promise<void> {
         '/proposals/' + encodeURIComponent(proposal.proposal_id) + suffix,
         {
           method: 'POST',
-          body: JSON.stringify({ payload_digest: proposal.payload_digest, conversation_id: id }),
+          body: JSON.stringify({ payload_digest: proposal.payload_digest, conversation_id: id, ...(reviewToken ? { review_token: reviewToken } : {}) }),
         },
       );
       const executed = result.status === 'executed';
@@ -655,6 +739,18 @@ async function sendMessage(retryText?: string): Promise<void> {
     } finally {
       if (id === conversationId.value) await reconcileProposals(id);
     }
+  }
+
+  async function reviewProposal(proposal: AiProposal): Promise<{ proposal: AiProposal; reviewToken: string }> {
+    const id = conversationId.value;
+    const result = await api<{ proposal: AiProposal; review_token: string }>(
+      '/proposals/' + encodeURIComponent(proposal.proposal_id) + '/review',
+      {
+        method: 'POST',
+        body: JSON.stringify({ payload_digest: proposal.payload_digest, conversation_id: id }),
+      },
+    );
+    return { proposal: result.proposal, reviewToken: result.review_token };
   }
 
   function appendAssistantAnalysis(result: Parameters<typeof analysisResultText>[0]): void {
@@ -865,6 +961,8 @@ async function sendMessage(retryText?: string): Promise<void> {
   onBeforeUnmount(() => {
     stopLoginPolling();
     stopActivityPolling();
+    researchTimers.forEach((timer) => clearTimeout(timer));
+    researchTimers.clear();
   });
 
   async function initialize(): Promise<void> {
@@ -910,6 +1008,7 @@ async function sendMessage(retryText?: string): Promise<void> {
     retryMessage,
     reasoningSummary,
     activityHistory,
+    researchItems,
     conversationLastError,
     composerEnabled,
     setNotice,
@@ -923,6 +1022,9 @@ async function sendMessage(retryText?: string): Promise<void> {
     deleteCurrentConversation,
     rewindToMessage,
     resolveProposal,
+    reviewProposal,
+    refreshResearchItem,
+    actResearch,
     startChatgptLogin,
     cancelChatgptLogin,
     disconnectChatgpt,
