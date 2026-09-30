@@ -7,6 +7,8 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhCaretDown, PhCaretRight } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { calcPct, fmtBytes, fmtTS } from '../lib/jobsFormat';
 import type { JobRecord } from '../types';
@@ -85,7 +87,7 @@ function statusBadgeClass(status: string): string {
       <span v-if="steps.mode">{{ t('market.modeLabel', { mode: steps.mode }) }}</span>
     </div>
     <div class="hlda-exp mt-1.5" v-if="hasStats">
-      <Button type="button" variant="ghost" size="sm" class="hlda-exp-toggle h-auto border-0 px-0 py-0.5 font-normal text-muted hover:bg-transparent hover:text-primary" @click="$emit('expand')">{{ expanded ? '▼' : '▶' }} {{ t('market.details') }}</Button>
+      <Button type="button" variant="ghost" size="sm" class="hlda-exp-toggle h-auto border-0 px-0 py-0.5 font-normal text-muted hover:bg-transparent hover:text-primary" @click="$emit('expand')"><PbIcon :icon="expanded ? PhCaretDown : PhCaretRight" :size="12" /> {{ t('market.details') }}</Button>
       <div class="hlda-exp-body pt-1.5 pl-2 text-xs text-secondary" :class="expanded ? 'open block' : 'hidden'">
         <div class="dr mb-0.5">{{ t('market.downloadsStat', { count: stats.downloaded, size: fmtBytes(progress.downloaded_bytes_total) }) }}</div>
         <div class="dr mb-0.5">{{ t('market.skippedStat', { count: stats.skipped, size: fmtBytes(progress.skipped_existing_bytes_total) }) }}</div>

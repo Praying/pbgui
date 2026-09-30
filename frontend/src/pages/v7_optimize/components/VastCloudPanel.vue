@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhCaretDown } from '@phosphor-icons/vue';
 import { apiFetch } from '@/shared/api';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
@@ -466,8 +468,11 @@ onBeforeUnmount(() => {
 
 <template>
   <details class="rounded-lg border border-border-subtle bg-panel shadow-panel" @toggle="isOpen = ($event.target as HTMLDetailsElement).open">
-    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-border-subtle px-3 py-2.5 text-sm font-semibold text-primary">
-      <span>{{ t('v7optimize.cloudGpuTitle') }}</span>
+    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-border-subtle px-3 py-2.5 text-sm font-semibold text-primary transition-colors duration-[120ms] ease-standard hover:bg-surface-hover">
+      <span class="flex min-w-0 items-center gap-2">
+        <PbIcon :icon="PhCaretDown" :size="14" class="shrink-0 text-secondary transition-transform duration-[120ms] ease-standard" :class="isOpen ? '' : '-rotate-90'" />
+        <span>{{ t('v7optimize.cloudGpuTitle') }}</span>
+      </span>
       <span class="text-xs font-normal text-secondary">{{ workerLabel }}</span>
     </summary>
     <div class="grid gap-4 p-3">

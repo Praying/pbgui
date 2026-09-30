@@ -228,7 +228,7 @@ onUnmounted(() => {
       />
     </template>
 
-    <div class="flex min-h-0 flex-1 flex-col bg-page text-primary">
+    <div class="pbgui-ambient flex min-h-0 flex-1 flex-col bg-page text-primary">
       <div class="flex min-h-0 flex-1">
         <section class="flex min-w-0 flex-1 flex-col overflow-auto p-[var(--page-padding)]">
           <div

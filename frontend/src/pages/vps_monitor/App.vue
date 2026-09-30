@@ -433,7 +433,7 @@ onUnmounted(() => { window.removeEventListener('keydown', onKeydown); disconnect
       />
     </template>
 
-  <div class="vps-monitor flex min-h-0 flex-1 flex-col bg-page text-primary" :class="{ compact: compactMode }">
+  <div class="vps-monitor pbgui-ambient flex min-h-0 flex-1 flex-col bg-page text-primary" :class="{ compact: compactMode }">
     <div class="flex min-h-0 flex-1">
       <section class="flex min-w-0 flex-1 flex-col p-[var(--page-padding)]">
         <div class="mb-3 flex flex-wrap gap-3.5 text-xs text-secondary">

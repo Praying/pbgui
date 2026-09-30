@@ -314,6 +314,6 @@ defineExpose({ load });
   gap: 0.5rem;
   margin-top: 0.5rem;
   cursor: pointer;
-  color: var(--danger, #ef4444);
+  color: var(--danger);
 }
 </style>

@@ -24,7 +24,7 @@ const visible = import.meta.env.VITE_MIGRATION_WATERMARK === 'on';
      decorative letter-spacing on a 6%-opacity rotated watermark, not
      readable type, so it stays wider than --tracking-label. */
   letter-spacing: 0.35em;
-  color: #f2f5fb;
+  color: var(--text-primary);
   opacity: 0.06;
   transform: rotate(-30deg);
   white-space: nowrap;

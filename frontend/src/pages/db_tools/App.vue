@@ -25,7 +25,7 @@
  *  - Poll/timer handles are disposed on unmount (legacy leaked them).
  */
 import { computed, onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
-import { PhCalendar } from '@phosphor-icons/vue';
+import { PhCalendar, PhCaretDown, PhCaretUp } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import AppShell from '@/shared/components/AppShell.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -155,11 +155,6 @@ const backupSummary = computed(() => {
   });
 });
 
-function sortMark(key: string): string {
-  if (store.backupSort.value.key !== key) return '';
-  return store.backupSort.value.dir === 'asc' ? ' ▲' : ' ▼';
-}
-
 /* ── sync job list (:694-720) ── */
 
 const syncJobRows = computed(() =>
@@ -239,7 +234,7 @@ onBeforeUnmount(() => store.teardown());
     </template>
 
   <div id="page-body" class="flex h-[calc(100dvh-64px)] overflow-hidden max-[760px]:flex-col">
-    <div id="main-content" class="min-w-0 flex-1 overflow-y-auto p-[var(--page-padding)]">
+    <div id="main-content" class="pbgui-ambient min-w-0 flex-1 overflow-y-auto p-[var(--page-padding)]">
       <!-- Cleanup -->
       <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" id="panel-cleanup" :class="store.activePanel.value === 'cleanup' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
@@ -582,11 +577,11 @@ onBeforeUnmount(() => store.teardown());
             </div>
             <div id="backup-list" class="min-h-[360px] flex-1 select-none overflow-auto p-0">
               <div :class="[backupsGridClass, 'sticky top-0 z-[2] border-b-2 border-border-default bg-page px-3 py-2 text-xs font-bold tracking-label text-secondary uppercase']">
-                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('created')">{{ t('misc.dbtools.created') }}{{ sortMark('created') }}</Button>
-                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('label')">{{ t('misc.dbtools.operation') }}{{ sortMark('label') }}</Button>
-                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('db')">{{ t('misc.dbtools.file') }}{{ sortMark('db') }}</Button>
-                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('size')">{{ t('misc.dbtools.size') }}{{ sortMark('size') }}</Button>
-                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('name')">{{ t('misc.dbtools.backupName') }}{{ sortMark('name') }}</Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('created')">{{ t('misc.dbtools.created') }}<PbIcon v-if="store.backupSort.value.key === 'created'" :icon="store.backupSort.value.dir === 'asc' ? PhCaretUp : PhCaretDown" :size="12" /></Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('label')">{{ t('misc.dbtools.operation') }}<PbIcon v-if="store.backupSort.value.key === 'label'" :icon="store.backupSort.value.dir === 'asc' ? PhCaretUp : PhCaretDown" :size="12" /></Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('db')">{{ t('misc.dbtools.file') }}<PbIcon v-if="store.backupSort.value.key === 'db'" :icon="store.backupSort.value.dir === 'asc' ? PhCaretUp : PhCaretDown" :size="12" /></Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('size')">{{ t('misc.dbtools.size') }}<PbIcon v-if="store.backupSort.value.key === 'size'" :icon="store.backupSort.value.dir === 'asc' ? PhCaretUp : PhCaretDown" :size="12" /></Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('name')">{{ t('misc.dbtools.backupName') }}<PbIcon v-if="store.backupSort.value.key === 'name'" :icon="store.backupSort.value.dir === 'asc' ? PhCaretUp : PhCaretDown" :size="12" /></Button>
               </div>
               <div v-if="!backupRows.length" class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-white/3" aria-disabled="true">{{ t('misc.dbtools.noBackupsFound') }}</div>
               <Button

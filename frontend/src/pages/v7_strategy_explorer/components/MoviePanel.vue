@@ -170,8 +170,8 @@ const exportCodecLabel = computed(() => {
           </div>
           <div class="flex flex-col gap-1">
             <Label for="movie-start-date-input" :data-tip="t('v7explore.movieStartDateTip')">{{ t('v7explore.startDate') }}</Label>
-            <div style="position:relative">
-              <Input id="movie-start-date-input" v-model="store.controls.movieStartDate" type="text" placeholder="YYYY-MM-DD" style="padding-right:28px" @change="store.invalidateMovieRequest()" />
+            <div class="relative">
+              <Input id="movie-start-date-input" v-model="store.controls.movieStartDate" type="text" placeholder="YYYY-MM-DD" class="pr-7" @change="store.invalidateMovieRequest()" />
               <!-- ui-migration: blocked — legacy window.__dp datepicker bridge (lib/datePicker.ts); the trigger stays raw -->
               <button type="button" data-dp="movie-start-date-input" :title="t('v7explore.openCalendar')" :aria-label="t('v7explore.openCalendar')" class="absolute right-0.5 top-1/2 -translate-y-1/2 cursor-pointer border-none bg-transparent p-0 px-[3px] text-secondary leading-none hover:text-primary" @click="openDatePicker('movie-start-date-input', $event.currentTarget as HTMLElement)"><PbIcon :icon="PhCalendar" :size="14" /></button>
             </div>
@@ -250,7 +250,7 @@ const exportCodecLabel = computed(() => {
           <p class="text-secondary" id="movie-export-info">{{ movie.exportInfo.value || t('v7explore.exportDirectlyHint') }}</p>
           <details class="mt-2">
             <summary>{{ t('v7explore.advancedExportSettings') }}</summary>
-            <div class="grid grid-cols-[repeat(4,minmax(0,1fr))] items-end gap-3 max-[1250px]:grid-cols-[1fr]" style="margin-top:var(--sp-sm)">
+            <div class="mt-2 grid grid-cols-[repeat(4,minmax(0,1fr))] items-end gap-3 max-[1250px]:grid-cols-[1fr]">
               <div class="flex flex-col gap-1">
                 <Label id="movie-export-codec-label" for="movie-export-codec" :data-tip="t('v7explore.videoCodecTip')">{{ t('v7explore.videoCodec') }}</Label>
                 <SelectRoot v-model="store.controls.exportCodec" @update:model-value="store.invalidateMovieRequest(); movie.markExportCustom()">
@@ -281,10 +281,10 @@ const exportCodecLabel = computed(() => {
             </div>
           </details>
         </div>
-        <div class="grid grid-cols-[minmax(420px,2fr)_minmax(320px,1fr)] items-start gap-3 max-[1250px]:grid-cols-[1fr]" style="margin-top:var(--sp-md)">
+        <div class="mt-3 grid grid-cols-[minmax(420px,2fr)_minmax(320px,1fr)] items-start gap-3 max-[1250px]:grid-cols-[1fr]">
           <div><MoviePlot ref="plotRef" :store="store" :movie="movie" /></div>
           <div id="movie-frame-details">
-            <div class="grid gap-3" style="grid-template-columns:1fr 1fr;margin-bottom:12px">
+            <div class="mb-3 grid grid-cols-2 gap-3">
               <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-label">{{ t('v7explore.frames') }}</div><div class="mt-1 truncate text-lg font-bold">{{ frames.length }}</div></div>
               <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-label">{{ t('v7explore.fills') }}</div><div class="mt-1 truncate text-lg font-bold">{{ sideEvents.length }}</div></div>
             </div>

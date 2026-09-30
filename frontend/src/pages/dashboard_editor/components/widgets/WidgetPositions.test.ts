@@ -178,13 +178,13 @@ describe('WidgetPositions', () => {
     await flushPromises();
     const ths = wrapper.findAll('.dp-table thead th');
     await ths[0]!.trigger('click');
-    expect((ths[0]!.find('.dp-sort').element as HTMLElement).textContent).toBe(' \u25B2');
+    expect(ths[0]!.find('.dp-sort').attributes('data-dir')).toBe('asc');
     expect(wrapper.findAll('.dp-table tbody tr td')[0]!.text()).toBe('alice');
     await ths[0]!.trigger('click');
-    expect((ths[0]!.find('.dp-sort').element as HTMLElement).textContent).toBe(' \u25BC');
+    expect(ths[0]!.find('.dp-sort').attributes('data-dir')).toBe('desc');
     expect(wrapper.findAll('.dp-table tbody tr td')[0]!.text()).toBe('bob');
-    /* other columns keep empty arrows */
-    expect((ths[1]!.find('.dp-sort').element as HTMLElement).textContent).toBe('');
+    /* other columns keep no caret */
+    expect(ths[1]!.find('.dp-sort').attributes('data-dir')).toBeUndefined();
   });
 
   it('selects a row, highlights it and fires the positions-selected contract (render.js:3239-3251)', async () => {

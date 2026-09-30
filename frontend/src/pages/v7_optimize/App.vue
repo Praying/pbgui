@@ -556,7 +556,7 @@ onBeforeUnmount(() => {
       :ok-text="t('v7optimize.connected')"
     />
     <div id="page-body" class="flex h-[calc(100dvh-82px)] flex-col overflow-hidden">
-    <div class="workbench-page-content optimize-workspace flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-page bg-[radial-gradient(circle_at_94%_0%,rgb(var(--accent-rgb)/0.09),transparent_28rem),radial-gradient(circle_at_0%_84%,rgb(var(--success-rgb)/0.05),transparent_24rem),repeating-linear-gradient(135deg,rgb(var(--text-secondary-rgb)/0.016)_0_1px,transparent_1px_42px)] p-[var(--page-padding)]">
+    <div class="workbench-page-content optimize-workspace pbgui-ambient flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-page p-[var(--page-padding)]">
     <!-- Converged navigation: panel switching lives in the workbench rail
          (AppShell sections); this strip carries only the active panel's
          contextual actions. -->
@@ -612,7 +612,7 @@ onBeforeUnmount(() => {
       <LoadingSkeleton v-if="page.loading.value" class="p-[30px] text-secondary" :label="t('common.loading')" />
       <template v-else>
         <section v-if="page.panel.value === 'configs'" class="opt-panel-view flex min-h-0 flex-col h-full"><PanelHeader class="mb-2" :title="panelTitle" :description="panelSubtitle" /><ConfigsPanel :is-v8="adapter.isV8" :rows="page.filteredConfigs.value" :selected="page.selectedConfigs.value" :search="page.configSearch.value" :sort="page.configSort.value" @update:search="page.configSearch.value = $event" @toggle="(name) => toggle('configs', name)" @create="page.openEditor()" @edit="page.openEditor" @duplicate="openDuplicate" @sort="(key: string) => sortPanel('configs', key)" @select-all="selectVisible('configs')" @clear-selection="clearVisible('configs')" @select-range="(paths, selected) => page.setSelection('configs', paths, selected)" /></section>
-        <section v-else-if="page.panel.value === 'queue'" class="opt-panel-view flex min-h-0 flex-col h-full"><PanelHeader class="mb-2" :title="panelTitle" :description="panelSubtitle" /><VastCloudPanel v-if="adapter.isV8" class="mb-3 shrink-0" /><QueuePanel :rows="page.filteredQueue.value" :selected="page.selectedQueue.value" :search="page.configSearch.value" :sort="page.queueSort.value" @update:search="page.configSearch.value = $event" @toggle="(filename) => toggle('queue', filename)" @action="runQueueAction" @edit="page.openQueueConfig" @log="openQueueLog" @move="(filename, delta) => safely(() => page.moveQueue(filename, delta))" @sort="(key: string) => sortPanel('queue', key)" @select-all="selectVisible('queue')" @clear-selection="clearVisible('queue')" @select-range="(paths, selected) => page.setSelection('queue', paths, selected)" @reorder="(filenames) => safely(() => page.reorderQueue(filenames))" @go-to-configs="page.setPanel('configs')" /></section>
+        <section v-else-if="page.panel.value === 'queue'" class="opt-panel-view opt-queue-view flex min-h-0 flex-col h-full"><PanelHeader class="mb-2" :title="panelTitle" :description="panelSubtitle" /><VastCloudPanel v-if="adapter.isV8" class="mb-3 shrink-0" /><QueuePanel :rows="page.filteredQueue.value" :selected="page.selectedQueue.value" :search="page.configSearch.value" :sort="page.queueSort.value" @update:search="page.configSearch.value = $event" @toggle="(filename) => toggle('queue', filename)" @action="runQueueAction" @edit="page.openQueueConfig" @log="openQueueLog" @move="(filename, delta) => safely(() => page.moveQueue(filename, delta))" @sort="(key: string) => sortPanel('queue', key)" @select-all="selectVisible('queue')" @clear-selection="clearVisible('queue')" @select-range="(paths, selected) => page.setSelection('queue', paths, selected)" @reorder="(filenames) => safely(() => page.reorderQueue(filenames))" @go-to-configs="page.setPanel('configs')" /></section>
         <section v-else-if="page.panel.value === 'results'" class="opt-panel-view flex min-h-0 flex-col h-full"><PanelHeader class="mb-2" :title="panelTitle" :description="panelSubtitle" /><ResultsPanel :rows="page.filteredResults.value" :selected="page.selectedResults.value" :selected-path="page.selectedResultPath.value" :is-v8="adapter.isV8" :search="page.resultSearch.value" :sort="page.resultSort.value" @update:search="page.resultSearch.value = $event" @toggle="(path) => toggle('results', path)" @open="openResult" @action="resultAction" @sort="(key: string) => sortPanel('results', key)" @select-all="selectVisible('results')" @clear-selection="clearVisible('results')" @select-range="(paths, selected) => page.setSelection('results', paths, selected)" @go-to-queue="page.setPanel('queue')" /></section>
         <section v-else class="opt-panel-view flex min-h-0 flex-col h-full"><PanelHeader class="mb-2" :title="panelTitle" :description="panelSubtitle" /><ParetosPanel :rows="page.filteredParetos.value" :meta="page.paretoMeta.value" :result-name="page.selectedResultName.value" :selected="page.selectedParetos.value" :is-v8="adapter.isV8" :columns="page.paretoMetricColumns.value" :available-metrics="page.paretoAvailableMetrics.value" :available-results="page.results.value" :selected-result-path="page.selectedResultPath.value" :holdout-validation-mode="holdoutValidationMode" :sort="page.paretoSort.value" @toggle="(path) => toggle('paretos', path)" @view="viewPareto" @seed="seedPareto" @migrate="migratePareto" @update:scenario="updateParetoFilter('scenario', $event)" @update:statistic="updateParetoFilter('statistic', $event)" @update:holdout-validation-mode="holdoutValidationMode = $event" @toggle-column="onToggleParetoColumn" @reset-columns="onResetParetoColumns" @select-all-columns="onResetParetoColumns" @select-result-path="selectParetoResultPath" @go-to-results="page.setPanel('results')" @sort="(key: string) => sortPanel('paretos', key)" @select-all="selectVisible('paretos')" @clear-selection="clearVisible('paretos')" @select-range="(paths, selected) => page.setSelection('paretos', paths, selected)" /></section>
       </template>
@@ -729,6 +729,19 @@ body { overflow: hidden; }
   flex: 1 1 0%;
   height: auto;
   min-width: 0;
+}
+
+/* Queue panel + expanded Vast cloud card: the card unrolls to several
+   viewport-heights, so the panel itself becomes the scroll container and
+   the queue list keeps a usable floor instead of being crushed to zero by
+   the flex chain. Collapsed, the queue owns the space exactly as before. */
+.opt-queue-view:has(> details[open]) {
+  overflow-y: auto;
+}
+
+.opt-queue-view:has(> details[open]) .opt-panel {
+  min-height: 320px;
+  flex-shrink: 0;
 }
 
 .opt-panel-heading {
@@ -891,7 +904,7 @@ body { overflow: hidden; }
   overflow: hidden;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
-  background: #1a2025;
+  background: var(--bg-elevated);
   box-shadow: var(--shadow-elevated), inset 0 1px 0 rgb(255 255 255 / 0.05);
   color: var(--text-primary);
   font-size: var(--text-sm);

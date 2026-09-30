@@ -50,7 +50,7 @@ function onStartStateChange(): void {
   <section id="stage-simulation" :class="store.controls.stage === 'simulation' ? 'active block' : 'hidden'">
     <section class="pbgui-card border border-border-default rounded-xl bg-panel p-3.5">
       <h3 class="m-0 mb-2.5">{{ t('v7explore.simulation') }}</h3>
-      <div class="flex flex-wrap items-center gap-2" style="margin-top:12px">
+      <div class="mt-3 flex flex-wrap items-center gap-2">
         <Button
           v-for="mode in simulationModes"
           :key="mode.key"
@@ -65,7 +65,7 @@ function onStartStateChange(): void {
         </Button>
         <span class="text-secondary">{{ t('v7explore.requiresLocalCandles') }}</span>
       </div>
-      <div class="grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3 max-[1250px]:grid-cols-[1fr]" style="margin-top:var(--sp-md)">
+      <div class="mt-3 grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3 max-[1250px]:grid-cols-[1fr]">
         <div class="flex flex-col gap-1 col-span-4 max-[1250px]:col-span-full"><Label for="max-candles-input">{{ t('v7explore.simMaxCandles') }}</Label><Input id="max-candles-input" v-model.number="store.controls.simMaxCandles" type="number" min="50" max="20000" step="50" @input="store.invalidateSimulationRequest()" /></div>
         <div class="flex flex-col gap-1 col-span-4 max-[1250px]:col-span-full"><Label for="max-orders-input">{{ t('v7explore.simMaxEntryFills') }}</Label><Input id="max-orders-input" v-model.number="store.controls.simMaxOrders" type="number" min="1" max="2000" step="1" @input="store.invalidateSimulationRequest()" /></div>
         <div class="flex flex-col gap-1 col-span-4 max-[1250px]:col-span-full">
@@ -81,7 +81,7 @@ function onStartStateChange(): void {
           </SelectRoot>
         </div>
       </div>
-      <div class="grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3 max-[1250px]:grid-cols-[1fr]" id="sim-manual-start-grid" v-show="isManual && !store.adapter.isV8" style="margin-top:var(--sp-md)">
+      <div class="mt-3 grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3 max-[1250px]:grid-cols-[1fr]" id="sim-manual-start-grid" v-show="isManual && !store.adapter.isV8">
         <div class="flex flex-col gap-1 col-span-4 max-[1250px]:col-span-full"><Label for="sim-start-balance-input">{{ t('v7explore.startBalance') }}</Label><Input id="sim-start-balance-input" v-model.number="store.controls.simStartBalance" type="number" min="0" step="10" @input="store.invalidateSimulationRequest()" /></div>
         <div class="flex flex-col gap-1 col-span-4 max-[1250px]:col-span-full"><Label for="sim-start-long-size-input">{{ t('v7explore.longSize') }}</Label><Input id="sim-start-long-size-input" v-model.number="store.controls.simStartLongSize" type="number" step="0.001" @input="store.invalidateSimulationRequest()" /></div>
         <div class="flex flex-col gap-1 col-span-4 max-[1250px]:col-span-full"><Label for="sim-start-long-price-input">{{ t('v7explore.longPrice') }}</Label><Input id="sim-start-long-price-input" v-model.number="store.controls.simStartLongPrice" type="number" min="0" step="0.000001" @input="store.invalidateSimulationRequest()" /></div>

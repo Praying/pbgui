@@ -173,6 +173,6 @@ onBeforeUnmount(() => {
       >{{ hostBadge }}</span>
       <Button variant="ghost" size="icon" class="h-7 w-7 text-md" :title="t('common.close')" :aria-label="t('common.close')" @click="open = false">&#x00D7;</Button>
     </div>
-    <div id="log-viewer-target" style="flex: 1; overflow: hidden; min-height: 0"></div>
+    <div id="log-viewer-target" class="min-h-0 flex-1 overflow-hidden"></div>
   </div>
 </template>

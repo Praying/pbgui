@@ -27,7 +27,7 @@
  *    legacy editor never passes height to buildPositions (editor:1949-1953).
  */
 import { computed, inject, onScopeDispose, ref, watch } from 'vue';
-import { PhClipboard, PhTrash } from '@phosphor-icons/vue';
+import { PhCaretDown, PhCaretUp, PhClipboard, PhTrash } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { useDashboardStore } from '../../stores/dashboardStore';
@@ -197,9 +197,12 @@ const sortedRows = computed<PositionRow[]>(() =>
    replacement on live updates (legacy compared object identity). */
 const selectedKey = computed<string>(() => (selectedRow.value ? rowKey(selectedRow.value) : ''));
 
-function sortArrow(key: string): string {
-  if (sortCol.value !== key) return '';
-  return sortAsc.value ? ' ▲' : ' ▼';
+/* Sort caret direction; null when the column is not the active sort. The
+   template renders the PbIcon caret (app-wide pattern), data-dir carries
+   the direction for tests and semantics. */
+function sortCaret(key: string): 'asc' | 'desc' | null {
+  if (sortCol.value !== key) return null;
+  return sortAsc.value ? 'asc' : 'desc';
 }
 
 /* ── manage modal (render.js:2881 — openManageModal) ── */
@@ -295,7 +298,7 @@ function onDelete(): void {
             class="sticky top-0 cursor-pointer select-none border-b border-b-border-default bg-card px-[0.5rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary hover:text-primary"
             @click="onSortClick(c.key)"
           >
-              {{ dashT(c.i18nKey, c.fallback) }}<span class="dp-sort ml-[0.2rem] text-micro text-muted">{{ sortArrow(c.key) }}</span>
+              {{ dashT(c.i18nKey, c.fallback) }}<span class="dp-sort ml-[0.2rem] inline-flex text-micro text-muted" :data-dir="sortCaret(c.key) ?? undefined"><PbIcon v-if="sortCaret(c.key)" :icon="sortCaret(c.key) === 'asc' ? PhCaretUp : PhCaretDown" :size="11" /></span>
             </th>
           </tr>
         </thead>

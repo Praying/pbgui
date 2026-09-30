@@ -60,7 +60,7 @@ const DEBUG_BLOCKS = [
       <h3 class="m-0 text-primary text-md tracking-label">{{ t('v7explore.sideStatistics', { side: sideKey.toUpperCase() }) }}</h3>
       <span class="inline-flex min-h-[25px] items-center gap-1.5 rounded-full border border-border-default bg-elevated px-2 py-0.75 text-micro text-secondary">{{ modes().entry || '-' }} / {{ modes().close || '-' }}</span>
     </div>
-    <div class="grid gap-3" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:12px">
+    <div class="mb-3 grid grid-cols-4 gap-3">
       <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-label">{{ t('v7explore.entryOrders') }}</div><div class="mt-1 truncate text-lg font-bold">{{ summary().entry_orders || 0 }}</div></div>
       <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-label">{{ t('v7explore.entryAvg') }}</div><div class="mt-1 truncate text-lg font-bold">{{ fmt(summary().entry_avg_price, 8) }}</div></div>
       <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-label">{{ t('v7explore.entryGrid') }}</div><div class="mt-1 truncate text-lg font-bold">{{ fmt(summary().entry_grid_pct, 2) }}%</div></div>
@@ -82,7 +82,7 @@ const DEBUG_BLOCKS = [
         <tr v-for="(row, i) in orderRows(closes())" :key="'c' + i"><td>{{ row.idx }}</td><td>{{ row.qty }}</td><td>{{ row.price }}</td><td>{{ row.twe }}</td><td>{{ row.type }}</td></tr>
       </tbody>
     </Table>
-    <section class="accordion-card overflow-hidden rounded-lg border border-border-default bg-panel" :class="{ collapsed: !debugOpen }" style="margin-top:14px">
+    <section class="accordion-card mt-3.5 overflow-hidden rounded-lg border border-border-default bg-panel" :class="{ collapsed: !debugOpen }">
       <!-- ui-migration: out of scope — accordion disclosure chrome (the
            .accordion-head pseudo-element chevron in App.vue's style block),
            not a form control -->

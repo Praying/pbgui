@@ -26,7 +26,7 @@
  *    document drag handlers on every rebuild).
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
-import { PhWarning, PhX } from '@phosphor-icons/vue';
+import { PhCaretDown, PhCaretUp, PhWarning, PhX } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Input } from '@/shared/components/ui/input';
@@ -124,9 +124,12 @@ function onSortClick(key: IncomeSortKey): void {
   clearJumpDebounce(); /* legacy re-created the jump input per render */
 }
 
-function sortArrow(key: string): string {
-  if (sortCol.value !== key) return '';
-  return sortAsc.value ? ' ▲' : ' ▼';
+/* Sort caret direction; null when the column is not the active sort. The
+   template renders the PbIcon caret (app-wide pattern), data-dir carries
+   the direction for tests and semantics. */
+function sortCaret(key: string): 'asc' | 'desc' | null {
+  if (sortCol.value !== key) return null;
+  return sortAsc.value ? 'asc' : 'desc';
 }
 
 /* ── DOM refs ── */
@@ -492,7 +495,7 @@ onBeforeUnmount(() => {
               class="sticky top-0 cursor-pointer select-none border-b-2 border-b-border-default bg-card px-[0.5rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary hover:text-primary"
               @click="onSortClick(c.key)"
             >
-              {{ dashT(c.labelKey, c.fallback) }}<span class="di-sort ml-[0.2rem] text-micro text-muted">{{ sortArrow(c.key) }}</span>
+              {{ dashT(c.labelKey, c.fallback) }}<span class="di-sort ml-[0.2rem] inline-flex text-micro text-muted" :data-dir="sortCaret(c.key) ?? undefined"><PbIcon v-if="sortCaret(c.key)" :icon="sortCaret(c.key) === 'asc' ? PhCaretUp : PhCaretDown" :size="11" /></span>
               <Input
                 v-if="c.key === 'date'"
                 type="date"

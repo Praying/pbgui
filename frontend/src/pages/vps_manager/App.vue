@@ -788,7 +788,7 @@ onUnmounted(() => {
       >{{ display(item.name) }}: {{ hyperliquidLimitText(item) }}</Button>
     </template>
 
-  <div class="vps-manager flex min-h-0 flex-1 flex-col bg-page text-primary">
+  <div class="vps-manager pbgui-ambient flex min-h-0 flex-1 flex-col bg-page text-primary">
     <div class="flex min-h-0 flex-1 max-[680px]:block">
       <section class="min-w-0 flex-1 overflow-auto p-[var(--page-padding)]">
         <div v-if="notice" class="mb-3 block rounded-lg bg-card px-3 py-2.25 whitespace-pre-line cursor-pointer select-none" role="status" aria-live="polite" :class="noticeKindClass(notice.kind)" @click="notice = null">{{ notice.text }}</div>

@@ -194,21 +194,21 @@ onBeforeUnmount(() => {
 }
 
 :deep(.vjs-key) {
-  color: #7eb8f0;
+  color: var(--color-syntax-key);
 }
 
 :deep(.vjs-value-string) {
-  color: #13ce66;
+  color: var(--color-syntax-string);
 }
 
 :deep(.vjs-value-number),
 :deep(.vjs-value-boolean) {
-  color: #38a8f0;
+  color: var(--color-syntax-number);
 }
 
 :deep(.vjs-value-null),
 :deep(.vjs-value-undefined) {
-  color: #d55fde;
+  color: var(--color-syntax-null);
 }
 
 :deep(.vjs-comment) {

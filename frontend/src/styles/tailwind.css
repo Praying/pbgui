@@ -224,6 +224,16 @@
   --color-danger: #d98080;
   --color-danger-soft: #e6aaaa;
   --color-danger-deep: #914343;
+
+  /* ── JSON viewer syntax palette ───────────────────────────────
+     The vue-json-pretty token colours (JsonViewer :deep overrides).
+     Deliberately separate from the semantic ramps above: these
+     colourise code structure, not status — they never mix into
+     badges, notices or accents. */
+  --color-syntax-key: #7eb8f0;
+  --color-syntax-string: #13ce66;
+  --color-syntax-number: #38a8f0;
+  --color-syntax-null: #d55fde;
 }
 
 /* ═══════════════════════════════════════════════════════════════

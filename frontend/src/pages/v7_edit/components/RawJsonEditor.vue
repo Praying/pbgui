@@ -133,9 +133,8 @@ function fieldStatusClass(hasError: boolean): string {
         <Textarea
           id="cfg-raw-json"
           v-model="page.state.rawJson"
-          class="json-editor block w-full min-w-0"
+          class="json-editor block w-full min-w-0 overflow-hidden resize-y"
           :class="{ 'json-invalid': !!error }"
-          style="overflow: hidden; resize: vertical"
           @input="page.jsonSync.scheduleRaw()"
           @scroll="onScroll"
         />

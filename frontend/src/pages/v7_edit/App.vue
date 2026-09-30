@@ -237,7 +237,7 @@ onBeforeUnmount(() => {
          top strip (v7_run precedent): same buttons, ids and gating; the
          drag-resize handle left with the column. -->
     <div
-      class="workbench-page-content flex flex-1 flex-col overflow-y-auto p-[var(--page-padding)]"
+      class="workbench-page-content pbgui-ambient flex flex-1 flex-col overflow-y-auto p-[var(--page-padding)]"
       :class="adapter.isV8 ? 'gap-4' : 'gap-[var(--component-gap)]'"
     >
       <PageToolbar :label="t(adapter.sidebarTitleKey)">

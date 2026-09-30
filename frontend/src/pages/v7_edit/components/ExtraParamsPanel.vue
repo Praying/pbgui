@@ -18,7 +18,7 @@ const page = useEditPageContext();
 <template>
   <ExpanderGroup v-if="page.extraLive.value.length" id="exp-extra-live" :title="t('v7run.additionalParameters')">
     <template #header-extra>
-      <span style="margin-left: auto; font-size: var(--text-xs); color: var(--text-dim)">{{ t('v7run.parametersNotInGui') }}</span>
+      <span class="ml-auto text-xs text-secondary">{{ t('v7run.parametersNotInGui') }}</span>
     </template>
     <div class="form-row cols-3">
       <div
@@ -40,7 +40,7 @@ const page = useEditPageContext();
         <template v-else-if="field.kind === 'json'">
           <!-- ui-migration: Textarea + json-editor — un-layered page rules own
                the geometry (shared with CoinOverridesPanel). -->
-          <Textarea :id="'extra-live-' + field.key" v-model="field.text" class="json-editor" rows="4" style="overflow: hidden; resize: vertical" />
+          <Textarea :id="'extra-live-' + field.key" v-model="field.text" class="json-editor overflow-hidden resize-y" rows="4" />
           <div :id="'extra-live-' + field.key + '-status'" class="hidden text-sm leading-[1.35]" aria-live="polite"></div>
         </template>
         <Input v-else :id="'extra-live-' + field.key" v-model="field.text" type="text" />

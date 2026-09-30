@@ -103,7 +103,7 @@ describe('IncomeTable rendering (render.js:1054-1167)', () => {
   it('renders the 4 sortable columns with the jump input in the Date header', () => {
     const wrapper = mountTable();
     const ths = wrapper.findAll('thead th');
-    expect(ths.map((th) => th.text())).toEqual(['Date ▼', 'User', 'Symbol', 'Income']);
+    expect(ths.map((th) => th.text())).toEqual(['Date', 'User', 'Symbol', 'Income']);
     expect(ths[0]!.find('input.di-jump-input').exists()).toBe(true);
     expect(ths[0]!.find('input.di-jump-input').attributes('type')).toBe('date');
   });
@@ -113,12 +113,14 @@ describe('IncomeTable rendering (render.js:1054-1167)', () => {
     expect(wrapper.findAll('tbody tr').map((tr) => tr.attributes('data-income-id'))).toEqual(['3', '1', '2']);
   });
 
-  it('shows the ▼ arrow on Date before the first sort (legacy initial sortCol/sortAsc)', () => {
+  it('shows the caret on Date before the first sort (legacy initial sortCol/sortAsc)', () => {
     const wrapper = mountTable();
-    /* element.textContent — the raw " ▼" incl. leading space (test-utils text() trims).
-       Every sortable column gets the span; only the text is conditional (render.js:1119-1121). */
-    expect(wrapper.get('thead th .di-sort').element.textContent).toBe(' ▼');
-    expect(wrapper.findAll('thead th')[1]!.get('.di-sort').element.textContent).toBe('');
+    /* Every sortable column gets the span; the PbIcon caret and its
+       data-dir are conditional (render.js:1119-1121). */
+    expect(wrapper.get('thead th .di-sort').attributes('data-dir')).toBe('desc');
+    expect(wrapper.get('thead th .di-sort').find('svg').exists()).toBe(true);
+    expect(wrapper.findAll('thead th')[1]!.get('.di-sort').attributes('data-dir')).toBeUndefined();
+    expect(wrapper.findAll('thead th')[1]!.get('.di-sort').find('svg').exists()).toBe(false);
   });
 
   it('formats income with toFixed(2) and the pos/neg classes (render.js:1159-1161)', () => {
@@ -233,7 +235,7 @@ describe('IncomeTable sorting (render.js:1124-1131, 1235-1243)', () => {
     const wrapper = mountTable();
     await wrapper.findAll('thead th')[1]!.trigger('click'); /* User: alice, alice, bob */
     expect(wrapper.findAll('tbody tr').map((tr) => tr.attributes('data-income-id'))).toEqual(['3', '2', '1']);
-    expect(wrapper.findAll('thead th')[1]!.get('.di-sort').text()).toBe('▲');
+    expect(wrapper.findAll('thead th')[1]!.get('.di-sort').attributes('data-dir')).toBe('asc');
   });
 
   it('clicking the same column flips the direction', async () => {
@@ -241,7 +243,7 @@ describe('IncomeTable sorting (render.js:1124-1131, 1235-1243)', () => {
     await wrapper.findAll('thead th')[1]!.trigger('click');
     await wrapper.findAll('thead th')[1]!.trigger('click');
     expect(wrapper.findAll('tbody tr').map((tr) => tr.attributes('data-income-id'))).toEqual(['1', '3', '2']);
-    expect(wrapper.findAll('thead th')[1]!.get('.di-sort').text()).toBe('▼');
+    expect(wrapper.findAll('thead th')[1]!.get('.di-sort').attributes('data-dir')).toBe('desc');
   });
 
   it('clicking Date first flips the initial false to ascending (server order is desc)', async () => {

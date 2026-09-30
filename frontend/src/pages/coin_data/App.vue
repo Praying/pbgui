@@ -320,7 +320,7 @@ onBeforeUnmount(() => {
 
     <MigrationWatermark />
     <div id="page-body" class="coin-data-page-body flex h-[calc(100dvh-64px)] overflow-hidden max-[980px]:flex-col">
-    <div id="main-content" ref="mainContent" class="coin-data-workspace flex min-w-0 min-h-0 flex-1 flex-col gap-[var(--component-gap)] overflow-hidden p-[var(--page-padding)] max-[980px]:overflow-y-auto">
+    <div id="main-content" ref="mainContent" class="coin-data-workspace pbgui-ambient flex min-w-0 min-h-0 flex-1 flex-col gap-[var(--component-gap)] overflow-hidden p-[var(--page-padding)] max-[980px]:overflow-y-auto">
       <div id="warning-box" class="warning-box rounded-xl border px-4 py-3 text-sm leading-[1.55]" :class="warnings.length ? 'flex' : 'hidden'">
         <PbIcon class="mt-0.5 shrink-0 text-warning" :icon="PhWarningCircle" :size="18" />
         <div class="grid min-w-0 gap-1 text-warning-soft">

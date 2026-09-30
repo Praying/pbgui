@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
       />
     </template>
 
-  <div id="page-body" class="flex flex-1 min-h-0 overflow-hidden">
+  <div id="page-body" class="pbgui-ambient flex flex-1 min-h-0 overflow-hidden">
     <div class="flex flex-1 min-w-0 min-h-0 overflow-hidden">
       <section v-show="view === 'logs'" class="flex flex-1 min-h-0 flex-col overflow-hidden">
         <div v-if="currentFile" class="flex shrink-0 items-center gap-2.5 px-3.5 pt-1.75">

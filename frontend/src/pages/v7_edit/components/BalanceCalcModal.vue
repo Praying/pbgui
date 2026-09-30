@@ -85,15 +85,13 @@ defineExpose({ show });
 <template>
   <Teleport to="body">
     <div v-if="open" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-backdrop" id="bc-modal" @mousedown.self="open = false">
-      <div class="flex w-[90%] max-w-[800px] max-h-[80dvh] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5" style="max-width: 560px">
+      <div class="flex w-[90%] max-h-[80dvh] max-w-[560px] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5">
         <h3 class="text-lg">{{ t('v7run.calculateBalance') }}</h3>
         <div v-if="loading" class="text-secondary text-sm mb-3">
           {{ t('v7run.calculating') }}
         </div>
         <template v-if="data">
-          <div
-            style="background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: var(--sp-md); margin-bottom: var(--sp-md); font-size: var(--text-sm)"
-          >
+          <div class="mb-3 rounded-md border border-border-default bg-elevated p-3 text-sm">
             <template v-if="data.recommendation">
               <div>&#x2705; {{ t('v7run.bcRecommendation', { side: data.recommendation.side }) }} — <strong>{{ data.exchange || '?' }}</strong></div>
               <div><strong>{{ t('v7run.bcLimitingSymbol') }}</strong> {{ data.recommendation.symbol }}</div>

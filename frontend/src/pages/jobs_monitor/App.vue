@@ -538,7 +538,7 @@ onUnmounted(() => {
     </template>
 
   <div
-    class="jobs-monitor-content min-h-0 bg-page text-primary"
+    class="jobs-monitor-content pbgui-ambient min-h-0 bg-page text-primary"
     :class="{ 'jobs-monitor-content--embedded': embedMode, 'p-3': embedMode }"
   >
     <div class="mx-auto max-w-[1400px]">

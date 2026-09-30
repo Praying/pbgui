@@ -271,7 +271,7 @@ onBeforeUnmount(() => {
       />
 
       <!-- Right Column: Document Reader & Search View -->
-      <div id="help-content-pane" class="flex-1 flex flex-col w-full h-full overflow-hidden min-w-0 bg-page">
+      <div id="help-content-pane" class="pbgui-ambient flex-1 flex flex-col w-full h-full overflow-hidden min-w-0 bg-page">
         <div id="help-content" ref="contentEl" class="flex-1 w-full overflow-y-auto px-8 py-8 max-[720px]:px-4 max-[720px]:py-4 text-primary text-base">
           <div class="help-reader-container w-full max-w-[920px] mx-auto min-h-full flex flex-col justify-between min-w-0">
             <!-- Global Mode Search Results -->

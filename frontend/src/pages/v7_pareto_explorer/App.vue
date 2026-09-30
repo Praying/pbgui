@@ -413,7 +413,7 @@ onBeforeUnmount(() => {
     </template>
 
     <div id="page-body" class="flex h-[calc(100dvh-var(--nav-height))] overflow-hidden max-[1100px]:flex-col">
-    <div class="workbench-page-content flex min-w-0 flex-1 flex-col gap-[var(--section-gap)] overflow-auto p-[var(--page-padding)]">
+    <div class="workbench-page-content pbgui-ambient flex min-w-0 flex-1 flex-col gap-[var(--section-gap)] overflow-auto p-[var(--page-padding)]">
     <!-- Stage nav lives in the workbench rail; this strip carries only the
          session actions (legacy ctx-actions :767-777). -->
     <PageToolbar :label="t('v7explore.paretoExplorer')">

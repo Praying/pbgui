@@ -69,11 +69,11 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
           <span>{{ t('v7explore.mismatchesOnly') }}</span>
         </label>
       </div>
-      <Button class="action-btn" variant="info" id="btn-run-compare" type="button" style="margin-top:14px;width:100%" :disabled="compare.running.value" @click="compare.runCompare()">
+      <Button class="action-btn mt-3.5 w-full" variant="info" id="btn-run-compare" type="button" :disabled="compare.running.value" @click="compare.runCompare()">
         {{ compare.running.value ? t('v7explore.compareRunning') : t('v7explore.startCompare') }}
       </Button>
     </section>
-    <section class="pbgui-card border border-border-default rounded-xl bg-panel p-3.5" style="margin-top:var(--sp-md)">
+    <section class="pbgui-card mt-3 border border-border-default rounded-xl bg-panel p-3.5">
       <h3 class="m-0 mb-2.5">{{ t('v7explore.compareResult') }}</h3>
       <div id="compare-summary" class="text-secondary">
         <span v-if="compare.summaryText.value" class="text-secondary">{{ compare.summaryText.value }}</span>
@@ -84,7 +84,7 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
               <tr v-for="[key, item] in eventRows" :key="key"><td>{{ sourceLabels[key] || key }}</td><td>{{ item?.long || 0 }}</td><td>{{ item?.short || 0 }}</td><td>{{ item?.total || 0 }}</td></tr>
             </tbody>
           </Table>
-          <div style="margin-top:12px">
+          <div class="mt-3">
             <Table class="orders">
               <thead><tr><Th :sticky="false">{{ t('v7explore.colSide') }}</Th><Th v-for="status in statusModel.statuses" :key="status" :sticky="false">{{ statusModel.labels[status] || status }}</Th></tr></thead>
               <tbody>
@@ -103,9 +103,9 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
         <div class="h-2.5 overflow-hidden rounded-full border border-border-default bg-page"><div id="compare-progress-fill" class="h-full w-0 bg-[linear-gradient(90deg,var(--accent),var(--success))] transition-[width] duration-200 ease-[ease]" :style="{ width: compare.progress.value.pct + '%' }"></div></div>
         <div id="compare-progress-text" class="mt-1.5 text-secondary text-sm">{{ compare.progress.value.message || t('v7explore.waiting') }}</div>
       </div>
-      <div id="compare-result" style="margin-top:12px" v-if="data && data.ok">
+      <div id="compare-result" class="mt-3" v-if="data && data.ok">
         <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.longCompareRows') }}</h4>
-        <div style="overflow:auto">
+        <div class="overflow-auto">
           <Table class="orders compare-grid">
             <thead><tr><Th v-for="[key, label] in columns" :key="key" :sticky="false">{{ label }}</Th></tr></thead>
             <tbody>
@@ -115,7 +115,7 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
           </Table>
         </div>
         <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.shortCompareRows') }}</h4>
-        <div style="overflow:auto">
+        <div class="overflow-auto">
           <Table class="orders compare-grid">
             <thead><tr><Th v-for="[key, label] in columns" :key="key" :sticky="false">{{ label }}</Th></tr></thead>
             <tbody>

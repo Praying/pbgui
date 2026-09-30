@@ -119,9 +119,9 @@ defineExpose({ show });
 <template>
   <Teleport to="body">
     <div v-if="open" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-backdrop" id="copy-user-modal" @mousedown.self="close">
-      <div class="flex w-[90%] max-w-[800px] max-h-[80dvh] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5 max-w-[520px]">
+      <div class="flex w-[90%] max-h-[80dvh] max-w-[520px] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5">
         <h3 class="text-lg">{{ t('v7run.copyConfigToUser') }}</h3>
-        <div style="color: var(--text-dim); font-size: var(--text-sm); line-height: 1.45">
+        <div class="text-sm leading-[1.45] text-secondary">
           {{ t('v7run.copyConfigToUserDesc') }}
         </div>
         <div class="form-group">
