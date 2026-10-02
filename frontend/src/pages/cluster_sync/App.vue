@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
   PhArrowsLeftRight,
   PhDesktopTower,
@@ -69,6 +69,9 @@ function onSectionSelect(sectionKey: string): void {
 }
 
 const loading = ref(true);
+const refreshing = ref(false);
+const refreshError = ref('');
+const hasLoaded = ref(false);
 const status = ref<Record<string, any>>({});
 const nodes = ref<Record<string, any>[]>([]);
 const localClusterSsh = ref<Record<string, any>>({});
@@ -83,8 +86,11 @@ const settingsNode = ref<Record<string, any> | null>(null);
 const settingsForm = ref({ remote_pbgui_dir: '', sync_mode: 'reachable', ssh_host: '', ssh_user: '', ssh_port: 22, sync_peers: [] as string[] });
 const retentionDays = ref(7);
 const retentionMode = ref('report_only');
+const retentionDraftDirty = ref(false);
 const selfJoinForm = ref({ hostname: '', remote_pbgui_dir: '', ssh_host: '', ssh_user: '', ssh_port: 22, reset: false });
 let refreshTimer: number | null = null;
+let refreshInFlight = false;
+let applyingRetention = false;
 
 const SYNC_MODE_LABEL_KEYS: Record<string, string> = {
   reachable: 'sysmon.reachable',
@@ -143,8 +149,24 @@ const thClass = 'sticky top-0 z-[1] border-b border-border-default bg-card px-2.
 const tdClass = 'border-b border-border-default px-2.5 py-2.25 text-left align-top';
 const tdHoverClass = `${tdClass} transition-colors group-hover:bg-accent/8`;
 
-async function loadAll(): Promise<void> {
-  loading.value = true;
+watch([retentionDays, retentionMode], () => {
+  if (!applyingRetention) retentionDraftDirty.value = true;
+}, { flush: 'sync' });
+
+function applyRetentionFromStatus(): void {
+  if (retentionDraftDirty.value && hasLoaded.value) return;
+  applyingRetention = true;
+  retentionDays.value = Number(status.value.retention_policy?.history_days || 7);
+  retentionMode.value = String(status.value.retention_policy?.mode || 'report_only');
+  applyingRetention = false;
+}
+
+async function loadAll(options: { initial?: boolean } = {}): Promise<void> {
+  if (refreshInFlight) return;
+  const isInitialLoad = options.initial ?? !hasLoaded.value;
+  refreshInFlight = true;
+  if (isInitialLoad) loading.value = true;
+  else refreshing.value = true;
   try {
     const [statusData, nodesData, desiredData, oplogData, retentionData, bootstrapData, remoteData] = await Promise.all([
       apiFetch<Record<string, any>>(`${apiBase}/status`), apiFetch<Record<string, any>>(`${apiBase}/nodes`), apiFetch<Record<string, any>>(`${apiBase}/desired-state`),
@@ -158,10 +180,17 @@ async function loadAll(): Promise<void> {
     retentionReport.value = retentionData || {};
     bootstrap.value = bootstrapData || {};
     remoteStatus.value = remoteData || {};
-    retentionDays.value = Number(status.value.retention_policy?.history_days || 7);
-    retentionMode.value = String(status.value.retention_policy?.mode || 'report_only');
-  } catch (error) { showNotice(apiMessage(error), 'err'); }
-  finally { loading.value = false; }
+    applyRetentionFromStatus();
+    hasLoaded.value = true;
+    refreshError.value = '';
+  } catch (error) {
+    if (isInitialLoad || !hasLoaded.value) showNotice(apiMessage(error), 'err');
+    else refreshError.value = apiMessage(error);
+  } finally {
+    if (isInitialLoad) loading.value = false;
+    else refreshing.value = false;
+    refreshInFlight = false;
+  }
 }
 
 async function post(path: string, options: RequestInit = {}): Promise<Record<string, any>> {
@@ -191,7 +220,10 @@ async function saveSettings(): Promise<void> {
 function openRemove(node: Record<string, any>): void { removeNode.value = node; }
 function closeRemove(): void { removeNode.value = null; }
 async function confirmRemove(): Promise<void> { if (!removeNode.value) return; await post(`/nodes/${encodeURIComponent(String(removeNode.value.node_id))}/remove`, { method: 'POST' }); closeRemove(); }
-async function saveRetention(): Promise<void> { await post('/retention/settings', { method: 'POST', body: JSON.stringify({ mode: retentionMode.value, history_days: Number(retentionDays.value), expected_generation: Number(status.value.generation || 0) }) }); }
+async function saveRetention(): Promise<void> {
+  const result = await post('/retention/settings', { method: 'POST', body: JSON.stringify({ mode: retentionMode.value, history_days: Number(retentionDays.value), expected_generation: Number(status.value.generation || 0) }) });
+  if (Object.keys(result).length) retentionDraftDirty.value = false;
+}
 async function applyBootstrap(): Promise<void> { await post('/bootstrap', { method: 'POST' }); }
 async function bootstrapNode(hostname: string): Promise<void> { await post(`/bootstrap/nodes/${encodeURIComponent(hostname)}`, { method: 'POST' }); }
 async function joinRemote(node: Record<string, any>): Promise<void> { await post(`/remote-join/${encodeURIComponent(String(node.node_id))}`, { method: 'POST' }); }
@@ -203,7 +235,7 @@ async function startSelfJoin(): Promise<void> { await post('/self-join/start', {
 onMounted(() => {
   document.title = t('sysmon.clusterSyncTitle');
   refreshTimer = window.setInterval(() => { if (!document.hidden && !loading.value) void loadAll(); }, 5000);
-  void loadAll();
+  void loadAll({ initial: true });
 });
 
 onUnmounted(() => {
@@ -223,8 +255,8 @@ onUnmounted(() => {
     <template #status>
       <StatusStrip
         :label="t('sysmon.status')"
-        :value="loading ? t('common.loading') : notice ? notice.text : t('common.ok')"
-        :tone="loading ? 'warning' : notice?.kind === 'err' ? 'danger' : notice?.kind === 'warn' ? 'warning' : 'success'"
+        :value="loading ? t('common.loading') : notice ? notice.text : refreshError || t('common.ok')"
+        :tone="loading ? 'warning' : notice?.kind === 'err' ? 'danger' : notice?.kind === 'warn' || refreshError ? 'warning' : 'success'"
       />
     </template>
 
@@ -371,9 +403,15 @@ onUnmounted(() => {
                   <p class="mt-1 max-w-[78ch] text-sm leading-relaxed text-secondary">{{ t('sysmon.clusterNodesOverview') }}</p>
                 </div>
               </div>
-              <span class="inline-flex shrink-0 items-center rounded-full border border-border-default bg-card px-2.5 py-1 text-xs font-semibold tabular-nums text-secondary">
-                {{ t('sysmon.nodesCount', { count: nodes.length }) }}
-              </span>
+              <div class="flex shrink-0 items-center gap-2">
+                <span class="cluster-refresh-indicator" :class="{ 'is-refreshing': refreshing }" :title="refreshing ? t('sysmon.polling') : t('sysmon.statusRefreshHint')" data-cluster-refreshing>
+                  <span class="cluster-refresh-indicator__dot" aria-hidden="true" />
+                  <span class="sr-only">{{ refreshing ? t('sysmon.polling') : t('sysmon.statusRefreshHint') }}</span>
+                </span>
+                <span class="inline-flex items-center rounded-full border border-border-default bg-card px-2.5 py-1 text-xs font-semibold tabular-nums text-secondary">
+                  {{ t('sysmon.nodesCount', { count: nodes.length }) }}
+                </span>
+              </div>
             </header>
 
             <div class="cluster-node-stats grid grid-cols-[repeat(4,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-2 max-[520px]:grid-cols-1">
@@ -689,6 +727,49 @@ onUnmounted(() => {
 
 .cluster-node-table tbody tr:last-child td {
   border-bottom: 0;
+}
+
+.cluster-refresh-indicator {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+}
+
+.cluster-refresh-indicator__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.cluster-refresh-indicator.is-refreshing {
+  border-color: rgb(var(--accent-rgb) / 0.2);
+  color: var(--accent-soft);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cluster-refresh-indicator.is-refreshing .cluster-refresh-indicator__dot {
+    animation: cluster-refresh-pulse 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes cluster-refresh-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
 }
 
 @media (max-width: 760px) {

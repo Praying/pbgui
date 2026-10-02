@@ -298,22 +298,22 @@ onUnmounted(() => {
 <template>
   <AppShell page-key="system_transfers" :page-title="t('transfers.title')" :page-description="t('transfers.pageDescription')" class="data-page-shell transfers-shell">
     <template v-if="loading || errorMessage" #status><StatusStrip :label="t('shared.status')" :value="loading ? t('common.loading') : t('common.error')" :tone="errorMessage ? 'danger' : 'warning'" /></template>
-    <div class="pbgui-ambient flex min-h-0 flex-1 gap-4 p-[var(--page-padding)] max-[900px]:flex-col">
-      <aside class="w-72 shrink-0 self-start overflow-auto rounded-lg border border-border-default bg-panel p-3 min-[901px]:sticky min-[901px]:top-[var(--page-padding)] min-[901px]:max-h-[calc(100dvh-var(--header-height)-2*var(--page-padding))] max-[900px]:w-full max-[900px]:max-h-52">
-        <div class="mb-3 flex items-center justify-between"><h2 class="text-base font-semibold text-primary">{{ t('transfers.accounts') }}</h2><span class="text-xs text-secondary">{{ filteredUsers.length }}/{{ users.length }}</span></div>
+    <div class="pbgui-ambient transfers-layout flex min-h-0 flex-1 gap-5 p-[var(--page-padding)] max-[900px]:flex-col">
+      <aside class="transfer-account-rail w-72 shrink-0 self-start overflow-auto rounded-xl border border-border-default bg-panel p-3 min-[901px]:sticky min-[901px]:top-[var(--page-padding)] min-[901px]:max-h-[calc(100dvh-var(--header-height)-2*var(--page-padding))] max-[900px]:w-full max-[900px]:max-h-64">
+        <div class="mb-3 flex items-center justify-between gap-3"><div><p class="text-micro font-semibold uppercase tracking-label text-accent-soft">{{ t('transfers.accounts') }}</p><h2 class="mt-1 text-md font-semibold text-primary">{{ t('transfers.accountState') }}</h2></div><span class="rounded-full border border-border-default bg-card px-2 py-1 text-xs tabular-nums text-secondary">{{ filteredUsers.length }}/{{ users.length }}</span></div>
         <Input v-model="search" class="mb-2" :placeholder="t('transfers.searchAccounts')" />
         <div class="grid gap-1">
-          <button v-for="user in filteredUsers" :key="user.name" type="button" class="rounded-md border border-transparent px-3 py-2 text-left hover:bg-card" :class="user.name === selectedUser ? 'border-accent/30 bg-accent/10' : ''" :disabled="actionPending" @click="loadAccount(user.name)"><span class="block font-semibold text-primary">{{ user.name }}</span><span class="text-xs text-secondary">{{ user.exchange || t('transfers.unknownExchange') }} / {{ user.account_type || t('transfers.standard') }}</span></button>
+          <button v-for="user in filteredUsers" :key="user.name" type="button" class="transfer-account-row rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:bg-card" :class="user.name === selectedUser ? 'is-selected border-accent/30 bg-accent/10' : ''" :disabled="actionPending" @click="loadAccount(user.name)"><span class="block truncate font-semibold text-primary">{{ user.name }}</span><span class="mt-1 block text-xs text-secondary">{{ user.exchange || t('transfers.unknownExchange') }} / {{ user.account_type || t('transfers.standard') }}</span></button>
           <LoadingSkeleton v-if="loading" class="p-3" :lines="2" :label="t('common.loading')" />
           <EmptyState v-else-if="!filteredUsers.length" class="py-4" :title="t('transfers.noAccounts')" />
         </div>
       </aside>
-      <main class="min-w-0 flex-1 overflow-auto">
-        <header class="mb-4 flex flex-wrap items-start justify-between gap-3"><div><p class="text-xs font-bold uppercase tracking-label text-accent">{{ preview?.exchange || t('transfers.eyebrow') }}</p><h1 class="text-2xl font-bold text-primary">{{ selectedUser || t('transfers.title') }}</h1><p class="text-sm text-secondary">{{ selectedUser ? t('transfers.accountSubtitle', { type: preview?.account_type || 'standard' }) : t('transfers.selectAccount') }}</p></div></header>
+      <main class="transfer-content min-w-0 flex-1 overflow-auto">
+        <header class="transfer-heading mb-5 flex flex-wrap items-end justify-between gap-4"><div class="min-w-0"><p class="text-micro font-bold uppercase tracking-label text-accent">{{ preview?.exchange || t('transfers.eyebrow') }}</p><h1 class="mt-1 truncate text-2xl font-bold tracking-tight text-primary">{{ selectedUser || t('transfers.title') }}</h1><p class="mt-2 max-w-[62ch] text-sm leading-relaxed text-secondary">{{ selectedUser ? t('transfers.accountSubtitle', { type: preview?.account_type || 'standard' }) : t('transfers.selectAccount') }}</p></div><span v-if="preview?.account_type" class="rounded-full border border-border-default bg-panel px-2.5 py-1 text-xs font-semibold uppercase tracking-label text-secondary">{{ preview.account_type }}</span></header>
         <p v-if="errorMessage" class="mb-3 rounded-md border border-danger/30 bg-danger/10 p-3 text-sm text-danger">{{ errorMessage }}</p>
         <p v-if="statusMessage" class="mb-3 rounded-md border border-success/30 bg-success/10 p-3 text-sm text-success">{{ statusMessage }}</p>
-        <section class="rounded-lg border border-border-default bg-panel">
-          <div class="border-b border-border-default p-4"><h2 class="text-lg font-semibold text-primary">{{ t('transfers.internalTransfer') }}</h2><p class="text-sm text-secondary">{{ t('transfers.internalHint') }}</p></div>
+        <section class="transfer-card rounded-xl border border-border-default bg-panel">
+          <div class="transfer-card-header border-b border-border-default p-4"><p class="text-micro font-semibold uppercase tracking-label text-accent-soft">{{ t('transfers.internalTransfer') }}</p><h2 class="mt-1 text-lg font-semibold text-primary">{{ t('transfers.internalHint') }}</h2></div>
           <div class="space-y-4 p-4">
             <div v-if="!preview && actionPending" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-busy="true" aria-live="polite">
               <span class="sr-only">{{ t('common.loading') }}</span>
@@ -323,7 +323,7 @@ onUnmounted(() => {
             </div>
             <EmptyState v-else-if="!preview && !selectedUser" :title="t('transfers.selectAccount')" class="py-8!" />
             <template v-else>
-              <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div class="transfer-summary-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <article class="min-w-0 rounded-lg border border-border-default bg-card p-3 sm:col-span-2">
                   <p class="text-xs uppercase tracking-label text-muted">{{ t('transfers.route') }}</p>
                   <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-lg font-semibold text-primary"><span class="break-words">{{ formatValue(selectedRoute?.source) }}</span><PbIcon :icon="PhArrowRight" aria-hidden="true" class="shrink-0 text-accent" /><span class="break-words">{{ formatValue(selectedRoute?.destination) }}</span></p>
@@ -334,7 +334,7 @@ onUnmounted(() => {
                 </article>
                 <article v-for="item in [{ label: t('transfers.minimum'), value: selectedRoute ? `${selectedRoute.minimum_amount} ${selectedRoute.asset || 'USDC'}` : '-' }, { label: t('transfers.sourceBalance'), value: selectedRoute ? `${selectedRoute.source_balance} ${selectedRoute.asset || 'USDC'}` : '-' }, { label: t('transfers.destinationBalance'), value: selectedRoute?.destination_balance ? `${selectedRoute.destination_balance} ${selectedRoute.asset || 'USDC'}` : '-' }]" :key="item.label" class="min-w-0 rounded-lg border border-border-default bg-card p-3"><p class="text-xs uppercase tracking-label text-muted">{{ item.label }}</p><p class="mt-1 break-words text-base font-semibold tabular-nums text-primary">{{ formatValue(item.value) }}</p></article>
               </div>
-              <section v-if="isVault" class="border-t border-border-default pt-4">
+              <section v-if="isVault" class="transfer-vault-section border-t border-border-default pt-4">
                 <h3 class="mb-3 text-sm font-semibold text-primary">{{ t('transfers.vaultSection') }}</h3>
                 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <article v-for="item in [{ label: t('transfers.vaultEquity'), value: preview?.your_vault_equity }, { label: t('transfers.vaultAccountValue'), value: preview?.vault_account_value }, { label: t('transfers.maxWithdrawable'), value: preview?.user_max_withdrawable }]" :key="item.label" class="min-w-0 rounded-lg border border-border-default bg-card p-3"><p class="text-xs uppercase tracking-label text-muted">{{ item.label }}</p><p class="mt-1 break-words text-base font-semibold tabular-nums text-primary">{{ formatValue(item.value) }}</p></article>
@@ -344,12 +344,63 @@ onUnmounted(() => {
             <p class="rounded-md border border-accent/25 bg-accent/5 p-3 text-sm text-secondary">{{ t('transfers.accountingNotice') }}</p>
             <p v-if="preview?.route_note" class="rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning">{{ preview.route_note }}</p>
             <p v-if="preview?.blocked_reason" class="rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning"><PbIcon :icon="PhWarning" /> {{ preview.blocked_reason }}</p>
-            <div class="grid items-start gap-3 md:grid-cols-[minmax(220px,1.4fr)_minmax(180px,1fr)_auto]"><label class="grid gap-1 text-sm font-medium text-primary">{{ t('transfers.direction') }}<SelectRoot v-model="selectedRouteId" :disabled="!preview?.routes?.length || actionPending"><SelectTrigger class="h-9" :placeholder="t('transfers.selectRoute')" /><SelectContent><SelectItem v-for="route in preview?.routes || []" :key="route.id" :value="route.id">{{ routeLabel(route.id) }}</SelectItem></SelectContent></SelectRoot></label><label class="grid gap-1 text-sm font-medium text-primary">{{ t('transfers.amount') }} ({{ selectedRoute?.asset || 'USDC' }})<Input v-model="amount" type="number" min="0.000001" step="any" inputmode="decimal" :disabled="actionPending" /><span v-if="selectedRoute" class="text-xs text-muted">{{ t('transfers.amountRange', { min: selectedRoute.minimum_amount, max: selectedRoute.max_transferable, asset: selectedRoute.asset || 'USDC' }) }}</span></label><Button class="md:mt-6" variant="primary" :disabled="!canSubmit || actionPending" @click="reviewTransfer"><PbIcon :icon="PhArrowsLeftRight" /> {{ t('transfers.review') }}</Button></div>
+            <div class="transfer-controls grid items-start gap-3 md:grid-cols-[minmax(220px,1.4fr)_minmax(180px,1fr)_auto]"><label class="grid gap-1 text-sm font-medium text-primary">{{ t('transfers.direction') }}<SelectRoot v-model="selectedRouteId" :disabled="!preview?.routes?.length || actionPending"><SelectTrigger class="h-9" :placeholder="t('transfers.selectRoute')" /><SelectContent><SelectItem v-for="route in preview?.routes || []" :key="route.id" :value="route.id">{{ routeLabel(route.id) }}</SelectItem></SelectContent></SelectRoot></label><label class="grid gap-1 text-sm font-medium text-primary">{{ t('transfers.amount') }} ({{ selectedRoute?.asset || 'USDC' }})<Input v-model="amount" type="number" min="0.000001" step="any" inputmode="decimal" :disabled="actionPending" /><span v-if="selectedRoute" class="text-xs text-muted">{{ t('transfers.amountRange', { min: selectedRoute.minimum_amount, max: selectedRoute.max_transferable, asset: selectedRoute.asset || 'USDC' }) }}</span></label><Button class="md:mt-6" variant="primary" :disabled="!canSubmit || actionPending" @click="reviewTransfer"><PbIcon :icon="PhArrowsLeftRight" /> {{ t('transfers.review') }}</Button></div>
             <section v-if="isVault" class="border-t border-border-default pt-4"><div class="mb-3 flex items-start justify-between gap-2"><div><h3 class="font-semibold text-primary">{{ t('transfers.positions') }}</h3><p class="text-sm text-secondary">{{ t('transfers.positionImpact') }}</p></div><span class="shrink-0 rounded-full border border-border-default px-2 py-1 text-xs text-secondary">{{ preview?.position_count || 0 }}</span></div><EmptyState v-if="!preview?.positions?.length" :title="t('transfers.noPositions')" class="py-8!" /><div v-else class="pbgui-table-wrap"><table class="pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[900px]:min-w-[760px]"><thead><tr><th>{{ t('transfers.coin') }}</th><th>{{ t('transfers.side') }}</th><th class="text-right!">{{ t('transfers.size') }}</th><th class="text-right!">{{ t('transfers.positionValue') }}</th><th class="text-right!">{{ t('transfers.entry') }}</th><th class="text-right!">{{ t('transfers.unrealizedPnl') }}</th><th class="text-right!">{{ t('transfers.liquidation') }}</th><th>{{ t('transfers.leverage') }}</th></tr></thead><tbody><tr v-for="position in preview.positions" :key="`${position.coin}-${position.side}`"><td class="font-mono text-primary">{{ position.coin }}</td><td class="font-semibold uppercase" :class="position.side === 'long' ? 'text-success' : 'text-danger'">{{ position.side }}</td><td class="text-right font-mono tabular-nums">{{ position.size }}</td><td class="text-right font-mono tabular-nums">{{ position.position_value }}</td><td class="text-right font-mono tabular-nums">{{ position.entry_price }}</td><td class="text-right font-mono tabular-nums">{{ position.unrealized_pnl }}</td><td class="text-right font-mono tabular-nums">{{ position.liquidation_price }}</td><td>{{ position.leverage_type }}</td></tr></tbody></table></div></section>
           </div>
         </section>
-        <section class="mt-4 rounded-lg border border-border-default bg-panel"><div class="border-b border-border-default p-4"><h2 class="text-lg font-semibold text-primary">{{ t('transfers.history') }}</h2><p class="text-sm text-secondary">{{ t('transfers.historyHint') }}</p></div><div v-if="operations.length" class="pbgui-table-wrap"><table class="pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[900px]:min-w-[720px]"><thead><tr><th>{{ t('transfers.operation') }}</th><th>{{ t('transfers.route') }}</th><th class="text-right!">{{ t('transfers.amount') }}</th><th>{{ t('transfers.status') }}</th><th>{{ t('transfers.created') }}</th><th><span class="sr-only">{{ t('transfers.reconcile') }}</span></th></tr></thead><tbody><tr v-for="operation in operations" :key="operation.operation_id"><td class="font-mono text-xs text-secondary"><span class="block max-w-[9ch] truncate" :title="operation.operation_id">{{ operation.operation_id }}</span></td><td>{{ routeLabel(operation.route || '') }}</td><td class="text-right font-mono tabular-nums">{{ formatValue(operation.actual_amount || operation.requested_amount) }} <span class="text-secondary">{{ operation.asset || 'USDC' }}</span></td><td><span class="rounded-full border px-2 py-1 text-xs font-semibold uppercase" :class="operationStatusClass(operation.status)">{{ operation.status }}</span></td><td class="whitespace-nowrap text-secondary">{{ formatTime(operation.prepared_at) }}</td><td class="text-right"><Button v-if="operation.can_reconcile" size="sm" variant="secondary" :disabled="actionPending" @click="reconcile(operation)">{{ t('transfers.reconcile') }}</Button></td></tr></tbody></table></div><div v-else-if="actionPending" class="space-y-3 p-4" role="status" aria-busy="true" aria-live="polite"><span class="sr-only">{{ t('common.loading') }}</span><span v-for="n in 3" :key="n" class="pbgui-skeleton block h-4" aria-hidden="true" /></div><EmptyState v-else :title="t('transfers.noHistory')" :message="t('transfers.noHistoryHint')" class="m-4 py-8!" /></section>
+        <section class="transfer-history mt-4 rounded-xl border border-border-default bg-panel"><div class="border-b border-border-default p-4"><p class="text-micro font-semibold uppercase tracking-label text-accent-soft">{{ t('transfers.history') }}</p><h2 class="mt-1 text-lg font-semibold text-primary">{{ t('transfers.historyHint') }}</h2></div><div v-if="operations.length" class="pbgui-table-wrap"><table class="pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[900px]:min-w-[720px]"><thead><tr><th>{{ t('transfers.operation') }}</th><th>{{ t('transfers.route') }}</th><th class="text-right!">{{ t('transfers.amount') }}</th><th>{{ t('transfers.status') }}</th><th>{{ t('transfers.created') }}</th><th><span class="sr-only">{{ t('transfers.reconcile') }}</span></th></tr></thead><tbody><tr v-for="operation in operations" :key="operation.operation_id"><td class="font-mono text-xs text-secondary"><span class="block max-w-[9ch] truncate" :title="operation.operation_id">{{ operation.operation_id }}</span></td><td>{{ routeLabel(operation.route || '') }}</td><td class="text-right font-mono tabular-nums">{{ formatValue(operation.actual_amount || operation.requested_amount) }} <span class="text-secondary">{{ operation.asset || 'USDC' }}</span></td><td><span class="rounded-full border px-2 py-1 text-xs font-semibold uppercase" :class="operationStatusClass(operation.status)">{{ operation.status }}</span></td><td class="whitespace-nowrap text-secondary">{{ formatTime(operation.prepared_at) }}</td><td class="text-right"><Button v-if="operation.can_reconcile" size="sm" variant="secondary" :disabled="actionPending" @click="reconcile(operation)">{{ t('transfers.reconcile') }}</Button></td></tr></tbody></table></div><div v-else-if="actionPending" class="space-y-3 p-4" role="status" aria-busy="true" aria-live="polite"><span class="sr-only">{{ t('common.loading') }}</span><span v-for="n in 3" :key="n" class="pbgui-skeleton block h-4" aria-hidden="true" /></div><EmptyState v-else :title="t('transfers.noHistory')" :message="t('transfers.noHistoryHint')" class="m-4 py-8!" /></section>
       </main>
     </div>
   </AppShell>
 </template>
+
+<style scoped>
+.transfers-layout {
+  background:
+    radial-gradient(circle at 84% 0%, rgb(var(--accent-rgb) / 0.06), transparent 28rem),
+    var(--surface-workspace);
+}
+
+.transfer-account-rail,
+.transfer-card,
+.transfer-history {
+  box-shadow: var(--shadow-panel);
+}
+
+.transfer-account-row:focus-visible,
+.transfer-account-row.is-selected {
+  outline: none;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.transfer-account-row.is-selected {
+  color: var(--text-primary);
+}
+
+.transfer-card-header {
+  background: linear-gradient(180deg, rgb(var(--accent-rgb) / 0.045), transparent);
+}
+
+.transfer-summary-grid article {
+  min-height: 74px;
+}
+
+.transfer-controls {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--sp-md);
+}
+
+.transfer-vault-section {
+  margin-top: var(--sp-sm);
+}
+
+@media (max-width: 900px) {
+  .transfers-layout {
+    padding: var(--sp-md);
+  }
+
+  .transfer-account-rail {
+    position: static;
+  }
+}
+</style>

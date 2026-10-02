@@ -118,4 +118,35 @@ describe('Cluster Sync Vue page', () => {
     expect(wrapper.text()).toContain('SHA256');
     expect(wrapper.text()).not.toContain('secret');
   });
+
+  it('keeps the existing page visible while a background poll is in flight', async () => {
+    vi.useFakeTimers();
+    const wrapper = mountApp();
+    await flushPromises();
+    await wrapper.get('[data-testid="rail-section-nodes"]').trigger('click');
+
+    let resolveRefresh!: (value: unknown) => void;
+    const pendingRefresh = new Promise((resolve) => { resolveRefresh = resolve; });
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url.endsWith('/status')) return pendingRefresh;
+      if (url.endsWith('/nodes')) return Promise.resolve(nodes);
+      if (url.endsWith('/desired-state')) return Promise.resolve(desired);
+      if (url.includes('/oplog')) return Promise.resolve({ operations: [] });
+      if (url.endsWith('/retention/report')) return Promise.resolve({ policy: status.retention_policy, runtime: { status: 'ready' }, blockers: [] });
+      if (url.endsWith('/bootstrap-preview')) return Promise.resolve({ items: [], counts: {} });
+      if (url.endsWith('/remote-status')) return Promise.resolve({ nodes: [] });
+      return Promise.resolve({});
+    });
+
+    await vi.advanceTimersByTimeAsync(5000);
+    await Promise.resolve();
+    expect(wrapper.find('[data-section="nodes"]').exists()).toBe(true);
+    expect(wrapper.get('[data-cluster-refreshing]').classes()).toContain('is-refreshing');
+    expect(wrapper.find('.pbgui-skeleton').exists()).toBe(false);
+
+    resolveRefresh(status);
+    await flushPromises();
+    expect(wrapper.get('[data-cluster-refreshing]').classes()).not.toContain('is-refreshing');
+    vi.useRealTimers();
+  });
 });

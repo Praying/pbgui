@@ -1,5 +1,7 @@
 # Cluster Sync
 
+Die Cluster-Seite lädt einen vollständigen Snapshot nur beim Öffnen. Die Hintergrundabfrage alle fünf Sekunden lässt den aktuellen Bereich, Tabellen, die Scrollposition und den offenen Kontext sichtbar, während neue Daten geladen werden. Ein kleiner Statusindikator zeigt eine laufende Abfrage, ohne die Seite durch ein Lade-Skeleton zu ersetzen; der vollständige Ladezustand bleibt dem ersten Laden vorbehalten.
+
 Cluster Sync hält mehrere PBGui-Master und VPS-Runner auf demselben gewünschten PB7-, PB8- und API-Key-Stand, ohne einen externen Storage-Dienst zu verwenden.
 
 Nutze Cluster Sync, wenn du mehr als einen Master betreibst, Bots auf mehrere VPS verteilst oder VPS-Nodes auch dann sauber neu starten sollen, wenn gerade kein Master online ist.

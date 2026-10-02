@@ -4,6 +4,8 @@ Die Transfer-Historie wird auch bei einem fehlgeschlagenen Live-Snapshot der Bö
 
 Beim Aktualisieren der Kontovorschau bleibt die gewählte Transferroute erhalten, sofern sie verfügbar ist. Ein ungeklärter Transfer behält für einen sicheren erneuten Versuch seine ursprüngliche Route.
 
+Die Seite hält die Accountauswahl in der linken Leiste und trennt Routenwerte, Transfersteuerung und Historie in klar abgegrenzte Bereiche. Automatische Aktualisierungen setzen Route und Betrag nicht zurück.
+
 ## Zweck
 
 **System > Transfers** bietet ausdrueckliche manuelle Transfers zwischen festen internen Accounts. Die Seite akzeptiert keine externe Adresse und veraendert weder Profit-Sweep-Due noch Baselines, High-Water Marks oder bestaetigte Sweep-Summen.

@@ -21,7 +21,7 @@ import {
   SelectRoot,
   SelectTrigger,
 } from '@/shared/components/ui/select';
-import { PhArrowClockwise, PhChartLineUp, PhFloppyDisk, PhPlay, PhTrash, PhWarning } from '@phosphor-icons/vue';
+import { PhChartLineUp, PhFloppyDisk, PhPlay, PhTrash, PhWarning } from '@phosphor-icons/vue';
 import OverviewPanel from './components/OverviewPanel.vue';
 import type { OverviewAccount } from './types';
 
@@ -164,13 +164,6 @@ async function loadOverview(): Promise<void> {
     if (generation === overviewGeneration) overviewLoading.value = false;
   }
 }
-async function refreshOverviewNow(): Promise<void> {
-  try {
-    await apiFetch(`${apiBase}/overview/refresh`, { method: 'POST', body: '{}' });
-    overviewMessage.value = t('profitSweep.refreshQueued');
-    await loadOverview();
-  } catch (error) { overviewMessage.value = detailOf(error); }
-}
 async function updateOverviewMinutes(value: number): Promise<void> {
   if (![5, 15, 30, 60].includes(value)) return;
   try {
@@ -216,12 +209,34 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
 <template>
   <AppShell page-key="system_profit_sweep" :page-title="t('profitSweep.title')" class="data-page-shell profit-sweep-shell">
     <template v-if="loading || errorMessage" #status><StatusStrip :label="t('shared.status')" :value="loading ? t('common.loading') : t('common.error')" :tone="errorMessage ? 'danger' : 'warning'" /></template>
-    <template #header-actions><Button size="sm" :disabled="loading" @click="loadPage"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</Button></template>
-    <div class="pbgui-ambient flex min-h-0 flex-1 gap-4 p-[var(--page-padding)] max-[900px]:flex-col">
-      <aside class="w-72 shrink-0 self-start overflow-auto rounded-lg border border-border-default bg-panel p-3 min-[901px]:sticky min-[901px]:top-[var(--page-padding)] min-[901px]:max-h-[calc(100dvh-var(--header-height)-2*var(--page-padding))] max-[900px]:w-full max-[900px]:max-h-52"><div class="mb-3 flex items-center justify-between"><h2 class="text-base font-semibold text-primary">{{ t('profitSweep.accounts') }}</h2><span class="text-xs text-secondary">{{ filteredUsers.length }}/{{ users.length }}</span></div><Input v-model="search" class="mb-2" :placeholder="t('profitSweep.searchAccounts')" /><div class="grid gap-1"><button v-for="user in filteredUsers" :key="user.name" type="button" class="rounded-md border border-transparent px-3 py-2 text-left hover:bg-card" :class="user.name === selectedUser ? 'border-accent/30 bg-accent/10' : ''" @click="loadAccount(user.name)"><span class="block font-semibold text-primary">{{ user.name }}</span><span class="text-xs text-secondary">{{ user.exchange || t('profitSweep.unknownExchange') }}{{ user.is_vault ? t('profitSweep.vaultSuffix') : '' }} · {{ modeLabel(user.operating_mode) }}</span></button><LoadingSkeleton v-if="loading" class="p-3" :lines="2" :label="t('common.loading')" /><EmptyState v-else-if="!filteredUsers.length" class="py-4" :title="t('profitSweep.noAccounts')" /></div></aside>
-      <main class="min-w-0 flex-1 overflow-auto"><header class="mb-4 flex flex-wrap items-start justify-between gap-3"><div><p class="text-xs font-bold uppercase tracking-label text-accent">{{ currentUser?.exchange || t('profitSweep.selectAccount') }}</p><h1 class="text-2xl font-bold text-primary">{{ currentUser?.name || t('profitSweep.title') }}</h1><p class="text-sm text-secondary">{{ t('profitSweep.readOnlyHint') }}</p></div><div class="flex flex-wrap gap-2"><Button variant="warning" :disabled="!selectedUser || actionPending" @click="setMode('dry')"><PbIcon :icon="PhChartLineUp" /> {{ t('profitSweep.enableDry') }}</Button><Button :disabled="!selectedUser || actionPending" @click="evaluate"><PbIcon :icon="PhPlay" /> {{ t('profitSweep.evaluate') }}</Button><Button variant="danger" :disabled="!record || actionPending" @click="deletePolicy"><PbIcon :icon="PhTrash" /> {{ t('profitSweep.delete') }}</Button></div></header><p v-if="!selectedUser" class="mb-3 rounded-md border border-border-subtle bg-card p-3 text-sm text-secondary">{{ t('profitSweep.selectAccountHint') }}</p><p v-if="errorMessage" class="mb-3 rounded-md border border-danger/30 bg-danger/10 p-3 text-sm text-danger">{{ errorMessage }}</p><p v-if="statusMessage" class="mb-3 rounded-md border border-success/30 bg-success/10 p-3 text-sm text-success">{{ statusMessage }}</p>
-        <div v-if="selectedUser" class="grid gap-3 sm:grid-cols-4"><article v-for="item in [{ label: t('profitSweep.mode'), value: modeLabel(currentMode) }, { label: t('profitSweep.due'), value: preview?.decision && typeof preview.decision === 'object' ? (preview.decision as Record<string, unknown>).sweep_due : statusState?.sweep_due }, { label: t('profitSweep.lastPnl'), value: statusState?.last_net_pnl }, { label: t('profitSweep.highWatermark'), value: statusState?.high_watermark }]" :key="item.label" class="rounded-lg border border-border-default bg-panel p-3"><p class="text-xs uppercase tracking-label text-muted">{{ item.label }}</p><p class="mt-1 truncate text-lg font-semibold text-primary">{{ formatValue(item.value) }}</p></article></div>
-        <nav class="mt-4 flex gap-1 overflow-x-auto rounded-lg border border-border-default bg-panel p-1"><button v-for="tab in (['overview', 'policy', 'schedule', 'vault', 'journal'] as const)" :key="tab" type="button" class="rounded-md px-3 py-2 text-sm font-semibold text-secondary transition-colors duration-[var(--motion-fast)] ease-standard hover:bg-card hover:text-primary" :class="activeTab === tab ? 'bg-accent/15 text-accent-soft' : ''" @click="activeTab = tab">{{ t(`profitSweep.tabs.${tab}`) }}</button></nav>
+    <div class="pbgui-ambient profit-sweep-layout flex min-h-0 flex-1 gap-5 p-[var(--page-padding)] max-[900px]:flex-col">
+      <aside class="profit-account-rail w-72 shrink-0 self-start overflow-auto rounded-xl border border-border-default bg-panel p-3 min-[901px]:sticky min-[901px]:top-[var(--page-padding)] min-[901px]:max-h-[calc(100dvh-var(--header-height)-2*var(--page-padding))] max-[900px]:w-full max-[900px]:max-h-64">
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <div><p class="text-micro font-semibold uppercase tracking-label text-accent-soft">{{ t('profitSweep.accounts') }}</p><h2 class="mt-1 text-md font-semibold text-primary">{{ t('profitSweep.accountState') }}</h2></div>
+          <span class="rounded-full border border-border-default bg-card px-2 py-1 text-xs tabular-nums text-secondary">{{ filteredUsers.length }}/{{ users.length }}</span>
+        </div>
+        <Input v-model="search" class="mb-2.5" :placeholder="t('profitSweep.searchAccounts')" />
+        <div class="grid gap-1.5">
+          <button v-for="user in filteredUsers" :key="user.name" type="button" class="profit-account-row rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:bg-card" :class="user.name === selectedUser ? 'is-selected border-accent/30 bg-accent/10' : ''" @click="loadAccount(user.name)">
+            <span class="block truncate font-semibold text-primary">{{ user.name }}</span>
+            <span class="mt-1 block text-xs text-secondary">{{ user.exchange || t('profitSweep.unknownExchange') }}<span v-if="user.is_vault">{{ t('profitSweep.vaultSuffix') }}</span><span class="mx-1 text-muted">/</span>{{ modeLabel(user.operating_mode) }}</span>
+          </button>
+          <LoadingSkeleton v-if="loading" class="p-3" :lines="2" :label="t('common.loading')" />
+          <EmptyState v-else-if="!filteredUsers.length" class="py-4" :title="t('profitSweep.noAccounts')" />
+        </div>
+      </aside>
+      <main class="profit-sweep-content min-w-0 flex-1 overflow-auto">
+        <header class="profit-sweep-heading mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div class="min-w-0"><p class="text-micro font-bold uppercase tracking-label text-accent">{{ currentUser?.exchange || t('profitSweep.selectAccount') }}</p><h1 class="mt-1 truncate text-2xl font-bold tracking-tight text-primary">{{ currentUser?.name || t('profitSweep.title') }}</h1><p class="mt-2 max-w-[62ch] text-sm leading-relaxed text-secondary">{{ t('profitSweep.readOnlyHint') }}</p></div>
+          <div class="profit-actions flex flex-wrap gap-2"><Button variant="warning" :disabled="!selectedUser || actionPending" @click="setMode('dry')"><PbIcon :icon="PhChartLineUp" /> {{ t('profitSweep.enableDry') }}</Button><Button :disabled="!selectedUser || actionPending" @click="evaluate"><PbIcon :icon="PhPlay" /> {{ t('profitSweep.evaluate') }}</Button><Button variant="danger" :disabled="!record || actionPending" @click="deletePolicy"><PbIcon :icon="PhTrash" /> {{ t('profitSweep.delete') }}</Button></div>
+        </header>
+        <div class="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4" v-if="selectedUser"><article v-for="item in [{ label: t('profitSweep.mode'), value: modeLabel(currentMode) }, { label: t('profitSweep.due'), value: preview?.decision && typeof preview.decision === 'object' ? (preview.decision as Record<string, unknown>).sweep_due : statusState?.sweep_due }, { label: t('profitSweep.lastPnl'), value: statusState?.last_net_pnl }, { label: t('profitSweep.highWatermark'), value: statusState?.high_watermark }]" :key="item.label" class="profit-metric rounded-lg border border-border-default bg-panel px-3.5 py-3"><p class="text-micro uppercase tracking-label text-muted">{{ item.label }}</p><p class="mt-1 truncate text-lg font-semibold tabular-nums text-primary">{{ formatValue(item.value) }}</p></article></div>
+        <p v-if="!selectedUser" class="mb-3 rounded-lg border border-border-subtle bg-card p-3 text-sm text-secondary">{{ t('profitSweep.selectAccountHint') }}</p>
+        <p v-if="errorMessage" class="mt-3 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">{{ errorMessage }}</p>
+        <p v-if="statusMessage" class="mt-3 rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-success">{{ statusMessage }}</p>
+        <nav class="profit-tabs mt-5 flex gap-1 overflow-x-auto rounded-xl border border-border-default bg-panel p-1" role="tablist">
+          <button v-for="tab in (['overview', 'policy', 'schedule', 'vault', 'journal'] as const)" :key="tab" type="button" role="tab" :aria-selected="activeTab === tab" class="whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-secondary transition-colors duration-[var(--motion-fast)] ease-standard hover:bg-card hover:text-primary" :class="activeTab === tab ? 'bg-accent/15 text-accent-soft' : ''" @click="activeTab = tab">{{ t(`profitSweep.tabs.${tab}`) }}</button>
+        </nav>
         <OverviewPanel
           :accounts="overviewAccounts"
           :loading="overviewLoading"
@@ -231,11 +246,10 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
           :format-amount="formatAmount"
           :format-time="formatTime"
           @select="loadAccount"
-          @refresh="refreshOverviewNow"
           @update:anonymized="setOverviewAnonymized"
           @update:refresh-minutes="updateOverviewMinutes"
         />
-        <section v-if="preview" class="mt-4 rounded-lg border border-warning/30 bg-warning/5 p-4">
+        <section v-if="preview" class="profit-preview mt-4 rounded-xl border border-warning/30 bg-warning/5 p-4">
           <h2 class="text-lg font-semibold text-warning">{{ t('profitSweep.preview') }}</h2>
           <p class="mt-2 text-sm text-secondary">{{ t('profitSweep.previewHint') }}</p>
           <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
@@ -247,8 +261,8 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
             </template>
           </dl>
         </section>
-        <section v-else-if="['policy', 'schedule', 'vault'].includes(activeTab)" class="mt-4 rounded-lg border border-border-default bg-panel p-4">
-          <div class="mb-4 flex items-center justify-between">
+        <section v-else-if="['policy', 'schedule', 'vault'].includes(activeTab)" class="profit-form mt-4 rounded-xl border border-border-default bg-panel p-4">
+          <div class="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
             <div>
               <h2 class="text-lg font-semibold text-primary">{{ t(`profitSweep.tabs.${activeTab}`) }}</h2>
               <p class="text-sm text-secondary">{{ t('profitSweep.formHint') }}</p>
@@ -257,7 +271,7 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
               <PbIcon :icon="PhFloppyDisk" /> {{ t('profitSweep.save') }}
             </Button>
           </div>
-          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div class="grid gap-x-5 gap-y-4 md:grid-cols-2 xl:grid-cols-3">
             <div v-for="field in fieldsFor(activeTab)" :key="field" class="grid gap-1.5">
               <Label :for="`profit-sweep-${field}`">
                 {{ fieldLabel(field) }}
@@ -309,9 +323,59 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
             <Button variant="primary" :disabled="!record || schema.live_available !== true || actionPending" @click="enableLive"><PbIcon :icon="PhWarning" /> {{ t('profitSweep.enableLive') }}</Button>
           </div>
         </section>
-        <section v-else class="mt-4 grid gap-4"><div class="rounded-lg border border-border-default bg-panel p-4"><div class="mb-3 flex items-center justify-between"><h2 class="text-lg font-semibold text-primary">{{ t('profitSweep.journal') }}</h2><Button size="sm" @click="loadAccount(selectedUser)">{{ t('common.refresh') }}</Button></div><div class="overflow-auto"><table class="w-full min-w-[720px] text-left text-sm"><thead><tr class="border-b border-border-default text-xs font-semibold uppercase tracking-label text-secondary"><th class="p-2">{{ t('profitSweep.time') }}</th><th class="p-2">{{ t('profitSweep.decision') }}</th><th class="p-2">{{ t('profitSweep.amount') }}</th><th class="p-2">{{ t('profitSweep.netPnl') }}</th><th class="p-2">{{ t('profitSweep.due') }}</th></tr></thead><tbody><tr v-for="entry in journal" :key="`${entry.created_at}-${entry.amount}`" class="border-b border-border-subtle"><td class="p-2">{{ formatTime(entry.created_at) }}</td><td class="p-2" :class="Number(entry.amount) > 0 ? 'text-warning' : 'text-primary'">{{ Number(entry.amount) > 0 ? t('profitSweep.wouldTransfer') : fieldLabel(String(entry.reason || '-')) }}</td><td class="p-2">{{ formatValue(entry.amount) }}</td><td class="p-2">{{ formatValue(entry.net_pnl) }}</td><td class="p-2">{{ formatValue(entry.due_after) }}</td></tr><tr v-if="!journal.length"><td colspan="5" class="p-6 text-center text-secondary">{{ t('profitSweep.noJournal') }}</td></tr></tbody></table></div></div><div class="rounded-lg border border-border-default bg-panel p-4"><h2 class="mb-3 text-lg font-semibold text-primary">{{ t('profitSweep.intents') }}</h2><div class="overflow-auto"><table class="w-full min-w-[720px] text-left text-sm"><thead><tr class="border-b border-border-default text-xs font-semibold uppercase tracking-label text-secondary"><th class="p-2">{{ t('profitSweep.operation') }}</th><th class="p-2">{{ t('profitSweep.state') }}</th><th class="p-2">{{ t('profitSweep.route') }}</th><th class="p-2">{{ t('profitSweep.amount') }}</th><th class="p-2">{{ t('profitSweep.action') }}</th></tr></thead><tbody><tr v-for="intent in intents" :key="intent.operation_id" class="border-b border-border-subtle"><td class="p-2">{{ intent.operation_id }}</td><td class="p-2">{{ fieldLabel(String(intent.state || 'unknown')) }}</td><td class="p-2">{{ formatValue(intent.route) }}</td><td class="p-2">{{ formatValue(intent.reserved_amount) }}</td><td class="p-2"><Button v-if="intent.can_reconcile" size="sm" variant="warning" :disabled="reconcilePending" @click="reconcile(intent)">{{ t('profitSweep.reconcile') }}</Button><span v-else>-</span></td></tr><tr v-if="!intents.length"><td colspan="5" class="p-6 text-center text-secondary">{{ t('profitSweep.noIntents') }}</td></tr></tbody></table></div></div></section>
+        <section v-else class="profit-journal mt-4 grid gap-4 xl:grid-cols-2"><div class="rounded-xl border border-border-default bg-panel p-4"><div class="mb-4"><p class="text-micro font-semibold uppercase tracking-label text-accent-soft">{{ t('profitSweep.journal') }}</p><h2 class="mt-1 text-lg font-semibold text-primary">{{ t('profitSweep.journalDesc') }}</h2></div><div class="overflow-auto"><table class="w-full min-w-[720px] text-left text-sm"><thead><tr class="border-b-2 border-border-default bg-elevated text-xs font-semibold uppercase tracking-label text-secondary"><th class="p-2">{{ t('profitSweep.time') }}</th><th class="p-2">{{ t('profitSweep.decision') }}</th><th class="p-2">{{ t('profitSweep.amount') }}</th><th class="p-2">{{ t('profitSweep.netPnl') }}</th><th class="p-2">{{ t('profitSweep.due') }}</th></tr></thead><tbody><tr v-for="entry in journal" :key="`${entry.created_at}-${entry.amount}`" class="border-b border-border-subtle"><td class="p-2">{{ formatTime(entry.created_at) }}</td><td class="p-2" :class="Number(entry.amount) > 0 ? 'text-warning' : 'text-primary'">{{ Number(entry.amount) > 0 ? t('profitSweep.wouldTransfer') : fieldLabel(String(entry.reason || '-')) }}</td><td class="p-2">{{ formatValue(entry.amount) }}</td><td class="p-2">{{ formatValue(entry.net_pnl) }}</td><td class="p-2">{{ formatValue(entry.due_after) }}</td></tr><tr v-if="!journal.length"><td colspan="5" class="p-6 text-center text-secondary">{{ t('profitSweep.noJournal') }}</td></tr></tbody></table></div></div><div class="rounded-xl border border-border-default bg-panel p-4"><div class="mb-4"><p class="text-micro font-semibold uppercase tracking-label text-accent-soft">{{ t('profitSweep.intents') }}</p><h2 class="mt-1 text-lg font-semibold text-primary">{{ t('profitSweep.intentsDesc') }}</h2></div><div class="overflow-auto"><table class="w-full min-w-[720px] text-left text-sm"><thead><tr class="border-b-2 border-border-default bg-elevated text-xs font-semibold uppercase tracking-label text-secondary"><th class="p-2">{{ t('profitSweep.operation') }}</th><th class="p-2">{{ t('profitSweep.state') }}</th><th class="p-2">{{ t('profitSweep.route') }}</th><th class="p-2">{{ t('profitSweep.amount') }}</th><th class="p-2">{{ t('profitSweep.action') }}</th></tr></thead><tbody><tr v-for="intent in intents" :key="intent.operation_id" class="border-b border-border-subtle"><td class="p-2">{{ intent.operation_id }}</td><td class="p-2">{{ fieldLabel(String(intent.state || 'unknown')) }}</td><td class="p-2">{{ formatValue(intent.route) }}</td><td class="p-2">{{ formatValue(intent.reserved_amount) }}</td><td class="p-2"><Button v-if="intent.can_reconcile" size="sm" variant="warning" :disabled="reconcilePending" @click="reconcile(intent)">{{ t('profitSweep.reconcile') }}</Button><span v-else>-</span></td></tr><tr v-if="!intents.length"><td colspan="5" class="p-6 text-center text-secondary">{{ t('profitSweep.noIntents') }}</td></tr></tbody></table></div></div></section>
       </main>
     </div>
   </AppShell>
 </template>
 
+<style scoped>
+.profit-sweep-layout {
+  background:
+    radial-gradient(circle at 84% 0%, rgb(var(--accent-rgb) / 0.06), transparent 28rem),
+    var(--surface-workspace);
+}
+
+.profit-account-rail,
+.profit-metric,
+.profit-tabs,
+.profit-preview,
+.profit-form,
+.profit-journal > section {
+  box-shadow: var(--shadow-panel);
+}
+
+.profit-account-row:focus-visible,
+.profit-account-row.is-selected {
+  outline: none;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.profit-metric {
+  min-height: 76px;
+}
+
+.profit-form input,
+.profit-form button,
+.profit-form [role='combobox'] {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .profit-sweep-layout {
+    padding: var(--sp-md);
+  }
+
+  .profit-account-rail {
+    position: static;
+  }
+
+  .profit-actions {
+    width: 100%;
+  }
+
+  .profit-actions > * {
+    flex: 1 1 auto;
+  }
+}
+</style>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import type { OverviewAccount } from '../types';
@@ -18,7 +17,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   select: [name: string];
-  refresh: [];
   'update:anonymized': [value: boolean];
   'update:refreshMinutes': [value: number];
 }>();
@@ -46,6 +44,7 @@ function rowTone(account: OverviewAccount): string {
         <p class="mt-1 text-sm text-secondary">{{ t('profitSweep.overviewHint') }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
+        <span v-if="loading" class="text-xs text-accent-soft" role="status" aria-live="polite">{{ t('common.loading') }}</span>
         <label class="flex items-center gap-2 text-sm text-secondary">
           <Checkbox :model-value="anonymized" @update:model-value="emit('update:anonymized', $event === true)" />
           <span>{{ t('profitSweep.anonymizeAccounts') }}</span>
@@ -60,7 +59,6 @@ function rowTone(account: OverviewAccount): string {
             </SelectItem>
           </SelectContent>
         </SelectRoot>
-        <Button size="sm" :loading="loading" @click="emit('refresh')">{{ t('profitSweep.refreshNow') }}</Button>
       </div>
     </div>
 

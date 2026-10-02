@@ -1,5 +1,7 @@
 # Cluster Sync
 
+The cluster page loads a full snapshot only when entering the page. Its five-second background poll keeps the current section, tables, scroll position, and open context visible while data is fetched. A small status indicator shows an active poll without replacing the page with a loading skeleton; the full loading state is reserved for the initial load.
+
 Cluster Sync keeps multiple PBGui masters and VPS runners on the same desired PB7, PB8, and API-key state without using an external storage service.
 
 Use it when you run more than one master, run bots across multiple VPS, or want VPS nodes to keep enough local state to reboot safely when no master is online.
