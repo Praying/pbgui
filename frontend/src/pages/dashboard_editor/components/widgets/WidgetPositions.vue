@@ -32,7 +32,7 @@ import { Button } from '@/shared/components/ui/button';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
-import { useDashboardUsers } from '../../composables/useDashboardUsers';
+import { useDashboardUserSelection } from '../../composables/useDashboardUserSelection';
 import { canLivePoll, MAX_LIVE_POSITIONS, useLivePositions } from '../../composables/useLivePoll';
 import { useManageActions } from '../../composables/useManageActions';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
@@ -84,10 +84,9 @@ const rootEl = ref<HTMLElement | null>(null);
 
 if (store.state[uKey] === undefined) store.state[uKey] = ['ALL'];
 
-const users = computed<string[]>(() => {
-  const v = store.state[uKey];
-  return Array.isArray(v) ? (v as string[]) : [];
-});
+const userSelection = useDashboardUserSelection(uKey, store);
+const { allUsers, isShared, onUsersChange } = userSelection;
+const users = computed<string[]>(() => userSelection.users.value ?? []);
 
 /* ── fetch (editor:1928-1943) ── */
 
@@ -229,13 +228,6 @@ function onReload(): void {
 
 /* ── users control (editor:1945-1948) ── */
 
-function onUsersChange(value: string[]): void {
-  store.state[uKey] = value;
-  store.scheduleSync();
-}
-
-const allUsers = useDashboardUsers().users;
-
 function onDelete(): void {
   if (!ctx) return;
   /* legacy _makeDeleteCb: clearCell + rebuild + scheduleSync */
@@ -269,8 +261,10 @@ function onDelete(): void {
         {{ dashT('dash.manage', 'Manage') }}
       </Button>
       <div :class="[dtMetaClass, dtMetaControlsClass]">
-        <span :class="dtMetaLblClass">{{ dashT('dash.users', 'Users') }}</span>
-        <MultiSelectDropdown :model-value="users" :users="allUsers" @update:model-value="onUsersChange" />
+        <template v-if="!isShared">
+          <span :class="dtMetaLblClass">{{ dashT('dash.users', 'Users') }}</span>
+          <MultiSelectDropdown :model-value="users" :users="allUsers" @update:model-value="onUsersChange" />
+        </template>
       </div>
       <Button
         v-if="editMode"

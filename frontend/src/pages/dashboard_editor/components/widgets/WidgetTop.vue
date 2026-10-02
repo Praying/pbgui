@@ -16,13 +16,15 @@ import { computed, inject, watch } from 'vue';
 import { Input } from '@/shared/components/ui/input';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
-import { useDashboardUsers } from '../../composables/useDashboardUsers';
+import {
+  useDashboardPeriodSelection,
+  useDashboardUserSelection,
+} from '../../composables/useDashboardUserSelection';
 import { cellContextKey } from '../../lib/cellContext';
 import { dashT } from '../../lib/i18n';
 import { dateRangeText } from '../../lib/format';
 import { topDataUrl } from '../../lib/endpoints';
 import { topLayout, topTraces } from '../../lib/plotlyLayouts';
-import { periodFromSelect } from '../../composables/usePeriodControls';
 import type { TopData, TopRow } from '../../types/widgets';
 import {
   dtCtrlNumClass,
@@ -52,11 +54,10 @@ const tKey = 'dashboard_top_symbols_top_' + pos;
 
 /* ── config (editor:1223-1226 — no ensure-defaults for TOP) ── */
 
-const users = computed<string[] | null>(() => {
-  const v = store.state[uKey];
-  return Array.isArray(v) ? (v as string[]) : null;
-});
-const period = computed<string>(() => String(store.state[pKey] || 'THIS_MONTH'));
+const userSelection = useDashboardUserSelection(uKey, store);
+const { users, allUsers, isShared, onUsersChange } = userSelection;
+const periodSelection = useDashboardPeriodSelection(pKey, store);
+const { period, isShared: isPeriodShared, onPeriodChange } = periodSelection;
 const topN = computed<number | string>(() => (store.state[tKey] as number | string) || 10);
 
 /* ── fetch (editor:1237-1247) ── */
@@ -87,17 +88,6 @@ function onTopNChange(e: Event): void {
   store.scheduleSync();
 }
 
-function onPeriodChange(value: string): void {
-  store.state[pKey] = periodFromSelect(value);
-  store.scheduleSync();
-}
-
-function onUsersChange(value: string[]): void {
-  store.state[uKey] = value;
-  store.scheduleSync();
-}
-
-const allUsers = useDashboardUsers().users;
 </script>
 
 <template>
@@ -118,14 +108,16 @@ const allUsers = useDashboardUsers().users;
           @change="onTopNChange"
         />
         <span :class="dtMetaSepClass">·</span>
-        <PeriodControls :period="period" @update:period="onPeriodChange" />
-        <span :class="dtMetaSepClass">·</span>
-        <span :class="dtMetaLblClass">{{ dashT('dash.users', 'Users') }}</span>
-        <MultiSelectDropdown
-          :model-value="users"
-          :users="allUsers"
-          @update:model-value="onUsersChange"
-        />
+        <PeriodControls v-if="!isPeriodShared" :period="period" @update:period="onPeriodChange" />
+        <template v-if="!isShared">
+          <span :class="dtMetaSepClass">·</span>
+          <span :class="dtMetaLblClass">{{ dashT('dash.users', 'Users') }}</span>
+          <MultiSelectDropdown
+            :model-value="users"
+            :users="allUsers"
+            @update:model-value="onUsersChange"
+          />
+        </template>
       </div>
     </WidgetHeader>
     <div v-if="data && data.from_date && data.to_date" :class="dtDaterangeClass">

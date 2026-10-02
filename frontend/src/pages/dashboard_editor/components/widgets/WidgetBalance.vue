@@ -29,7 +29,7 @@ import { Button } from '@/shared/components/ui/button';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
-import { useDashboardUsers } from '../../composables/useDashboardUsers';
+import { useDashboardUserSelection } from '../../composables/useDashboardUserSelection';
 import { canLivePoll, useLiveBalance } from '../../composables/useLivePoll';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
 import { dashT } from '../../lib/i18n';
@@ -54,10 +54,8 @@ const rootEl = ref<HTMLElement | null>(null);
 
 /* ── config (editor:1164-1166 — no ensure-defaults for BALANCE) ── */
 
-const users = computed<string[] | null>(() => {
-  const v = store.state[uKey];
-  return Array.isArray(v) ? (v as string[]) : null;
-});
+const userSelection = useDashboardUserSelection(uKey, store);
+const { users, allUsers, isShared, onUsersChange } = userSelection;
 
 /* ── fetch (editor:1167-1206) ── */
 
@@ -137,13 +135,6 @@ function num(v: unknown): number {
 
 /* ── users control (editor:1185-1188) ── */
 
-function onUsersChange(value: string[]): void {
-  store.state[uKey] = value;
-  store.scheduleSync();
-}
-
-const allUsers = useDashboardUsers().users;
-
 function onDelete(): void {
   if (!ctx) return;
   /* legacy _makeDeleteCb: clearCell + rebuild + scheduleSync */
@@ -176,7 +167,7 @@ function onDelete(): void {
           <span class="text-compact font-semibold" :style="{ color: tweColor(num(totals.we)) }">{{ num(totals.we).toFixed(2) }} %</span>
         </div>
       </div>
-      <div class="db-user-sel relative ml-auto flex items-center gap-[0.4rem]">
+      <div v-if="!isShared" class="db-user-sel relative ml-auto flex items-center gap-[0.4rem]">
         <label class="text-micro text-secondary">{{ dashT('dash.usersColon', 'Users:') }}</label>
         <MultiSelectDropdown :model-value="users" :users="allUsers" @update:model-value="onUsersChange" />
       </div>

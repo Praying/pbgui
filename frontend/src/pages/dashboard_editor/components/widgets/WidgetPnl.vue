@@ -16,14 +16,18 @@ import { computed, inject, watch } from 'vue';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
-import { useDashboardUsers } from '../../composables/useDashboardUsers';
+import {
+  useDashboardModeSelection,
+  useDashboardPeriodSelection,
+  useDashboardUserSelection,
+} from '../../composables/useDashboardUserSelection';
 import { cellContextKey } from '../../lib/cellContext';
 import { dashT } from '../../lib/i18n';
 import { dateRangeText } from '../../lib/format';
 import { pnlDataUrl } from '../../lib/endpoints';
 import { applyRangeZoom, pnlLayout, pnlTraces } from '../../lib/plotlyLayouts';
 import { clearSavedZoom } from '../../lib/savedZoom';
-import { MODES, periodFromSelect } from '../../composables/usePeriodControls';
+import { MODES } from '../../composables/usePeriodControls';
 import type { PnlData } from '../../types/widgets';
 import {
   dtCtrlSelClass,
@@ -57,12 +61,12 @@ if (store.state[uKey] === undefined) store.state[uKey] = ['ALL'];
 if (store.state[pKey] === undefined) store.state[pKey] = 'THIS_MONTH';
 if (store.state[mKey] === undefined) store.state[mKey] = 'bar';
 
-const users = computed<string[] | null>(() => {
-  const v = store.state[uKey];
-  return Array.isArray(v) ? (v as string[]) : null;
-});
-const period = computed<string>(() => String(store.state[pKey] || 'THIS_MONTH'));
-const mode = computed<string>(() => String(store.state[mKey] || 'bar'));
+const userSelection = useDashboardUserSelection(uKey, store);
+const { users, allUsers, isShared, onUsersChange } = userSelection;
+const periodSelection = useDashboardPeriodSelection(pKey, store);
+const modeSelection = useDashboardModeSelection(mKey, store);
+const { period, isShared: isPeriodShared, onPeriodChange } = periodSelection;
+const { mode, isShared: isModeShared, onModeChange } = modeSelection;
 
 /* ── fetch (editor:1525-1534) ── */
 
@@ -92,22 +96,6 @@ const layout = computed(() => pnlLayout(height.value));
 
 /* ── controls ── */
 
-function onModeUpdate(value: unknown): void {
-  store.state[mKey] = String(value);
-  store.scheduleSync();
-}
-
-function onPeriodChange(value: string): void {
-  store.state[pKey] = periodFromSelect(value);
-  store.scheduleSync();
-}
-
-function onUsersChange(value: string[]): void {
-  store.state[uKey] = value;
-  store.scheduleSync();
-}
-
-const allUsers = useDashboardUsers().users;
 </script>
 
 <template>
@@ -116,24 +104,28 @@ const allUsers = useDashboardUsers().users;
   <div v-else :class="dtRootClass">
     <WidgetHeader :title="dashT('dash.dailyPnl', 'Daily PNL')" :icon="'📊'">
       <div :class="[dtMetaClass, dtMetaControlsClass]">
-        <span :class="dtMetaLblClass">{{ dashT('dash.mode', 'Mode') }}</span>
-        <SelectRoot :model-value="mode" @update:model-value="onModeUpdate">
-          <SelectTrigger :class="dtCtrlSelClass" :aria-label="dashT('dash.mode', 'Mode')">
-            <span>{{ mode }}</span>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem v-for="m in MODES" :key="m" :value="m">{{ m }}</SelectItem>
-          </SelectContent>
-        </SelectRoot>
-        <span :class="dtMetaSepClass">·</span>
-        <PeriodControls :period="period" @update:period="onPeriodChange" />
-        <span :class="dtMetaSepClass">·</span>
-        <span :class="dtMetaLblClass">{{ dashT('dash.users', 'Users') }}</span>
-        <MultiSelectDropdown
-          :model-value="users"
-          :users="allUsers"
-          @update:model-value="onUsersChange"
-        />
+        <template v-if="!isModeShared">
+          <span :class="dtMetaLblClass">{{ dashT('dash.mode', 'Mode') }}</span>
+          <SelectRoot :model-value="mode" @update:model-value="onModeChange">
+            <SelectTrigger :class="dtCtrlSelClass" :aria-label="dashT('dash.mode', 'Mode')">
+              <span>{{ mode }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="m in MODES" :key="m" :value="m">{{ m }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
+          <span :class="dtMetaSepClass">·</span>
+        </template>
+        <PeriodControls v-if="!isPeriodShared" :period="period" @update:period="onPeriodChange" />
+        <template v-if="!isShared">
+          <span :class="dtMetaSepClass">·</span>
+          <span :class="dtMetaLblClass">{{ dashT('dash.users', 'Users') }}</span>
+          <MultiSelectDropdown
+            :model-value="users"
+            :users="allUsers"
+            @update:model-value="onUsersChange"
+          />
+        </template>
       </div>
     </WidgetHeader>
     <div v-if="data && data.from_date && data.to_date" :class="dtDaterangeClass">

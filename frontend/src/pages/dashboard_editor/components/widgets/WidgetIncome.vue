@@ -25,12 +25,14 @@ import { computed, inject, onMounted, ref, watch } from 'vue';
 import { Input } from '@/shared/components/ui/input';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
-import { useDashboardUsers } from '../../composables/useDashboardUsers';
+import {
+  useDashboardPeriodSelection,
+  useDashboardUserSelection,
+} from '../../composables/useDashboardUserSelection';
 import { cellContextKey } from '../../lib/cellContext';
 import { dashT } from '../../lib/i18n';
 import { dateRangeText } from '../../lib/format';
 import { incomeDataUrl } from '../../lib/endpoints';
-import { periodFromSelect } from '../../composables/usePeriodControls';
 import type { IncomeData } from '../../types/widgets';
 import {
   diRootClass,
@@ -66,11 +68,10 @@ if (store.state[pKey] === undefined) store.state[pKey] = 'THIS_MONTH';
 if (store.state[lKey] === undefined) store.state[lKey] = 0;
 if (store.state[fKey] === undefined) store.state[fKey] = 0;
 
-const users = computed<string[] | null>(() => {
-  const v = store.state[uKey];
-  return Array.isArray(v) ? (v as string[]) : null;
-});
-const period = computed<string>(() => String(store.state[pKey] || 'THIS_MONTH'));
+const userSelection = useDashboardUserSelection(uKey, store);
+const { users, allUsers, isShared, onUsersChange } = userSelection;
+const periodSelection = useDashboardPeriodSelection(pKey, store);
+const { period, isShared: isPeriodShared, onPeriodChange } = periodSelection;
 const lastN = computed<number>(() => Number(store.state[lKey]) || 0);
 const filterVal = computed<number>(() => Number(store.state[fKey]) || 0);
 
@@ -100,11 +101,6 @@ function onReload(): void {
 
 /* ── controls (editor:1391-1473) ── */
 
-function onPeriodChange(value: string): void {
-  store.state[pKey] = periodFromSelect(value);
-  store.scheduleSync();
-}
-
 function onLastNChange(e: Event): void {
   store.state[lKey] = parseInt((e.target as HTMLInputElement).value, 10) || 0;
   store.scheduleSync();
@@ -114,13 +110,6 @@ function onFilterChange(e: Event): void {
   store.state[fKey] = parseFloat((e.target as HTMLInputElement).value) || 0;
   store.scheduleSync();
 }
-
-function onUsersChange(value: string[]): void {
-  store.state[uKey] = value;
-  store.scheduleSync();
-}
-
-const allUsers = useDashboardUsers().users;
 
 /* ── cell pre-height freeze (editor:1474-1490) ── */
 
@@ -164,7 +153,7 @@ watch(
   <div v-else ref="hostEl" :class="diRootClass">
     <WidgetHeader :title="dashT('dash.income', 'Income')" :icon="'💰'">
       <div :class="[dtMetaClass, dtMetaControlsClass]">
-        <PeriodControls :period="period" @update:period="onPeriodChange" />
+        <PeriodControls v-if="!isPeriodShared" :period="period" @update:period="onPeriodChange" />
         <span :class="dtMetaSepClass">·</span>
         <span :class="dtMetaLblClass">{{ dashT('dash.lastN', 'Last N') }}</span>
         <Input
@@ -188,13 +177,15 @@ watch(
           :model-value="filterVal"
           @change="onFilterChange"
         />
-        <span :class="dtMetaSepClass">·</span>
-        <span :class="dtMetaLblClass">{{ dashT('dash.users', 'Users') }}</span>
-        <MultiSelectDropdown
-          :model-value="users"
-          :users="allUsers"
-          @update:model-value="onUsersChange"
-        />
+        <template v-if="!isShared">
+          <span :class="dtMetaSepClass">·</span>
+          <span :class="dtMetaLblClass">{{ dashT('dash.users', 'Users') }}</span>
+          <MultiSelectDropdown
+            :model-value="users"
+            :users="allUsers"
+            @update:model-value="onUsersChange"
+          />
+        </template>
       </div>
     </WidgetHeader>
     <div v-if="data && data.from_date && data.to_date" :class="dtDaterangeClass">
