@@ -12,6 +12,7 @@ import platform
 import re
 import secrets
 import signal
+import stat
 import socket
 import subprocess
 import threading
@@ -20,10 +21,11 @@ import traceback
 import uuid
 
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path, PurePath
 from shutil import copy2, rmtree, which
-from typing import Optional
+from typing import Callable, Optional
 
 import psutil
 import httpx
@@ -64,6 +66,8 @@ from pb8_config import (
     get_pb8_exchange_metadata,
     interrupt_pb8_migration_helper,
     load_pb8_config,
+    load_pb8_editor_config,
+    preview_pb8_hsl_migration,
     migrate_pb7_config,
     prepare_pb8_migration_helper_startup,
     prepare_pb8_config,
@@ -176,6 +180,11 @@ _OPT_LOG_GPU_RE = re.compile(
     r"GPU optimize\s*\|\s*gen=(?P<generation>\d+)\s+proxy=(?P<proxy>\d+)\s+\((?P<rate>[0-9.]+)/s\)\s+exact=(?P<exact>\d+)\s+inflight=(?P<inflight>\d+)",
     re.IGNORECASE,
 )
+_OPT_LOG_GPU_PROGRESS_RE = re.compile(
+    r"GPU optimizer progress\s*\|\s*gen=(?P<generation>\d+)\s+phase=(?P<stage>\w+)\s*\|\s*"
+    r"evolution_proxy_completed_run=(?P<proxy>\d+)(?=\s|$)[^\n]*?\bevolution_exact=(?P<exact>\d+)/\d+(?=\s|$)"
+    r"[^\n]*?\bevolution_pending=(?P<pending>\d+)(?=\s|$)", re.IGNORECASE,
+)
 _OPT_LOG_GPU_DISPATCH_RE = re.compile(
     r"GPU proxy dispatch progress\s*\|\s*strategy=(?P<strategy>\S+)\s+chunks=(?P<chunks_done>\d+)/(?P<chunks_total>\d+)\s+candidates=(?P<candidates_done>\d+)/(?P<candidates_total>\d+)\s+elapsed=(?P<elapsed>[0-9.]+)s\s+eta=(?P<eta>[0-9.]+)s",
     re.IGNORECASE,
@@ -195,7 +204,7 @@ _OPT_LOG_GPU_HALVING_RE = re.compile(
     re.IGNORECASE,
 )
 _OPT_LOG_GPU_RESUME_RE = re.compile(
-    r"Resumed GPU optimizer at generation\s+(?P<generation>\d+)\s+with\s+(?P<exact>\d+)\s+exact evaluations",
+    r"Resumed GPU optimizer at generation\s+(?P<generation>\d+)\s+with\s+(?:(?P<seed>\d+)\s+seed\s+and\s+)?(?P<exact>\d+)\s+exact evaluations",
     re.IGNORECASE,
 )
 _OPT_LOG_GPU_COMPLETE_RE = re.compile(
@@ -827,6 +836,7 @@ def _launch_optimizer_runner(filename: str, command: list[str], cwd: Path, log_p
                 f"--property=StandardOutput=append:{log_path}",
                 f"--property=StandardError=append:{log_path}",
                 f"--setenv=PATH={Path(command[0]).parent}{os.pathsep}{os.environ.get('PATH', '')}",
+                "--setenv=PASSIVBOT_GPU_PROFILE=1",
                 "--",
                 *command,
             ],
@@ -847,7 +857,7 @@ def _launch_optimizer_runner(filename: str, command: list[str], cwd: Path, log_p
             "cwd": str(cwd),
             "stdout": log_file,
             "stderr": log_file,
-            "env": {**os.environ, "PATH": str(Path(command[0]).parent) + os.pathsep + os.environ.get("PATH", "")},
+            "env": {**os.environ, "PASSIVBOT_GPU_PROFILE": "1", "PATH": str(Path(command[0]).parent) + os.pathsep + os.environ.get("PATH", "")},
             "close_fds": True,
         }
         if platform.system() == "Windows":
@@ -887,10 +897,25 @@ def _read_runner_state(filename: str) -> dict | None:
         return None
 
 
+_LOG_TERMINAL_STATUS_CACHE_MAX = 1024
+_log_terminal_status_cache: dict[str, tuple[tuple[int, int, int, int], str | None]] = {}
+_log_terminal_status_lock = threading.Lock()
+
+
 def _read_log_terminal_status(filename: str) -> str | None:
     path = _safe_path(_log_dir() / f"{filename}.log", _log_dir())
-    if not path.is_file() or path.is_symlink():
+    try:
+        info = path.lstat()
+    except OSError:
         return None
+    if not stat.S_ISREG(info.st_mode):
+        return None
+    # Finished logs never change, so re-read the 64 KiB tail only after a write or rotation.
+    signature = (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns)
+    with _log_terminal_status_lock:
+        cached = _log_terminal_status_cache.get(str(path))
+    if cached is not None and cached[0] == signature:
+        return cached[1]
     try:
         with path.open("rb") as handle:
             handle.seek(0, 2)
@@ -899,10 +924,16 @@ def _read_log_terminal_status(filename: str) -> str | None:
     except OSError:
         return None
     if "optimization complete" in tail or "successfully processed optimize_results" in tail:
-        return "complete"
-    if tail.strip():
-        return "error"
-    return None
+        status = "complete"
+    elif tail.strip():
+        status = "error"
+    else:
+        status = None
+    with _log_terminal_status_lock:
+        if len(_log_terminal_status_cache) >= _LOG_TERMINAL_STATUS_CACHE_MAX:
+            _log_terminal_status_cache.clear()
+        _log_terminal_status_cache[str(path)] = (signature, status)
+    return status
 
 
 def _clear_stale_process_record(filename: str, record: dict | None = None) -> None:
@@ -1417,21 +1448,64 @@ def _apply_queue_launch_settings(
     return prepared
 
 
-def _queue_item(path: Path) -> dict:
+def _read_queue_record(path: Path) -> tuple[dict, str]:
+    """Return one persisted queue entry with its validated filename and creation stamp."""
     data = _read_json(_safe_path(path, _queue_dir()))
     filename = str(data.get("filename") or path.stem)
     if filename != path.stem:
         raise RuntimeError("Persisted queue filename does not match its file")
-    status, pid = _queue_status({**data, "filename": filename})
+    created = datetime.datetime.fromtimestamp(path.stat().st_mtime).isoformat()
+    return {**data, "filename": filename}, created
+
+
+def _queue_records() -> list[tuple[Path, dict, str]]:
+    """Read each queue file once and return (path, data, created) in queue order."""
+    ensure_private_directory(_queue_dir())
+    records = []
+    for path in _queue_dir().glob("*.json"):
+        try:
+            records.append((path, *_read_queue_record(path)))
+        except Exception as exc:
+            _log(SERVICE, f"Failed to load PB8 optimize queue item {path.name}: {exc}", level="WARNING")
+    pending_order = _pending_reorder_filenames()
+    pending_rank = {filename: index for index, filename in enumerate(pending_order)}
+    return sorted(
+        records,
+        key=lambda record: (
+            pending_rank.get(record[1]["filename"], 10**18)
+            if pending_rank
+            else int(record[1]["order"]) if isinstance(record[1].get("order"), int) else 10**18,
+            record[2],
+            record[1]["filename"],
+        ),
+    )
+
+
+def _queue_record_status(path: Path, data: dict) -> tuple[str, int | None] | None:
+    try:
+        return _queue_status(data)
+    except Exception as exc:
+        _log(SERVICE, f"Failed to load PB8 optimize queue item {path.name}: {exc}", level="WARNING")
+        return None
+
+
+def _queue_item(path: Path) -> dict:
+    data, created = _read_queue_record(path)
+    return _queue_record_item(data, created, *_queue_status(data))
+
+
+def _queue_record_item(data: dict, created: str, status: str, pid: int | None) -> dict:
+    filename = data["filename"]
     options = data.get("launch_options") if isinstance(data.get("launch_options"), dict) else {}
     return {
         "filename": filename,
+        "loop_id": data.get("loop_id"),
         "estimated_coin_candles": estimate_snapshot(_snapshot_file(filename), _queue_dir()),
         "name": str(data.get("name") or filename),
         "exchange": data.get("exchange") or [],
         "status": status,
         "pid": pid,
-        "created": datetime.datetime.fromtimestamp(path.stat().st_mtime).isoformat(),
+        "created": created,
         "started_at": data.get("started_at"),
         "order": data.get("order"),
         "launch_mode": options.get("mode") or "fresh",
@@ -1445,11 +1519,13 @@ def _queue_item(path: Path) -> dict:
 
 
 def _load_queue() -> list[dict]:
-    ensure_private_directory(_queue_dir())
     items = []
-    for path in _queue_dir().glob("*.json"):
+    for path, data, created in _queue_records():
+        result = _queue_record_status(path, data)
+        if result is None:
+            continue
         try:
-            items.append(_queue_item(path))
+            items.append(_queue_record_item(data, created, *result))
         except Exception as exc:
             _log(SERVICE, f"Failed to load PB8 optimize queue item {path.name}: {exc}", level="WARNING")
     pending_order = _pending_reorder_filenames()
@@ -1470,6 +1546,31 @@ def _load_queue() -> list[dict]:
             if progress:
                 item["progress"] = progress
     return sorted_items
+
+
+def _first_manual_queued_filename() -> str | None:
+    """Return the queue head eligible for autostart, evaluating only jobs ahead of it."""
+    for path, data, _created in _queue_records():
+        if data.get("loop_id"):
+            continue
+        result = _queue_record_status(path, data)
+        if result is not None and result[0] == "queued":
+            return data["filename"]
+    return None
+
+
+def _autostart_candidate() -> str | None:
+    """Return the next autostart job unless an automatic job is already running."""
+    candidate = None
+    for path, data, _created in _queue_records():
+        result = _queue_record_status(path, data)
+        if result is None:
+            continue
+        if result[0] == "running" and data.get("automatic"):
+            return None
+        if candidate is None and result[0] == "queued" and not data.get("loop_id"):
+            candidate = data["filename"]
+    return candidate
 
 
 def _pending_reorder_filenames() -> list[str]:
@@ -3164,6 +3265,8 @@ class OptimizeV8Worker:
     def __init__(self) -> None:
         self._task: Optional[asyncio.Task] = None
         self._running = False
+        self._launch_lock = threading.Lock()
+        self._launch_executor: ThreadPoolExecutor | None = None
 
     def start(self) -> None:
         if self._task is None or self._task.done():
@@ -3189,31 +3292,12 @@ class OptimizeV8Worker:
                 if str(settings.get("autostart", "False")).lower() != "true":
                     delay = 5
                 else:
-                    filename = None
-                    with _queue_lock():
-                        items = _load_queue()
-                        if not any(item["status"] == "running" and item.get("automatic") for item in items):
-                            queued = next((item for item in items if item["status"] == "queued"), None)
-                            if queued and claim_autostart("v8", queued["filename"]):
-                                filename = queued["filename"]
+                    filename = await self._claim_next_autostart()
+                    if filename and not self._running:
+                        release_autostart("v8", filename)
+                        break
                     if filename:
-                        try:
-                            record = await asyncio.to_thread(self.launch, filename, None, True)
-                            publish_autostart_process(
-                                "v8",
-                                filename,
-                                record["pid"],
-                                record["create_time"],
-                                [str(Path(PBGDIR) / "pb8_optimize_runner.py"), str(_launch_config_file(filename).resolve())],
-                            )
-                        except Exception as exc:
-                            release_autostart("v8", filename)
-                            transient = _record_launch_failure(filename, exc)
-                            _log(
-                                SERVICE,
-                                f"PB8 automatic optimize launch failed: {exc}",
-                                level="WARNING" if transient else "ERROR",
-                            )
+                        await self._launch_autostart(filename)
             except asyncio.CancelledError:
                 break
             except Exception as exc:
@@ -3224,7 +3308,56 @@ class OptimizeV8Worker:
             except asyncio.CancelledError:
                 break
 
-    def launch(self, filename: str, launch_options: dict | None = None, automatic: bool = False) -> dict:
+    async def _claim_next_autostart(self) -> str | None:
+        """Claim off the event loop; a claim finishing after cancellation is released, not leaked."""
+        claim = asyncio.ensure_future(asyncio.to_thread(self._claim_autostart_candidate))
+        # The thread cannot be interrupted, so every stop() waits until it is settled.
+        if not await _wait_through_cancellation(claim):
+            return claim.result()
+        if claim.exception() is None and claim.result():
+            try:
+                release_autostart("v8", claim.result())
+            except Exception as exc:
+                _log(SERVICE, f"Failed to release PB8 autostart claim after stop: {exc}", level="ERROR")
+        raise asyncio.CancelledError
+
+    async def _launch_autostart(self, filename: str) -> None:
+        """Own a launch whose thread settles its claim even after the event loop closes."""
+        with self._launch_lock:
+            try:
+                if self._launch_executor is None:
+                    self._launch_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="optimize-v8-launch")
+                launch = self._launch_executor.submit(_settle_autostart_launch, filename, self.launch)
+            except Exception:
+                release_autostart("v8", filename)
+                raise
+        # Cancellation stops the controller, not the submitted launch or its claim settlement.
+        await asyncio.shield(asyncio.wrap_future(launch))
+
+    async def drain_autostart_launches(self) -> None:
+        """Join launch threads during API shutdown without terminating detached optimizer jobs."""
+        with self._launch_lock:
+            executor = self._launch_executor
+        if executor is not None:
+            closing = asyncio.create_task(
+                asyncio.to_thread(executor.shutdown, wait=True), name="optimize-v8-launch-shutdown",
+            )
+            await _wait_through_cancellation(closing)
+            closing.result()
+            with self._launch_lock:
+                if self._launch_executor is executor:
+                    self._launch_executor = None
+
+    @staticmethod
+    def _claim_autostart_candidate() -> str | None:
+        """Pick and claim the next autostart job off the event loop."""
+        with _queue_lock():
+            filename = _autostart_candidate()
+            if filename and claim_autostart("v8", filename):
+                return filename
+        return None
+
+    def launch(self, filename: str, launch_options: dict | None = None, automatic: bool = False, loop_id: str | None = None) -> dict:
         """Validate an immutable queue snapshot and launch one detached PB8 optimizer."""
         filename = _validate_name(filename)
         with _queue_lock():
@@ -3232,12 +3365,14 @@ class OptimizeV8Worker:
             if not queue_path.is_file():
                 raise HTTPException(status_code=404, detail="Queue item not found")
             data = _read_json(queue_path)
+            if data.get("loop_id"):
+                from pb8_loop_store import authorize_native_job
+                authorize_native_job(Path(PBGDIR), data, loop_id)
             status, _pid = _queue_status(data)
             if status != "queued":
                 raise HTTPException(status_code=409, detail=f"Queue item is already {status}")
             if automatic:
-                first_queued = next((item for item in _load_queue() if item["status"] == "queued"), None)
-                if first_queued is None or first_queued["filename"] != filename:
+                if _first_manual_queued_filename() != filename:
                     raise HTTPException(status_code=409, detail="Queue order changed; automatic launch will retry")
             snapshot = _snapshot_file(filename)
             if not snapshot.is_file() or snapshot.is_symlink():
@@ -3355,8 +3490,71 @@ class OptimizeV8Worker:
                 runtime_lease.release()
 
 
+async def _wait_through_cancellation(future: asyncio.Future) -> bool:
+    """Wait until a thread-backed future finishes, even across repeated cancellation; return if cancelled."""
+    cancelled = False
+    while not future.done():
+        try:
+            await asyncio.wait({future})
+        except asyncio.CancelledError:
+            cancelled = True
+    return cancelled
+
+
+def _settle_autostart_launch(filename: str, launcher: Callable[[str, dict | None, bool], dict]) -> None:
+    """Launch and persist claim ownership in one thread, independently of asyncio cancellation."""
+    try:
+        try:
+            record = launcher(filename, None, True)
+            publish_autostart_process(
+                "v8",
+                filename,
+                record["pid"],
+                record["create_time"],
+                [str(Path(PBGDIR) / "pb8_optimize_runner.py"), str(_launch_config_file(filename).resolve())],
+            )
+        except Exception as exc:
+            release_autostart("v8", filename)
+            transient = _record_launch_failure(filename, exc)
+            _log(
+                SERVICE,
+                f"PB8 automatic optimize launch failed: {exc}",
+                level="WARNING" if transient else "ERROR",
+            )
+    except Exception as exc:
+        _log(SERVICE, f"Failed to settle PB8 autostart claim for {filename}: {exc}", level="ERROR",
+             meta={"traceback": traceback.format_exc()})
+
+
 _worker = OptimizeV8Worker()
 _ws_clients: set[WebSocket] = set()
+_ws_snapshot_lock = asyncio.Lock()
+_ws_snapshot: dict | None = None
+_ws_snapshot_until = 0.0
+
+
+async def _queue_ws_snapshot() -> dict:
+    """Share one bounded queue scan across all Optimize WebSocket clients."""
+    global _ws_snapshot, _ws_snapshot_until
+    async with _ws_snapshot_lock:
+        if _ws_snapshot is not None and time.monotonic() < _ws_snapshot_until:
+            return _ws_snapshot
+        scan = asyncio.create_task(asyncio.to_thread(
+            lambda: {
+                "type": "queue_update",
+                "items": [row for row in _load_queue() if not row.get("loop_id")],
+                "settings": load_ini_section(_QUEUE_SETTINGS_SECTION),
+            }
+        ))
+        try:
+            payload = await asyncio.shield(scan)
+        except asyncio.CancelledError:
+            await asyncio.gather(scan, return_exceptions=True)
+            raise
+        _ws_snapshot = payload
+        active = any(item.get("status") in ("running", "optimizing") for item in payload["items"])
+        _ws_snapshot_until = time.monotonic() + (3.0 if active else 8.0)
+        return payload
 
 
 def startup() -> None:
@@ -3390,6 +3588,7 @@ async def shutdown() -> None:
     with _dash_lock:
         _dash_admission_open = False
     await _worker.stop()
+    await _worker.drain_autostart_launches()
     await asyncio.to_thread(_stop_all_dash_sessions)
     await asyncio.to_thread(shutdown_pb8_ohlcv_start_date_jobs)
     await asyncio.to_thread(_shutdown_active_evaluation_scans)
@@ -3402,27 +3601,30 @@ async def shutdown() -> None:
 
 @router.websocket("/ws/opt8")
 async def ws_optimize(websocket: WebSocket) -> None:
+    """Push changed state only, with an idle backoff and a shared scan cache."""
+    global _ws_snapshot, _ws_snapshot_until
     if await authenticate_websocket(websocket) is None:
         return
     _ws_clients.add(websocket)
+    last_payload = None
     try:
         while True:
-            payload = await asyncio.to_thread(
-                lambda: {
-                    "type": "queue_update",
-                    "items": _load_queue(),
-                    "settings": load_ini_section(_QUEUE_SETTINGS_SECTION),
-                }
-            )
-            await websocket.send_json(payload)
+            payload = await _queue_ws_snapshot()
+            if payload != last_payload:
+                await websocket.send_json(payload)
+                last_payload = payload
+            active = any(item.get("status") in ("running", "optimizing") for item in payload["items"])
             try:
-                await asyncio.wait_for(websocket.receive_text(), timeout=3)
+                await asyncio.wait_for(websocket.receive_text(), timeout=3.0 if active else 8.0)
             except asyncio.TimeoutError:
                 pass
     except (WebSocketDisconnect, RuntimeError):
         pass
     finally:
         _ws_clients.discard(websocket)
+        if not _ws_clients:
+            _ws_snapshot = None
+            _ws_snapshot_until = 0.0
 
 
 @router.get("/main_page", response_class=HTMLResponse, response_model=None)
@@ -3720,15 +3922,32 @@ def get_config(name: str, session: SessionToken = Depends(require_auth)) -> dict
         with _config_lock():
             if not path.is_file() or path.is_symlink():
                 raise HTTPException(status_code=404, detail=f"Config '{name}' not found")
-            config = load_pb8_config(path)
+            editor_payload = load_pb8_editor_config(path, loader=load_pb8_config)
+            config = editor_payload["config"]
             return {
+                **editor_payload,
                 "name": name,
                 "config": config,
-                "param_status": {},
+                "param_status": editor_payload.get("param_status", {}),
                 "override_configs": _load_override_payloads(config, path.parent),
             }
     except PB8ConfigurationError as exc:
         raise _configuration_error(f"Loading PB8 optimize config {name}", exc) from exc
+
+
+@router.post("/configs/{name}/migrate-hsl")
+def preview_hsl_migration(name: str, body: dict, session: SessionToken = Depends(require_auth)) -> dict:
+    """Preview the native HSL migration; the existing config remains untouched."""
+    path = _config_file(_validate_name(name))
+    with _config_lock():
+        if not path.is_file() or path.is_symlink() or path.parent.is_symlink():
+            raise HTTPException(status_code=404, detail="Config not found")
+        try:
+            editor_payload = load_pb8_editor_config(path, loader=load_pb8_config)
+            _load_override_payloads(editor_payload["config"], path.parent)
+            return preview_pb8_hsl_migration(path, body)
+        except PB8ConfigurationError as exc:
+            raise _configuration_error("Previewing PB8 HSL migration", exc) from exc
 
 
 @router.put("/configs/{name}")
@@ -3926,7 +4145,7 @@ def migrate_v7(body: dict, session: SessionToken = Depends(require_auth)) -> dic
 
 @router.get("/queue")
 def get_queue(session: SessionToken = Depends(require_auth)) -> dict:
-    return {"items": _load_queue()}
+    return {"items": [row for row in _load_queue() if not row.get("loop_id")]}
 
 
 @router.post("/queue/reorder")
@@ -4263,6 +4482,8 @@ def clear_finished(session: SessionToken = Depends(require_auth)) -> dict:
     removed = 0
     with _queue_lock():
         for item in _load_queue():
+            if item.get("loop_id"):
+                continue
             if item["status"] == "complete" and _remove_queue_item(item["filename"], require_exists=False):
                 removed += 1
     return {"ok": True, "removed": removed}
@@ -4348,6 +4569,8 @@ def _parse_optimize_log_status(text: str) -> dict:
         "replay": {},
         "halving": {},
     }
+    proxy_generation = 0
+    proxy_total = 0
     for raw_line in text.splitlines():
         line = raw_line.strip()
         if not line or line == "...":
@@ -4399,6 +4622,62 @@ def _parse_optimize_log_status(text: str) -> dict:
                 exact_inflight=int(gpu.group("inflight")),
                 evaluations=int(gpu.group("exact")),
             )
+            proxy_generation = summary["generation"]
+            proxy_total = summary["proxy_evaluations"]
+        progress = _OPT_LOG_GPU_PROGRESS_RE.search(message)
+        if progress:
+            # Current PB8 emits authoritative per-run evolution counters even
+            # when optional JSON profiling is disabled. Seed/pending counters
+            # never count toward the user's completed proxy-work allowance.
+            summary.update(
+                backend="gpu", algorithm="nsga2", phase="optimizing",
+                stage=progress.group("stage"), generation=int(progress.group("generation")),
+                proxy_evaluations=int(progress.group("proxy")), proxy_rate=None,
+                exact_evaluations=int(progress.group("exact")), evaluations=int(progress.group("exact")),
+                exact_inflight=int(progress.group("pending")),
+            )
+            front = re.search(r"\bfront=(\d+)(?=\s|$)", message)
+            if front:
+                summary["front"] = int(front.group(1))
+            proxy_generation, proxy_total = summary["generation"], summary["proxy_evaluations"]
+        if '[gpu-profile]' in message:
+            try:
+                profile = json.loads(message.split('[gpu-profile]', 1)[1].strip())
+            except (ValueError, TypeError):
+                profile = None
+            if isinstance(profile, dict):
+                event = profile.get('event')
+                exact = profile.get('exact_completed')
+                if type(exact) is int and exact >= 0:
+                    summary.update(exact_evaluations=exact, evaluations=exact)
+                if event == 'generation':
+                    generation = profile.get('generation')
+                    population = profile.get('population_size')
+                    reused = profile.get('seed_proxy_reused', 0)
+                    screening = profile.get('screening') or []
+                    count = None
+                    if isinstance(screening, list) and screening:
+                        counts = [item.get('candidate_count') if isinstance(item, dict) else None for item in screening]
+                        if all(type(value) is int and value >= 0 for value in counts):
+                            count = sum(counts)
+                    elif (screening == [] and type(population) is int and population > 0
+                          and type(reused) is int and 0 <= reused <= population):
+                        count = population - reused
+                    # Native PB8 increments this exact quantity per generation.
+                    # Never infer missing generations from generation * population.
+                    if type(generation) is int and generation == proxy_generation + 1 and count is not None:
+                        proxy_generation = generation
+                        proxy_total += count
+                        summary.update(backend='gpu', algorithm='nsga2', phase='optimizing',
+                                       generation=generation, proxy_evaluations=proxy_total)
+                elif event == 'complete':
+                    proxy = profile.get('proxy_evaluations')
+                    if type(proxy) is int and proxy >= 0:
+                        proxy_total = proxy
+                        summary.update(proxy_evaluations=proxy, phase='complete')
+                inflight = profile.get('exact_inflight')
+                if type(inflight) is int and inflight >= 0:
+                    summary['exact_inflight'] = inflight
         dispatch = _OPT_LOG_GPU_DISPATCH_RE.search(message)
         if dispatch:
             summary.update(backend="gpu", algorithm="nsga2", phase="optimizing", stage="proxy_dispatch")
@@ -4472,11 +4751,14 @@ def _parse_optimize_log_status(text: str) -> dict:
         resumed = _OPT_LOG_GPU_RESUME_RE.search(message)
         if resumed:
             exact = int(resumed.group("exact"))
+            proxy_generation = int(resumed.group("generation"))
+            proxy_total = 0  # PB8 restarts its proxy counter when resuming a checkpoint.
             summary.update(
                 backend="gpu",
                 algorithm="nsga2",
                 phase="optimizing",
                 stage="resumed",
+                proxy_evaluations=0,
                 generation=int(resumed.group("generation")),
                 exact_evaluations=exact,
                 evaluations=exact,
@@ -4710,7 +4992,8 @@ def _active_queue_item_progress(filename: str, status: str = "running") -> dict 
 
 @router.get("/queue/{filename}/status")
 def get_queue_status(filename: str, session: SessionToken = Depends(require_auth)) -> dict:
-    item = next((item for item in _load_queue() if item["filename"] == filename), None)
+    queue_items = _load_queue()
+    item = next((item for item in queue_items if item["filename"] == filename), None)
     if item is None:
         raise HTTPException(status_code=404, detail="Queue item not found")
     state = _read_runner_state(filename) or {}
@@ -4729,6 +5012,55 @@ def get_queue_status(filename: str, session: SessionToken = Depends(require_auth
     specs = _pareto_objective_specs(config)
     progress = _active_queue_item_progress(filename, status=item["status"])
     queue_items = _load_queue()
+    target = None
+    for key in ("iters", "max_evaluations", "n_evaluations"):
+        try:
+            if optimize.get(key) not in (None, ""):
+                target = int(optimize[key])
+                break
+        except (TypeError, ValueError):
+            continue
+    evaluations = log_summary["evaluations"]
+    evaluation_source = "log" if evaluations is not None else None
+    log_estimate = _estimate_log_evaluations(log_path) if item["status"] == "running" else None
+    if log_estimate is not None and (evaluations is None or log_estimate > evaluations):
+        evaluations = log_estimate
+        evaluation_source = "log_lower_bound"
+    durable_progress = _active_all_results_progress(filename) if item["status"] == "running" else None
+    if durable_progress is not None:
+        durable_evaluations = int(durable_progress["evaluations"])
+        if evaluations is None or durable_evaluations >= evaluations:
+            evaluations = durable_evaluations
+            evaluation_source = durable_progress.get("source") or "fallback_scan"
+    if evaluations is None and item["status"] == "complete" and target is not None:
+        evaluations = target
+        evaluation_source = "complete"
+    percent = None
+    if evaluations is not None and target and target > 0:
+        percent = max(0.0, min(100.0, evaluations / target * 100.0))
+    if progress is None:
+        progress = {
+            "eval": evaluations,
+            "evaluations": evaluations,
+            "iter": None,
+            "target_iters": None,
+            "target_evaluations": target,
+            "percent": percent,
+            "evaluation_source": evaluation_source,
+            "estimated": evaluation_source == "log_lower_bound",
+            "result": None,
+            "evaluation_scan": None,
+            "front": None,
+            "generation": None,
+            "proxy_evaluations": None,
+            "proxy_rate": None,
+            "exact_evaluations": None,
+            "target_exact_evaluations": None,
+            "exact_inflight": None,
+            "dispatch": None,
+            "replay": None,
+            "halving": None,
+        }
     queue_totals = {
         status: sum(1 for queued in queue_items if queued["status"] == status)
         for status in ("queued", "running", "complete", "error")

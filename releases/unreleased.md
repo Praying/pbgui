@@ -1,5 +1,11 @@
 # Unreleased
 
+## 合并远端 main v2.08.1-v2.08.4 并适配 Vue 3
+
+- 合并远端 `main` 的 v2.08.1 至 v2.08.4，纳入 PB8 Loop 优化器、HSL 迁移、优化队列轮询、Dashboard candle reconciliation、AI 导航生命周期、VPS 更新确认、Services Monitor 状态轮询以及对应 API、文档和回归测试。
+- 保留 Vue 3 + Tailwind CSS v4.3 页面作为产品入口，将主线旧 HTML/JS 的相关行为适配到 Vue 回测、优化、运行编辑器、Dashboard、AI Drawer、VPS Manager 和 Services Monitor 页面；旧页面继续作为兼容回退。
+- API serial 从 `3173` 递增至 `3174`，使运行中的 PBGui 能识别本次 API/PBApiServer 运行时代码更新。
+
 - **信息 / 仪表盘**：将 Vue3 仪表盘改为固定实时运营总览，统一展示余额、绩效、仓位、收入与热门交易对，移除新建、选择、自定义布局、删除和模板管理入口。
 - **信息 / 仪表盘**：固定总览改为单一共享用户选择，余额、绩效、仓位、收入和热门交易对统一使用相同的用户范围。
 - **信息 / 仪表盘**：固定总览新增共享「周期」和「模式」选项，统一驱动支持对应筛选的组件，移除各组件内重复的周期与图表模式控制。

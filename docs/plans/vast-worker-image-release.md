@@ -1,5 +1,43 @@
 # Public PB8 GPU worker image
 
+## Temporary GPU suite metric fix (2026-10-04)
+
+- Upstream fix: [Passivbot PR #1871](https://github.com/enarjord/passivbot/pull/1871), commit `83d18f0af`. The worker backport matches this patch.
+- Public tag: `ghcr.io/msei99/pbgui-pb8-worker:061e472-suite-metrics-v1`.
+- Immutable manifest: `sha256:792a11f40098a3fffe9365c46e38f60c7bddaa35179c9bc608d130b5e1449dbe`; reviewed image ID: `sha256:0406be0ececcc8dffad1b4128dcc1cb0a0be738325c11424d44f727c032cc04d`. Anonymous manifest retrieval matches both digests.
+- Derived from the preceding official worker. PB8 revision stays `061e472e3d400cb3a740583d52f9d46e02eaf781`; Rust, metric definitions, GPU metric contract, and worker wrapper stay unchanged.
+- `Dockerfile.suite-metrics` applies the checked-in Python-only patch with `git apply --check`. GPU suite metric aggregation errors receive the existing CPU invalid-candidate penalty instead of terminating the whole batch. Unrelated errors still propagate.
+- Five synthetic regressions passed inside the read-only, network-disabled worker; 895 focused upstream optimizer/backend tests passed with 6 skipped. All 1,231 focused PBGui image, job, cloud validation, calibration and help checks passed. No real CUDA performance run was performed.
+- PBGui selects the patched digest for new rentals; previous rental ownership and calibration evidence remain recognized. Existing rentals keep their original image. Replace this temporary backport when upgrading to an upstream revision containing the fix.
+
+## Published schema v8.6 worker (2026-10-02)
+
+- Official PB8 revision: `061e472e3d400cb3a740583d52f9d46e02eaf781`, matching the installed local PB8 and schema `v8.6.0`. No upstream source patch is applied.
+- Local review tag: `pbgui-pb8-worker:upstream-061e472-calibration`; published public tag: `ghcr.io/msei99/pbgui-pb8-worker:061e472-upstream-v1`.
+- Immutable manifest: `sha256:32d7ee7a00330e01e4a2b8856275289eb8ee4b067542b09cfdce5e81c3b3691c`; anonymously verified, with 26 layers totaling 3,781,461,719 compressed bytes. Its config digest equals the reviewed image ID below.
+- Reviewed image ID: `sha256:48030e3a990374e52926da28b380676d6758cb5556940f9c65dda7b23e0ef57f`; 26 filesystem layers, 7,536,489,815 uncompressed bytes.
+- Unchanged PBGui worker SHA256: `3803a47bd0d2eb36546d807a3296dbb0205f4f35aae7179b37ba37f5223cff19`.
+- A network-disabled, read-only container verified the clean official checkout, native Rust source stamp, worker/calibration imports, rsync, native loading of the isolated migrated `ema_anchor_05_hype_bybit_hype` input, an enabled HSL policy, and the native GPU data-independent config scope. No optimization or GPU health/performance run was executed.
+- Exported metric contract: 157 supported, 460 allowed and 63 exact-only metrics. Supported/allowed names are unchanged; retired orange/yellow HSL duration names leave the exact-only set. All three source hashes match the installed local PB8 checkout. The checked-in contract now matches the reviewed worker export.
+- All 1,174 focused image upgrade, cloud validation, calibration, benchmark, worker status and Loop migration tests passed.
+- After activation, all 1,646 focused image ownership/recovery, cloud validation, calibration/performance, queue/integration, Loop and help tests passed, including migrated v8.6 Loop initialization against the current worker pin.
+
+The narrow build context contains only allowlisted build/worker files; the PB8
+source and dependencies are fetched from their public upstreams. No user configs,
+credentials or market data are copied into the image. The test input is mounted
+read-only into a disposable network-disabled verification container.
+
+Published with explicit user authorization using password stdin and a temporary
+private Docker configuration removed after upload. The production anonymous
+image check passed, and the public tag's manifest hash and config digest match
+the reviewed image. PBGui job, validation and calibration pins now select this
+digest; actual compressed layer sizes are recorded in `vast_image_layers.py`.
+The preceding v8.4 image/revision and calibration evidence stay recognized.
+EN/DE guides cover activation through the API restart-required control; a serial
+bump advertises that requirement to running sessions. Existing rentals retain
+their own immutable image/revision, and performance profiles are not reused
+across PB8 revisions. No paid rental, running worker or VPS was changed.
+
 ## Published official PB8 worker (2026-09-29)
 
 - PB8 revision: `7b639e1180fa6bfe02e110429d4f931933c73089` (official master after PRs #1832 and #1834).

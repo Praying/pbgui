@@ -70,6 +70,27 @@ describe('usePolling', () => {
     expect(fn).toHaveBeenCalledTimes(3); // rejected run included, chain unbroken
   });
 
+  it('pauses hidden-tab work and refreshes once when visible again', async () => {
+    const fn = vi.fn().mockResolvedValue(undefined);
+    const polling = usePolling(fn, 5000);
+
+    polling.start();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(15000);
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fn).toHaveBeenCalledTimes(2);
+
+    polling.stop();
+  });
+
   it('ignores start() when already running', async () => {
     const fn = vi.fn().mockResolvedValue(undefined);
     const polling = usePolling(fn, 5000);

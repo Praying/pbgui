@@ -6,6 +6,7 @@ import asyncio
 import copy
 import json
 import os
+import threading
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -778,6 +779,7 @@ def test_linux_optimizer_uses_separate_transient_systemd_unit(optimize_v8_roots,
     assert any(part.startswith("--unit=pbgui-pb8-optimize-persistent-job-") for part in launched)
     assert "--property=Type=exec" in launched
     assert f"--property=StandardOutput=append:{log_path}" in launched
+    assert "--setenv=PASSIVBOT_GPU_PROFILE=1" in launched
     assert launched[-3:] == command
     assert kwargs["timeout"] == 15
     assert log_path.read_text(encoding="utf-8") == ""
@@ -1869,7 +1871,7 @@ def test_thousand_pareto_candidates_keep_structural_payload_bounded(optimize_v8_
     assert len(json.dumps(response)) < 500_000
 
 
-def test_queue_status_returns_complete_shared_dashboard_shape(optimize_v8_roots) -> None:
+def test_queue_status_returns_complete_shared_dashboard_shape(optimize_v8_roots, monkeypatch) -> None:
     """PB8 queue status includes progress, runtime, process, host, log, totals, and runner sections."""
     _write_queue_job("status-job", 0)
     launch = optimize_v8._launch_dir("status-job")
@@ -1897,7 +1899,17 @@ def test_queue_status_returns_complete_shared_dashboard_shape(optimize_v8_roots)
         encoding="utf-8",
     )
 
+    loads = []
+    original_load = optimize_v8._load_queue
+
+    def counted_load():
+        """Count complete queue reads during one status request."""
+        loads.append(True)
+        return original_load()
+
+    monkeypatch.setattr(optimize_v8, "_load_queue", counted_load)
     status = optimize_v8.get_queue_status("status-job", None)
+    assert len(loads) == 1
 
     assert {"progress", "runtime", "metrics", "process", "system", "queue", "log", "runner"} <= status.keys()
     assert status["progress"]["evaluations"] == 50
@@ -3323,3 +3335,352 @@ def test_worker_loop_retries_unexpected_iteration_error(monkeypatch) -> None:
     asyncio.run(worker._loop())
 
     assert calls == 2
+
+
+@pytest.mark.parametrize('screening,reused,expected', [([], 0, 90112), ([], 100, 90012),
+    ([{'candidate_count':8192},{'candidate_count':2048},{'candidate_count':512}], 0, 92672)])
+def test_gpu_generation_profiles_advance_actual_proxy_count(screening, reused, expected):
+    """Each generation advances native counted work between sparse summary lines."""
+    profile = {'event':'generation','generation':11,'population_size':8192,'seed_proxy_reused':reused,
+               'screening':screening,'exact_completed':700,'exact_inflight':64}
+    line = '[gpu-profile] ' + json.dumps(profile) + '\n'
+    parsed = optimize_v8._parse_optimize_log_status(
+        'GPU optimize | gen=10 proxy=81920 (200.0/s) exact=640 inflight=0\n' + line + line)
+    assert parsed['proxy_evaluations'] == expected
+    assert parsed['generation'] == 11
+    assert parsed['exact_evaluations'] == 700 and parsed['exact_inflight'] == 64
+
+
+def test_gpu_generation_profiles_never_estimate_missing_work():
+    """A log gap needs a new native counter anchor before accumulation can resume."""
+    profile = lambda generation: '[gpu-profile] ' + json.dumps(
+        {'event':'generation','generation':generation,'population_size':4000,'exact_completed':1000}) + '\n'
+    text = 'GPU optimize | gen=10 proxy=81920 (200.0/s) exact=640 inflight=0\n' + profile(12) + profile(13)
+    assert optimize_v8._parse_optimize_log_status(text)['proxy_evaluations'] == 81920
+    parsed = optimize_v8._parse_optimize_log_status(text +
+        'GPU optimize | gen=20 proxy=160000 (200.0/s) exact=1200 inflight=0\n' + profile(21))
+    assert parsed['proxy_evaluations'] == 164000
+
+
+@pytest.mark.parametrize('profile', [{'event':'generation','generation':11,'population_size':True},
+    {'event':'generation','generation':11,'population_size':8192,'seed_proxy_reused':8193},
+    {'event':'generation','generation':11,'population_size':8192,'screening':[{'candidate_count':-1}]},
+    {'event':'generation','generation':11,'population_size':8192,'screening':[{'candidate_count':'8192'}]}])
+def test_invalid_gpu_generation_profiles_cannot_trigger_budget_stop(profile):
+    """Invalid counted-work fields cannot fabricate quota exhaustion."""
+    parsed = optimize_v8._parse_optimize_log_status(
+        'GPU optimize | gen=10 proxy=81920 (200.0/s) exact=640 inflight=0\n[gpu-profile] ' + json.dumps(profile))
+    assert parsed['proxy_evaluations'] == 81920
+
+
+def test_detached_local_optimizer_enables_gpu_generation_profiles(optimize_v8_roots, monkeypatch):
+    """Local GPU limit supervision needs native generation events in detached launches."""
+    calls = []
+    monkeypatch.setattr(optimize_v8, '_systemd_user_manager_available', lambda: False)
+    monkeypatch.setattr(optimize_v8.platform, 'system', lambda: 'Linux')
+    monkeypatch.setattr(optimize_v8.subprocess, 'Popen', lambda command, **kwargs:calls.append((command,kwargs)))
+    optimize_v8._launch_optimizer_runner('profile-job', ['/venv/bin/python','runner.py'],
+                                         Path('/pb8'), optimize_v8._log_dir() / 'profile-job.log')
+    assert calls[0][1]['env']['PASSIVBOT_GPU_PROFILE'] == '1'
+    assert calls[0][1]['start_new_session'] is True
+
+
+@pytest.mark.parametrize('counts', ['128 exact evaluations', '16 seed and 128 exact evaluations'])
+def test_gpu_resume_restarts_proxy_counter_before_generation_profiles(counts):
+    """Current and older checkpoint logs anchor a new native proxy budget at zero."""
+    parsed = optimize_v8._parse_optimize_log_status(
+        'GPU optimize | gen=100 proxy=999999 (200.0/s) exact=10000 inflight=0\n'
+        'Resumed GPU optimizer at generation 20 with ' + counts + '\n'
+        '[gpu-profile] ' + json.dumps({'event':'generation','generation':21,'population_size':1024}))
+    assert parsed['proxy_evaluations'] == 1024 and parsed['generation'] == 21
+
+
+@pytest.mark.parametrize('stage', ['gpu_proxy', 'generation_complete', 'exact_wait'])
+def test_current_gpu_progress_restores_absolute_proxy_limit_counter(stage):
+    """Modern cumulative counters survive tail-only logs without JSON profiling."""
+    text = (f'2026-10-03T00:24:35Z INFO GPU optimizer progress | gen=115 phase={stage} | '
+            'evolution_proxy_completed_run=117760 seed_proxy=999999 seed_exact=99 '
+            'evolution_exact=3648/10000000 evolution_pending=32 front=997 feasible=997\n')
+    parsed = optimize_v8._parse_optimize_log_status(text)
+    assert parsed['proxy_evaluations'] == 117760
+    assert parsed['exact_evaluations'] == 3648
+    assert parsed['exact_inflight'] == 32
+    assert parsed['generation'] == 115 and parsed['front'] == 997
+    assert parsed['backend'] == 'gpu' and parsed['stage'] == stage
+    # A matching optional profile must not add the generation population twice.
+    text += '[gpu-profile] {"event":"generation","generation":115,"population_size":1024,"exact_completed":3648}\n'
+    assert optimize_v8._parse_optimize_log_status(text)['proxy_evaluations'] == 117760
+
+
+@pytest.mark.parametrize('counter', [
+    'evolution_proxy_completed_run=-1 seed_proxy=999 evolution_exact=2/10000000 evolution_pending=64',
+    'evolution_proxy_completed_run=1.5 seed_proxy=999 evolution_exact=2/10000000 evolution_pending=64',
+    'evolution_proxy_completed_run=42 seed_proxy=999 evolution_exact=-2/10000000 evolution_pending=64',
+    'evolution_proxy_completed_run=42 seed_proxy=999 evolution_exact=2/10000000 evolution_pending=-64',
+    'seed_proxy=999 seed_exact=99 evolution_exact=2/10000000 evolution_pending=64',
+])
+def test_invalid_current_gpu_progress_cannot_authorize_proxy_stop(counter):
+    """Seeds and malformed counters cannot silently consume the run allowance."""
+    parsed = optimize_v8._parse_optimize_log_status('GPU optimizer progress | gen=1 phase=gpu_proxy | '+counter)
+    assert parsed['proxy_evaluations'] is None
+
+
+def test_log_terminal_status_reuses_unchanged_log_tail(optimize_v8_roots, monkeypatch) -> None:
+    """Finished logs are read once until they are written again (#400)."""
+    monkeypatch.setattr(optimize_v8, "_log_terminal_status_cache", {})
+    log_path = optimize_v8._log_dir() / "cached-log.log"
+    log_path.write_text("Optimization complete\n", encoding="utf-8")
+    opened = []
+    original_open = Path.open
+
+    def counting_open(self, mode="r", *args, **kwargs):
+        if self == log_path and mode == "rb":
+            opened.append(self)
+        return original_open(self, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", counting_open)
+    assert optimize_v8._read_log_terminal_status("cached-log") == "complete"
+    assert optimize_v8._read_log_terminal_status("cached-log") == "complete"
+    assert len(opened) == 1
+
+    log_path.write_text("crashed\n", encoding="utf-8")
+    assert optimize_v8._read_log_terminal_status("cached-log") == "error"
+    assert len(opened) == 2
+
+
+def test_automatic_launch_order_check_skips_full_queue_load(optimize_v8_roots, monkeypatch) -> None:
+    """The autostart recheck neither reloads display rows nor estimates candles (#400)."""
+    _write_queue_job("head", 0)
+    _write_queue_job("tail", 1)
+    monkeypatch.setattr(optimize_v8, "_load_queue", lambda: pytest.fail("launch reloaded the full queue"))
+    monkeypatch.setattr(optimize_v8, "estimate_snapshot", lambda *_args: pytest.fail("launch estimated candles"))
+    checked = []
+    original_status = optimize_v8._queue_status
+    monkeypatch.setattr(optimize_v8, "_queue_status", lambda data: checked.append(data["filename"]) or original_status(data))
+
+    assert optimize_v8._autostart_candidate() == "head"
+    checked.clear()
+    assert optimize_v8._first_manual_queued_filename() == "head"
+    assert checked == ["head"]
+    with pytest.raises(HTTPException) as exc_info:
+        optimize_v8.OptimizeV8Worker().launch("tail", None, True)
+    assert exc_info.value.status_code == 409
+    assert "order changed" in str(exc_info.value.detail).lower()
+
+
+def test_worker_stop_during_autostart_claim_releases_late_claim(monkeypatch) -> None:
+    """A claim that completes after stop() is released instead of blocking autostart forever."""
+    started = threading.Event()
+    proceed = threading.Event()
+    released = []
+
+    def slow_claim():
+        started.set()
+        proceed.wait(5)
+        return "claimed-job"
+
+    monkeypatch.setattr(optimize_v8, "load_ini_section", lambda _section: {"autostart": "True"})
+    monkeypatch.setattr(optimize_v8.OptimizeV8Worker, "_claim_autostart_candidate", staticmethod(slow_claim))
+    monkeypatch.setattr(optimize_v8, "release_autostart", lambda version, job: released.append((version, job)))
+    worker = optimize_v8.OptimizeV8Worker()
+    monkeypatch.setattr(worker, "launch", lambda *_args: pytest.fail("stopped worker launched a job"))
+
+    async def scenario() -> None:
+        worker._running = True
+        worker._task = asyncio.create_task(worker._loop())
+        await asyncio.to_thread(started.wait, 5)
+        stopping = asyncio.create_task(worker.stop())
+        await asyncio.sleep(0.05)
+        assert not stopping.done(), "stop() returned while the claim thread could still reserve the slot"
+        proceed.set()
+        await asyncio.wait_for(stopping, 5)
+
+    asyncio.run(scenario())
+    assert released == [("v8", "claimed-job")]
+    assert worker._task is None
+
+
+def test_concurrent_worker_stops_wait_for_claim_and_release_it(monkeypatch) -> None:
+    """A second stop() cannot interrupt claim cleanup; both stops wait for it (two browser tabs)."""
+    started = threading.Event()
+    proceed = threading.Event()
+    released = []
+
+    def slow_claim():
+        started.set()
+        proceed.wait(5)
+        return "claimed-job"
+
+    monkeypatch.setattr(optimize_v8, "load_ini_section", lambda _section: {"autostart": "True"})
+    monkeypatch.setattr(optimize_v8.OptimizeV8Worker, "_claim_autostart_candidate", staticmethod(slow_claim))
+    monkeypatch.setattr(optimize_v8, "release_autostart", lambda version, job: released.append((version, job)))
+    worker = optimize_v8.OptimizeV8Worker()
+    monkeypatch.setattr(worker, "launch", lambda *_args: pytest.fail("stopped worker launched a job"))
+
+    async def scenario() -> None:
+        worker._running = True
+        worker._task = asyncio.create_task(worker._loop())
+        await asyncio.to_thread(started.wait, 5)
+        first = asyncio.create_task(worker.stop())
+        await asyncio.sleep(0.05)
+        second = asyncio.create_task(worker.stop())
+        await asyncio.sleep(0.05)
+        assert not first.done() and not second.done(), "a stop returned while the claim thread was still running"
+        proceed.set()
+        await asyncio.wait_for(asyncio.gather(first, second), 5)
+
+    asyncio.run(scenario())
+    assert released == [("v8", "claimed-job")]
+    assert worker._task is None
+
+
+@pytest.mark.parametrize("launch_fails", [False, True])
+def test_worker_stop_during_autostart_launch_settles_claim(monkeypatch, launch_fails) -> None:
+    """Stopping mid-launch returns promptly; the late launch publishes ownership or releases its claim."""
+    launching = threading.Event()
+    proceed = threading.Event()
+    events = []
+
+    def slow_launch(filename, _options, automatic):
+        assert automatic is True
+        launching.set()
+        proceed.wait(5)
+        if launch_fails:
+            raise RuntimeError("runner exited")
+        return {"pid": 4321, "create_time": 1.0}
+
+    monkeypatch.setattr(optimize_v8, "load_ini_section", lambda _section: {"autostart": "True"})
+    monkeypatch.setattr(optimize_v8.OptimizeV8Worker, "_claim_autostart_candidate", staticmethod(lambda: "job"))
+    monkeypatch.setattr(optimize_v8, "release_autostart", lambda version, job: events.append(("release", job)))
+    monkeypatch.setattr(optimize_v8, "publish_autostart_process", lambda version, job, pid, *_args: events.append(("publish", job, pid)))
+    monkeypatch.setattr(optimize_v8, "_record_launch_failure", lambda job, exc: events.append(("failure", job)) or False)
+    monkeypatch.setattr(optimize_v8, "_launch_config_file", lambda job: Path("/tmp") / f"{job}.json")
+    monkeypatch.setattr(optimize_v8, "_log", lambda *_args, **_kwargs: None)
+    worker = optimize_v8.OptimizeV8Worker()
+    monkeypatch.setattr(worker, "launch", slow_launch)
+
+    async def scenario() -> None:
+        worker._running = True
+        worker._task = asyncio.create_task(worker._loop())
+        await asyncio.to_thread(launching.wait, 5)
+        await asyncio.wait_for(asyncio.gather(worker.stop(), worker.stop()), 1)
+        assert events == []
+        proceed.set()
+        for _ in range(100):
+            if events:
+                break
+            await asyncio.sleep(0.01)
+        await worker.drain_autostart_launches()
+
+    asyncio.run(scenario())
+    expected = [("release", "job"), ("failure", "job")] if launch_fails else [("publish", "job", 4321)]
+    assert events == expected
+
+
+@pytest.mark.parametrize("launch_fails", [False, True])
+def test_autostart_launch_settles_after_event_loop_closes(monkeypatch, launch_fails) -> None:
+    """Closing the event loop cannot discard a running launch's success or failure."""
+    launching = threading.Event()
+    proceed = threading.Event()
+    settled = threading.Event()
+    events = []
+    loop_errors = []
+
+    def slow_launch(*_args):
+        launching.set()
+        assert proceed.wait(5)
+        if launch_fails:
+            raise RuntimeError("runner exited")
+        return {"pid": 4321, "create_time": 1.0}
+
+    def publish(*_args):
+        events.append("publish")
+        settled.set()
+
+    def log(*_args, **_kwargs):
+        events.append("log")
+        settled.set()
+
+    monkeypatch.setattr(optimize_v8, "load_ini_section", lambda _section: {"autostart": "True"})
+    monkeypatch.setattr(optimize_v8, "release_autostart", lambda *_args: events.append("release"))
+    monkeypatch.setattr(optimize_v8, "publish_autostart_process", publish)
+    monkeypatch.setattr(optimize_v8, "_record_launch_failure", lambda *_args: events.append("failure") or False)
+    monkeypatch.setattr(optimize_v8, "_launch_config_file", lambda _job: Path("/tmp/unused-launch-config.json"))
+    monkeypatch.setattr(optimize_v8, "_log", log)
+    worker = optimize_v8.OptimizeV8Worker()
+    monkeypatch.setattr(worker, "_claim_autostart_candidate", lambda: "job")
+    monkeypatch.setattr(worker, "launch", slow_launch)
+    unblock = threading.Timer(0.1, proceed.set)
+
+    async def scenario() -> None:
+        asyncio.get_running_loop().set_exception_handler(lambda _loop, context: loop_errors.append(context))
+        worker.start()
+        assert await asyncio.to_thread(launching.wait, 5)
+        await worker.stop()
+        unblock.start()
+        # asyncio.run now cancels remaining tasks and closes this event loop.
+
+    try:
+        asyncio.run(scenario())
+        assert settled.wait(5), "launch result was lost when the event loop closed"
+        assert events == (["release", "failure", "log"] if launch_fails else ["publish"])
+        assert loop_errors == []
+    finally:
+        proceed.set()
+        unblock.cancel()
+        if unblock.ident is not None:
+            unblock.join()
+        asyncio.run(worker.drain_autostart_launches())
+
+
+@pytest.mark.parametrize("launch_fails", [False, True])
+def test_api_shutdown_drains_autostart_launch_before_resource_cleanup(monkeypatch, launch_fails) -> None:
+    """API shutdown joins launch controllers before closing dependencies, preserving detached jobs."""
+    launching = threading.Event()
+    proceed = threading.Event()
+    events = []
+
+    def slow_launch(*_args):
+        launching.set()
+        assert proceed.wait(5)
+        if launch_fails:
+            raise RuntimeError("runner exited")
+        return {"pid": 4321, "create_time": 1.0}
+
+    monkeypatch.setattr(optimize_v8, "load_ini_section", lambda _section: {"autostart": "True"})
+    monkeypatch.setattr(optimize_v8, "release_autostart", lambda *_args: events.append("release"))
+    monkeypatch.setattr(optimize_v8, "publish_autostart_process", lambda *_args: events.append("publish"))
+    monkeypatch.setattr(optimize_v8, "_record_launch_failure", lambda *_args: events.append("failure") or False)
+    monkeypatch.setattr(optimize_v8, "_launch_config_file", lambda _job: Path("/tmp/unused-launch-config.json"))
+    monkeypatch.setattr(optimize_v8, "_log", lambda *_args, **_kwargs: None)
+    for name in (
+        "_stop_all_dash_sessions", "shutdown_pb8_ohlcv_start_date_jobs",
+        "_shutdown_active_evaluation_scans", "interrupt_pb8_migration_helper",
+        "shutdown_pb8_migration_helper",
+    ):
+        monkeypatch.setattr(optimize_v8, name, lambda: events.append("cleanup"))
+    monkeypatch.setattr(optimize_v8, "_migration_helper_warmup_task", None)
+    worker = optimize_v8.OptimizeV8Worker()
+    monkeypatch.setattr(optimize_v8, "_worker", worker)
+    monkeypatch.setattr(worker, "_claim_autostart_candidate", lambda: "job")
+    monkeypatch.setattr(worker, "launch", slow_launch)
+
+    async def scenario() -> None:
+        worker.start()
+        assert await asyncio.to_thread(launching.wait, 5)
+        closing = asyncio.create_task(optimize_v8.shutdown())
+        second_closing = asyncio.create_task(optimize_v8.shutdown())
+        try:
+            await asyncio.sleep(0.05)
+            assert not closing.done() and not second_closing.done(), "API shutdown returned while its launch was still running"
+            assert events == [], "dependencies were closed before launch settlement"
+        finally:
+            proceed.set()
+            await asyncio.wait_for(asyncio.gather(closing, second_closing), 5)
+        await optimize_v8.shutdown()  # Repeated shutdown is harmless.
+
+    asyncio.run(scenario())
+    expected = ["release", "failure"] if launch_fails else ["publish"]
+    assert events[:len(expected)] == expected
+    assert events[len(expected):] == ["cleanup"] * 15
+    assert worker._launch_executor is None

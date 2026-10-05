@@ -17,6 +17,7 @@ from file_lock import advisory_file_lock
 from master_update_lock import MasterUpdateBusyError, acquire_master_runtime_lock
 from pbgui_purefunc import pb8_runtime_status
 from pbgui_purefunc import PBGDIR
+from secure_files import read_regular_file_nofollow
 
 
 class PB8ConfigurationError(RuntimeError):
@@ -571,6 +572,23 @@ def prepare_pb8_config(config: dict, *, base_config_path: str = "") -> dict:
     )["config"]
 
 
+def read_pb8_backup_metadata(path: Path | str) -> dict:
+    """Read archival metadata without migrating or validating the saved bot schema.
+
+    Backups must preserve legacy configs even when the installed PB8 runtime
+    cannot load them. This metadata is only for versioning and bundle membership;
+    it must never be used as a prepared runtime config.
+    """
+    source = Path(path)
+    try:
+        config = json.loads(read_regular_file_nofollow(source, source.parent))
+        if not isinstance(config, dict):
+            raise ValueError("PB8 backup config must be a JSON object")
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise PB8ConfigurationError(f"Cannot read PB8 backup metadata: {exc}") from exc
+    return {key: config[key] for key in ("pbgui", "coin_overrides") if key in config}
+
+
 def load_pb8_config(path: Path | str) -> dict:
     """Load and canonicalize a PB8 config through the installed PB8 loader."""
     source = Path(path).resolve()
@@ -590,6 +608,24 @@ def load_pb8_config(path: Path | str) -> dict:
         config = _call_helper("load", config_path=key)["config"]
         _cache_config(source, config, fingerprint)
         return copy.deepcopy(config)
+
+
+def load_pb8_editor_config(path: Path | str, *, loader=None) -> dict:
+    """Open legacy HSL as an unsaved native migration draft with change markers."""
+    try:
+        return {"config": (loader or load_pb8_config)(path)}
+    except PB8ConfigurationError as exc:
+        if "migrate-hsl" not in str(exc):
+            raise
+        return _call_migration_helper("load_hsl_editor", config_path=str(Path(path).resolve()))
+
+
+def preview_pb8_hsl_migration(path: Path | str, choices: dict) -> dict:
+    """Preview PB8's official HSL migration without writing or starting a bot."""
+    return _call_migration_helper(
+        "migrate_hsl", config_path=str(Path(path).resolve()),
+        restart_policies=choices.get("restart_policies"), portfolio=choices.get("portfolio"),
+    )
 
 
 def save_pb8_config(config: dict, path: Path | str) -> dict:

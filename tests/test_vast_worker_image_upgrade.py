@@ -10,8 +10,8 @@ from tests.test_vast_jobs import job, Provider
 def test_published_worker_build_uses_pinned_official_pb8():
     """The published worker build must not inherit an obsolete PB8 image."""
     root = Path(__file__).resolve().parents[1] / 'setup' / 'vast_gpu_benchmark'
-    revision = '7b639e1180fa6bfe02e110429d4f931933c73089'
-    base_tag = 'pbgui-pb8-worker:upstream-7b639e1-base'
+    revision = '061e472e3d400cb3a740583d52f9d46e02eaf781'
+    base_tag = 'pbgui-pb8-worker:upstream-061e472-base'
     base = (root / 'Dockerfile').read_text()
     assert 'git clone https://github.com/enarjord/passivbot.git' in base
     assert f'ARG PB8_REVISION={revision}' in base
@@ -26,15 +26,16 @@ def test_published_worker_build_uses_pinned_official_pb8():
 
 def test_creation_and_validation_use_same_image():
     """The config preflight must accept the image selected for new rentals."""
-    from vast_config_validation import PROFILE_IMAGE
+    from vast_config_validation import PROFILE_IMAGE, PROFILE_REVISION
     assert IMAGE == PROFILE_IMAGE
+    assert REVISION == PROFILE_REVISION
 
 
 def test_current_image_has_offline_layer_sizes():
     """The active immutable image keeps byte-weighted pull progress available."""
     from vast_image_layers import IMAGE_LAYERS
     assert IMAGE in IMAGE_LAYERS
-    assert len(IMAGE_LAYERS[IMAGE]) == 26
+    assert len(IMAGE_LAYERS[IMAGE]) == 28
 
 
 def test_new_calibration_pin_keeps_previous_worker_image_known():
@@ -57,6 +58,24 @@ def test_old_worker_images_keep_their_original_pb8_revision(digest):
     """Published pre-merge images remain bound to their own PB8 commit."""
     image = 'ghcr.io/msei99/pbgui-pb8-worker@sha256:' + digest
     assert SUPPORTED_RENTAL_IMAGE_REVISIONS[image] == '903ed11153ce82d1b6760604eaa3a553309a752a'
+
+
+def test_previous_upstream_worker_keeps_its_revision_and_calibration_evidence():
+    """A schema upgrade must retain ownership of the preceding immutable image."""
+    from vast_calibration import COMPATIBLE_CALIBRATION_IMAGES
+    old = 'ghcr.io/msei99/pbgui-pb8-worker@sha256:3fadf2220b4b19ee58aff6df95fa62a5e27e30d5a8058015e326ad4c229f55e0'
+    assert SUPPORTED_RENTAL_IMAGE_REVISIONS[old] == '7b639e1180fa6bfe02e110429d4f931933c73089'
+    assert old in COMPATIBLE_CALIBRATION_IMAGES
+
+
+def test_current_metric_contract_excludes_removed_hsl_tier_metrics():
+    """The v8.6 worker contract cannot advertise retired HSL tier durations."""
+    import json
+    path = Path(__file__).resolve().parents[1] / 'setup/vast_gpu_benchmark/gpu_metric_contract.json'
+    contract = json.loads(path.read_text())
+    retired = {'hard_stop_time_in_orange_pct', 'hard_stop_time_in_yellow_pct'}
+    for key in ('supported_metrics', 'allowed_metrics', 'exact_only_metrics'):
+        assert not retired.intersection(contract[key])
 
 
 @pytest.mark.parametrize('image', SUPPORTED_RENTAL_IMAGES)
@@ -102,3 +121,26 @@ def test_known_image_with_wrong_revision_is_rejected(job):
     assert intent['pb8_revision'] == REVISION
     with pytest.raises(VastError):
         validate_intent(intent, identifier)
+
+
+def test_suite_metric_hotfix_is_a_narrow_checked_backport():
+    """The temporary worker patches only GPU suite metric orchestration."""
+    root = Path(__file__).resolve().parents[1] / 'setup' / 'vast_gpu_benchmark'
+    dockerfile = (root / 'Dockerfile.suite-metrics').read_text()
+    patch = (root / 'patches' / 'gpu-suite-invalid-metrics.patch').read_text()
+    assert 'FROM ghcr.io/msei99/pbgui-pb8-worker@sha256:32d7ee7a00330e01e4a2b8856275289eb8ee4b067542b09cfdce5e81c3b3691c' in dockerfile
+    assert 'git apply --check' in dockerfile
+    assert 'git apply /opt/pbgui/patches/gpu-suite-invalid-metrics.patch' in dockerfile
+    assert '061e472e3d400cb3a740583d52f9d46e02eaf781' in dockerfile
+    assert patch.count('diff --git ') == 1
+    assert 'diff --git a/src/optimization/backends/gpu_backend.py b/src/optimization/backends/gpu_backend.py' in patch
+    assert '+        except MetricAggregationError as exc:' in patch
+    assert '+            from optimize import _build_invalid_candidate_metrics' in patch
+
+
+def test_unpatched_v86_worker_retains_ownership_and_calibration_evidence():
+    """Introducing a backport does not orphan existing official worker rentals."""
+    from vast_calibration import COMPATIBLE_CALIBRATION_IMAGES
+    image = 'ghcr.io/msei99/pbgui-pb8-worker@sha256:32d7ee7a00330e01e4a2b8856275289eb8ee4b067542b09cfdce5e81c3b3691c'
+    assert SUPPORTED_RENTAL_IMAGE_REVISIONS[image] == REVISION
+    assert image in COMPATIBLE_CALIBRATION_IMAGES

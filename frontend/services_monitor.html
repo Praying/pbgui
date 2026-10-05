@@ -1195,23 +1195,55 @@ window.PBGUI_NAV_CONFIG = {
   }
 
   /* ── Status polling ────────────────────────────────────── */
+  var _statusInFlight = false;
+  var _statusRefreshQueued = false;
+
   function fetchStatus() {
+    if (_statusInFlight) {
+      // A user action asked for fresh status while a poll is running.
+      _statusRefreshQueued = true;
+      return;
+    }
+    clearTimeout(_statusTimer);
+    _statusTimer = null;
+    _statusInFlight = true;
+    _statusRefreshQueued = false;
     fetch(API_BASE + '/status', authOptions())
       .then(function (r) { return r.json(); })
-      .then(function (data) { _status = data; _statusRequestState = 'ready'; updateStatusUI(); scheduleStatus(); })
+      .then(function (data) { _status = data; _statusRequestState = 'ready'; updateStatusUI(); })
       .catch(function () {
         if (_statusRequestState !== 'ready') {
           _statusRequestState = 'unavailable';
           renderOverviewCards();
         }
-        scheduleStatus();
+      })
+      .then(function () {
+        _statusInFlight = false;
+        if (_statusRefreshQueued) fetchStatus();
+        else scheduleStatus();
       });
   }
 
   function scheduleStatus() {
     clearTimeout(_statusTimer);
+    _statusTimer = null;
+    // Hidden tabs stop polling; visibilitychange resumes immediately.
+    if (document.hidden) return;
     _statusTimer = setTimeout(fetchStatus, 5000);
   }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      // Drop the pending polls so a hidden tab never fetches.
+      clearTimeout(_statusTimer);
+      _statusTimer = null;
+      clearTimeout(_workersTimer);
+      _workersTimer = null;
+      return;
+    }
+    if (!_statusInFlight) fetchStatus();
+    if (Object.keys(_workerActionPending).length === 0) window.fetchWorkers(false);
+  });
 
   function serviceSkipped(item) {
     return item.expected === false && !item.running;
@@ -1363,9 +1395,12 @@ window.PBGUI_NAV_CONFIG = {
 
   function scheduleWorkers() {
     clearTimeout(_workersTimer);
-    if (Object.keys(_workerActionPending).length === 0) {
-      _workersTimer = setTimeout(function () { window.fetchWorkers(false); }, 5000);
-    }
+    _workersTimer = null;
+    // Hidden tabs stop polling; visibilitychange resumes immediately.
+    if (document.hidden || Object.keys(_workerActionPending).length > 0) return;
+    // The full worker status scans every queue, so poll it less often than the cheap summary.
+    var delay = _currentPanelId === 'workers' ? 10000 : 5000;
+    _workersTimer = setTimeout(function () { window.fetchWorkers(false); }, delay);
   }
 
   function rebuildWorkerIndex() {

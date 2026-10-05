@@ -16,14 +16,23 @@
     modelGeneration: 0,
     modelsLoading: false,
     selectionDirty: false,
+    savedSelection: null,
+    selectionWrite: Promise.resolve(),
+    selectionSaveError: '',
     listGeneration: 0,
     proposalGeneration: 0,
     history: false,
     busy: false,
+    workTimer: null,
+    workSince: 0,
+    workIdentity: '',
     resizing: false,
     drawerWidth: 460,
     drawerPinned: false,
     drawerPinnedDirty: false,
+    drawerWidthDirty: false,
+    preferencesReady: null,
+    drawerPreferenceWrite: Promise.resolve(),
     retryMessages: {},
     messageSnapshots: {},
     messageSignature: '',
@@ -36,6 +45,7 @@
     usageSignature: ''
   };
   var root;
+  var activityNode;
 
   function el(tag, className, text) {
     var node = document.createElement(tag);
@@ -61,6 +71,8 @@
     return false;
   }
 
+  var selectionReady;
+
   function build() {
     if (root) return;
     root = el('aside');
@@ -74,6 +86,13 @@
     bindResize(resize);
 
     var head = el('div', 'pai-head');
+    var working = el('span', 'pai-working');
+    working.hidden = true;
+    working.appendChild(el('span', 'pai-working-dot'));
+    working.appendChild(el('span', '', 'AI working'));
+    var elapsed = el('span', 'pai-working-time', '0:00');
+    elapsed.setAttribute('aria-label', 'Elapsed processing time');
+    working.appendChild(elapsed);
     var history = el('button', '', 'History');
     history.type = 'button';
     history.addEventListener('click', function () {
@@ -81,7 +100,17 @@
       root.querySelector('.pai-body').classList.toggle('history-open', state.history);
     });
     head.appendChild(history);
-    head.appendChild(el('div', 'pai-title', 'PBGui AI'));
+    var title = el('div', 'pai-title');
+    title.appendChild(el('span', '', 'PBGui AI'));
+    var stateLine = el('div', 'pai-state-line');
+    stateLine.appendChild(working);
+    var contextMeter = el('span', 'pai-context-meter', '—');
+    contextMeter.setAttribute('role', 'img');
+    contextMeter.setAttribute('aria-label', 'Context usage unavailable');
+    contextMeter.title = 'Context usage unavailable';
+    stateLine.appendChild(contextMeter);
+    title.appendChild(stateLine);
+    head.appendChild(title);
     var pin = el('button', 'pai-pin', '\uD83D\uDCCC');
     pin.type = 'button';
     pin.setAttribute('aria-label', 'Place AI beside PBGui');
@@ -118,23 +147,23 @@
         renderHistory();
       }
       state.selectionDirty = true;
-      loadModels();
+      selectionReady = loadModels().then(function (loaded) { if (loaded) return persistSelection(); });
     });
     toolbar.appendChild(provider);
     var model = el('select');
     model.id = 'pai-model';
-    model.addEventListener('change', function () { state.selectionDirty = true; rebuildEfforts(); rebuildSpeeds(); });
+    model.addEventListener('change', function () { state.selectionDirty = true; rebuildEfforts(); rebuildSpeeds(); persistSelection(); });
     toolbar.appendChild(model);
     var effort = el('select');
     effort.id = 'pai-effort';
-    effort.addEventListener('change', function () { state.selectionDirty = true; });
+    effort.addEventListener('change', function () { state.selectionDirty = true; persistSelection(); });
     toolbar.appendChild(effort);
     var speed = el('select');
     speed.id = 'pai-speed';
     speed.setAttribute('aria-label', 'Speed');
     speed.title = 'Fast mode uses more ChatGPT credits';
     speed.hidden = true;
-    speed.addEventListener('change', function () { state.selectionDirty = true; });
+    speed.addEventListener('change', function () { state.selectionDirty = true; persistSelection(); });
     toolbar.appendChild(speed);
     var fresh = el('button', 'pai-new', 'New');
     fresh.type = 'button';
@@ -173,7 +202,7 @@
     chat.appendChild(el('div', 'pai-messages'));
     chat.appendChild(el('div', 'pai-proposals'));
     var reasoning = el('details', 'pai-reasoning'); reasoning.hidden = true; reasoning.appendChild(el('summary', '', 'Reasoning summary')); reasoning.appendChild(el('pre', 'pai-reasoning-text')); chat.appendChild(reasoning);
-    var activity = el('details', 'pai-reasoning'); activity.hidden = true; activity.appendChild(el('summary', '', 'Activity')); activity.appendChild(el('pre', 'pai-activity-history')); chat.appendChild(activity);
+    activityNode = el('details', 'pai-activity'); activityNode.hidden = true; activityNode.appendChild(el('summary', '', 'Activity')); activityNode.appendChild(el('div', 'pai-activity-history')); chat.querySelector('.pai-messages').appendChild(activityNode);
     chat.appendChild(statusRow);
     var compose = el('div', 'pai-compose');
     var prompt = document.createElement('textarea');
@@ -192,13 +221,65 @@
     stop.hidden = true;
     stop.addEventListener('click', stopTurn);
     compose.appendChild(stop);
+    bindComposeResize(compose, prompt);
     chat.appendChild(compose);
     body.appendChild(chat);
     root.appendChild(body);
     document.body.appendChild(root);
     document.body.appendChild(buildReviewOverlay());
     renderContext(collectDisplayContext());
-    refreshAll();
+    selectionReady = refreshAll();
+  }
+
+  function bindComposeResize(compose, prompt) {
+    var key = 'pbgui.ai.compose.height', preferred = 64, drag = null;
+    try { preferred = Number(localStorage.getItem(key)) || preferred; } catch (_) {}
+    var handle = el('div', 'pai-compose-resize');
+    handle.tabIndex = 0;
+    handle.setAttribute('role', 'separator');
+    handle.setAttribute('aria-orientation', 'horizontal');
+    handle.setAttribute('aria-label', 'Resize message input');
+    handle.title = 'Drag up or down to resize message input';
+    compose.prepend(handle);
+    function apply() {
+      var maximum = Math.max(44, Math.min(500, Math.floor(window.innerHeight * 0.45)));
+      var height = Math.max(44, Math.min(maximum, preferred));
+      prompt.style.height = height + 'px';
+      handle.setAttribute('aria-valuemin', '44');
+      handle.setAttribute('aria-valuemax', String(maximum));
+      handle.setAttribute('aria-valuenow', String(height));
+    }
+    function save() { try { localStorage.setItem(key, String(Math.round(prompt.getBoundingClientRect().height))); } catch (_) {} }
+    function finish(event) {
+      if (!drag || (event.pointerId != null && event.pointerId !== drag.id)) return;
+      drag = null;
+      handle.classList.remove('active');
+      save();
+    }
+    handle.addEventListener('pointerdown', function (event) {
+      if (event.button !== 0 || drag) return;
+      event.preventDefault();
+      drag = {id:event.pointerId, y:event.clientY, height:prompt.getBoundingClientRect().height};
+      handle.setPointerCapture(event.pointerId);
+      handle.classList.add('active');
+    });
+    handle.addEventListener('pointermove', function (event) {
+      if (!drag || event.pointerId !== drag.id) return;
+      preferred = Math.max(44, Math.min(500, window.innerHeight * 0.45, drag.height + drag.y - event.clientY));
+      apply();
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (type) { handle.addEventListener(type, finish); });
+    handle.addEventListener('keydown', function (event) {
+      if (!['ArrowUp','ArrowDown','Home','End'].includes(event.key)) return;
+      event.preventDefault();
+      preferred = Number(handle.getAttribute('aria-valuenow')) + (event.key === 'ArrowUp' ? 20 : -20);
+      if (event.key === 'Home') preferred = 44;
+      if (event.key === 'End') preferred = Number(handle.getAttribute('aria-valuemax'));
+      apply(); save();
+    });
+    window.addEventListener('blur', finish);
+    window.addEventListener('resize', apply);
+    apply();
   }
 
   function collectContext(options) {
@@ -315,8 +396,43 @@
     node.classList.toggle('error', !!error);
   }
 
-  function setBusy(busy) {
+  function updateWorkingIndicator(conversation) {
+    if (state.workTimer) clearInterval(state.workTimer);
+    state.workTimer = null;
+    var node = root.querySelector('.pai-working');
+    node.hidden = !state.busy;
+    if (!state.busy) { state.workSince = 0; state.workIdentity = ''; return; }
+    var identity = conversation ? state.current + ':' + (conversation.active_turn_id || 'pending')
+      : (state.workIdentity.startsWith(state.current + ':') ? state.workIdentity : state.current + ':pending');
+    if (!state.workSince || state.workIdentity !== identity) {
+      state.workSince = Date.now();
+      state.workIdentity = identity;
+    }
+    var history = (conversation || {}).activity_history || [];
+    var started = Number((history[0] || {}).timestamp) * 1000;
+    if (Number.isFinite(started) && started > 0 && started <= Date.now()) state.workSince = Math.min(state.workSince, started);
+    function tick() {
+      var seconds = Math.max(0, Math.floor((Date.now() - state.workSince) / 1000));
+      var hours = Math.floor(seconds / 3600);
+      var minutes = Math.floor(seconds / 60) % 60;
+      node.querySelector('.pai-working-time').textContent = (hours ? hours + ':' + String(minutes).padStart(2, '0') : String(minutes)) + ':' + String(seconds % 60).padStart(2, '0');
+    }
+    tick();
+    if (state.open) state.workTimer = setInterval(tick, 1000);
+  }
+
+  function setBusy(busy, conversation) {
     state.busy = !!busy;
+    updateWorkingIndicator(conversation);
+    var usage = (conversation || {}).context_usage;
+    var meter = root.querySelector('.pai-context-meter');
+    var available = usage && Number.isFinite(usage.used_tokens) && usage.used_tokens >= 0 && Number.isFinite(usage.limit_tokens) && usage.limit_tokens > 0;
+    var percent = available ? Math.min(100, Math.round(100 * usage.used_tokens / usage.limit_tokens)) : null;
+    meter.textContent = available ? percent + '%' : '—';
+    meter.style.setProperty('--pai-context-percent', (percent || 0) + '%');
+    meter.classList.toggle('unavailable', !available);
+    meter.title = available ? 'Context: ' + usage.used_tokens.toLocaleString() + ' / ' + usage.limit_tokens.toLocaleString() + ' tokens (last reported)' : 'Context usage unavailable from this provider';
+    meter.setAttribute('aria-label', meter.title);
     root.querySelector('.primary').hidden = busy;
     root.querySelector('.danger').hidden = !busy;
     root.querySelector('textarea').disabled = busy;
@@ -330,14 +446,29 @@
 
   async function refreshAll() {
     try {
-      var preferences = await api('/preferences');
+      state.preferencesReady = api('/preferences');
+      var preferences = await state.preferencesReady;
       if (!state.drawerPinnedDirty) state.drawerPinned = preferences.drawer_pinned === true;
-      if (!state.resizing) applyWidth(preferences.drawer_width);
+      if (!state.resizing && !state.drawerWidthDirty) applyWidth(preferences.drawer_width);
       else applyDrawerLayout();
       notifyLayoutChange();
       var status = await api('/status');
       state.providers = status.providers || {};
-      await rebuildProviders();
+      var saved = !state.selectionDirty && preferences.selection;
+      if (saved) {
+        state.savedSelection = saved;
+        state.selectionDirty = true;
+        state.profile = saved.profile || 'default';
+        var restoring = rebuildProviders(saved.provider === 'chatgpt' ? 'chatgpt:' + state.profile : saved.provider, saved.model, true);
+        var restoreGeneration = state.modelGeneration;
+        await restoring;
+        if (restoreGeneration === state.modelGeneration && state.savedSelection === saved) {
+          rebuildEfforts(saved.effort || '');
+          rebuildSpeeds(saved.service_tier || '');
+        }
+      } else {
+        await rebuildProviders();
+      }
       await loadConversations();
     } catch (error) { setStatus(error.message, true); }
   }
@@ -383,17 +514,44 @@
     } catch (error) { setStatus(error.message, true); }
   }
 
-  function saveDrawerPreferences(drawerOpen) {
-    var width = root ? root.getBoundingClientRect().width : state.drawerWidth;
-    return api('/preferences', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        drawer_width: Math.round(width),
-        drawer_open: drawerOpen == null ? state.open : !!drawerOpen,
-        drawer_pinned: state.drawerPinned
-      })
+  async function saveDrawerPreferences(drawerOpen) {
+    // Opening during restoration must not overwrite the stored width with 460px.
+    await state.preferencesReady;
+    var payload = {
+      drawer_width: Math.round(state.drawerWidth),
+      drawer_open: drawerOpen == null ? state.open : !!drawerOpen,
+      drawer_pinned: state.drawerPinned
+    };
+    state.drawerPreferenceWrite = state.drawerPreferenceWrite.catch(function () {}).then(function () {
+      return api('/preferences', {
+        method: 'PUT', keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
     });
+    return state.drawerPreferenceWrite;
+  }
+
+  function currentSelection() {
+    return {provider: selectedProvider(), profile: selectedProfile() || 'default',
+      model: root.querySelector('#pai-model').value, effort: root.querySelector('#pai-effort').value,
+      service_tier: root.querySelector('#pai-speed').hidden ? '' : root.querySelector('#pai-speed').value};
+  }
+
+  function persistSelection() {
+    if (state.modelsLoading) return state.selectionWrite;
+    var selection = currentSelection();
+    if (!selection.model || !state.models[selection.model]) return state.selectionWrite;
+    state.savedSelection = selection;
+    // Serialize snapshots so older writes cannot overwrite a newer choice.
+    state.selectionWrite = state.selectionWrite.then(function () {
+      return api('/preferences', {method: 'PUT', keepalive: true,
+        headers: {'Content-Type': 'application/json'}, body: JSON.stringify({selection: selection})});
+    }).then(function () { state.selectionSaveError = ''; }, function (error) {
+      state.selectionSaveError = 'AI selection could not be saved: ' + error.message;
+      setStatus(state.selectionSaveError, true);
+    });
+    return state.selectionWrite;
   }
 
   function bindResize(handle) {
@@ -409,7 +567,7 @@
       var previousUserSelect = document.body.style.userSelect;
       document.body.style.userSelect = 'none';
       var finished = false;
-      function move(moveEvent) { applyWidth(window.innerWidth - moveEvent.clientX); }
+      function move(moveEvent) { state.drawerWidthDirty = true; applyWidth(window.innerWidth - moveEvent.clientX); }
       async function finish() {
         if (finished) return;
         finished = true;
@@ -441,7 +599,7 @@
     return value.startsWith('chatgpt:') ? value.slice(8) : state.profile;
   }
 
-  function rebuildProviders(preferred, preferredModel) {
+  function rebuildProviders(preferred, preferredModel, strictModel) {
     var select = root.querySelector('#pai-provider');
     var current = preferred || select.value;
     select.textContent = '';
@@ -463,10 +621,10 @@
       select.appendChild(missing);
     }
     if (current) select.value = current;
-    return loadModels(preferredModel);
+    return loadModels(preferredModel, strictModel);
   }
 
-  async function loadModels(preferred) {
+  async function loadModels(preferred, strictModel) {
     var provider = selectedProvider();
     var profile = selectedProfile();
     root.querySelector('.pai-compose textarea').placeholder = provider === 'openrouter'
@@ -514,10 +672,18 @@
         select.appendChild(empty);
       }
       if (current && Array.from(select.options).some(function (option) { return option.value === current; })) select.value = current;
+      else if (strictModel && current) {
+        var missing = el('option', '', 'Unavailable model: ' + current);
+        missing.value = current;
+        select.appendChild(missing);
+        select.value = current;
+        setStatus('The saved AI model is unavailable. Select a connected model.', true);
+      }
       rebuildEfforts();
       rebuildSpeeds();
       state.modelsLoading = false;
       setBusy(state.busy);
+      return true;
     } catch (error) {
       if (generation !== state.modelGeneration || provider !== selectedProvider() || profile !== selectedProfile()) return;
       state.models = {};
@@ -643,20 +809,20 @@
         state.messageConversationId = id;
         state.messageSignature = '';
       }
-      renderMessages(messages);
+      renderMessages(messages, !!conversation.busy);
       if (window.PBGuiAIResearch) window.PBGuiAIResearch.render(root.querySelector('.pai-messages'), conversation, apiBase);
       renderReasoningSummary(conversation.reasoning_summary || '');
-      renderActivityHistory(conversation.activity_history || []);
+      renderActivityHistory(conversation.activity_history || [], !!conversation.busy, conversation.streaming_messages || []);
       var uiActions = conversation.analysis_only ? [] : (conversation.ui_actions || []);
       dispatchUiActions(id, uiActions, !!conversation.busy);
       window.PBGuiAIMessageView.restore(box, savedScroll);
       if (conversation.retry_message) state.retryMessages[id] = conversation.retry_message;
       renderContext(collectDisplayContext());
-      setBusy(!!conversation.busy);
+      setBusy(!!conversation.busy, conversation);
       var retry = root.querySelector('.pai-retry');
       retry.hidden = !conversation.last_error || !state.retryMessages[id] || conversation.busy;
-      setStatus(conversation.busy ? (conversation.activity || 'Model is working...') : (conversation.last_error || (conversation.analysis_only ? 'Analysis only' : '')), !!conversation.last_error);
-      if (!state.selectionDirty) {
+      setStatus(state.selectionSaveError || conversation.last_error || (!conversation.busy && conversation.analysis_only ? 'Analysis only' : ''), !!state.selectionSaveError || !!conversation.last_error);
+      if (!state.selectionDirty && !state.savedSelection) {
         state.profile = conversation.chatgpt_profile || 'default';
         var providerValue = conversation.provider === 'chatgpt' ? 'chatgpt:' + state.profile : conversation.provider;
         if (root.querySelector('#pai-provider').value !== providerValue) {
@@ -666,7 +832,7 @@
         }
       }
       if (id !== state.current || generation !== state.requestGeneration) return;
-      if (!state.selectionDirty) {
+      if (!state.selectionDirty && !state.savedSelection) {
         rebuildEfforts(conversation.effort || '');
         rebuildSpeeds(conversation.service_tier || '');
       }
@@ -705,9 +871,11 @@
         return;
       }
       state.uiActionIds.add(actionId);
+      if (action.browser_navigation) return; // Destination acknowledges after navigation.
       Promise.resolve(action.browser_completion).then(function () {
         return api('/conversations/' + encodeURIComponent(conversationId) + '/ui-actions/' + encodeURIComponent(actionId) + '/ack', {
-          method: 'POST'
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ context: collectContext() })
         });
       }).then(function () {
         if (window.PBGuiAI && typeof window.PBGuiAI.completePageActionNavigation === 'function') {
@@ -754,16 +922,26 @@
     box.scrollTop = box.scrollHeight;
   }
 
-  function renderMessages(messages) {
+  function renderMessages(messages, busy) {
     var box = root.querySelector('.pai-messages');
-    var signature = JSON.stringify(messages);
+    var signature = JSON.stringify([messages, !!busy]);
     if (signature === state.messageSignature) return;
     state.messageSignature = signature;
     box.textContent = '';
     if (!messages.length) {
+      activityNode.hidden = true;
+      box.appendChild(activityNode);
       box.appendChild(el('div', 'pai-empty', 'Ask about the current PBGui page, selected resource, or installed Passivbot source.'));
       return;
     }
+    var lastUser = -1;
+    messages.forEach(function (message, index) { if (message.role === 'user') lastUser = index; });
+    // Approval continuations have a hidden user turn: the last visible message
+    // is the previous assistant answer. New activity belongs below that answer.
+    // Once complete, keep its collapsed history immediately before the new answer.
+    var activityAfter = busy ? messages.length - 1 : lastUser;
+    if (!busy && messages[messages.length - 1].role === 'assistant') activityAfter = messages.length - 2;
+    if (activityAfter < 0) box.appendChild(activityNode);
     messages.forEach(function (message, index) {
       var row = el('div', 'pai-message ' + (message.role === 'user' ? 'user' : 'assistant'));
       row.dataset.messageIndex = String(index);
@@ -778,6 +956,7 @@
       }
       row.appendChild(actions);
       box.appendChild(row);
+      if (index === activityAfter) box.appendChild(activityNode);
     });
     box.scrollTop = box.scrollHeight;
   }
@@ -818,10 +997,29 @@
     details.hidden = !text.textContent;
   }
 
-  function renderActivityHistory(items) {
-    var text = root.querySelector('.pai-activity-history');
-    var details = text.closest('details');
-    text.textContent = (items || []).map(function (item) { return String(item.message || ''); }).filter(Boolean).join('\n');
+  function renderActivityHistory(items, busy, streamingMessages) {
+    var details = activityNode;
+    var text = details.querySelector('.pai-activity-history');
+    var timeline = (items || []).map(function (item) { return { timestamp: Number(item.timestamp) || 0, message: String(item.message || '') }; });
+    (streamingMessages || []).forEach(function (item) { timeline.push({ timestamp: Number(item.timestamp) || 0, content: String(item.content || '') }); });
+    timeline.sort(function (left, right) { return left.timestamp - right.timestamp; });
+    var signature = JSON.stringify(timeline);
+    if (text.dataset.signature !== signature) {
+      text.dataset.signature = signature;
+      text.textContent = '';
+      timeline.forEach(function (item) {
+        if (item.content) {
+          var row = el('div', 'pai-message assistant pai-streaming-message');
+          var bubble = el('div', 'pai-bubble');
+          window.PBGuiAIMessageView.render(bubble, item.content);
+          row.appendChild(bubble); text.appendChild(row);
+        } else if (item.message) text.appendChild(el('div', 'pai-activity-step', item.message));
+      });
+    }
+    if (details.dataset.conversation !== state.current || details.dataset.busy !== String(!!busy)) details.open = !!busy;
+    details.dataset.conversation = state.current;
+    details.dataset.busy = String(!!busy);
+    details.classList.toggle('running', !!busy);
     details.hidden = !text.textContent;
   }
 
@@ -1307,6 +1505,7 @@
   function openDrawer() {
     build();
     state.open = true;
+    updateWorkingIndicator();
     root.classList.add('open');
     root.setAttribute('aria-hidden', 'false');
     applyDrawerLayout();
@@ -1316,12 +1515,14 @@
     var button = document.getElementById('pbgui-ai-btn');
     if (button) button.setAttribute('aria-expanded', 'true');
     saveDrawerPreferences(true).catch(function (error) { setStatus(error.message, true); });
-    loadConversations();
+    selectionReady.then(function () { return loadConversations(); }).catch(function (error) { setStatus(error.message, true); });
   }
 
   function closeDrawer() {
     if (!root) return;
     state.open = false;
+    if (state.workTimer) clearInterval(state.workTimer);
+    state.workTimer = null;
     closeProposalReview();
     stopContextWatch();
     root.classList.remove('open');
@@ -1334,12 +1535,25 @@
   }
 
   var facade = window.PBGuiAI || {};
+  facade.getSelection = async function () {
+    build();
+    await selectionReady;
+    var write;
+    do { write = state.selectionWrite; await write; } while (write !== state.selectionWrite);
+    if (state.selectionSaveError) throw new Error(state.selectionSaveError);
+    if (state.modelsLoading) throw new Error('AI models are still loading. Try again shortly.');
+    var model = root.querySelector('#pai-model').value;
+    if (!model || !state.models[model]) throw new Error('Select a connected model in the PBGui AI assistant.');
+    return currentSelection();
+  };
   facade.open = openDrawer;
   facade.close = closeDrawer;
   facade.toggle = function () { state.open ? closeDrawer() : openDrawer(); };
   window.PBGuiAI = facade;
   window.addEventListener('resize', function () { if (root) applyWidth(state.drawerWidth); });
   window.addEventListener('pagehide', function () {
+    if (state.workTimer) clearInterval(state.workTimer);
+    state.workTimer = null;
     document.documentElement.classList.remove('pbgui-ai-drawer-pinned');
     stopPoll();
     stopContextWatch();

@@ -103,6 +103,7 @@ const branchUi = ref<Record<string, JsonRecord>>({});
 const deploy = ref<JsonRecord>({ action: '', mode: '', debug: false, reboot_requested: false, selectedHosts: [], password: '', currentHost: '', entryId: '', remainingHosts: [], acceptUnknownHost: false, acceptedHostKeyFingerprint: '' });
 const loggingConfig = ref<JsonRecord>({ services: [], selected_hosts: [] });
 const deploySettings = ref<JsonRecord>({ action: '', mode: '', debug: false, reboot_requested: false, selected_hosts: [], actions: [], modes: [] });
+const pb8UpdateNoticeAccepted = ref(false);
 const overviewSort = ref({ field: 'hostname', direction: 'asc' });
 const overviewDrag = ref({ active: false, anchor: '', mode: true, pointerHandled: false });
 const visibleColumns = ref<Record<string, boolean>>({ status: true, ip: true, cpu: true, memory: true, disk: true, pbgui: true, pb7: true, pb8: true, updates: true, actions: true });
@@ -561,7 +562,19 @@ function trustHostKey(): void {
 
 function revealSecret(field: string): void { send({ cmd: 'reveal_secret', hostname: hostname.value, field }); }
 function requestDelete(): void { setModal('confirm', { title: t('vpsmgr.deleteVps'), message: t('vpsmgr.deleteVpsBody', { host: hostname.value }), action: 'delete-vps' }); }
-function acceptConfirm(): void { const action = String(modalData.value.action || ''); closeModal(); if (action === 'delete-vps') send({ cmd: 'delete_vps', hostname: hostname.value }); if (action === 'apply-ufw') sendUfw('apply_ufw_rules'); if (action === 'purge') runVpsCommand('vps-purge-install', true); if (action === 'systemd') runVpsCommand('vps-migrate-systemd', false); }
+function acceptConfirm(): void {
+  const action = String(modalData.value.action || '');
+  closeModal();
+  if (action === 'continue-pb8-update') {
+    pb8UpdateNoticeAccepted.value = true;
+    startDeploy();
+    return;
+  }
+  if (action === 'delete-vps') send({ cmd: 'delete_vps', hostname: hostname.value });
+  if (action === 'apply-ufw') sendUfw('apply_ufw_rules');
+  if (action === 'purge') runVpsCommand('vps-purge-install', true);
+  if (action === 'systemd') runVpsCommand('vps-migrate-systemd', false);
+}
 function runMasterCommand(command: string, extraVars: JsonRecord | null = null): void { send({ cmd: 'run_master_command', command, command_text: actionText(command), debug: false, sudo_pw: masterSudoPw.value || '', extra_vars: extraVars }); }
 function runVpsCommand(command: string, saveConfig = true, extraVars: JsonRecord | null = null): void { if (saveConfig && !canUseStoredPassword() && command !== 'vps-restart') { setModal('password', { title: t('vpsmgr.vpsUserPasswordRequired'), action: 'run-vps', command, extraVars }); return; } if (saveConfig) send({ cmd: 'save_vps_config', hostname: hostname.value, form: { ...vpsForm.value } }); send({ cmd: 'run_vps_command', hostname: hostname.value, command, command_text: actionText(command), debug: false, extra_vars: extraVars }); }
 function promptMasterCommand(command: string, extraVars: JsonRecord | null = null): void { setModal('password', { title: t('vpsmgr.sudoPassword'), action: 'run-master', command, extraVars }); }
@@ -734,7 +747,29 @@ function openDeployLog(entry: JsonRecord, host: string): void {
   setContext('vps-host-logs', host);
   void nextTick(initSharedLogViewer);
 }
-function startDeploy(): void { syncDeployConfig(); const hosts = (deploy.value.selectedHosts.length ? deploy.value.selectedHosts : vpsRows.value.map((row: JsonRecord) => String(row.hostname || ''))).filter(Boolean); deploy.value.selectedHosts = hosts; deploy.value.currentHost = hosts[0] || ''; deploy.value.remainingHosts = hosts.slice(1); if (!deploy.value.password && hosts.length && deploy.value.action !== 'vps-deploy-logging') { setModal('deploy-password', { action: 'deploy' }); return; } if (hosts.length) stageNextDeployHost(); }
+function startDeploy(): void {
+  syncDeployConfig();
+  const hosts = (deploy.value.selectedHosts.length ? deploy.value.selectedHosts : vpsRows.value.map((row: JsonRecord) => String(row.hostname || ''))).filter(Boolean);
+  const command = String(deploySettings.value.action || '');
+  const pb8Update = ['vps-update-pb8', 'vps-update-pbgui-pb8'].includes(command);
+  const mixedRuntimeUpdate = ['vps-update-runtime', 'vps-update-pbgui-runtime'].includes(command)
+    && vpsRows.value.some((row: JsonRecord) => hosts.includes(String(row.hostname || '')) && Boolean(row.pb8_installed));
+  if ((pb8Update || mixedRuntimeUpdate) && !pb8UpdateNoticeAccepted.value) {
+    setModal('confirm', {
+      action: 'continue-pb8-update',
+      title: t('vpsmgr.pb8UpdateNoticeTitle'),
+      message: t('vpsmgr.pb8UpdateNoticeMessage'),
+      detail: t('vpsmgr.pb8UpdateNoticeDetail'),
+    });
+    return;
+  }
+  pb8UpdateNoticeAccepted.value = false;
+  deploy.value.selectedHosts = hosts;
+  deploy.value.currentHost = hosts[0] || '';
+  deploy.value.remainingHosts = hosts.slice(1);
+  if (!deploy.value.password && hosts.length && deploy.value.action !== 'vps-deploy-logging') { setModal('deploy-password', { action: 'deploy' }); return; }
+  if (hosts.length) stageNextDeployHost();
+}
 function stageNextDeployHost(): void { const host = String(deploy.value.currentHost || deploy.value.selectedHosts[0] || ''); if (!host) return; send({ cmd: 'validate_and_stage_vps_deploy_host', hostnames: deploy.value.selectedHosts, hostname: host, password: deploy.value.password || '', command: deploySettings.value.action || 'vps-update-pbgui', mode: deploySettings.value.mode || 'serial', debug: Boolean(deploySettings.value.debug), extra_vars: deploySettings.value.reboot_requested ? { reboot: true, reboot_requested: true } : null, entry_id: deploy.value.entryId || undefined, accept_unknown_host: Boolean(deploy.value.acceptUnknownHost), accepted_host_key_fingerprint: deploy.value.acceptedHostKeyFingerprint || '' }); }
 function handleStagedDeploy(data: JsonRecord): void { deploy.value.entryId = String(data.entry_id || deploy.value.entryId || ''); const remaining = Array.isArray(data.remaining_hosts) ? data.remaining_hosts : []; if (remaining.length) { deploy.value.remainingHosts = remaining; deploy.value.currentHost = String(remaining[0] || ''); stageNextDeployHost(); } else if (deploy.value.entryId) send({ cmd: 'finalize_vps_deploy_session', entry_id: deploy.value.entryId }); else { closeModal(); showNotice(t('vpsmgr.deploymentStarted')); } }
 

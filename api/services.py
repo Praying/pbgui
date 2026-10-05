@@ -17,6 +17,7 @@ import signal
 import socket
 import subprocess
 import sys
+import threading
 import time
 import traceback
 import uuid
@@ -338,21 +339,32 @@ def _process_matches_service_script(process: Any, cmdline: list[Any], script: st
     return False
 
 
-def _legacy_service_running(name: str) -> bool:
-    """Check legacy daemon status without instantiating service classes."""
+def _legacy_service_running(
+    name: str,
+    daemons: list[dict[str, Any]] | None = None,
+) -> bool:
+    """Check legacy daemon status without instantiating service classes.
+
+    ``daemons`` lets batch callers share one process scan across services.
+    """
     pid = _read_service_pid(name)
     if pid and _pid_matches_service(pid, name):
         return True
-    return any(item.get("service") == name for item in _collect_pbgui_daemon_processes())
+    if daemons is None:
+        daemons = _collect_pbgui_daemon_processes()
+    return any(item.get("service") == name for item in daemons)
 
 
-def _service_status(name: str) -> dict[str, Any]:
+def _service_status(
+    name: str,
+    daemons: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """Return service status using systemd when available, otherwise legacy PID checks."""
     blocker = _optional_service_blocker(name)
     systemd_status = _systemd_service_status(name)
     if systemd_status is not None and systemd_status.get("running"):
         return systemd_status
-    legacy_running = _legacy_service_running(name)
+    legacy_running = _legacy_service_running(name, daemons=daemons)
     if legacy_running:
         result = {"running": True, "manager": "legacy"}
         if systemd_status is not None:
@@ -1549,21 +1561,50 @@ async def _stop_worker(worker_id: str) -> None:
 
 # ── Status ───────────────────────────────────────────────────
 
+# The status endpoint is polled every few seconds; resuming pending credential
+# mutations there only needs to happen occasionally (#393).
+_STATUS_RECONCILE_INTERVAL_S = 60.0
+_status_reconcile_last_ok = float("-inf")
+_status_reconcile_lock = threading.Lock()
+
+
+def _reconcile_credentials_for_status() -> None:
+    """Resume pending credential mutations at most once per interval across requests."""
+    global _status_reconcile_last_ok
+    if time.monotonic() - _status_reconcile_last_ok < _STATUS_RECONCILE_INTERVAL_S:
+        return
+    # Concurrent polls skip instead of queueing behind a running reconciliation.
+    if not _status_reconcile_lock.acquire(blocking=False):
+        return
+    try:
+        now = time.monotonic()
+        if now - _status_reconcile_last_ok < _STATUS_RECONCILE_INTERVAL_S:
+            return
+        try:
+            reconcile_pending_credentials(PBGDIR)
+            _status_reconcile_last_ok = now
+        except Exception as exc:
+            _log(
+                SERVICE,
+                f"Credential reconciliation remains pending: {type(exc).__name__}",
+                level="WARNING",
+            )
+    finally:
+        _status_reconcile_lock.release()
+
 @router.get("/status")
 def get_status(session: SessionToken = Depends(require_auth)) -> Dict[str, Any]:
     """Return running status for all services."""
+    _reconcile_credentials_for_status()
+    daemons: list[dict[str, Any]] | None = None
     try:
-        reconcile_pending_credentials(PBGDIR)
-    except Exception as exc:
-        _log(
-            SERVICE,
-            f"Credential reconciliation remains pending: {type(exc).__name__}",
-            level="WARNING",
-        )
+        daemons = _collect_pbgui_daemon_processes()
+    except Exception as e:
+        _log(SERVICE, f"daemon process scan failed: {e}", level="WARNING")
     result = {}
     for svc in _SERVICES:
         try:
-            result[svc] = _service_status(svc)
+            result[svc] = _service_status(svc, daemons=daemons)
         except Exception as e:
             _log(SERVICE, f"status check failed for {svc}: {e}", level="WARNING")
             result[svc] = {"running": False, "error": str(e)}
@@ -1634,21 +1675,46 @@ async def get_workers_summary(session: SessionToken = Depends(require_auth)) -> 
     }
 
 
+# Polling tabs share one bounded snapshot instead of each rescanning all five queues.
+_WORKERS_STATUS_TTL_S = 3.0
+_workers_status_lock = asyncio.Lock()
+_workers_status_cache: Dict[str, Any] | None = None
+_workers_status_until = 0.0
+# Bumped by every invalidation so a scan that started earlier never repopulates the cache.
+_workers_status_generation = 0
+
+
+def _invalidate_workers_status() -> None:
+    global _workers_status_cache, _workers_status_until, _workers_status_generation
+    _workers_status_generation += 1
+    _workers_status_cache = None
+    _workers_status_until = 0.0
+
+
 @router.get("/workers/status")
 async def get_workers_status(session: SessionToken = Depends(require_auth)) -> Dict[str, Any]:
-    groups = await _collect_worker_groups()
-    total = sum(len(group.get("items", [])) for group in groups)
-    running = sum(
-        1
-        for group in groups
-        for item in group.get("items", [])
-        if item.get("running")
-    )
-    return {
-        "updated_ts": int(time.time()),
-        "counts": {"total": total, "running": running},
-        "groups": groups,
-    }
+    global _workers_status_cache, _workers_status_until
+    async with _workers_status_lock:
+        if _workers_status_cache is not None and time.monotonic() < _workers_status_until:
+            return _workers_status_cache
+        generation = _workers_status_generation
+        groups = await _collect_worker_groups()
+        total = sum(len(group.get("items", [])) for group in groups)
+        running = sum(
+            1
+            for group in groups
+            for item in group.get("items", [])
+            if item.get("running")
+        )
+        payload = {
+            "updated_ts": int(time.time()),
+            "counts": {"total": total, "running": running},
+            "groups": groups,
+        }
+        if generation == _workers_status_generation:
+            _workers_status_cache = payload
+            _workers_status_until = time.monotonic() + _WORKERS_STATUS_TTL_S
+        return payload
 
 
 # ── Start / Stop ─────────────────────────────────────────────
@@ -1744,6 +1810,8 @@ async def worker_action(worker_id: str, action: str, session: SessionToken = Dep
     except Exception as e:
         _log(SERVICE, f"worker action failed ({worker_id}/{normalized_action}): {e}", level="ERROR", meta={"operation": "worker_action", "worker": worker_id, "action": normalized_action, "traceback": traceback.format_exc()})
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        _invalidate_workers_status()
 
 
 @router.post("/api-server/restart")

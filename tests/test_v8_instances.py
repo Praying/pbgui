@@ -1391,3 +1391,135 @@ def test_frontend_and_server_register_the_complete_pb8_live_surface() -> None:
     assert 'app.include_router(v8_router, prefix="/api/v8", tags=["v8"])' in server_source
     assert Path("docs/help/44_pbv8_run.md").is_file()
     assert Path("docs/help_de/44_pbv8_run.md").is_file()
+
+
+@pytest.mark.parametrize('observation,expected', [
+    ('running', 'synced'), ('stopped', 'disabled'), ('blocked', 'blocked'),
+    ('unobserved', 'collecting'), ('conflicted', 'conflicted'), ('tombstoned', 'tombstoned'),
+])
+def test_local_hsl_migration_gate_does_not_override_vps_status(monkeypatch, tmp_path, observation, expected):
+    """A newer local schema cannot declare an older remote bot's config broken."""
+    _configure_root(monkeypatch, tmp_path)
+    directory = tmp_path / 'data' / 'run_v8' / 'alice'
+    directory.mkdir(parents=True)
+    path = directory / 'config.json'
+    path.write_text(json.dumps({
+        'config_version': 'v8.5.0', 'live': {'user': 'alice', 'strategy_kind': 'ema_anchor'},
+        'bot': {'long': {'hsl': {'enabled': True, 'restart_after_red_policy': 'threshold'},
+                         'risk': {'n_positions': 1, 'total_wallet_exposure_limit': 6}}},
+        'pbgui': {'version': 3, 'enabled_on': 'disabled' if observation == 'stopped' else 'vps-a'},
+    }))
+    before = path.read_bytes()
+
+    def reject_local_schema(_path):
+        raise v8_instances.PB8ConfigurationError(
+            'pre-v8.6 HSL configuration requires explicit migration with passivbot tool migrate-hsl and re-backtesting before use')
+
+    monkeypatch.setattr(v8_instances, 'load_pb8_config', reject_local_schema)
+    monkeypatch.setattr(v8_instances, '_desired_pb8_state', lambda: (
+        {'alice': {'version': 3, 'assigned_host': 'node-a', 'desired_state': 'running',
+                   'conflicted': observation == 'conflicted'}},
+        {'alice': {}} if observation == 'tombstoned' else {},
+        {'node-a': {'hostname': 'vps-a'}},
+    ))
+    items = [] if observation == 'unobserved' else [{
+        'name': 'alice', 'running': observation == 'running', 'rv': 3, 'cv': 3,
+        'blocked': observation == 'blocked', 'blocked_reason': 'Actual remote launch failure',
+    }]
+    monkeypatch.setattr(v8_instances, '_monitor', SimpleNamespace(store=SimpleNamespace(v8_instances={'vps-a': items})))
+    monkeypatch.setattr(v8_instances, '_user_exchange_map', lambda: {'alice': 'hyperliquid'})
+    messages = []
+    monkeypatch.setattr(v8_instances, '_log', lambda *args, **kwargs: messages.append(args))
+
+    row, = v8_instances._list_instances()
+
+    assert row['status'] == expected
+    assert row['load_error'] == row['runtime_error'] == ''
+    assert row['running_on'] == (['vps-a'] if observation == 'running' else [])
+    assert row['strategy'] == 'ema_anchor'
+    assert row['twe'] == 'L=6.0'
+    if observation == 'blocked':
+        assert row['blocked_reason'] == 'Actual remote launch failure'
+    assert messages == []
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize('use_backup', [False, True])
+def test_log_placement_does_not_load_or_migrate_trading_config(monkeypatch, tmp_path, use_backup):
+    """Optimizer errors cannot hide current or historical remote bot logs."""
+    _configure_root(monkeypatch, tmp_path)
+    current = tmp_path / 'data' / 'run_v8' / 'alice'
+    backup = tmp_path / 'data' / 'backup' / 'v8' / 'alice' / '7'
+    current.mkdir(parents=True)
+    source = backup if use_backup else current
+    source.mkdir(parents=True, exist_ok=True)
+    path = source / 'config.json'
+    path.write_text(json.dumps({'config_version': 'v8.2.0',
+                               'pbgui': {'enabled_on': 'worker-a', 'version': 7},
+                               'optimize': {'fixed_params': ['bot.long.forager.score_weights_ema_readiness']}}))
+    before = path.read_bytes()
+    if use_backup:
+        (current / 'config.json').write_text('{"pbgui":{"enabled_on":"disabled"}}')
+    monkeypatch.setattr(v8_instances, '_monitor', None)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError('Log placement must not invoke native config preparation')
+
+    monkeypatch.setattr(v8_instances, 'load_pb8_config', forbidden)
+    monkeypatch.setattr(v8_instances, 'load_pb8_editor_config', forbidden)
+    result = v8_instances.get_v8_last_active_host('alice', session=None)
+    assert result['host'] == 'worker-a'
+    assert result['version'] == '7'
+    assert result['source'] == ('backup' if use_backup else 'current')
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("hsl_enabled", [True, False])
+def test_save_migrated_config_backs_up_legacy_hsl_verbatim(monkeypatch, tmp_path, hsl_enabled):
+    """Saving a migrated draft archives legacy HSL without the current PB8 loader."""
+    _configure_root(monkeypatch, tmp_path)
+    prepared_calls = _install_test_pipeline(monkeypatch)
+    bundle = tmp_path / "data/run_v8/alice"
+    bundle.mkdir(parents=True)
+    legacy = _payload()["config"]
+    legacy["config_version"] = "v8.5.0"
+    legacy["pbgui"]["version"] = 1
+    legacy["bot"]["long"]["hsl"] = {
+        "enabled": hsl_enabled,
+        "no_restart_drawdown_threshold": 1,
+        "orange_tier_mode": "tp_only_with_active_entry_cancellation",
+        "tier_ratios": {"orange": 0.75, "yellow": 0.5},
+    }
+    legacy["coin_overrides"] = {"BTC": {"override_config_path": "BTC.json"}}
+    original = (json.dumps(legacy, indent=2) + "\n").encode()
+    override = b'{"bot": {"long": {"risk": {"n_positions": 1}}}}\n'
+    (bundle / "config.json").write_bytes(original)
+    (bundle / "BTC.json").write_bytes(override)
+    loader_calls = []
+
+    def rejecting_loader(path):
+        """Simulate the installed runtime rejecting the original HSL schema."""
+        loader_calls.append(path)
+        raise v8_instances.PB8ConfigurationError(
+            "pre-v8.6 HSL configuration requires explicit migration with passivbot tool migrate-hsl"
+        )
+
+    monkeypatch.setattr(v8_instances, "load_pb8_config", rejecting_loader)
+    payload = _payload(note="migrated")
+    payload["config"]["config_version"] = "v8.6.0"
+    payload["config"]["bot"]["long"]["hsl"] = {"enabled": hsl_enabled}
+    payload["expected_version"] = 1
+    result = asyncio.run(v8_instances.save_v8_instance_config("alice", payload, False, session=None))
+
+    assert result["ok"] is True
+    assert result["version"] == 2
+    assert result["backup_id"] == "1"
+    assert loader_calls == []
+    assert len(prepared_calls) == 1
+    assert prepared_calls[0]["config_version"] == "v8.6.0"
+    backup = tmp_path / "data/backup/v8/alice/1"
+    assert (backup / "config.json").read_bytes() == original
+    assert (backup / "BTC.json").read_bytes() == override
+    saved = json.loads((bundle / "config.json").read_bytes())
+    assert saved["config_version"] == "v8.6.0"
+    assert saved["bot"]["long"]["hsl"] == {"enabled": hsl_enabled}

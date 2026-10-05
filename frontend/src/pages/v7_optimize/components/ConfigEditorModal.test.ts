@@ -133,6 +133,37 @@ describe('ConfigEditorModal', () => {
     expect(saved.runtimeOverrides['bot.long.hsl_enabled']).toBeUndefined();
   }, 15_000);
 
+  it('shows only the active PB8 HSL runtime paths', async () => {
+    const draft = buildEditorDraft({
+      backtest: { exchanges: ['bybit'] },
+      live: { hsl_signal_mode: 'coin' },
+      bot: { long: { hsl: { enabled: true } }, short: { hsl: { enabled: true } } },
+      optimize: {},
+      pbgui: { optimize_runtime: { overrides: { 'hsl.enabled': true } } },
+    }, 'v8', 'hsl-mode');
+    const wrapper = mount(ConfigEditorModal, {
+      props: {
+        open: true,
+        draft,
+        version: 'v8',
+        error: '',
+        hslModes: ['coin', 'unified'],
+        fixedRuntimeOverrides: { 'hsl.enabled': true },
+      },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    await wrapper.find('[data-tab="runtime"]').trigger('click');
+    expect(wrapper.find('[data-field="runtime-bot-long-hsl-enabled"]').exists()).toBe(true);
+    expect(wrapper.find('[data-field="runtime-hsl-enabled"]').exists()).toBe(false);
+
+    await wrapper.find('[data-tab="general"]').trigger('click');
+    await pickSelectOption(wrapper, '[aria-label="hsl_signal_mode"]', 'unified');
+    await wrapper.find('[data-tab="runtime"]').trigger('click');
+    expect(wrapper.find('[data-field="runtime-bot-long-hsl-enabled"]').exists()).toBe(false);
+    expect(wrapper.find('[data-field="runtime-hsl-enabled"]').exists()).toBe(true);
+  });
+
   it('migrates optimizer backend fields and removes inactive backend values', async () => {
     const draft = buildEditorDraft({
       backtest: { exchanges: ['bybit'] },

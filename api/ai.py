@@ -87,6 +87,7 @@ class AIPreferencesRequest(BaseModel):
     drawer_open: bool | None = None
     drawer_pinned: bool | None = None
     jev_max_cost_usd: float | None = Field(default=None, ge=0.000001, le=1.0)
+    selection: dict[str, str] | None = Field(default=None, max_length=5)
 
 
 class ConversationRewindRequest(BaseModel):
@@ -204,7 +205,8 @@ async def save_preferences(
     try:
         return _json(
             get_ai_chat_service().save_preferences(
-                _owner(session), body.drawer_width, body.drawer_open, body.drawer_pinned, body.jev_max_cost_usd
+                _owner(session), body.drawer_width, body.drawer_open, body.drawer_pinned, body.jev_max_cost_usd,
+                **({"selection": body.selection} if body.selection is not None else {})
             )
         )
     except Exception as exc:
@@ -471,15 +473,22 @@ async def record_local_action(
         raise _provider_error("record_local_action", exc) from exc
 
 
+class UIActionAcknowledgement(BaseModel):
+    """Optional current page evidence after a browser action completes."""
+    context: dict | None = None
+
+
 @router.post("/conversations/{conversation_id}/ui-actions/{action_id}/ack")
 async def acknowledge_ui_action(
     conversation_id: str,
     action_id: str,
     session: SessionToken = Depends(require_auth),
+    body: UIActionAcknowledgement | None = None,
 ) -> JSONResponse:
     """Acknowledge one browser action after an allowlisted page applied it."""
     try:
-        await get_ai_chat_service().acknowledge_ui_action(_owner(session), conversation_id, action_id)
+        kwargs = {"context": body.context} if body else {}
+        await get_ai_chat_service().acknowledge_ui_action(_owner(session), conversation_id, action_id, **kwargs)
         return _json({"status": "acknowledged"})
     except Exception as exc:
         raise _provider_error("acknowledge_ui_action", exc) from exc

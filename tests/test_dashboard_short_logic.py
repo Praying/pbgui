@@ -1,61 +1,64 @@
-"""Regression tests for dashboard backend logic and page-route security.
+"""Regression tests for dashboard position order classification.
 
-Position order classification (long/short DCA/TP mapping), market-close
-parameter builders, forced-mode config writers, and the cookie-auth contract
-of the dashboard page routes.
-
-Frontend lifecycle regression tests (fragment WS generation guards, stale
-fetch rejection, live-before-DB fallback) were removed with the legacy
-dashboard engine (dashboard_render.js + the HTML fragments); the behaviors
-live on in the Vue suite: composables/useDashboardWs.test.ts,
-composables/useDashboardFetch.test.ts, composables/useLivePoll.test.ts and
-components/widgets/WidgetOrders.test.ts.
+These tests lock down the long/short-specific mapping used by the dashboard
+snapshot and live API paths for DCA counting plus nearest DCA/TP prices.
 """
 
 import asyncio
+import json
+import subprocess
+import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from fastapi.responses import FileResponse
 
 from api import cluster, dashboard, live, v7_instances
 import pb7_config
 
+
 ROOT = Path(__file__).resolve().parents[1]
+DASHBOARD_WS_FRAGMENTS = [
+    "dashboard_top.html",
+    "dashboard_income.html",
+    "dashboard_pnl.html",
+    "dashboard_adg.html",
+    "dashboard_ppl.html",
+    "dashboard_positions.html",
+    "dashboard_orders.html",
+]
+DASHBOARD_REQUEST_FRAGMENTS = [
+    "dashboard_top.html",
+    "dashboard_pnl.html",
+    "dashboard_adg.html",
+    "dashboard_ppl.html",
+    "dashboard_orders.html",
+]
 
 
-def test_dashboard_pages_use_cookie_auth_without_rendering_session_token() -> None:
+def test_dashboard_pages_use_cookie_auth_without_rendering_session_token(monkeypatch, tmp_path) -> None:
     """Dashboard HTML should never expose or require the browser session token."""
+    import pbgui_purefunc
+    from starlette.requests import Request
+
+    monkeypatch.setattr(pbgui_purefunc, "PBGDIR", tmp_path)
     class CookieOnlySession:
         """Fail if page rendering attempts to read any session field."""
 
         def __getattr__(self, name):
             raise AssertionError(f"session field accessed: {name}")
 
-    request = SimpleNamespace(
-        url=SimpleNamespace(scheme="http", hostname="testserver", port=80),
-    )
+    request = Request({"type": "http", "root_path": ""})
     responses = [
         dashboard.get_main_page(request, current="", session=CookieOnlySession()),
         dashboard.get_editor_page(
-            request,
-            name="",
-            api_base="/api",
-            view_only=False,
-            standalone=False,
-            session=CookieOnlySession(),
+            request, name="", api_base="/api", view_only=False, standalone=False, session=CookieOnlySession()
         ),
         dashboard.get_templates_page(request, current="", api_base="/api", session=CookieOnlySession()),
     ]
 
     for response in responses:
-        # get_main_page serves the built Vue entry (FileResponse) when
-        # frontend/dist exists; the legacy HTML fallback keeps .body.
-        if isinstance(response, FileResponse):
-            html = response.path.read_bytes().decode()
-        else:
-            html = response.body.decode()
+        html = response.body.decode()
         assert "%%TOKEN%%" not in html
         assert "Authorization" not in html
         assert "Bearer " not in html
@@ -63,13 +66,7 @@ def test_dashboard_pages_use_cookie_auth_without_rendering_session_token() -> No
 
 
 def test_dashboard_refreshes_generation_safe_after_approved_ai_layout() -> None:
-    """An approved AI dashboard save should reload its iframe without overriding later navigation.
-
-    Vue port (frontend/src/pages/dashboard_main) of the v1.99.4 legacy
-    dashboard_main.html behaviour: the pbgui:ai-action-completed listener
-    guards its refreshList callback with a generation counter and the
-    pre-navigation dashboard so a stale AI reload never hijacks the view.
-    """
+    """An approved AI dashboard save should reload its iframe without overriding later navigation."""
     source = (ROOT / "frontend" / "src" / "pages" / "dashboard_main" / "App.vue").read_text(encoding="utf-8")
 
     assert "pbgui:ai-action-completed" in source
@@ -78,10 +75,351 @@ def test_dashboard_refreshes_generation_safe_after_approved_ai_layout() -> None:
     assert "generation !== aiDashboardRefreshGeneration || currentDash.value !== previousDashboard" in source
     assert "loadView(name, true)" in source
     assert "selected.value = [name]" in source
-
     config = (ROOT / "frontend" / "src" / "pages" / "dashboard_main" / "config.ts").read_text(encoding="utf-8")
     assert "forceReload" in config
     assert "params.set('refresh', String(Date.now()))" in config
+
+
+@pytest.mark.parametrize("filename", DASHBOARD_WS_FRAGMENTS)
+def test_dashboard_websocket_fragments_reject_stale_generations(filename: str) -> None:
+    """Every rerenderable dashboard fragment must retire stale socket callbacks."""
+    source = (ROOT / "frontend" / filename).read_text(encoding="utf-8")
+
+    assert "function isCurrentGeneration()" in source
+    assert "if (!isCurrentGeneration() || !API_HOST) return;" in source
+    assert "%%TOKEN%%" not in source
+    assert "Authorization" not in source
+    assert ".onmessage = window[" in source or ".onmessage = window._dtWs.onclose" in source
+    assert "!== socket) return;" in source
+    assert "=== socket) socket.close();" in source
+
+
+def test_dashboard_top_dequeued_old_reconnect_cannot_create_socket() -> None:
+    """A reconnect callback already dequeued before rerender must not revive its old fragment."""
+    html = (ROOT / "frontend" / "dashboard_top.html").read_text(encoding="utf-8")
+    source = html.rsplit("<script>", 1)[1].split("</script>", 1)[0]
+    for placeholder, value in {
+        "%%TOKEN%%": "test-token",
+        "%%API_BASE%%": "/api",
+        "%%API_HOST%%": "localhost",
+        "%%USERS%%": "[]",
+        "%%PERIOD%%": "TODAY",
+        "%%TOP%%": "10",
+        "%%HEIGHT%%": "0",
+        "%%POSITION%%": "0",
+    }.items():
+        source = source.replace(placeholder, value)
+
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const vm = require('node:vm');
+        const fragment = {json.dumps(source)};
+        const sockets = [];
+        const timers = [];
+
+        global.window = global;
+        window.location = {{ protocol: 'http:', host: 'localhost', href: 'http://localhost/app/dashboard_top.html' }};
+        global.document = {{ getElementById: function () {{ return {{}}; }} }};
+        global.DashRender = {{
+            VERSION: '20260930b',
+            injectCSS: function () {{}}
+        }};
+        window.DashRender = global.DashRender;
+        global.Plotly = {{}};
+        global.WebSocket = class {{
+            constructor(url) {{ this.url = url; sockets.push(this); }}
+            close() {{}}
+        }};
+        global.setTimeout = function (callback) {{ timers.push(callback); return timers.length; }};
+        global.clearTimeout = function () {{}};
+
+        vm.runInThisContext(fragment);
+        assert.equal(sockets.length, 1);
+        sockets[0].onclose();
+        assert.equal(timers.length, 1);
+        const staleReconnect = timers[0];
+
+        vm.runInThisContext(fragment);
+        assert.equal(sockets.length, 2);
+        staleReconnect();
+        assert.equal(sockets.length, 2);
+        """
+    )
+    result = subprocess.run(
+        ["node", "-e", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, (
+        "Dashboard WebSocket lifecycle regression failed\n"
+        f"STDOUT:\n{result.stdout}\n"
+        f"STDERR:\n{result.stderr}"
+    )
+
+
+@pytest.mark.parametrize("filename", DASHBOARD_REQUEST_FRAGMENTS)
+def test_dashboard_fetch_fragments_reject_stale_responses(filename: str) -> None:
+    """Repeated dashboard loaders must only render their newest HTTP response."""
+    source = (ROOT / "frontend" / filename).read_text(encoding="utf-8")
+
+    assert "var loadSeq" in source
+    assert "var seq = ++loadSeq;" in source
+    assert "seq !== loadSeq || !isCurrentGeneration()" in source
+
+
+def test_dashboard_editor_orders_rejects_stale_position_response() -> None:
+    """The inline Orders preview must bind responses to its latest selected position."""
+    source = (ROOT / "frontend" / "dashboard_editor.html").read_text(encoding="utf-8")
+    start = source.index("function buildOrdersInline(")
+    end = source.index("/* \u2500\u2500 drag & drop state", start)
+    orders_source = source[start:end]
+
+    assert "var _loadSeqKey = '_ordInlineLoadSeq_' + pos;" in orders_source
+    assert "var seq = ++window[_loadSeqKey];" in orders_source
+    assert "if (seq !== window[_loadSeqKey]) return;" in orders_source
+    assert "if (expectedSeq != null && expectedSeq !== window[_loadSeqKey]) return;" in orders_source
+
+
+def test_dashboard_top_older_fetch_cannot_overwrite_newer_render() -> None:
+    """Resolve two Top requests in reverse order and render only the newer payload."""
+    html = (ROOT / "frontend" / "dashboard_top.html").read_text(encoding="utf-8")
+    source = html.rsplit("<script>", 1)[1].split("</script>", 1)[0]
+    for placeholder, value in {
+        "%%TOKEN%%": "test-token",
+        "%%API_BASE%%": "/api",
+        "%%API_HOST%%": "localhost",
+        "%%USERS%%": "[]",
+        "%%PERIOD%%": "TODAY",
+        "%%TOP%%": "10",
+        "%%HEIGHT%%": "0",
+        "%%POSITION%%": "0",
+    }.items():
+        source = source.replace(placeholder, value)
+
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const vm = require('node:vm');
+        const fragment = {json.dumps(source)};
+        const sockets = [];
+        const requests = [];
+        const renders = [];
+        const container = {{ appendChild: function () {{}}, innerHTML: '' }};
+
+        global.window = global;
+        window.location = {{ protocol: 'http:', host: 'localhost', href: 'http://localhost/app/dashboard_top.html' }};
+        global.document = {{
+            getElementById: function () {{ return container; }},
+            createElement: function () {{
+                return {{ addEventListener: function () {{}}, appendChild: function () {{}} }};
+            }},
+            createTextNode: function () {{ return {{}}; }}
+        }};
+        global.DashRender = {{
+            VERSION: '20260930b',
+            injectCSS: function () {{}},
+            buildTop: function (target, data) {{ renders.push(data.id); }}
+        }};
+        window.DashRender = global.DashRender;
+        global.Plotly = {{}};
+        global.WebSocket = class {{
+            constructor(url) {{ this.url = url; sockets.push(this); }}
+            close() {{}}
+        }};
+        global.fetch = function () {{
+            return new Promise(function (resolve) {{ requests.push(resolve); }});
+        }};
+        global.setTimeout = function () {{ return 1; }};
+        global.clearTimeout = function () {{}};
+
+        (async function () {{
+            vm.runInThisContext(fragment);
+            sockets[0].onopen();
+            sockets[0].onmessage({{ data: JSON.stringify({{ type: 'income_updated' }}) }});
+            assert.equal(requests.length, 2);
+
+            requests[1]({{ ok: true, json: async function () {{ return {{ id: 'new' }}; }} }});
+            await new Promise(setImmediate);
+            await new Promise(setImmediate);
+            requests[0]({{ ok: true, json: async function () {{ return {{ id: 'old' }}; }} }});
+            await new Promise(setImmediate);
+            await new Promise(setImmediate);
+
+            assert.deepEqual(renders, ['new']);
+        }})().catch(function (error) {{
+            console.error(error);
+            process.exitCode = 1;
+        }});
+        """
+    )
+    result = subprocess.run(
+        ["node", "-e", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, (
+        "Dashboard request-order regression failed\n"
+        f"STDOUT:\n{result.stdout}\n"
+        f"STDERR:\n{result.stderr}"
+    )
+
+
+def test_dashboard_positions_waits_for_live_before_rendering_db_fallback() -> None:
+    """Do not flash the DB snapshot while an allowed live positions request is pending."""
+    html = (ROOT / "frontend" / "dashboard_positions.html").read_text(encoding="utf-8")
+    source = html.rsplit("<script>", 1)[1].split("</script>", 1)[0]
+    for placeholder, value in {
+        "%%TOKEN%%": "test-token",
+        "%%API_BASE%%": "/api",
+        "%%API_HOST%%": "localhost",
+        "%%USERS%%": '["alice"]',
+        "%%HEIGHT%%": "0",
+        "%%POSITION%%": "0",
+    }.items():
+        source = source.replace(placeholder, value)
+
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const vm = require('node:vm');
+        const fragment = {json.dumps(source)};
+        const requests = [];
+        const renders = [];
+        const container = {{ appendChild: function () {{}}, innerHTML: '' }};
+
+        global.window = global;
+        window.location = {{ protocol: 'http:', host: 'localhost', href: 'http://localhost/app/dashboard_positions.html' }};
+        global.document = {{ getElementById: function () {{ return container; }} }};
+        global.DashRender = {{
+            VERSION: '20260930b',
+            injectCSS: function () {{}},
+            buildPositions: function (target, data) {{ renders.push(data.id); }}
+        }};
+        window.DashRender = global.DashRender;
+        global.WebSocket = class {{
+            constructor(url) {{ this.url = url; }}
+            close() {{}}
+        }};
+        global.fetch = function (url) {{
+            return new Promise(function (resolve, reject) {{ requests.push({{ url, resolve, reject }}); }});
+        }};
+        global.setTimeout = function () {{ return 1; }};
+        global.clearTimeout = function () {{}};
+
+        (async function () {{
+            vm.runInThisContext(fragment);
+            assert.equal(requests.length, 1);
+
+            requests[0].resolve({{
+                ok: true,
+                json: async function () {{ return {{ id: 'db', source: 'db', positions: [{{ symbol: 'UNIUSDC' }}] }}; }}
+            }});
+            await new Promise(setImmediate);
+            await new Promise(setImmediate);
+
+            assert.equal(requests.length, 2);
+            assert.deepEqual(renders, []);
+
+            requests[1].resolve({{
+                ok: true,
+                json: async function () {{ return {{ id: 'live', source: 'live', positions: [{{ symbol: 'UNIUSDC' }}] }}; }}
+            }});
+            await new Promise(setImmediate);
+            await new Promise(setImmediate);
+
+            assert.deepEqual(renders, ['live']);
+        }})().catch(function (error) {{
+            console.error(error);
+            process.exitCode = 1;
+        }});
+        """
+    )
+    result = subprocess.run(
+        ["node", "-e", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, (
+        "Dashboard positions live-first regression failed\n"
+        f"STDOUT:\n{result.stdout}\n"
+        f"STDERR:\n{result.stderr}"
+    )
+
+
+def test_dashboard_editor_does_not_rebuild_live_positions_on_balance_updates() -> None:
+    """Balance notifications must not replace active live positions with a DB snapshot."""
+    source = (ROOT / "frontend" / "dashboard_editor.html").read_text(encoding="utf-8")
+    ws_start = source.index("function _rebuildCellsOfTypes(types)")
+    ws_end = source.index("_connectWs();", ws_start)
+    ws_source = source[ws_start:ws_end]
+
+    assert "types = ['BALANCE'];" in ws_source
+    assert "types = ['BALANCE', 'POSITIONS'];" not in ws_source
+    assert "m.type === 'positions_updated'" in ws_source
+    assert "if (!liveState || !liveState.timer) buildPositionsInline" in ws_source
+
+
+def test_dashboard_editor_defers_widget_refresh_while_a_control_is_active() -> None:
+    """Live updates must not replace an open native select and resume once on blur."""
+    source = (ROOT / "frontend" / "dashboard_editor.html").read_text(encoding="utf-8")
+    start = source.index("function deferDashboardCellRefreshWhileInteracting(")
+    end = source.index("/* ── Live updates via WebSocket", start)
+    function = source[start:end]
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        let blurHandler = null;
+        const active = {{
+          tagName: 'SELECT',
+          addEventListener(type, handler, options) {{
+            assert.equal(type, 'blur');
+            assert.equal(options.once, true);
+            blurHandler = handler;
+          }}
+        }};
+        const document = {{activeElement: active}};
+        const cell = {{contains(node) {{ return node === active; }}}};
+        const rebuilds = [];
+        function rebuild(types) {{ rebuilds.push(types); }}
+        {function}
+
+        assert.equal(deferDashboardCellRefreshWhileInteracting(cell, 'INCOME', rebuild), true);
+        assert.equal(deferDashboardCellRefreshWhileInteracting(cell, 'PNL', rebuild), true);
+        assert.deepEqual(rebuilds, []);
+        assert.ok(blurHandler);
+        blurHandler();
+        setTimeout(function () {{
+          assert.deepEqual(rebuilds, [['INCOME', 'PNL']]);
+        }}, 5);
+        """
+    )
+    result = subprocess.run(
+        ["node", "-e", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert "deferDashboardCellRefreshWhileInteracting(cellEl, type, _rebuildCellsOfTypes)" in source
+
+
+def test_dashboard_editor_live_positions_renders_backend_db_fallback() -> None:
+    """The live poller must render the endpoint's DB fallback when live retrieval fails."""
+    source = (ROOT / "frontend" / "dashboard_editor.html").read_text(encoding="utf-8")
+    live_start = source.index("function _connectLivePos(")
+    live_end = source.index("function _connectLiveBal(", live_start)
+    live_source = source[live_start:live_end]
+
+    assert "container._dpUpdate(d.positions || [], st.source)" in live_source
+    assert "if (st.source === 'live' || st.source === 'mixed')" not in live_source
 
 
 class _TickerExchange:

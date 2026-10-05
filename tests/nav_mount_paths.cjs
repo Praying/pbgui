@@ -41,11 +41,9 @@ function browser(apiBase = prefix + '/api/balance-calc', mount = prefixArg) {
   location.replace = value => redirects.push(value);
   location.reload = () => {};
   const context = {
-    URL, console, WeakMap, Map, Set,
+    URL, console, WeakMap, Map, Set, AbortController,
     location, API_BASE: apiBase,
     PBGUI_NAV_CONFIG: {current: 'info_balance_calc', authenticated: true},
-    PBGuiI18n: {t: (key, fallback) => fallback, serverMsg: (message) => message},
-    PBGuiIcons: {create: () => '<svg></svg>'},
     sessionStorage: {getItem: key => stored.get(key), setItem: (key, value) => stored.set(key, value), removeItem: key => stored.delete(key)},
     addEventListener(name, handler) { (listeners[name] ||= []).push(handler); },
     setInterval(fn, delay) { intervals.push({fn, delay}); return intervals.length; },
@@ -61,7 +59,7 @@ function browser(apiBase = prefix + '/api/balance-calc', mount = prefixArg) {
       close() { this.closed = true; }
     },
     document: {
-      readyState: 'loading', body: element(), head: {appendChild: item => assets.push(item)},
+      readyState: 'loading', visibilityState: 'visible', body: element(), head: {appendChild: item => assets.push(item)},
       createElement: () => element(), getElementById: id => nodes[id] || null,
       querySelectorAll: selector => selector === '.nav-item[data-page]' ? navItems : [],
       addEventListener(name, handler) { documentListeners[name] = handler; }
@@ -118,19 +116,31 @@ async function main() {
     assert.equal(b.requests.at(-1).input, app + '/api/vps/alerts/ack-all');
 
     b.nodes['pbgui-guide-btn'].click();
-    // The Vue-migration guide button navigates to the Help Center page
-    // instead of lazy-loading the legacy overlay script.
     assert.equal(c.location.href, app + c.testNav.FASTAPI_PAGES['help'] + '?topic=38_balance_calc');
     b.nodes['pbgui-ai-btn'].click();
-    assert.equal(b.assets.at(-2).href, prefix + '/app/css/ai_drawer.css?v=16');
+    assert.equal(b.assets.at(-2).href, prefix + '/app/css/ai_drawer.css?v=22');
     assert.equal(b.assets.at(-1).src, prefix + '/app/js/pbgui_dialogs.js?v=11');
     b.assets.at(-1).onload();
-    assert.equal(b.assets.at(-1).src, prefix + '/app/js/ai_usage.js?v=1');
-    c.PBGuiAIUsage = { render() {} };
+    // Follow the current local dependency chain before the drawer's usage module.
+    for (const [global, asset] of [
+      ['marked', '/app/vendor/marked.min.js?v=1'],
+      ['DOMPurify', '/app/vendor/purify.min.js?v=1'],
+      ['PBGuiAIMessageView', '/app/js/ai_message_view.js?v=2'],
+      ['PBGuiAIResearch', '/app/js/ai_research.js?v=9']
+    ]) {
+      assert.equal(b.assets.at(-1).src, prefix + asset);
+      c[global] = {};
+      b.assets.at(-1).onload();
+    }
+    assert.equal(b.assets.at(-1).src, prefix + '/app/js/ai_usage.js?v=2');
+    c.PBGuiAIUsage = {render() {}};
     b.assets.at(-1).onload();
-    assert.equal(b.assets.at(-1).src, prefix + '/app/js/ai_drawer.js?v=42');
+    assert.equal(b.assets.at(-1).src, prefix + '/app/js/jev_transfer_preview.js?v=1');
+    c.PBGuiJevTransferPreview = {review() {}};
+    b.assets.at(-1).onload();
+    assert.equal(b.assets.at(-1).src, prefix + '/app/js/ai_drawer.js?v=69');
     b.nodes['pbgui-notify-btn'].click();
-    assert.equal(b.assets.at(-1).src, prefix + '/app/js/log_viewer_panel.js?v=48');
+    assert.equal(b.assets.at(-1).src, prefix + '/app/js/log_viewer_panel.js?v=50');
     let viewerOptions;
     c.LogViewerPanel = class {constructor(options) {viewerOptions = options;} open() {} close() {}};
     b.assets.at(-1).onload();

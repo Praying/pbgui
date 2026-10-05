@@ -222,14 +222,19 @@ const runtimeOverrideFields = computed<RuntimeOverrideField[]>(() => {
   const fields = new Map<string, RuntimeOverrideField>();
   const addField = (key: string, defaultValue: unknown, side: BotSide | 'other' = 'other'): void => {
     const canonicalKey = canonicalRuntimeOverrideKey(key);
+    if (!isActiveHslRuntimePath(canonicalKey)) return;
     const restartPolicy = canonicalKey.endsWith('.hsl.restart_after_red_policy');
+    const botSide = canonicalKey.match(/^bot\.(long|short)\./)?.[1] as BotSide | undefined;
+    const sideConfig = botSide === 'long' ? local.value?.botLong : botSide === 'short' ? local.value?.botShort : undefined;
+    const hasDrawdownThreshold = isObject(sideConfig) && isObject(sideConfig.hsl)
+      && Object.prototype.hasOwnProperty.call(sideConfig.hsl, 'no_restart_drawdown_threshold');
     fields.set(canonicalKey, {
       key: canonicalKey,
       label: canonicalKey,
       side,
       type: restartPolicy ? 'string' : typeof defaultValue === 'boolean' ? 'boolean' : typeof defaultValue === 'number' ? 'number' : 'string',
       defaultValue,
-      choices: restartPolicy ? ['always', 'threshold', 'never'] : [],
+      choices: restartPolicy ? (hasDrawdownThreshold ? ['always', 'threshold', 'never'] : ['always', 'never']) : [],
       minimum: canonicalKey.endsWith('.hsl.no_restart_drawdown_threshold') ? 0 : undefined,
       maximum: canonicalKey.endsWith('.hsl.no_restart_drawdown_threshold') ? 1 : undefined,
       step: canonicalKey.endsWith('.hsl.no_restart_drawdown_threshold') ? 0.01 : undefined,
@@ -253,6 +258,15 @@ function runtimeOverrideFieldsFor(side: BotSide | 'other'): RuntimeOverrideField
 
 function runtimeOverrideDataField(key: string): string {
   return `runtime-${key.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}`;
+}
+
+function isActiveHslRuntimePath(key: string): boolean {
+  if (props.version !== 'v8') return true;
+  const normalized = key.replace(/^bot\./, '');
+  const signalMode = String(local.value?.live.hsl_signal_mode || 'coin').trim().toLowerCase();
+  if (/^(long|short)\.hsl(?:\.|$)/.test(normalized)) return signalMode !== 'unified';
+  if (/^hsl(?:\.|$)/.test(normalized)) return signalMode === 'unified';
+  return true;
 }
 
 function strategyFromParameterPath(path: string): string {
