@@ -83,7 +83,7 @@ const errorText = computed(() => (props.statusError ? props.statusError : logErr
 </script>
 
 <template>
-  <section class="grid shrink-0 gap-2.5 border-b border-border-default bg-panel px-4 py-3" data-test="optimize-log-dashboard">
+  <section class="grid max-h-[min(42dvh,360px)] shrink-0 gap-2.5 overflow-y-auto border-b border-border-default bg-panel px-4 py-3" data-test="optimize-log-dashboard">
     <div class="flex flex-wrap items-center gap-3" data-test="log-progress">
       <div class="h-1.5 min-w-40 flex-1 overflow-hidden rounded-full bg-border-default">
         <div class="h-full w-full origin-left rounded-full bg-accent transition-transform duration-[var(--motion-slow)] ease-standard" :style="{ transform: `scaleX(${percent / 100})` }"></div>
@@ -92,7 +92,7 @@ const errorText = computed(() => (props.statusError ? props.statusError : logErr
       <span class="whitespace-nowrap text-xs text-muted" data-test="log-updated">{{ updatedText }}</span>
     </div>
 
-    <div class="grid grid-cols-2 gap-2 lg:grid-cols-4">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(190px,100%),1fr))] gap-2">
       <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2" data-test="log-card-phase">
         <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.phase') }}</div>
         <div class="mt-1">
@@ -158,7 +158,7 @@ const errorText = computed(() => (props.statusError ? props.statusError : logErr
       </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(240px,100%),1fr))] gap-2">
       <div class="min-w-0 rounded-md border border-border-subtle bg-page/40 px-3 py-2" data-test="log-detail-objectives">
         <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.logObjectives') }}</div>
         <div class="mt-1 overflow-hidden text-xs font-mono text-secondary whitespace-nowrap text-ellipsis" :title="objectivesText" data-test="log-objectives">{{ objectivesText }}</div>

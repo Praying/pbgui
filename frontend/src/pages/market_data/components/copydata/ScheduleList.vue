@@ -115,6 +115,7 @@ const { t } = useI18n();
             size="sm"
             class="text-danger hover:bg-danger/12 hover:text-danger-soft"
             type="button"
+            :disabled="store.isDeletingSchedule.value"
             data-copy-schedule-action="delete"
             :data-schedule-id="row.id"
             @click="$emit('remove', row.id)"

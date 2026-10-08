@@ -77,6 +77,8 @@ export interface UseCopyData {
   isTesting: ComputedRef<boolean>;
   /** True while a schedules load (initial or post-CRUD) is in flight. */
   isLoadingSchedules: Ref<boolean>;
+  /** True while a recurring schedule deletion is in flight. */
+  isDeletingSchedule: ComputedRef<boolean>;
   /* job monitor */
   jobMonitorSrc: Ref<string>;
   mountJobMonitor(forceReload: boolean): void;
@@ -134,6 +136,7 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
   const testing = ref(false);
   const saving = ref(false);
   const isLoadingSchedules = ref(false);
+  const deletingScheduleId = ref('');
 
   function setFeedback(message: string, level: 'info' | 'error' | 'warning'): void {
     const text = String(message ?? '').trim();
@@ -266,6 +269,7 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
   const isEditing = computed(() => editingId.value !== '');
 
   const isSaveBusy = computed(() => saving.value);
+  const isDeletingSchedule = computed(() => deletingScheduleId.value !== '');
 
   /** resetCopyDataScheduleEditor (:5155-5163) — editor only, form stays. */
   function resetEditor(): void {
@@ -385,6 +389,17 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
 
   /** deleteCopyDataSchedule (:5243-5254). */
   async function deleteSchedule(scheduleId: string): Promise<void> {
+    if (deletingScheduleId.value) return;
+    const schedule = schedules.value.find((item) => item.id === scheduleId);
+    if (!schedule) {
+      const message = t('market.copyScheduleUnavailable');
+      setFeedback(message, 'info');
+      options.showToast(message, 'info');
+      await loadSchedules(true);
+      return;
+    }
+
+    deletingScheduleId.value = scheduleId;
     try {
       await fetchScheduleJson(`/copy-data/schedules/${encodeURIComponent(scheduleId)}`, {
         method: 'DELETE',
@@ -399,6 +414,8 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
           : t('market.failedDeleteCopySchedule'); // :5250
       setFeedback(message, 'error');
       options.showToast(message, 'error');
+    } finally {
+      deletingScheduleId.value = '';
     }
   }
 
@@ -507,6 +524,7 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
     isQueueing,
     isTesting,
     isLoadingSchedules,
+    isDeletingSchedule,
     jobMonitorSrc,
     mountJobMonitor,
     dryRunSummary,

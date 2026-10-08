@@ -1101,6 +1101,7 @@
   "market.copyScheduleColSchedule": "Schedule",
   "market.copyScheduleColTarget": "Target",
   "market.copyScheduleDeleted": "Copy Data schedule deleted.",
+  "market.copyScheduleUnavailable": "Copy Data schedule is no longer available. Updating the schedule list.",
   "market.copySchedules": "Copy Schedules",
   "market.copySchedulesNote": "Save the current target and exchange selection as a recurring copy job. Schedules survive API restarts.",
   "market.copyTestFailed": "Copy Data connection test failed.",

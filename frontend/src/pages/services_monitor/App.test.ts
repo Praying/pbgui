@@ -1137,7 +1137,7 @@ describe('services_monitor pbdata status wiring (legacy pbdata status tab + pric
     await flushPromises();
 
     expect(wrapper.find('#prices-overlay').classes()).toContain('active');
-    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/prices-snapshot');
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/prices-snapshot', expect.objectContaining({ signal: expect.any(AbortSignal) }));
     expect(wrapper.find('#prices-overlay .po-table tbody tr').text()).toContain('BTCUSDT');
   });
 

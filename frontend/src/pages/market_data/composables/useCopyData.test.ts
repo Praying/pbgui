@@ -303,6 +303,7 @@ describe('schedules (:5062-5254)', () => {
 
   it('deletes a schedule, resetting the editor when it was being edited (:5243-5254)', async () => {
     const store = makeStore();
+    store.schedules.value = [{ id: 's2', name: 'Nightly' }];
     store.editingId.value = 's2';
     rawFetch.mockResolvedValue(json({ success: true }));
     await store.deleteSchedule('s2');
@@ -312,6 +313,41 @@ describe('schedules (:5062-5254)', () => {
     );
     expect(store.isEditing.value).toBe(false);
     expect(showToast).toHaveBeenCalledWith('market.copyScheduleDeleted', 'success');
+  });
+
+  it('reloads when a confirmed delete targets a schedule that is no longer present', async () => {
+    const store = makeStore();
+    rawFetch.mockResolvedValue(json({ schedules: [] }));
+
+    await store.deleteSchedule('gone');
+
+    expect(rawFetch).toHaveBeenCalledWith(
+      'http://h:8/api/market-data/copy-data/schedules',
+      expect.objectContaining({ cache: 'no-store' }),
+    );
+    expect(rawFetch).not.toHaveBeenCalledWith(
+      'http://h:8/api/market-data/copy-data/schedules/gone',
+      expect.anything(),
+    );
+    expect(showToast).toHaveBeenCalledWith('market.copyScheduleUnavailable', 'info');
+  });
+
+  it('drops a duplicate delete while the first request is pending', async () => {
+    const store = makeStore();
+    store.schedules.value = [{ id: 's2', name: 'Nightly' }];
+    let release!: (response: Response) => void;
+    rawFetch.mockReturnValue(new Promise<Response>((resolve) => { release = resolve; }));
+
+    const firstDelete = store.deleteSchedule('s2');
+    const secondDelete = store.deleteSchedule('s2');
+    await secondDelete;
+    release(json({ success: true }));
+    await firstDelete;
+
+    const deleteCalls = rawFetch.mock.calls.filter(
+      (call) => (call[1] as RequestInit | undefined)?.method === 'DELETE',
+    );
+    expect(deleteCalls).toHaveLength(1);
   });
 
   it('reports run failures (:5236-5240)', async () => {

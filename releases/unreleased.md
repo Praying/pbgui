@@ -1,5 +1,11 @@
 # Unreleased
 
+## 合并远端 main v2.08.5-v2.08.6 并适配 Vue 3
+
+- 合并远端 `main` 的 4 个发布提交，纳入 PB8 worker、Vast GPU、服务监控、行情价格快照、Copy Data 计划和优化日志生命周期修复，以及对应 API、文档和回归测试。
+- 将 Copy Data 计划删除的并发/陈旧状态保护、Services Monitor 价格快照的请求代际与页面可见性保护，以及 Optimize 队列日志的 bfcache/轮询保护适配到 Vue 3 + Tailwind CSS v4.3 页面；优化日志弹窗保持响应式布局并恢复当前日志上下文。
+- API serial 从 `3174` 递增至 `3182`，使运行中的 PBGui 能识别合并后的 API/PBApiServer 运行时代码更新。
+
 ## 合并远端 main v2.08.1-v2.08.4 并适配 Vue 3
 
 - 合并远端 `main` 的 v2.08.1 至 v2.08.4，纳入 PB8 Loop 优化器、HSL 迁移、优化队列轮询、Dashboard candle reconciliation、AI 导航生命周期、VPS 更新确认、Services Monitor 状态轮询以及对应 API、文档和回归测试。

@@ -22,6 +22,9 @@ PRINT_ALLOWLIST = {
     "setup/vast_gpu_benchmark/prepare.py": "Isolated benchmark preparation CLI reports its export path.",
     "setup/vast_gpu_benchmark/sync_input.py": "Remote worker stdout is the machine-readable input publication protocol.",
     "setup/vast_gpu_benchmark/export_metric_contract.py": "CLI exports the machine-readable PB8 metric contract.",
+    "setup/vast_gpu_benchmark/reproduce_hsl_terminal_balance.py": "Disposable GPU reproduction CLI emits synthetic candidate results as JSON.",
+    "setup/vast_gpu_benchmark/probe_hsl_terminal_balance.py": "Disposable CUDA boundary probe emits non-secret synthetic results as JSON.",
+    "setup/vast_gpu_benchmark/verify_hsl_terminal_balance.py": "Offline artifact verification CLI reports its comparison result.",
     "setup/vast_gpu_benchmark/store_pull_key.py": "Credential storage CLI reports completion without secrets.",
     "pb7_guard.py": "PB7 guard is a human-facing install/update safety CLI.",
     "starter.py": "Starter is the human-facing service-control CLI.",
@@ -87,7 +90,7 @@ HUMAN_LOG_SERVICE_MODULES = {
 TIER_3_SERVICES = {
     "PB7Bridge",
     "TaskQueue",
-    "AIChat", "AIResearch", "PB8Loop", "OptimizerWorkload",
+    "AIChat", "AIResearch", "PB8Loop", "PB8Config", "OptimizerWorkload",
     "ApiKeyState", "ApiKeys", "ApiLogging", "Auth", "BacktestQueueAPI",
     "BalanceCalc", "BitgetUTA", "Cluster", "CoinDataUI", "Config", "Dashboard", "DbTools",
     "HyperliquidAWS", "LiveSession", "MarketDataAPI", "PB7OhlcvAPI", "PBV7UI",

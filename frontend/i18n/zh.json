@@ -1101,6 +1101,7 @@
   "market.copyScheduleColSchedule": "计划",
   "market.copyScheduleColTarget": "目标",
   "market.copyScheduleDeleted": "复制数据计划已删除。",
+  "market.copyScheduleUnavailable": "复制数据计划已不可用，正在更新计划列表。",
   "market.copySchedules": "复制计划",
   "market.copySchedulesNote": "将当前目标和交易所选择保存为定期复制任务。计划在 API 重启后仍保留。",
   "market.copyTestFailed": "复制数据连接测试失败。",

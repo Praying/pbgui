@@ -68,6 +68,7 @@ const importOpen = ref(false);
 const logOpen = ref(false);
 const logFilename = ref('');
 const logTitle = ref('');
+const optimizeLogStorageKey = `pbgui.optimize-log.${adapter.version}.v1`;
 const preflightOpen = ref(false);
 const preflightLoading = ref(false);
 const preflightData = ref<Record<string, unknown>>({});
@@ -117,7 +118,7 @@ function handleKeydown(event: KeyboardEvent): void {
   if (preflightOpen.value) { closePreflight(); return; }
   if (duplicateSource.value) { duplicateSource.value = ''; return; }
   if (confirmAction.value) { confirmAction.value = null; return; }
-  if (logOpen.value) { logOpen.value = false; return; }
+  if (logOpen.value) { closeQueueLog(); return; }
   if (actions.plot.value.open) { void actions.closePlot(); }
 }
 async function safely(action: () => Promise<void>): Promise<void> { try { await action(); } catch (error) { notify(detail(error), 'error'); } }
@@ -315,7 +316,54 @@ async function migrateSelected(): Promise<void> {
 }
 
 async function runQueueAction(filename: string, action: 'start' | 'stop' | 'restart' | 'requeue'): Promise<void> { await safely(() => page.queueAction(filename, action)); }
-function openQueueLog(row: QueueItem): void { logFilename.value = row.filename; logTitle.value = String(row.name || row.filename); logOpen.value = true; }
+
+function persistQueueLogTarget(target: { filename: string; title: string } | null): void {
+  try {
+    const existing = JSON.parse(window.sessionStorage.getItem(optimizeLogStorageKey) || '{}');
+    const state = existing && typeof existing === 'object' && !Array.isArray(existing) ? existing : {};
+    state.target = target ? { ...target, panel: 'queue', cloud: false, backtest: false } : null;
+    window.sessionStorage.setItem(optimizeLogStorageKey, JSON.stringify(state));
+  } catch {
+    // Session storage is optional; the live dialog continues without restoration.
+  }
+}
+
+function openQueueLog(row: QueueItem): void {
+  logFilename.value = row.filename;
+  logTitle.value = String(row.name || row.filename);
+  logOpen.value = true;
+  persistQueueLogTarget({ filename: logFilename.value, title: logTitle.value });
+}
+
+function closeQueueLog(): void {
+  logOpen.value = false;
+  persistQueueLogTarget(null);
+}
+
+function restoreQueueLog(): void {
+  let target: { filename?: unknown; title?: unknown; cloud?: unknown; backtest?: unknown } | null = null;
+  try {
+    const saved = JSON.parse(window.sessionStorage.getItem(optimizeLogStorageKey) || '{}');
+    if (saved && typeof saved === 'object' && !Array.isArray(saved)) target = saved.target ?? null;
+  } catch {
+    persistQueueLogTarget(null);
+    return;
+  }
+  const filename = String(target?.filename || '');
+  const isValidFilename = filename !== '' && filename !== '.' && filename !== '..' && !/[\\/\x00-\x1f\x7f]/.test(filename);
+  if (!target || target.cloud || target.backtest || !isValidFilename) {
+    if (target) persistQueueLogTarget(null);
+    return;
+  }
+  const row = page.queue.value.find((item) => item.filename === filename);
+  if (!row) {
+    persistQueueLogTarget(null);
+    notify(t('v7optimize.aiQueueItemGone'));
+    return;
+  }
+  page.setPanel('queue');
+  openQueueLog({ ...row, name: String(target.title || row.name || row.filename) });
+}
 
 /* Log dialog → results handoff (legacy openLogPanelResults/openLogPanelParetoExplorer):
    exact name/path match first, then substring, newest modified wins. */
@@ -342,7 +390,7 @@ function queueLogGoToResults(): void {
   if (match) void safely(() => page.selectResult(match));
   else page.resultSearch.value = queueLogResultQuery();
   page.setPanel('results');
-  logOpen.value = false;
+  closeQueueLog();
 }
 function queueLogOpenExplorer(): void {
   const match = findQueueLogResult();
@@ -504,6 +552,7 @@ onMounted(async () => {
   window.PBGUI_HELP_OPENER = openOptimizeHelp;
   page.connect();
   await page.loadAll();
+  restoreQueueLog();
   if (page.panel.value === 'paretos') await page.restoreSelectedResult();
   await handleIncomingDraft();
   try { pbguiDataPath.value = await actions.pbguiDataPath(); } catch { pbguiDataPath.value = ''; }
@@ -624,7 +673,7 @@ onBeforeUnmount(() => {
   <SettingsModal :open="page.settingsOpen.value" :settings="page.settings.value" @close="page.settingsOpen.value = false" @save="page.saveSettings" />
   <ImportConfigModal :open="importOpen" :archives="actions.archives.value" :configs="actions.archiveConfigs.value" :archive-name="actions.archiveName.value" :busy="actions.busy.value" @close="importOpen = false" @load-archives="actions.loadArchives" @load-configs="actions.loadArchiveConfigs" @local-import="importLocal" @archive-import="importArchive" />
   <PlotModal :plot="actions.plot.value" @close="actions.closePlot" />
-  <QueueLogPanel :open="logOpen" :filename="logFilename" :title="logTitle" :adapter="adapter" @close="logOpen = false" @open-results="queueLogGoToResults" @open-explorer="queueLogOpenExplorer" />
+  <QueueLogPanel :open="logOpen" :filename="logFilename" :title="logTitle" :adapter="adapter" @close="closeQueueLog" @open-results="queueLogGoToResults" @open-explorer="queueLogOpenExplorer" />
 
   <div v-if="page.queueConfigChoice.value" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop">
     <section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true">

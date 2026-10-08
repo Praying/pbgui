@@ -10,7 +10,7 @@
  * global — that dependency is why the dialog used to render empty).
  */
 import { PhTerminalWindow, PhX } from '@phosphor-icons/vue';
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { apiFetch } from '@/shared/api';
@@ -33,40 +33,72 @@ let pollTimer: number | undefined;
 let pollInFlight = false;
 /** Filename the in-flight request belongs to (legacy state.logFilename guard). */
 let pollFilename = '';
+let pollGeneration = 0;
+let pollController: AbortController | undefined;
 
 async function refreshStatus(): Promise<void> {
   if (pollInFlight || !pollFilename || document.visibilityState !== 'visible') return;
+  const generation = pollGeneration;
+  const filename = pollFilename;
+  const controller = new AbortController();
+  pollController = controller;
   pollInFlight = true;
   try {
     const payload = await apiFetch<OptimizeLogStatus>(
-      `${props.adapter.apiBase}/queue/${encodeURIComponent(pollFilename)}/status`,
+      `${props.adapter.apiBase}/queue/${encodeURIComponent(filename)}/status`,
+      { signal: controller.signal },
     );
-    if (!props.open || props.filename !== pollFilename) return;
+    if (generation !== pollGeneration || controller.signal.aborted || !props.open || props.filename !== filename) return;
     status.value = payload;
     statusError.value = '';
   } catch (error) {
-    if (!props.open || props.filename !== pollFilename) return;
+    if (generation !== pollGeneration || controller.signal.aborted || !props.open || props.filename !== filename) return;
     // Legacy refreshOptimizeLogStatus fallback: dashboard resets, activity
     // becomes "Status unavailable" and the error row carries the message.
     status.value = null;
     statusError.value = error instanceof Error ? error.message : String(error);
   } finally {
-    pollInFlight = false;
+    if (generation === pollGeneration) {
+      pollInFlight = false;
+      if (pollController === controller) pollController = undefined;
+    }
   }
 }
 
 function stopPolling(): void {
+  pollGeneration += 1;
+  pollController?.abort();
+  pollController = undefined;
+  pollInFlight = false;
   if (pollTimer !== undefined) window.clearInterval(pollTimer);
   pollTimer = undefined;
 }
 
 function startPolling(): void {
   stopPolling();
+  if (document.visibilityState !== 'visible') return;
+  pollGeneration += 1;
   pollFilename = props.filename;
   status.value = null;
   statusError.value = '';
   void refreshStatus();
   pollTimer = window.setInterval(() => { void refreshStatus(); }, STATUS_POLL_MS);
+}
+
+function handleVisibilityChange(): void {
+  if (document.visibilityState === 'visible') {
+    if (props.open && props.filename) startPolling();
+    return;
+  }
+  stopPolling();
+}
+
+function handlePageHide(): void {
+  stopPolling();
+}
+
+function handlePageShow(event: PageTransitionEvent): void {
+  if (event.persisted && props.open && props.filename) startPolling();
 }
 
 watch(
@@ -79,6 +111,18 @@ watch(
 );
 
 onBeforeUnmount(stopPolling);
+
+onMounted(() => {
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('pagehide', handlePageHide);
+  window.addEventListener('pageshow', handlePageShow);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('pagehide', handlePageHide);
+  window.removeEventListener('pageshow', handlePageShow);
+});
 
 const heading = () => t('v7optimize.optimizeLogWithName', { name: props.title || props.filename });
 </script>

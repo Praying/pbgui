@@ -57,7 +57,7 @@ export function ageCol(ts: number | string | null | undefined): string {
 </script>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { PhChartBar, PhMagnifyingGlass, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
@@ -84,6 +84,15 @@ const nowTick = ref(0);
 
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 let ageTimer: ReturnType<typeof setInterval> | undefined;
+let requestGeneration = 0;
+let requestController: AbortController | undefined;
+
+function cancelActiveRequest(): void {
+  requestGeneration += 1;
+  requestController?.abort();
+  requestController = undefined;
+  loading.value = false;
+}
 
 /* ── Legacy filteredPriceRows (po-search symbol/exchange match) ── */
 
@@ -100,20 +109,29 @@ const displayRows = computed<PriceRow[]>(() => {
 /* ── Legacy loadPricesOverlay ── */
 
 async function loadPrices(opts: { silent?: boolean } = {}): Promise<void> {
-  if (loading.value) return; // legacy _pricesLoading overlap guard
+  if (!open.value || document.hidden || loading.value) return; // legacy _pricesLoading overlap guard
+  const generation = ++requestGeneration;
+  const controller = new AbortController();
+  requestController = controller;
   loading.value = true;
   if (!opts.silent) {
     loadError.value = '';
     if (!rows.value.length) query.value = '';
   }
   try {
-    const data = await apiFetch<{ rows?: PriceRow[] }>(`${apiBase()}/prices-snapshot`);
+    const data = await apiFetch<{ rows?: PriceRow[] }>(`${apiBase()}/prices-snapshot`, { signal: controller.signal });
+    if (generation !== requestGeneration || controller.signal.aborted || document.hidden) return;
     rows.value = data.rows ?? [];
     loadError.value = '';
   } catch {
-    if (!opts.silent) loadError.value = t('sysmon.failedLoadPrices');
+    if (generation === requestGeneration && !controller.signal.aborted && !document.hidden && !opts.silent) {
+      loadError.value = t('sysmon.failedLoadPrices');
+    }
   } finally {
-    loading.value = false;
+    if (generation === requestGeneration) {
+      loading.value = false;
+      if (requestController === controller) requestController = undefined;
+    }
   }
 }
 
@@ -121,6 +139,7 @@ async function loadPrices(opts: { silent?: boolean } = {}): Promise<void> {
 
 function startAutoRefresh(): void {
   stopAutoRefresh();
+  if (!open.value || document.hidden) return;
   refreshTimer = setInterval(() => void loadPrices({ silent: true }), REFRESH_MS);
   ageTimer = setInterval(() => {
     nowTick.value += 1;
@@ -145,8 +164,37 @@ function openOverlay(): void {
 /** Legacy window.closePricesOverlay: stop timers and hide. */
 function closeOverlay(): void {
   stopAutoRefresh();
+  cancelActiveRequest();
   open.value = false;
 }
+
+function handleVisibilityChange(): void {
+  if (document.hidden) {
+    stopAutoRefresh();
+    cancelActiveRequest();
+    return;
+  }
+  if (!open.value) return;
+  startAutoRefresh();
+  void loadPrices({ silent: true });
+}
+
+function handlePageHide(): void {
+  stopAutoRefresh();
+  cancelActiveRequest();
+}
+
+function handlePageShow(event: PageTransitionEvent): void {
+  if (!event.persisted || document.hidden || !open.value) return;
+  startAutoRefresh();
+  void loadPrices({ silent: true });
+}
+
+onMounted(() => {
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('pagehide', handlePageHide);
+  window.addEventListener('pageshow', handlePageShow);
+});
 
 /* ── Legacy title-bar drag ── */
 
@@ -187,6 +235,10 @@ function onUp(): void {
 
 onUnmounted(() => {
   stopAutoRefresh();
+  cancelActiveRequest();
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('pagehide', handlePageHide);
+  window.removeEventListener('pageshow', handlePageShow);
   onUp();
 });
 
