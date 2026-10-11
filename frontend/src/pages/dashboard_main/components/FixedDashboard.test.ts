@@ -57,4 +57,28 @@ describe('FixedDashboard', () => {
     expect(wrapper.findAll('[data-test="shared-dashboard-filters"]')).toHaveLength(1);
     expect(wrapper.findAll('.msel-wrap')).toHaveLength(1);
   });
+
+  it('keeps the workspace header as the only h1 and the overview copy in the hero', () => {
+    const wrapper = mount(FixedDashboard, {
+      global: { plugins: [createI18n('en')] },
+    });
+
+    // The workspace header owns the page h1; the hero is a section heading.
+    expect(wrapper.find('.overview-intro h1').exists()).toBe(false);
+    expect(wrapper.find('.overview-intro h2').exists()).toBe(true);
+    expect(wrapper.find('.overview-copy').text()).toContain('A single live layout');
+  });
+
+  it('renders localized chart-mode labels and a localized live badge name', () => {
+    const en = mount(FixedDashboard, {
+      global: { plugins: [createI18n('en')] },
+    });
+    expect(en.find('[data-test="shared-mode-selector"]').text()).toContain('Bar');
+    expect(en.find('.overview-rhythm').attributes('aria-label')).toBe('Live');
+
+    const zh = mount(FixedDashboard, {
+      global: { plugins: [createI18n('zh')] },
+    });
+    expect(zh.find('[data-test="shared-mode-selector"]').text()).toContain('柱状图');
+  });
 });

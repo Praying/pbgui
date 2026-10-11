@@ -50,6 +50,20 @@ describe('fixed dashboard shell', () => {
     expect(wrapper.text()).toContain('Live overview');
   });
 
+  it('mirrors the Information/Dashboards nav path in the breadcrumb', () => {
+    const wrapper = mountApp();
+
+    expect(wrapper.find('.workspace-header__breadcrumb').text()).toContain('Information');
+  });
+
+  it('leaves the overview copy to the page hero instead of repeating it in the chrome', () => {
+    const wrapper = mountApp();
+
+    // The hero owns dash.fixedOverviewDescription; the workspace header
+    // must not echo the same sentence as a second description line.
+    expect(wrapper.text()).not.toContain('A single live layout');
+  });
+
   it('does not expose dashboard management or iframe controls', () => {
     expect(appSource).not.toContain('NewDashboardDialog');
     expect(appSource).not.toContain('DashboardList');

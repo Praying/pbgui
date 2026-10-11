@@ -62,6 +62,13 @@ function onModeChange(value: unknown): void {
   selectedMode.value = String(value);
 }
 
+/** Chart-mode display labels — the store keeps the raw 'bar'/'line' values. */
+function modeLabel(mode: string): string {
+  if (mode === 'bar') return t('dash.modeBar');
+  if (mode === 'line') return t('dash.modeLine');
+  return mode;
+}
+
 const store = useDashboardStore({
   apiBase,
   origName: '__fixed_overview__',
@@ -103,7 +110,7 @@ onUnmounted(() => {
     <div class="overview-intro">
       <div>
         <p class="overview-eyebrow">{{ t('dash.fixedLayout') }}</p>
-        <h1>{{ t('dash.fixedOverview') }}</h1>
+        <h2>{{ t('dash.fixedOverview') }}</h2>
         <p class="overview-copy">{{ t('dash.fixedOverviewDescription') }}</p>
       </div>
       <div class="overview-actions">
@@ -122,10 +129,10 @@ onUnmounted(() => {
               :aria-label="t('dash.mode')"
               data-test="shared-mode-selector"
             >
-              <span>{{ selectedMode }}</span>
+              <span>{{ modeLabel(selectedMode) }}</span>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem v-for="mode in MODES" :key="mode" :value="mode">{{ mode }}</SelectItem>
+              <SelectItem v-for="mode in MODES" :key="mode" :value="mode">{{ modeLabel(mode) }}</SelectItem>
             </SelectContent>
           </SelectRoot>
         </div>
@@ -137,7 +144,7 @@ onUnmounted(() => {
             :aria-label="t('dash.users')"
           />
         </div>
-        <div class="overview-rhythm" aria-label="Live data">
+        <div class="overview-rhythm" :aria-label="t('dash.live')">
           <span class="overview-rhythm__dot" aria-hidden="true" />
           <span>{{ t('dash.live') }}</span>
         </div>
@@ -200,20 +207,22 @@ onUnmounted(() => {
   text-transform: uppercase;
 }
 
-.overview-intro h1 {
+.overview-intro h2 {
   margin: 0;
   color: var(--text-primary);
-  font-size: var(--text-xl);
+  font-size: var(--text-2xl);
   font-weight: 600;
   letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
 }
 
 .overview-copy {
-  max-width: 58rem;
+  max-width: 34rem;
   margin: 7px 0 0;
   color: var(--text-muted);
   font-size: var(--text-sm);
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .overview-rhythm {
@@ -280,6 +289,19 @@ onUnmounted(() => {
   border-radius: 50%;
   background: var(--success);
   box-shadow: 0 0 0 3px rgb(var(--success-rgb) / 0.13);
+  animation: overview-live-pulse 2.4s ease-in-out infinite;
+}
+
+/* The live indicator breathes between a tight and a soft success ring. */
+@keyframes overview-live-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgb(var(--success-rgb) / 0.13);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px rgb(var(--success-rgb) / 0.04);
+  }
 }
 
 .overview-grid {
@@ -347,6 +369,7 @@ onUnmounted(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .overview-rhythm__dot {
+    animation: none;
     box-shadow: none;
   }
 }

@@ -275,6 +275,8 @@
   "dash.minutesAgo": "{n}m ago",
   "dash.mixedLiveDb": "Mixed live/DB",
   "dash.mode": "Mode",
+  "dash.modeBar": "Bar",
+  "dash.modeLine": "Line",
   "dash.myTemplates": "My templates",
   "dash.nTemplates": "{count} templates",
   "dash.nUsers": "{count} users",

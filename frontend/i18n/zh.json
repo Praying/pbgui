@@ -275,6 +275,8 @@
   "dash.minutesAgo": "{n} 分钟前",
   "dash.mixedLiveDb": "实时/数据库混合",
   "dash.mode": "模式",
+  "dash.modeBar": "柱状图",
+  "dash.modeLine": "折线图",
   "dash.myTemplates": "我的模板",
   "dash.nTemplates": "{count} 个模板",
   "dash.nUsers": "{count} 个用户",

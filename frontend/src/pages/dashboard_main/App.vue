@@ -22,8 +22,8 @@ onUnmounted(() => {
   <AppShell
     class="core-workbench-shell data-page-shell data-page-shell--dashboard-main"
     page-key="dashboards"
+    :page-family="t('nav.information')"
     :page-title="t('dash.dashboards')"
-    :page-description="t('dash.fixedOverviewDescription')"
     :status-text="t('dash.liveOverview')"
     status-tone="success"
   >
