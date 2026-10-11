@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PBGui — %%BACKTEST_LABEL%% Backtest</title>
+<script src="/app/i18n.js?v=1"></script>
 <script src="/app/plotly.min.js?v=1"></script>
 <link rel="stylesheet" href="/app/css/modals_shared.css?v=3">
 <script src="/app/js/backtest_shell.js?v=5"></script>
-<script src="/app/js/backtest_editor_adapter.js?v=12"></script>
+<script src="/app/js/backtest_editor_adapter.js?v=13"></script>
 <script src="/app/js/backtest_advanced_fields.js?v=2"></script>
   <link rel="stylesheet" href="/app/css/sidebar.css?v=6">
   <link rel="stylesheet" href="/app/css/sidebar_controls.css?v=2">
@@ -1987,11 +1988,11 @@ function renderConfigs() {
     return;
   }
   var html = '<table class="tbl"><thead><tr>' +
-    thSort('Name', 'name') + thSort('Exchange', 'exchanges') +
-    (backtestEditorAdapter.isV8 ? thSort('Strategy', 'strategy') : '') + thSort('Coins', 'coins') +
-    thSort('TWE L/S', 'twe_long') + thSort('Start', 'start_date') + thSort('End', 'end_date') +
-    thSort('Results', 'results') + thSort('Modified', 'modified') +
-    '<th>Actions</th></tr></thead><tbody>';
+    thSort(PBGuiI18n.t('v7backtest.name'), 'name') + thSort(PBGuiI18n.t('v7backtest.exchange'), 'exchanges') +
+    (backtestEditorAdapter.isV8 ? thSort(PBGuiI18n.t('v7backtest.strategy'), 'strategy') : '') + thSort(PBGuiI18n.t('v7backtest.coins'), 'coins') +
+    thSort('TWE L/S', 'twe_long') + thSort(PBGuiI18n.t('v7backtest.start'), 'start_date') + thSort(PBGuiI18n.t('v7backtest.end'), 'end_date') +
+    thSort(PBGuiI18n.t('v7backtest.results'), 'results') + thSort(PBGuiI18n.t('v7backtest.modified'), 'modified') +
+    '<th>' + PBGuiI18n.t('v7backtest.actions') + '</th></tr></thead><tbody>';
 
   sorted.forEach(function(c) {
     var convertAction = backtestEditorAdapter.isV8 ? '' :
