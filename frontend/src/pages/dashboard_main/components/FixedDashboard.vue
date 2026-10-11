@@ -114,37 +114,41 @@ onUnmounted(() => {
         <p class="overview-copy">{{ t('dash.fixedOverviewDescription') }}</p>
       </div>
       <div class="overview-actions">
-        <div class="overview-filter-group" data-test="shared-dashboard-filters">
+        <div class="overview-pill overview-filter-group" data-test="shared-dashboard-filters">
           <div class="overview-filter-control" data-test="shared-period-selector">
             <PeriodControls :period="selectedPeriod" @update:period="onPeriodChange" />
           </div>
-          <span :class="dtMetaSepClass">·</span>
-          <span :class="dtMetaLblClass">{{ t('dash.mode') }}</span>
-          <SelectRoot
-            :model-value="selectedMode"
-            @update:model-value="onModeChange"
-          >
-            <SelectTrigger
-              :class="dtCtrlSelClass"
-              :aria-label="t('dash.mode')"
-              data-test="shared-mode-selector"
+          <!-- Mode is one atomic unit so the group wrap can never split its
+               label from the select. -->
+          <div class="overview-filter-control">
+            <span :class="dtMetaSepClass">·</span>
+            <span :class="dtMetaLblClass">{{ t('dash.mode') }}</span>
+            <SelectRoot
+              :model-value="selectedMode"
+              @update:model-value="onModeChange"
             >
-              <span>{{ modeLabel(selectedMode) }}</span>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="mode in MODES" :key="mode" :value="mode">{{ modeLabel(mode) }}</SelectItem>
-            </SelectContent>
-          </SelectRoot>
+              <SelectTrigger
+                :class="dtCtrlSelClass"
+                :aria-label="t('dash.mode')"
+                data-test="shared-mode-selector"
+              >
+                <span>{{ modeLabel(selectedMode) }}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="mode in MODES" :key="mode" :value="mode">{{ modeLabel(mode) }}</SelectItem>
+              </SelectContent>
+            </SelectRoot>
+          </div>
         </div>
-        <div class="overview-user-filter" data-test="shared-user-selector">
-          <span class="overview-user-filter__label">{{ t('dash.users') }}</span>
+        <div class="overview-pill overview-user-filter" data-test="shared-user-selector">
+          <span :class="dtMetaLblClass">{{ t('dash.users') }}</span>
           <MultiSelectDropdown
             v-model="selectedUsers"
             :users="allUsers"
             :aria-label="t('dash.users')"
           />
         </div>
-        <div class="overview-rhythm" :aria-label="t('dash.live')">
+        <div class="overview-pill overview-rhythm" :aria-label="t('dash.live')">
           <span class="overview-rhythm__dot" aria-hidden="true" />
           <span>{{ t('dash.live') }}</span>
         </div>
@@ -225,22 +229,6 @@ onUnmounted(() => {
   text-wrap: pretty;
 }
 
-.overview-rhythm {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  gap: 7px;
-  padding: 7px 10px;
-  border: 1px solid rgb(var(--success-rgb) / 0.25);
-  border-radius: var(--radius-md);
-  background: rgb(var(--success-rgb) / 0.07);
-  color: var(--success-soft);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-}
-
 .overview-actions {
   display: flex;
   align-items: center;
@@ -249,38 +237,50 @@ onUnmounted(() => {
   gap: var(--sp-sm);
 }
 
-.overview-filter-group {
+/* Shared capsule chrome for the period/mode, user and live pills — one
+   padding, one gap and one min-height so the row keeps a single baseline
+   (the min-height matches the h-8 select + 5px padding + borders). */
+.overview-pill {
   display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 7px;
+  gap: var(--sp-sm);
+  min-height: 2.75rem;
   padding: 5px 8px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   background: var(--surface-panel);
+}
+
+/* Tone override — must follow .overview-pill so it wins the border-color
+   and background equal-specificity race. */
+.overview-rhythm {
+  flex: 0 0 auto;
+  border-color: rgb(var(--success-rgb) / 0.25);
+  background: rgb(var(--success-rgb) / 0.07);
+  color: var(--success-soft);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.overview-filter-group {
+  flex-wrap: wrap;
 }
 
 .overview-filter-control {
   display: inline-flex;
   align-items: center;
+  gap: var(--sp-sm);
 }
 
-.overview-user-filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 8px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-panel);
-}
-
-.overview-user-filter__label {
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+/* Host sizing for the page-level user pill — MultiSelectDropdown's root
+   carries w-full, and its .dt-meta-controls host rule does not apply here.
+   width: auto sizes the dropdown to its content; the max-width keeps long
+   user lists truncating instead of stretching the pill row. */
+.overview-user-filter :deep(.msel-wrap) {
+  width: auto;
+  max-width: 14rem;
 }
 
 .overview-rhythm__dot {

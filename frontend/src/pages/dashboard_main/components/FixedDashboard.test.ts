@@ -81,4 +81,19 @@ describe('FixedDashboard', () => {
     });
     expect(zh.find('[data-test="shared-mode-selector"]').text()).toContain('柱状图');
   });
+
+  it('keeps the action pills on one shared capsule rhythm', () => {
+    const wrapper = mount(FixedDashboard, {
+      global: { plugins: [createI18n('en')] },
+    });
+
+    // All three pills share the .overview-pill chrome (one padding/gap/height).
+    expect(wrapper.findAll('.overview-pill')).toHaveLength(3);
+    // The users label uses the same meta-label class as Period/Mode — the
+    // nowrap + shrink-0 keeps MultiSelectDropdown's w-full from crushing it.
+    expect(wrapper.find('.overview-user-filter .dt-meta-lbl').exists()).toBe(true);
+    expect(wrapper.find('.overview-user-filter__label').exists()).toBe(false);
+    // Mode label + select form one atomic unit that cannot wrap apart.
+    expect(wrapper.find('.overview-filter-control [data-test="shared-mode-selector"]').exists()).toBe(true);
+  });
 });
