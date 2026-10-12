@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<ChartFrameProps>(), {
 
 <template>
   <section
-    class="flex min-h-0 flex-col rounded-lg border border-border-default bg-panel p-4"
+    class="chart-frame flex min-h-0 flex-col rounded-lg border border-border-default bg-panel p-4"
     :data-chart-frame="props.state"
     :aria-label="props.title"
   >

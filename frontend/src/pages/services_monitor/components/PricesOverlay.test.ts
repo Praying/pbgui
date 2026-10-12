@@ -162,7 +162,7 @@ describe('PricesOverlay table rendering (legacy renderTable/fmtPrice/fmtAge/ageC
 
     expect(rows[3]!.findAll('td')[3]!.text()).toBe('—');
     expect(rows[3]!.findAll('td')[4]!.text()).toBe('—');
-    expect(rows[3]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(153, 153, 153)');
+    expect(rows[3]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(137, 163, 173)');
   });
 
   it('renders the header labels from the legacy keys', async () => {
