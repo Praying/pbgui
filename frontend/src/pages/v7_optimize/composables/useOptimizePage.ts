@@ -44,6 +44,11 @@ export interface QueueConfigChoice {
   intent: 'edit' | 'start' | 'stop' | 'restart' | 'requeue';
 }
 
+export interface QueueSaveError {
+  message: string;
+  details: string[];
+}
+
 export type OptimizeBannerState = 'ok' | 'lost' | 'waiting';
 
 function detailOf(error: unknown): string {
@@ -94,11 +99,13 @@ export function useOptimizePage(options: OptimizePageOptions) {
   const editorJson = ref('');
   const editorDraft = ref<OptimizeEditorDraft | null>(null);
   const editorParamStatus = ref<Record<string, unknown>>({});
+  const editorMigrationReport = ref<Record<string, unknown> | null>(null);
   const editorError = ref('');
   const editorOpen = ref(false);
   const editorSaving = ref(false);
   const settingsOpen = ref(false);
   const queueConfigChoice = ref<QueueConfigChoice | null>(null);
+  const queueSaveError = ref<QueueSaveError | null>(null);
   const loading = ref(false);
   const resultsLoading = ref(false);
   const error = ref('');
@@ -541,6 +548,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
     editorDraft.value = buildEditorDraft(data.config, adapter.version, resolvedName, data.override_configs);
     const rawParamStatus = data.param_status ?? getPath(data.config, '_pbgui_param_status', {});
     editorParamStatus.value = isObject(rawParamStatus) ? rawParamStatus : {};
+    editorMigrationReport.value = isObject(data.migration_report) ? data.migration_report : null;
     editorJson.value = prettyJson(data.config);
     editorOpen.value = true;
   }
@@ -615,6 +623,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
     editorOpen.value = false;
     editorDraft.value = null;
     editorParamStatus.value = {};
+    editorMigrationReport.value = null;
     editorQueueFilename.value = '';
     editorSourceName.value = '';
     editorError.value = '';
@@ -629,11 +638,16 @@ export function useOptimizePage(options: OptimizePageOptions) {
       return;
     }
     editorSaving.value = true;
+    queueSaveError.value = null;
     try {
       draft.name = name;
       const config = collectEditorConfig(draft, adapter.version);
       const encoded = encodeURIComponent(name);
-      const saveBody = adapter.isV8 ? { config, override_configs: draft.overrideConfigs } : config;
+      const saveBody = adapter.isV8 ? {
+        config,
+        override_configs: draft.overrideConfigs,
+        ...(editorMigrationReport.value ? { migration_report: editorMigrationReport.value } : {}),
+      } : config;
       await request(`/configs/${encoded}`, { method: 'PUT', body: JSON.stringify(saveBody) });
       if (queueAfterSave) {
         const execution = isObject(config.pbgui) ? String(config.pbgui.execution || '').trim().toLowerCase() : '';
@@ -662,9 +676,20 @@ export function useOptimizePage(options: OptimizePageOptions) {
     } catch (caught) {
       editorError.value = detailOf(caught);
       notify(editorError.value, 'error');
+      if (queueAfterSave) {
+        const validation = (caught as { validation?: { errors?: Array<{ path?: string; message?: string }> } } | null)?.validation;
+        queueSaveError.value = {
+          message: editorError.value || 'Could not queue config.',
+          details: (validation?.errors ?? []).map((issue) => `${issue.path ? `${issue.path}: ` : ''}${String(issue.message || '')}`).filter(Boolean),
+        };
+      }
     } finally {
       editorSaving.value = false;
     }
+  }
+
+  function closeQueueSaveError(): void {
+    queueSaveError.value = null;
   }
 
   async function duplicateConfig(name: string, copyName: string): Promise<void> {
@@ -868,11 +893,13 @@ export function useOptimizePage(options: OptimizePageOptions) {
     editorJson,
     editorDraft,
     editorParamStatus,
+    editorMigrationReport,
     editorError,
     editorOpen,
     editorSaving,
     settingsOpen,
     queueConfigChoice,
+    queueSaveError,
     loading,
     resultsLoading,
     error,
@@ -906,6 +933,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
     openResultConfig,
     closeEditor,
     saveEditor,
+    closeQueueSaveError,
     duplicateConfig,
     deleteConfigs,
     queueConfigs,

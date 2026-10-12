@@ -35,6 +35,7 @@ import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { Modal } from '@/shared/components/ui/modal';
 import { PageToolbar, PanelHeader } from '@/shared/components/ui/workbench-primitives';
 import { currentOptimizeAdapter, readIncomingDraft } from './config';
 import ConfigEditorModal from './components/ConfigEditorModal.vue';
@@ -55,7 +56,7 @@ import type { OptimizePanel } from './config';
 import type { ParetoItem, QueueItem, ResultSummary } from './types';
 import type { PageSection } from '@/shared/navigation';
 import { applyOptimizeSeed, buildEditorDraft, collectEditorConfig, type OptimizeEditorDraft } from './lib/configModel';
-import { queueVastConfig } from './lib/vastApi';
+import { queueVastConfig, validateVastConfig } from './lib/vastApi';
 import '@/styles/tailwind.css';
 
 const { t } = useI18n();
@@ -111,6 +112,7 @@ function handlePageShow(): void { void refreshLiveResults(true); }
 function handleVisibilityChange(): void { if (document.visibilityState === 'visible') void refreshLiveResults(true); }
 function handleKeydown(event: KeyboardEvent): void {
   if (event.key !== 'Escape') return;
+  if (page.queueSaveError.value) return;
   if (page.editorOpen.value) { page.closeEditor(); return; }
   if (importOpen.value) { importOpen.value = false; return; }
   if (page.settingsOpen.value) { page.settingsOpen.value = false; return; }
@@ -669,7 +671,23 @@ onBeforeUnmount(() => {
   </div>
   </AppShell>
 
-  <ConfigEditorModal :open="page.editorOpen.value" :draft="page.editorDraft.value" :version="adapter.version" :error="page.editorError.value" :param-status="page.editorParamStatus.value" :limits-meta="page.settings.value.limitsMeta" :exchange-options="(page.settings.value.exchange_options as string[] | undefined) || []" :bot-params="(page.settings.value.bot_params as string[] | undefined) || []" :hsl-modes="(page.settings.value.hsl_signal_modes as string[] | undefined) || []" :backend-options="(page.settings.value.optimize_backend_options as string[] | undefined) || []" :backend-contract="(page.settings.value.backend_contract as Record<string, unknown> | undefined) || null" :optimize-defaults="(page.settings.value.optimize_defaults as Record<string, unknown> | undefined) || {}" :optimizer-overrides="(page.settings.value.optimizer_overrides as string[] | undefined) || []" :fixed-runtime-overrides="(page.settings.value.fixed_runtime_overrides as Record<string, unknown> | undefined) || {}" :runtime-options="(page.settings.value.runtime_options as Record<string, unknown> | undefined) || {}" :strategy-defaults="(page.settings.value.strategy_defaults as Record<string, unknown> | undefined) || {}" :active-bounds="(page.settings.value.active_bounds as Record<string, unknown> | undefined) || {}" :pymoo-algorithm-options="(page.settings.value.pymoo_algorithm_options as string[] | undefined) || []" :pymoo-ref-dir-method-options="(page.settings.value.pymoo_ref_dir_method_options as string[] | undefined) || []" :strategy-options="(page.settings.value.strategies as string[] | undefined) || []" :pbgui-data-path="pbguiDataPath" :load-symbols="actions.loadSymbols" :preview-scenario-template="actions.previewScenarioTemplate" :start-ohlcv-lookup="actions.startOhlcvStartDateLookup" :load-ohlcv-lookup="actions.loadOhlcvStartDateLookup" :stop-ohlcv-lookup="actions.stopOhlcvStartDateLookup" @close="page.closeEditor" @save="saveEditor" @preflight="runPreflight" />
+  <ConfigEditorModal :open="page.editorOpen.value" :draft="page.editorDraft.value" :version="adapter.version" :error="page.editorError.value" :param-status="page.editorParamStatus.value" :limits-meta="page.settings.value.limitsMeta" :exchange-options="(page.settings.value.exchange_options as string[] | undefined) || []" :bot-params="(page.settings.value.bot_params as string[] | undefined) || []" :hsl-modes="(page.settings.value.hsl_signal_modes as string[] | undefined) || []" :backend-options="(page.settings.value.optimize_backend_options as string[] | undefined) || []" :backend-contract="(page.settings.value.backend_contract as Record<string, unknown> | undefined) || null" :optimize-defaults="(page.settings.value.optimize_defaults as Record<string, unknown> | undefined) || {}" :optimizer-overrides="(page.settings.value.optimizer_overrides as string[] | undefined) || []" :fixed-runtime-overrides="(page.settings.value.fixed_runtime_overrides as Record<string, unknown> | undefined) || {}" :runtime-options="(page.settings.value.runtime_options as Record<string, unknown> | undefined) || {}" :strategy-defaults="(page.settings.value.strategy_defaults as Record<string, unknown> | undefined) || {}" :active-bounds="(page.settings.value.active_bounds as Record<string, unknown> | undefined) || {}" :pymoo-algorithm-options="(page.settings.value.pymoo_algorithm_options as string[] | undefined) || []" :pymoo-ref-dir-method-options="(page.settings.value.pymoo_ref_dir_method_options as string[] | undefined) || []" :strategy-options="(page.settings.value.strategies as string[] | undefined) || []" :pbgui-data-path="pbguiDataPath" :host-cpu-count="Number(page.settings.value.host_cpu_count || page.settings.value.cpu_max || 1)" :load-symbols="actions.loadSymbols" :preview-scenario-template="actions.previewScenarioTemplate" :start-ohlcv-lookup="actions.startOhlcvStartDateLookup" :load-ohlcv-lookup="actions.loadOhlcvStartDateLookup" :stop-ohlcv-lookup="actions.stopOhlcvStartDateLookup" :validate-vast-config="validateVastConfig" @close="page.closeEditor" @save="saveEditor" @preflight="runPreflight" />
+  <Modal
+    :open="!!page.queueSaveError.value"
+    :title="t('v7optimize.cannotQueueConfiguration')"
+    :description="page.queueSaveError.value?.message || t('v7optimize.cannotQueueConfiguration')"
+    :dismissable="false"
+    :backdrop-close="false"
+    panel-class="w-[min(520px,calc(100vw-30px))] border-danger/45"
+  >
+    <template v-if="page.queueSaveError.value">
+      <p class="text-sm leading-6 text-primary">{{ page.queueSaveError.value.message }}</p>
+      <ul v-if="page.queueSaveError.value.details.length" class="grid gap-1.5 text-xs leading-5 text-secondary">
+        <li v-for="detailLine in page.queueSaveError.value.details" :key="detailLine">{{ detailLine }}</li>
+      </ul>
+    </template>
+    <template #footer><Button type="button" variant="info" @click="page.closeQueueSaveError">{{ t('common.ok') }}</Button></template>
+  </Modal>
   <SettingsModal :open="page.settingsOpen.value" :settings="page.settings.value" @close="page.settingsOpen.value = false" @save="page.saveSettings" />
   <ImportConfigModal :open="importOpen" :archives="actions.archives.value" :configs="actions.archiveConfigs.value" :archive-name="actions.archiveName.value" :busy="actions.busy.value" @close="importOpen = false" @load-archives="actions.loadArchives" @load-configs="actions.loadArchiveConfigs" @local-import="importLocal" @archive-import="importArchive" />
   <PlotModal :plot="actions.plot.value" @close="actions.closePlot" />

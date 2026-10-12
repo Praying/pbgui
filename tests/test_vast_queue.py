@@ -10,6 +10,7 @@ from vast_jobs import JobStore, write_json, IMAGE, REVISION
 from vast_queue import CloudQueue, worker_step
 from vast_job_runner import rental_payload
 from setup.vast_gpu_benchmark import cloud_worker
+from vast_direction_fixtures import direction_config
 
 
 @pytest.fixture
@@ -26,6 +27,9 @@ def queue(tmp_path):
         write_json(directory/'control.json', {'stop':False,'cleanup':False})
         write_json(directory/'intent.json', {'id':identifier,'image':IMAGE,'pb8_revision':REVISION,
                    'transfer_reserve_usd':1,'offer':{'download_gb_usd':.01,'upload_gb_usd':.01}})
+        if i:
+            ensure_private_directory(directory / 'input')
+            write_json(directory / 'input/optimize.json', direction_config())
     queue.update(worker_id=worker)
     return queue, worker
 
@@ -87,6 +91,28 @@ def test_reserved_rental_job_profiles_are_bounded_and_target_waiting_jobs(queue)
         queue.set_rental_gpu_profile(worker, None, profiles)
     assert exc.value.status == 409
     assert queue.store.read(worker, 'intent.json')['rental_job_gpu_profiles'] == profiles
+
+
+def test_reserved_rental_profile_cannot_select_incompatible_waiting_job(queue):
+    """An older rental rejects a per-job profile for a new HSL snapshot."""
+    from vast_provider import VastError
+    queue, worker = queue
+    queue.store.update(worker, awaiting_queue_start=True)
+    intent = queue.store.read(worker, 'intent.json')
+    intent.update(image='ghcr.io/msei99/pbgui-pb8-worker@sha256:47032b1e42076555a29909a9b888cd24efb69dec6ccd80d06ac26b0bc653ac99',
+                  pb8_revision='00ce7d0ddf123071ae67db149753d6b3619f52ac')
+    write_json(queue.store.directory(worker) / 'intent.json', intent)
+    first = 'b' * 32
+    config = queue.store.read(first, 'input/optimize.json')
+    config['bot']['long'].setdefault('hsl', {})['scale_budget_with_excess_allowance'] = True
+    write_json(queue.store.directory(first) / 'input/optimize.json', config)
+    before = queue.store.read(worker, 'intent.json')
+    with pytest.raises(VastError):
+        queue.set_rental_gpu_profile(worker, None, {first: {
+            'population_size': 7168, 'batch_size': 7168,
+            'max_dispatch_candidate_bars': 130_170_880_000}})
+    assert queue.store.read(worker, 'intent.json') == before
+    assert queue.store.read(first)['status'] == 'ready'
 
 def test_completed_calibration_worker_cleans_up_without_claiming_normal_job(queue):
     """An isolated calibration rental can never fall through to ordinary queue work."""
@@ -643,6 +669,7 @@ def test_missing_local_metadata_blocks_rental_before_worker_creation(tmp_path, m
     store.update(row['id'], status='ready', exchanges=['bybit'])
     input_dir = store.directory(row['id']) / 'input'
     input_dir.mkdir()
+    write_json(input_dir / 'optimize.json', direction_config())
     manifest = {'files': [{'path': 'ohlcv/bybit/1m/BTC_USDT:USDT/2024-01-01.npy'}]}
     if expired_bundle:
         manifest['public_market_cache_mtimes'] = {'bybit': time.time() - 86401}

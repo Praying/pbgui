@@ -3922,7 +3922,7 @@ def get_config(name: str, session: SessionToken = Depends(require_auth)) -> dict
         with _config_lock():
             if not path.is_file() or path.is_symlink():
                 raise HTTPException(status_code=404, detail=f"Config '{name}' not found")
-            editor_payload = load_pb8_editor_config(path, loader=load_pb8_config)
+            editor_payload = load_pb8_editor_config(path, loader=load_pb8_config, report_changes=True)
             config = editor_payload["config"]
             return {
                 **editor_payload,
@@ -4198,7 +4198,7 @@ def add_to_queue(body: dict, session: SessionToken = Depends(require_auth)) -> d
             from vast_provider import VastError
             try:
                 opt = prepared.get("optimize") or {}
-                workers = (opt.get("gpu") or {}).get("exact_workers") or opt.get("n_cpus", 4)
+                workers = (opt.get("gpu") or {}).get("exact_workers") or opt.get("n_cpus") or 4
                 job = JobStore().prepare(name, prepared, source_hash, Path(PBGDIR) / "data/ohlcv",
                                         Path(PBGDIR) / "data/coindata", _results_root(), opt.get("iters", 512), workers, False)
                 return {"ok": True, "filename": job["id"], "execution": "vast"}
@@ -5011,7 +5011,6 @@ def get_queue_status(filename: str, session: SessionToken = Depends(require_auth
     pymoo = optimize.get("pymoo") if isinstance(optimize.get("pymoo"), dict) else {}
     specs = _pareto_objective_specs(config)
     progress = _active_queue_item_progress(filename, status=item["status"])
-    queue_items = _load_queue()
     target = None
     for key in ("iters", "max_evaluations", "n_evaluations"):
         try:

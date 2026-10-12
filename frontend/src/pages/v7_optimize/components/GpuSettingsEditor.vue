@@ -18,6 +18,7 @@ const props = defineProps<{
   gpu: JsonObject;
   optimizeDefaults: Record<string, unknown>;
   contract: unknown;
+  invalidPaths?: ReadonlySet<string>;
 }>();
 const emit = defineEmits<{ 'update:gpu': [value: JsonObject] }>();
 const { t } = useI18n();
@@ -29,6 +30,9 @@ const halvingDefaults = computed<JsonObject>(() => {
   return isObject(value) ? value : {};
 });
 const unavailableMessage = computed(() => gpuUnavailableMessage(capability.value));
+function invalid(key: string): 'true' | undefined {
+  return props.invalidPaths?.has(`optimize.gpu.${key}`) ? 'true' : undefined;
+}
 
 function halvingObject(): JsonObject {
   const current = props.gpu.successive_halving;
@@ -67,11 +71,15 @@ function nullablePositiveInteger(value: string): number | null | string {
   const parsed = Number(text);
   return Number.isFinite(parsed) ? Math.max(1, Math.round(parsed)) : text;
 }
-function nonnegativeInteger(value: string): number | string {
+function nullableNonnegativeInteger(value: string): number | null | string {
   const text = value.trim();
-  if (!text) return 0;
+  if (!text) return null;
   const parsed = Number(text);
   return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : text;
+}
+function nonnegativeInteger(value: string): number | string {
+  const parsed = nullableNonnegativeInteger(value);
+  return parsed === null ? 0 : parsed;
 }
 function numeric(value: string): number | string {
   const text = value.trim();
@@ -110,13 +118,13 @@ const headingLabel = 'col-span-4 text-xs font-semibold text-secondary max-[600px
     <div :class="fieldGrid">
       <div :class="headingLabel">Automatic sizing</div>
       <label><Checkbox data-field="gpu-auto-lean" :model-value="fieldValue('auto_lean_parallelism') !== false" @update:model-value="emitField('auto_lean_parallelism', ($event === true))" /> <span :data-tip="t('v7optimize.tip.gpu.auto_lean_parallelism')">auto_lean_parallelism</span></label>
-      <label :class="fieldLabel"><span :data-tip="t('v7optimize.tip.gpu.population_size')">population_size</span><Input data-field="gpu-population-size" type="number" step="1" :placeholder="gpuAutoPlaceholder(capability, 'population_size')" :model-value="fieldText('population_size')" @update:model-value="emitField('population_size', nullablePositiveInteger(String($event ?? '')))" /></label>
+      <label :class="fieldLabel"><span :data-tip="t('v7optimize.tip.gpu.population_size')">population_size</span><Input data-field="gpu-population-size" type="number" step="1" :aria-invalid="invalid('population_size')" :placeholder="gpuAutoPlaceholder(capability, 'population_size')" :model-value="fieldText('population_size')" @update:model-value="emitField('population_size', nullablePositiveInteger(String($event ?? '')))" /></label>
       <label :class="fieldLabel"><span :data-tip="t('v7optimize.tip.gpu.batch_size')">batch_size</span><Input data-field="gpu-batch-size" type="number" step="1" :placeholder="gpuAutoPlaceholder(capability, 'batch_size')" :model-value="fieldText('batch_size')" @update:model-value="emitField('batch_size', nullablePositiveInteger(String($event ?? '')))" /></label>
       <label :class="fieldLabel"><span :data-tip="t('v7optimize.tip.gpu.max_dispatch_candidate_bars')">max_dispatch_candidate_bars</span><Input data-field="gpu-max-dispatch-bars" type="number" step="1" :placeholder="gpuAutoPlaceholder(capability, 'max_dispatch_candidate_bars')" :model-value="fieldText('max_dispatch_candidate_bars')" @update:model-value="emitField('max_dispatch_candidate_bars', nullablePositiveInteger(String($event ?? '')))" /></label>
 
       <div :class="headingLabel">Exact validation &amp; checkpointing</div>
-      <label :class="fieldLabel"><span :data-tip="t('v7optimize.tip.gpu.exact_workers')">exact_workers</span><Input data-field="gpu-exact-workers" type="number" step="1" :model-value="fieldText('exact_workers')" @update:model-value="emitField('exact_workers', nonnegativeInteger(String($event ?? '')))" /></label>
-      <label :class="fieldLabel"><span :data-tip="t('v7optimize.tip.gpu.max_pending_exact')">max_pending_exact</span><Input data-field="gpu-max-pending-exact" type="number" step="1" :model-value="fieldText('max_pending_exact')" @update:model-value="emitField('max_pending_exact', nonnegativeInteger(String($event ?? '')))" /></label>
+      <label :class="fieldLabel"><span :data-tip="t('v7optimize.tip.gpu.exact_workers')">exact_workers</span><Input data-field="gpu-exact-workers" type="number" step="1" placeholder="Auto" :aria-invalid="invalid('exact_workers')" :model-value="fieldText('exact_workers')" @update:model-value="emitField('exact_workers', nullableNonnegativeInteger(String($event ?? '')))" /></label>
+      <label :class="fieldLabel"><span :data-tip="t('v7optimize.tip.gpu.max_pending_exact')">max_pending_exact</span><Input data-field="gpu-max-pending-exact" type="number" step="1" placeholder="Auto" :aria-invalid="invalid('max_pending_exact')" :model-value="fieldText('max_pending_exact')" @update:model-value="emitField('max_pending_exact', nullableNonnegativeInteger(String($event ?? '')))" /></label>
       <label :class="fieldLabel"><span :data-tip="t('v7optimize.tip.gpu.validate_per_generation')">validate_per_generation</span><Input data-field="gpu-validate-generation" type="number" step="1" :model-value="fieldText('validate_per_generation')" @update:model-value="emitField('validate_per_generation', nullablePositiveInteger(String($event ?? '')))" /></label>
       <label :class="fieldLabel"><span :data-tip="t('v7optimize.tip.gpu.checkpoint_interval_seconds')">checkpoint_interval_seconds</span><Input data-field="gpu-checkpoint-seconds" type="number" step="any" :model-value="fieldText('checkpoint_interval_seconds')" @update:model-value="emitField('checkpoint_interval_seconds', numeric(String($event ?? '')))" /></label>
 

@@ -21,6 +21,7 @@ import {
   parseJsonObject,
   readStoredParetoColumns,
   validatePb8ScenarioBases,
+  validateHslBudgetScaling,
   validateScenarioReferences,
 } from './configModel';
 
@@ -56,6 +57,28 @@ describe('optimize config model', () => {
     expect(config.optimize as Record<string, unknown>).toMatchObject({ n_cpus: 6 });
     expect((config.optimize as Record<string, unknown>).bounds).toEqual({ bot: { long: { risk: { wallet_exposure_limit: [0.2, 0.8] } } } });
     expect(config.custom_root).toEqual({ keep: true });
+  });
+
+  it('migrates PB8 HSL budget scaling from runtime overrides into native bot HSL', () => {
+    const draft = buildEditorDraft({
+      bot: { long: { hsl: {} }, short: { hsl: {} } },
+      live: { hsl_signal_mode: 'coin' },
+      optimize: { fixed_runtime_overrides: { 'bot.long.hsl.scale_budget_with_excess_allowance': true } },
+    }, 'v8', 'demo');
+
+    expect(getPath(draft.botLong, 'hsl.scale_budget_with_excess_allowance')).toBe(true);
+    expect(draft.runtimeOverrides['bot.long.hsl.scale_budget_with_excess_allowance']).toBeUndefined();
+    expect(() => validateHslBudgetScaling(draft, 'v8')).not.toThrow();
+    draft.live.hsl_signal_mode = 'unified';
+    expect(() => validateHslBudgetScaling(draft, 'v8')).toThrow('requires coin HSL mode');
+  });
+
+  it('keeps invalid HSL budget scaling overrides for backend validation', () => {
+    const draft = buildEditorDraft({
+      optimize: { fixed_runtime_overrides: { 'bot.short.hsl.scale_budget_with_excess_allowance': 'invalid' } },
+    }, 'v8', 'demo');
+
+    expect(draft.runtimeOverrides['bot.short.hsl.scale_budget_with_excess_allowance']).toBe('invalid');
   });
 
   it('round trips flat and nested bound maps', () => {

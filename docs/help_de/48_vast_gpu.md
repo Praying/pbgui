@@ -1,6 +1,8 @@
 # Vast.ai GPU-Queue
 
-Neue Mieten verwenden die offizielle PB8-Revision `00ce7d0` mit der Absicherung ungültiger Kandidaten aus PR #1871. Der enthaltene HSL-Fix verhindert einen falschen Candle-Bewertungsfehler, wenn ein schließender Verlusttrade das Guthaben aufbraucht. Bestehende Mieten behalten ihr ursprüngliches Image und ihre Revision; eine neue Miete verwendet den aktualisierten Worker.
+Die Pool-Planung ordnet wartende Jobs freien Mieten anhand des gespeicherten Worker-Images, der PB8-Revision und der CPU-Zuteilung zu. Eine freie ältere Miete verhindert nicht die Anmietung eines Workers, den ein neuerer Job benötigt. Angebotssuche und Job-Profilauswahl einer Miete verwenden dieselbe Kompatibilitätsprüfung wie der Dispatch; unpassende Jobs bleiben mit einem Hinweis wartend, passende Jobs laufen weiter.
+
+Neue Mieten verwenden die offizielle PB8-Revision `b9d6692ea` mit der gemergten Absicherung ungültiger Kandidaten aus PR #1871 und nativer HSL-Budget-Skalierung, ohne separaten Quellcode-Patch. Der enthaltene HSL-Fix verhindert einen falschen Candle-Bewertungsfehler, wenn ein schließender Verlusttrade das Guthaben aufbraucht. Bestehende Mieten behalten ihr ursprüngliches Image und ihre Revision; eine neue Miete verwendet den aktualisierten Worker. Bis zur Neukalibrierung verwenden Jobs der neuen Revision konservative Hardware-Fallbacks. GPU-Hardwaretests und echte Checkpoint-/Resume-Abnahmen stehen noch aus.
 
 Die Job-Ansicht verwendet gespeicherte Durchsatzmessungen für abgeschlossene, fehlgeschlagene und abgebrochene Jobs erneut. Das Optimizer-Log eines beendeten Jobs wird nur gelesen, wenn die Durchsatzmessung noch fehlt.
 
@@ -212,6 +214,47 @@ Die Regeln sind an Image-Digest und PB8-Revision gebunden; für unbekannte Image
 werden die alten Regeln nicht übernommen. Datenverfügbarkeit/Export und native
 Runtime-/Geräteprüfungen folgen zusätzlich. Eine erfolgreiche Konfigurationsprüfung
 garantiert deshalb noch keinen erfolgreichen GPU-Lauf.
+
+### Richtungsprüfung vor der Anmietung
+
+Beim aktuellen Worker (`00ce7d0`, verglichen über den vollständigen Image-Digest
+und die Revision) prüft PBGui die Long-/Short-Aktivierung im Editor und vor dem
+Export. Eingefrorene Queue-Eingaben einschließlich Requeue und Kalibrierungen werden
+vor der Metadatenvorbereitung, einer neuen Miete und einer Zuweisung an diesen Worker
+erneut geprüft. Eindeutig inkompatible wartende Optimierungen werden mit Job/Szenario,
+Feldpfad und Korrekturwegen als fehlgeschlagen markiert; nach der Korrektur erneut
+vorbereiten. Nicht lesbare Eingaben bleiben mit Begründung wartend. Ein fehlerhafter
+Performance-Test-Watch endet sichtbar, statt wiederholt Angebote abzufragen.
+Unterstützte ältere Mieten behalten ihr bisheriges Zuweisungsverhalten; laufende
+Jobs bleiben unberührt.
+
+Die Prüfung berücksichtigt Fixed-Parameter-Selektoren, die Fixierung deaktivierter
+Seiten-Bounds, Quantisierung/Rundung der Startwerte sowie Runtime- und Szenario-Pins
+in Worker-Reihenfolge. Positive Szenario-Exposure allein aktiviert Short nicht
+zwangsläufig: Auch Positionen und Approved-Coins müssen es erlauben. Eine auf null
+fixierte Exposure-Bound kann insbesondere die Positions-Bounds dieser Seite auf
+null fixieren. PBGui ändert die Konfiguration nicht automatisch. Für nur Long bleibt
+Short im effektiven Suchraum und den Szenarien deaktiviert. Für Long + Short müssen
+Coins freigegeben sowie effektive Exposure strikt positiv und Positionen für das
+Dataset gültig sein.
+
+Die frühe Prüfung verlangt mindestens eine aktive Seite in der materialisierten
+Basis und jedem Szenario. Dafür gelten die Approved-Coins der Basis plus ausdrückliche
+Konfigurations-Overrides. Die Szenario-Coin-Auswahl gilt erst im späteren Dataset-Kontext.
+Jedes Szenario erhält weiterhin eine eigene Richtungsprüfung. Einzelcoin-Szenarien
+dürfen unterschiedliche, jeweils nicht leere Seitenmengen aktivieren; Mehrcoin-Suites
+brauchen eine gemeinsame Topologie. Prüfungen, die von der noch unbekannten vorbereiteten
+Coin-Anzahl abhängen, werden ohne vorläufige Warnung oder Queue-Sperre zurückgestellt.
+Die abschließenden datenabhängigen Prüfungen bleiben beim Worker.
+
+Richtungsfehler erklären die effektiven WE-/Positionsgrenzen und wie die Seite dauerhaft an oder aus bleibt. Die betroffenen Zeilen unter **Bounds long/short** der Basiskonfiguration werden rot umrandet; gültige benachbarte Grenzen bleiben unmarkiert. Nach der Korrektur verschwindet die Umrandung automatisch.
+
+Diese Vorprüfung deckt Richtungsregeln ab, nicht alle GPU-Voraussetzungen (etwa HSL,
+Metriken oder den Exposure-Enforcer). Nicht leere Fine-Tune-Anchor-Pläne werden in
+diesem Cloud-Profil nicht unterstützt. Ein historischer Traceback-Pfad wie
+`/opt/passivbot` oder seine Zeilennummer bestimmt weder Image noch Ausführungsort.
+Ohne Originalkonfiguration und Miet-Intent lässt sich der historische FET-Fehler
+nicht rekonstruieren.
 
 ## GPU-Pool und gemeinsame Mieten
 
@@ -425,3 +468,7 @@ Beim Upload zeigt **Transferring job metadata** die komprimierten Konfigurations
 Gueltige Pareto-Fronten mit mehr als 1.000 Ergebnissen werden weiterhin auf Stagnation geprueft; alle zulaessigen Punkte gehen in die exakte Hypervolumenberechnung ein.
 
 Aktionen zum Leistungsvergleich sind während einer laufenden Vergleichsanfrage deaktiviert. So werden doppelte Anfragen verhindert.
+
+Der Upstream-Worker-Kandidat vom Oktober verwendet PB8 `b9d6692ea` und enthält den gemergten PR #1871 ohne temporären Patch. Er ist noch nicht das aktive veröffentlichte Image. Die neue HSL-Budget-Skalierung wird bei der Vorbereitung gesperrt und beim Dispatch erneut gegen das tatsächliche Rental geprüft. Gesperrte Jobs bleiben wartend; nachfolgende passende Jobs können starten. Vor der Aktivierung muss auch die Pool-Planung kompatibilitätsbewusst werden, damit ein freies älteres Rental keine notwendige kompatible Anmietung verhindert. Alte Kalibrierungsprofile bleiben an ihre gemessene Revision gebunden und dürfen nicht für den Kandidaten verwendet werden.
+
+Ältere Worker lehnen das neue HSL-Feld auch bei `false` ab. Die Vorbereitung entfernt nur dieses deaktivierte Feld aus der Cloud-Kopie und erhält die Originalconfig. Bereits eingefrorene Jobs mit dem Feld müssen erneut vorbereitet werden; ihre unveränderlichen Snapshots werden beim Dispatch nicht umgeschrieben.

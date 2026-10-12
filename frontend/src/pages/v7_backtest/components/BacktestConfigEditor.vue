@@ -18,9 +18,11 @@ import type { CoinOverridesStore } from '@/shared/coinOverrides/useCoinOverrides
 import AdvancedFieldsPanel from './AdvancedFieldsPanel.vue';
 import BotSideEditor from './BotSideEditor.vue';
 import CoinMultiSelect from './CoinMultiSelect.vue';
+import MigrationReviewNotice from './MigrationReviewNotice.vue';
 import { EXTRA_BT_META } from '../lib/backtestFormModel';
 import type { BacktestFormState } from '../lib/backtestFormModel';
 import type { MarketSettingsState, ResultMetricsState } from '../lib/advancedFields';
+import type { BacktestMigrationDraft } from '../types';
 
 /**
  * BacktestConfigEditor — the structured form of showConfigEditor
@@ -57,6 +59,7 @@ const props = withDefaults(
     longErrorLine?: number | null;
     shortErrorLine?: number | null;
     paramStatus: { long: Record<string, string>; short: Record<string, string> };
+    migrationDraft?: BacktestMigrationDraft | null;
     loadSymbols(exchange: string): Promise<{ symbols: string[]; catalog?: Record<string, string> }>;
     applyFilters(): void;
     fillPbguiDataPath(): void;
@@ -68,6 +71,7 @@ const emit = defineEmits<{
   'update:suite': [value: SuiteState];
   'template-exchanges': [exchanges: string[]];
   'change': [];
+  'migration-decision': [index: number, option: string];
 }>();
 
 const { t } = useI18n();
@@ -120,6 +124,11 @@ defineExpose({ foldSuiteDraft });
     @input="touch"
     @change="touch"
   >
+    <MigrationReviewNotice
+      v-if="migrationDraft"
+      :draft="migrationDraft"
+      @decision="(index, option) => emit('migration-decision', index, option)"
+    />
     <div class="config-editor-intro relative flex min-h-[72px] items-start justify-between gap-5 border-b border-secondary/15 px-1 pb-3 pt-2 max-[900px]:flex-col max-[900px]:gap-2 max-[700px]:gap-3">
       <div>
         <div class="pt-[7px] text-xs font-bold uppercase tracking-label text-accent-soft">{{ isV8 ? 'PBv8' : 'PBv7' }}</div>
@@ -177,7 +186,10 @@ defineExpose({ foldSuiteDraft });
       <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.balanceSampleDivider')">balance_sample_divider</label><Input v-model="state.balanceSampleDivider" type="number" min="1" /></div>
       <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.btcCollateralCap')">btc_collateral_cap</label><Input v-model="state.btcCollateralCap" type="number" step="0.1" min="0" /></div>
       <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.btcCollateralLtvCap')">btc_collateral_ltv_cap</label><Input v-model="state.btcCollateralLtvCap" type="number" step="0.1" min="0" /></div>
-      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.minimumCoinAgeDays')">minimum_coin_age_days</label><Input v-model="state.minimumCoinAgeDays" type="number" min="1" /></div>
+      <div
+        class="form-group editor-span-2"
+        :class="migrationDraft?.migration_report.pbgui_review_decisions?.some((decision) => decision.code === 'minimum_coin_age_days' && decision.resolved !== true) ? 'rounded-md border border-warning/60 bg-warning/10 p-2' : ''"
+      ><label :data-tip="t('v7backtest.tip.minimumCoinAgeDays')">minimum_coin_age_days</label><Input v-model="state.minimumCoinAgeDays" type="number" min="0" /></div>
       <div class="form-group editor-span-2">
         <label :data-tip="t('v7backtest.tip.liquidationThreshold')">liquidation_threshold</label>
         <div class="num-stepper">

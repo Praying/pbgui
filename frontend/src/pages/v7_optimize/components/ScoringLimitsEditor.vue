@@ -36,6 +36,7 @@ const props = withDefaults(defineProps<{
   metadata?: unknown;
   backend?: string;
   backendContract?: unknown;
+  invalidPaths?: ReadonlySet<string>;
 }>(), { version: 'v7', metadata: undefined });
 const { t } = useI18n();
 const emit = defineEmits<{ 'update:scoring': [value: unknown[]]; 'update:limits': [value: unknown[]] }>();
@@ -164,6 +165,10 @@ function addLimit(): void {
 }
 function removeScoring(index: number): void { emit('update:scoring', scoringRows.value.filter((_, rowIndex) => rowIndex !== index)); }
 function removeLimit(index: number): void { emit('update:limits', limitRows.value.filter((_, rowIndex) => rowIndex !== index)); }
+function rowInvalid(group: 'scoring' | 'limits', index: number): boolean {
+  const prefix = `optimize.${group}.${index}`;
+  return [...(props.invalidPaths ?? [])].some((path) => path === prefix || path.startsWith(`${prefix}.`));
+}
 function scenarioMode(row: Row): string {
   if (!Object.prototype.hasOwnProperty.call(row, 'scenario')) return 'inherit';
   return row.scenario == null ? 'aggregate' : String(row.scenario);
@@ -209,6 +214,8 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
             v-for="(row, index) in scoringRows"
             :key="`score-${index}`"
             class="opt-objective-row-advanced group relative rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard hover:border-border-strong hover:bg-surface-deep/80"
+            :class="rowInvalid('scoring', index) ? 'border-danger/55 bg-danger/10' : ''"
+            :aria-invalid="rowInvalid('scoring', index) ? 'true' : undefined"
           >
             <!-- Primary Row: Metric + Goal + Delete -->
             <div class="flex items-center gap-2">

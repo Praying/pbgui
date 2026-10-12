@@ -504,9 +504,10 @@ def test_three_vast_slots_use_frozen_budget_and_reject_fourth(tmp_path, monkeypa
     """One GPU per owned rental, with all starting leases consuming shared slots."""
     import vast_queue
     from api.vast import RentalPreferences
-    from vast_jobs import JobStore, write_json
+    from vast_jobs import JobStore, digest, write_json
     from secure_files import ensure_private_directory
     from vast_provider import VastError
+    from vast_direction_fixtures import direction_config
     store = LoopStore(tmp_path / 'data/loop_optimizer')
     preferences = RentalPreferences(gpu_name='RTX 3060', budget=5, max_rentals=3).model_dump()
     row = store.create(OWNER, settings(execution='vast', vast=preferences), config(), {}, {'pb8': 'commit'}, [], config()['backtest'])
@@ -514,6 +515,9 @@ def test_three_vast_slots_use_frozen_budget_and_reject_fourth(tmp_path, monkeypa
     queue.update(gpu_preferences=preferences)
     directory = ensure_private_directory(jobs.root / 'jobs' / ('b' * 32))
     write_json(directory / 'state.json', {'id': 'b' * 32, 'kind': 'job', 'status': 'ready', 'rental_state': 'none', 'workers': 1, 'created_at': 1, 'loop_id': row['id'], 'loop_owner': OWNER})
+    folder = ensure_private_directory(directory / 'input')
+    write_json(folder / 'optimize.json', direction_config())
+    write_json(folder / 'manifest.json', {'config_sha256': digest(folder / 'optimize.json')})
     monkeypatch.setattr(vast_queue, 'PROJECT', tmp_path)
     monkeypatch.setattr(vast_queue, 'preflight_local_metadata', lambda *args: None)
     def start(identifier, offer, hours, budget):

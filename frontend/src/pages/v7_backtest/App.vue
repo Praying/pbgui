@@ -815,11 +815,13 @@ watch(
           :long-error-line="store.editor.longErrorLine.value"
           :short-error-line="store.editor.shortErrorLine.value"
           :param-status="store.editor.paramStatus.value"
+          :migration-draft="store.editor.migrationDraft.value"
           :load-symbols="loadSymbols"
           :apply-filters="() => store.editor.applyFilters()"
           :fill-pbgui-data-path="() => store.editor.fillPbguiDataPath()"
           @update:suite="store.editor.suite.value = $event"
           @template-exchanges="onTemplateExchanges"
+          @migration-decision="store.editor.applyMigrationDecision"
         />
       </div>
 

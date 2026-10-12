@@ -1,5 +1,7 @@
 # PBv8 Optimize
 
+Opening a saved config compares its stored values with the config prepared by the installed PB8. When PB8 adds defaults, changes values or removes fields, **PB8 adjusted this config** appears above the editor. Expand it for the complete before/after list. Affected form fields and Raw JSON locations are marked orange; hover an outlined field for its previous and prepared values. Missing fields, explicit `null`, `false` and zero remain distinct. Opening never writes the config: review the draft and use **Save** to accept it. After saving and reopening, unchanged values no longer show adjustment markers. Existing HSL migration review remains available.
+
 Queue state updates automatically when it changes. Background tabs defer queue rendering and results requests; returning to the tab updates the current view while preserving selections and unfinished edits. Active Results and Pareto views continue updating while a run is in progress, even if its queue status stays unchanged.
 
 PB8 runtimes with offline simulation support expose **offline** under Market & Universe. It uses cached candles and metadata only; missing inputs fail instead of downloading. OHLCV Readiness respects this mode and disables remote preload. This setting does not put other PBGui services offline. Prepared datasets also require PB8's verified offline provenance.
@@ -16,7 +18,7 @@ For cloud CPU capacity, set **Min CPU cores** in Vast Settings; Cloud Auto uses 
 
 When **Run on** is set to **Vast.ai**, the optimizer's **n_cpus** and **exact_workers** fields are greyed out. Their dotted help labels explain that **Min CPU cores** in Vast GPU settings controls the rental minimum; the actual run uses the effective container CPU allocation, capped by the rented CPU quota. Switching back to **Local** restores editing and the previous values.
 
-**Save & Queue** reports cloud compatibility checking, config saving and job creation in the editor. The save buttons stay disabled throughout this operation, with a steady **Saving & queueing…** label until completion or an error. Once the server confirms the new job, PBGui opens Queue with **Preparing** while the full queue refresh continues in the background.
+**Save & Queue** reports cloud compatibility checking, config saving and job creation in the editor. The save buttons stay disabled throughout this operation, with a steady **Saving & queueing…** label until completion or an error. Failures open a centered **Cannot queue configuration** dialog with **OK**; cloud compatibility failures include the validation details. The dialog stays open until explicitly dismissed and preserves the editor draft. Once the server confirms the new job, PBGui opens Queue with **Preparing** while the full queue refresh continues in the background.
 
 Vast input uploads recover from transient connection errors for up to 15 minutes without new transfer progress, with 15/30/60-second retry pauses and retained partial data. The log displays retry status. A healthy worker's upload is no longer cut short by its earlier setup timer; the rental deadline and collection reserve still apply.
 
@@ -244,6 +246,8 @@ PB8 Optimize configurations and PB8 Backtest results use the existing Archive wo
 If an OHLCV start-date lookup does not confirm Stop within 10 seconds, Optimize releases the controls and reports a timeout. The backend may still be stopping; a late result is not applied.
 
 ## Vast.ai cloud execution
+
+Vast.ai direction checks run automatically in the editor, before export, and on frozen queue/calibration inputs before rental or a current-worker assignment. Blocking errors name the scenario/field; checks awaiting the prepared coin count show no provisional warning and do not block queueing. The early check keeps the base approved coins; scenario coin selection belongs to the later dataset context. Supported older leases retain their previous behavior. See [Vast.ai GPU queue](48_vast_gpu.md#direction-checks-before-renting) for the scope and correction options.
 
 Under **Execution & optimizer backend**, choose **Run on → Vast.ai GPU**, leave the three GPU sizing fields blank for Auto or set manual overrides directly below, then use **Save & Queue**. Cloud validation appears beside those fields.
 Save the GPU type and limits under **Queue → Settings → GPU requirements**. PBGui selects a current matching offer when starting the queue.
@@ -532,3 +536,15 @@ GPU/Vast AI Loop optimizer copies use the previously used completion floor: an e
 AI-generated date templates (`contract_version: 1`) and graphical explicit windows (`contract_version: 2`) both retain their Holdout periods when queued as AI Loops and when optimizer results are collected. PBGui regenerates the plan from its parameters and verifies that the actual Suite scenarios match training; Holdout scenarios remain separate. This also applies when queueing an existing saved AI-generated definition. Historical failed runs keep their original recorded state.
 
 The current Vast.ai worker includes a temporary GPU suite fix: invalid non-finite candidate metrics receive the CPU optimizer invalid-candidate penalty instead of aborting the whole batch. New rentals use the patched image; existing rentals keep their original image.
+
+## PB8 October update: HSL budget scaling and GPU Auto
+
+The per-side **HSL budget scaling** checkbox appears in Bounds & Overrides when the installed PB8 supports `scale_budget_with_excess_allowance`. It is available only in Coin HSL mode. Switching to Pside or Unified with scaling enabled shows a validation error; choose Coin again or explicitly disable scaling before saving. Values are preserved. This is a global policy per side, not a numeric search bound or a Coin Override. When opening a config, a saved fixed runtime override is imported once into the base side setting and removed from the overrides. The checkbox and side Bot JSON then edit the same value; a later JSON edit takes precedence. You can also explicitly set the JSON value to `false` while in Pside or Unified mode to resolve a validation error. That saved policy also applies if the base config is later used for live trading.
+
+For local GPU runs, blank **exact_workers** means Auto when `tuning_mode` is not `off`; `0` inherits `n_cpus`, and a positive integer selects a fixed pool. Blank **n_cpus** preserves native Auto/fallback behavior. Blank **max_pending_exact** preserves native Auto, while `0` remains an explicit value. CPU backends require a positive integer `n_cpus`; decrementing at one keeps one. Local worker counts are limited by the host capacity shown in the field help. Values above that limit produce a save error instead of being silently shortened. GPU decrementing at one selects Auto; switching to a CPU backend requires an explicit positive count. Local autostart CPU overrides change the fallback/start value without turning `exact_workers: null` into a fixed pool. Cloud **auto_cpu_workers** controls rental/container allocation separately: the job copy sets both `n_cpus` and `gpu.exact_workers` to a concrete worker count (fallback 4), then uses the measured CPU allocation for Cloud Auto. Cloud execution therefore uses a fixed exact-worker pool.
+
+The active Cloud worker cannot run the new HSL budget-scaling policy yet. Preparation rejects it, and dispatch checks the actual rental revision before assigning any waiting job. An incompatible job remains waiting with a reason while other compatible jobs can run. The new upstream worker candidate includes merged PR #1871 without a backport; activation requires a validated published digest. Existing rentals keep their image.
+
+For older Cloud workers, an explicit `scale_budget_with_excess_allowance: false` is removed only from the exported job copy, including fixed and scenario overrides. The saved source config keeps its value. An older frozen job that still contains this unknown field must be prepared again; dispatch leaves it waiting rather than launching it on an incompatible worker.
+
+PB8 uses GPU checkpoint signature 8 and makes the final compatibility decision when resuming. Old checkpoints may be incompatible; use a fresh search or an eligible Pareto seed when resume is rejected. PBGui's resume preflight does not itself validate the native checkpoint signature.

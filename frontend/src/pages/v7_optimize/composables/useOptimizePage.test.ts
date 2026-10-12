@@ -84,6 +84,42 @@ describe('useOptimizePage', () => {
     expect(page.editorOpen.value).toBe(false);
   });
 
+  it('persists an optimizer migration report with the saved PB8 bundle', async () => {
+    vi.mocked(apiFetch)
+      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce({ configs: [] })
+      .mockResolvedValueOnce({ items: [] });
+    const page = useOptimizePage({ adapter: currentOptimizeAdapter('/api/optimize-v8/main_page', 'http://testserver') });
+
+    page.openEditorPayload({ config: { optimize: { n_cpus: 1 } }, name: 'alpha', migration_report: { status: 'ok_with_adjustments' } }, 'alpha');
+    expect(page.editorMigrationReport.value).toEqual({ status: 'ok_with_adjustments' });
+    await page.saveEditor(false);
+
+    const saveCall = vi.mocked(apiFetch).mock.calls.find(([url, init]) => String(url).endsWith('/configs/alpha') && init?.method === 'PUT');
+    expect(JSON.parse(String(saveCall?.[1]?.body))).toMatchObject({ migration_report: { status: 'ok_with_adjustments' } });
+  });
+
+  it('exposes structured queue errors without closing the editor', async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce({ ok: true });
+    const queueError = Object.assign(new Error('Resolve GPU errors.'), {
+      validation: { errors: [{ path: 'optimize.gpu.exact_workers', message: 'Invalid workers.' }] },
+    });
+    const queueCloudConfig = vi.fn().mockRejectedValue(queueError);
+    const page = useOptimizePage({
+      adapter: currentOptimizeAdapter('/api/optimize-v8/main_page', 'http://testserver'),
+      queueCloudConfig,
+    });
+
+    page.openEditorPayload({ config: { pbgui: { execution: 'vast' }, optimize: { n_cpus: 1 } }, name: 'alpha' }, 'alpha');
+    await page.saveEditor(true);
+
+    expect(queueCloudConfig).toHaveBeenCalledOnce();
+    expect(page.editorOpen.value).toBe(true);
+    expect(page.queueSaveError.value).toEqual({ message: 'Resolve GPU errors.', details: ['optimize.gpu.exact_workers: Invalid workers.'] });
+    page.closeQueueSaveError();
+    expect(page.queueSaveError.value).toBeNull();
+  });
+
   it('refreshes an opened queue snapshot only when saved under the same name', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, statusText: 'OK', json: async () => ({ config: { backtest: { exchanges: ['bybit'] }, optimize: {} }, name: 'alpha' }) }));
     vi.mocked(apiFetch)

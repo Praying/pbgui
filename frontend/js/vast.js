@@ -1753,7 +1753,11 @@
     if (!box) return;
     box.setAttribute('aria-busy', String(!!pending));
     if (pending) return; // Keep layout, focus and expanded details while checking.
-    document.querySelectorAll('.cloud-invalid').forEach(node => { node.classList.remove('cloud-invalid'); node.removeAttribute('title'); });
+    const blockingCount = errors.length;
+    errors = errors.concat((report && report.warnings || [])
+      .filter(item => !item.pending_coin_count)
+      .map(item => ({...item, warning:true})));
+    document.querySelectorAll('.cloud-invalid').forEach(node => { node.classList.remove('cloud-invalid'); node.removeAttribute('title'); node.removeAttribute('aria-invalid'); });
     if (!errors.length) {
       box.hidden = true; box.replaceChildren(); delete box.dataset.signature;
       return;
@@ -1764,10 +1768,11 @@
     const expanded = !!(box.querySelector('details') && box.querySelector('details').open);
     const content = document.createDocumentFragment();
     box.hidden = false;
-    box.classList.toggle('cloud-validation-error', !!errors.length);
+    box.classList.toggle('cloud-validation-error', !!blockingCount);
     const heading = document.createElement('strong');
-    heading.textContent = errors.some(error => error.path === 'validation') ? 'GPU validation unavailable' : 'Cloud configuration needs attention (' + errors.length + ')';
-    heading.dataset.tip = 'Saving remains available. Resolve these errors before queueing. Market data is checked during preparation.';
+    heading.textContent = errors.some(error => error.path === 'validation') ? 'GPU validation unavailable' :
+      blockingCount ? 'Cloud configuration needs attention (' + blockingCount + ')' : 'GPU direction hints (' + errors.length + ')';
+    heading.dataset.tip = blockingCount ? 'Saving remains available. Resolve these errors before queueing. Market data is checked during preparation.' : 'These hints do not block queueing. Dataset-dependent checks remain on the worker.';
     content.appendChild(heading);
     if (report) heading.dataset.tip += ' Worker PB8 ' + report.revision.slice(0, 7) + '.';
     const list = document.createElement('ul');
@@ -1775,7 +1780,7 @@
     if (errors.length > 6) { const summary = document.createElement('summary'); summary.textContent = (errors.length - 6) + ' more issues'; extra.appendChild(summary); extra.appendChild(extraList); }
     let localOffered = false;
     errors.forEach((error, index) => {
-      const item = document.createElement('li'), issue = document.createElement('div'); issue.className = 'cloud-issue-title'; issue.textContent = error.message; item.appendChild(issue);
+      const item = document.createElement('li'), issue = document.createElement('div'); issue.className = 'cloud-issue-title'; issue.textContent = (error.warning ? 'Hint: ' : '') + error.message; item.appendChild(issue);
       (index < 6 ? list : extraList).appendChild(item);
       issue.dataset.tip = [error.path].concat(error.suggestions || []).join('\n');
       if (error.path) {
@@ -1855,12 +1860,18 @@
         'bot.long.hsl.enabled':'opted-runtime-long-hsl-enabled', 'bot.short.hsl.enabled':'opted-runtime-short-hsl-enabled',
         'optimize.gpu.successive_halving.enabled':'opted-gpu-halving-enabled'};
       const field = fields[error.path] && el(fields[error.path]);
-      if (field) { field.classList.add('cloud-invalid'); field.title = error.message; }
+      if (field && !error.warning) { field.classList.add('cloud-invalid'); field.title = error.message; }
+      if (!error.warning && Array.isArray(error.bound_keys) && typeof window.getOptimizeBoundDomId === 'function') {
+        error.bound_keys.filter(key => /^(long|short)\.risk\.(total_wallet_exposure_limit|n_positions)$/.test(key)).forEach(key => {
+          const row = el(window.getOptimizeBoundDomId(key));
+          if (row) { row.classList.add('cloud-invalid'); row.title = error.message; row.setAttribute('aria-invalid', 'true'); }
+        });
+      }
       const match = /^optimize\.(scoring|limits)\.(\d+)/.exec(error.path);
       if (match) {
         const rows = document.querySelectorAll('#opted-' + match[1] + '-panel tbody tr');
         const row = rows[Number(match[2])];
-        if (row) { row.classList.add('cloud-invalid'); row.title = error.message; }
+        if (row && !error.warning) { row.classList.add('cloud-invalid'); row.title = error.message; }
       }
     });
     if (errors.length) content.appendChild(list);
@@ -2661,7 +2672,7 @@
     closeEditor: function () { validationGeneration++; gpuRecommendationGeneration++; gpuRecommendation = null; clearTimeout(validationTimer); setQueueBlocked(false); },
     queue: async function (name, config) {
       const job = await request('/jobs/prepare', {method:'POST', body:JSON.stringify({config_name:name,
-        iterations:Number(config.optimize.iters), workers:Number(config.optimize.gpu && config.optimize.gpu.exact_workers || config.optimize.n_cpus), use_adg:false})});
+        iterations:Number(config.optimize.iters), workers:Number(config.optimize.gpu && config.optimize.gpu.exact_workers || config.optimize.n_cpus || 4), use_adg:false})});
       if (!disposed) {
         // Publish the confirmed job immediately; a full refresh must not delay navigation.
         ++jobGeneration;

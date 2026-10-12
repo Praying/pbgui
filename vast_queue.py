@@ -1,6 +1,7 @@
 """Persistent shared Vast worker ownership for the PB8 optimizer cloud queue."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -15,6 +16,94 @@ from vast_jobs import JobStore, IMAGE, PROJECT, REVISION, TERMINAL, job_id, writ
 from vast_provider import VastError, positive_id, gpu_name_matches
 
 SERVICE = "VastRunner"
+
+
+def worker_compatible_jobs(store: JobStore, jobs: list[dict], *, image: str = IMAGE,
+                           revision: str = REVISION, report_errors: bool = True) -> list[dict]:
+    """Use the same frozen-input capability gate for planning, rental and dispatch."""
+    from vast_jobs import SUPPORTED_RENTAL_IMAGE_REVISIONS
+    from vast_worker_compatibility import worker_compatibility_errors
+
+    if SUPPORTED_RENTAL_IMAGE_REVISIONS.get(image) != revision:
+        raise VastError('Unsupported worker image/revision', 422)
+    accepted = []
+    for row in jobs:
+        try:
+            snapshot = store.read(row['id'], 'input/optimize.json')
+            errors = worker_compatibility_errors(snapshot, revision)
+        except (VastError, OSError, ValueError, TypeError) as exc:
+            errors = [{'message': 'Cannot verify the prepared job for this worker. Prepare the job again.'}]
+            if report_errors:
+                from logging_helpers import human_log
+                human_log(SERVICE, 'Worker compatibility inspection failed', level='WARNING',
+                          meta={'error_type': type(exc).__name__})
+        if errors:
+            message = 'Waiting for a compatible worker: ' + errors[0]['message']
+            if report_errors and row.get('error') != message:
+                store.update(row['id'], error=message)
+        else:
+            accepted.append(row)
+    return accepted
+
+
+def preflight_gpu_snapshots(store: JobStore, jobs: list[dict], *, reject: bool = False,
+                            checked_inputs: dict | None = None) -> list[dict]:
+    """Filter current-profile frozen inputs before metadata, rental or claim.
+
+    JobStore reads the exact immutable worker snapshot with no local PB8
+    rehydration: using the installed loader here could change the pinned input.
+    Callers hold the queue lock when persisting scheduling decisions.
+    """
+    from vast_direction_validation import validate_gpu_directions
+    from logging_helpers import human_log
+
+    accepted = []
+    for row in jobs:
+        try:
+            config = store.read(row['id'], 'input/optimize.json')
+            errors, _warnings = validate_gpu_directions(config)
+            unresolved = next((item for item in errors if item.get('uncheckable')), None)
+            if unresolved:
+                raise ValueError(unresolved['message'])
+            if config.get('_fine_tune_anchor_plan'):
+                errors.append({'path': '_fine_tune_anchor_plan',
+                               'message': 'Fine-tune anchor plans are not supported by this cloud profile.'})
+            if config.get('optimize', {}).get('enable_overrides'):
+                errors.append({'path': 'optimize.enable_overrides',
+                               'message': 'Cloud export does not support optimizer overrides.'})
+            fingerprint = (hashlib.sha256(json.dumps(config, sort_keys=True, allow_nan=False).encode()).hexdigest()
+                           if not errors else None)
+            # Verify the existing manifest identity, so the locally checked
+            # config still describes the immutable uploaded archive.
+            manifest_path = store.directory(row['id']) / 'input/manifest.json'
+            if not errors and (manifest_path.exists() or manifest_path.is_symlink()):
+                expected = store.read(row['id'], 'input/manifest.json').get('config_sha256')
+                if expected:
+                    raw = read_regular_file_nofollow(store.directory(row['id']) / 'input/optimize.json', store.root)
+                    if hashlib.sha256(raw).hexdigest() != expected or json.loads(raw) != config:
+                        raise VastError('Frozen optimizer input changed; prepare the job again', 409)
+        except (OSError, ValueError, TypeError, VastError) as exc:
+            message = f"Job {row['id']}: GPU direction snapshot cannot be checked; prepare the job again. {exc}"
+            if row.get('error') != message:
+                human_log(SERVICE, message, level='WARNING')
+                store.update(row['id'], error=message)
+            if reject:
+                raise VastError(message, 422) from exc
+            continue
+        if errors:
+            message = f"Job {row['id']}: " + '; '.join(
+                item['path'] + ': ' + item['message'] + ' ' + ' '.join(item.get('suggestions', []))
+                for item in errors) + ' Prepare the job again.'
+            human_log(SERVICE, message, level='WARNING')
+            if not reject:
+                store.update(row['id'], status='failed', error=message)
+            if reject:
+                raise VastError(message, 422)
+            continue
+        if checked_inputs is not None:
+            checked_inputs[row['id']] = fingerprint
+        accepted.append(row)
+    return accepted
 
 
 def blocked_machine_ids(state: dict) -> list[int]:
@@ -189,7 +278,28 @@ class CloudQueue:
                 raise VastError('GPU pool capacity or queue authorization changed', 409)
         # Public first-candle lookups may take time. Resolve them before holding
         # the queue lock so running workers can keep claiming and collecting jobs.
-        preflight_jobs = self.waiting(loop_id) if calibration_id is None else None
+        with advisory_file_lock(self.root / '.queue-lock'):
+            checked_inputs = {}
+            current = self.worker()
+            legacy_reuse = False
+            if (pool_authorization_id is None and loop_id is None and not manual and current
+                    and current['rental_state'] not in ('none', 'deletion_verified')):
+                from vast_jobs import SUPPORTED_RENTAL_IMAGE_REVISIONS
+                intent = self.store.read(current['id'], 'intent.json')
+                legacy_reuse = (intent.get('image') != IMAGE and intent.get('image') in SUPPORTED_RENTAL_IMAGE_REVISIONS
+                                and SUPPORTED_RENTAL_IMAGE_REVISIONS[intent['image']] == intent.get('pb8_revision'))
+            if legacy_reuse:
+                # This path returns an existing paid worker below, rather than
+                # creating a current-image rental. Keep its previous preflight.
+                preflight_jobs = worker_compatible_jobs(
+                    self.store, self.waiting(loop_id), image=intent['image'],
+                    revision=intent['pb8_revision']) if calibration_id is None else []
+            elif calibration_id is None:
+                preflight_jobs = preflight_gpu_snapshots(
+                    self.store, worker_compatible_jobs(self.store, self.waiting(loop_id)), checked_inputs=checked_inputs)
+            else:
+                preflight_jobs = preflight_gpu_snapshots(
+                    self.store, [self.store.read(job_id(calibration_id))], reject=True, checked_inputs=checked_inputs)
         if preflight_jobs:
             preflight_local_metadata(self.store, preflight_jobs)
         with advisory_file_lock(self.root / '.queue-lock'):
@@ -212,6 +322,8 @@ class CloudQueue:
                 if not rental_needed(self, pool_authorization_id):
                     raise VastError('GPU pool capacity or queue authorization changed', 409)
             elif loop_id is None and current and current['rental_state'] not in ('none', 'deletion_verified') and not manual:
+                if legacy_reuse and self.waiting(loop_id) and not preflight_jobs:
+                    raise VastError('Existing worker cannot run the waiting jobs; use a compatible pool rental or end it first', 409)
                 return current
             active_workers = self.workers()
             if loop_id is not None:
@@ -233,16 +345,20 @@ class CloudQueue:
                 raise VastError('Selected GPU is already rented', 409)
             if not offer_host_allowed(offer, blocked_machine_ids(self.read())):
                 raise VastError('GPU host is blocked or its machine ID is unavailable; refresh offers', 409)
+            current_inputs = {}
             if calibration_id is not None:
                 calibration_id = job_id(calibration_id)
                 calibration = self.store.read(calibration_id)
                 if calibration.get('kind') != 'calibration' or calibration.get('status') != 'ready':
                     raise VastError('GPU calibration is no longer ready to start', 409)
-                jobs = [calibration]
+                jobs = preflight_gpu_snapshots(self.store, [calibration], reject=True, checked_inputs=current_inputs)
             else:
-                jobs = self.waiting(loop_id)
+                jobs = preflight_gpu_snapshots(
+                    self.store, worker_compatible_jobs(self.store, self.waiting(loop_id)), checked_inputs=current_inputs)
                 if [row['id'] for row in jobs] != [row['id'] for row in preflight_jobs]:
                     raise VastError('Cloud queue changed during local metadata preparation; retry rental', 409)
+            if current_inputs != checked_inputs:
+                raise VastError('Cloud inputs changed during local metadata preparation; retry rental', 409)
             job_profiles = validated_rental_job_profiles(
                 rental_job_gpu_profiles, {row['id'] for row in jobs if row.get('kind') != 'calibration'},
             )
@@ -250,6 +366,11 @@ class CloudQueue:
                 raise VastError('Queue a cloud optimizer config first', 409)
             if jobs:
                 preflight_local_metadata(self.store, jobs, calibration_id is not None)
+                final_inputs = {}
+                checked_jobs = preflight_gpu_snapshots(
+                    self.store, jobs, reject=calibration_id is not None, checked_inputs=final_inputs)
+                if len(checked_jobs) != len(jobs) or final_inputs != current_inputs:
+                    raise VastError('Cloud inputs changed during local metadata preparation; retry rental', 409)
             identifier = uuid.uuid4().hex
             directory = ensure_private_directory(self.root / 'jobs' / identifier)
             write_json(directory / 'state.json', {'id': identifier, 'kind': 'worker', 'status': 'ready',
@@ -298,8 +419,10 @@ class CloudQueue:
             if not intent.get('offer'):
                 raise VastError('Wait for Vast to confirm this rental', 409)
             if job_profiles is not None:
+                compatible = worker_compatible_jobs(
+                    self.store, self.waiting(), image=intent['image'], revision=intent['pb8_revision'])
                 selected = validated_rental_job_profiles(
-                    job_profiles, {row['id'] for row in self.waiting()},
+                    job_profiles, {row['id'] for row in compatible},
                 )
                 intent['rental_job_gpu_profiles'] = selected
             intent['rental_gpu_profile'] = profile
@@ -638,7 +761,14 @@ def worker_step(queue: CloudQueue, identifier: str, *, now: float | None = None)
         if candidates:
             from vast_deadline import effective_intent
             intent = effective_intent(store, identifier, store.read(identifier, 'intent.json'))
-            for candidate in candidates:
+            from vast_jobs import SUPPORTED_RENTAL_IMAGE_REVISIONS
+            if (intent.get('image') not in SUPPORTED_RENTAL_IMAGE_REVISIONS
+                    or SUPPORTED_RENTAL_IMAGE_REVISIONS[intent['image']] != intent.get('pb8_revision')):
+                raise VastError('Unsupported worker image/revision', 422)
+            if (intent.get('image'), intent.get('pb8_revision')) == (IMAGE, REVISION):
+                candidates = preflight_gpu_snapshots(store, candidates)
+            for candidate in worker_compatible_jobs(
+                    store, candidates, image=intent['image'], revision=intent['pb8_revision']):
                 if not candidate.get('auto_cpu_workers') and candidate['workers'] > worker.get('allocated_cpus', worker['workers']):
                     store.update(candidate['id'], error='Waiting for a worker with enough allocated CPU cores')
                     continue

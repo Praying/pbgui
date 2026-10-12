@@ -24,9 +24,13 @@ Vast 云端视图现在包含 GPU 报价、主机管理和性能历史。报价�
 
 PB8 编辑器会把已安装运行时公布的每个优化器辅助覆盖显示为独立复选框。固定运行时覆盖按 Long、Short 和 Other 分组，并使用规范的点分路径；未知的未来值仍可在 JSON 编辑器中访问。**HSL enabled** 控制硬止损行为是否参与优化器评估。**Restart after RED** 是显式的 `always`、`threshold` 或 `never` 选择；`always` 是 PB8 的优化默认值，因此评估在冷却后恢复，而不是在持续回撤时终止。`polish_percentage` 显示为普通百分比，但转换为 PB8 的小数 `--polish-pct` 值，因此 `20` 表示 `0.20`。Pymoo 保持 PB8 的原生自动大小：NSGA-II 使用 `250`，而 NSGA-III 从 `500` 的预算派生其参考方向。
 
+每个方向的 **HSL budget scaling** 使用原生 `bot.<side>.hsl.scale_budget_with_excess_allowance` 字段，并且只在 `hsl_signal_mode=coin` 时可用。编辑器会把旧的布尔 fixed-runtime override 一次性迁移到该原生字段；非布尔值保留给 PB8 原生验证。切换到非 coin 模式时，已启用的预算缩放会阻止保存或入队，直到显式关闭或恢复 coin 模式。
+
 PB8 的 `gpu` 后端意味着实验性的 **Apple MPS**，而不是 CUDA。PBGui 区分 PB8 注册的后端与当前主机上可用的后端。GPU 在不受支持的主机上仍可作为显式编辑器预览选择，因此可以测试所有字段，并且可以保存可移植配置而不静默替换其后端。Queue 和 Start 仍会在创建快照或进程前以 PB8 的确切运行时原因失败。PBGui 安装和 PB8 更新工作流请求可选的 `gpu-mps` 配置文件；其平台标记只在 Apple Silicon 上安装 PyTorch。
 
 选择 GPU 时，编辑器暴露 PB8 运行时提供的可空种群、批次和候选条大小、M3 精简自动并行、精确工作器和漂移控件、检查点间隔以及 Successive Halving 策略。控件分组为 **Automatic sizing**、**Exact validation & checkpointing**、**Drift safety** 和 **Successive halving**。它们使用编辑器的标准响应式八列网格：宽屏 8×1，中屏 4×2，小屏 2×4。空白大小字段保留 PB8 的自动默认值，并将有效运行时值显示为 `auto (…)` 占位符；输入数字会有意禁用该字段的自动大小。**Reset GPU defaults** 恢复已安装运行时的默认值，而不删除未知的未来 GPU 键。新的评分和限制选择使用 PB8 的 GPU 代理允许列表；现有的不兼容条目保持可见供修复，PB8 的原生预检在排队或启动前阻止它们。
+
+PB8 的 `n_cpus` 在 GPU 后端可以留空表示 Auto；其它后端要求 1 到当前主机上限之间的整数。`gpu.exact_workers` 和 `gpu.max_pending_exact` 留空时也保留 PB8 的自动语义，不会被前端改写为 `0`。迁移或规范化调整会在编辑器顶部列出 `config_changes` 的前后值。Vast 校验错误会标记对应的 bounds、scoring、limits 和 GPU 字段并阻止入队；方向提示作为非阻塞 warning 显示。入队失败会打开明确的错误对话框，同时保留当前编辑内容。
 
 PB8 的默认优化边界是初始搜索范围，不是硬滑块限制。因此编辑器使用参数范围元数据作为滑块，并允许低于 PB8 默认值的值，如 `n_positions = 1`。
 

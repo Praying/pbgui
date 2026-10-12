@@ -2,6 +2,39 @@
 
 export type BacktestVersion = 'v7' | 'v8';
 
+export interface BacktestMigrationDecision {
+  code?: string;
+  path?: string;
+  pb8_age_gate_value?: number;
+  selected_option?: string;
+  selected_value?: unknown;
+  resolved?: boolean;
+}
+
+export interface BacktestMigrationAdjustment {
+  code: string;
+  path: string;
+  detail: string;
+}
+
+export interface BacktestMigrationReport {
+  status?: string;
+  manual_review_required?: boolean;
+  manual_review_fields?: string[];
+  dropped_unsupported_fields?: string[];
+  behavior_change_warnings?: string[];
+  pbgui_post_migration_review_fields?: string[];
+  pbgui_post_migration_adjustments?: BacktestMigrationAdjustment[];
+  pbgui_review_decisions?: BacktestMigrationDecision[];
+  [key: string]: unknown;
+}
+
+export interface BacktestMigrationDraft {
+  migration_report: BacktestMigrationReport;
+  migration_review_values?: Record<string, unknown>;
+  migration_message?: string;
+}
+
 /** Panel vocabulary — schema-frozen for the persisted view state (R2, :1354). */
 export type BacktestPanel = 'configs' | 'queue' | 'results' | 'archive' | 'legacy';
 

@@ -1,5 +1,11 @@
 # Unreleased
 
+## 合并远端 main v2.08.7-v2.08.8 并适配 Vue 3
+
+- 合并远端 `main` 的 4 个提交，纳入 PB8 October 配置兼容、Vast GPU 方向校验与 worker candidate、凭据同步补跑、CoinData/Cluster 修复，以及 v2.08.7-v2.08.8 发布文档和回归测试。
+- 在 Vue 3 + Tailwind CSS v4.3 的 Backtest 页面保留 V7→V8 迁移报告、行为变更警告和 `minimum_coin_age_days` 审核决策；在 Optimize 页面适配 HSL budget scaling、PB8/GPU 自动 sizing、`config_changes`、Vast 非阻塞方向提示、字段级错误状态和显式入队错误对话框。
+- 同步英文、德文和简体中文指南，并将 API serial 从远端 `3196` 递增至 `3198`，使运行中的 PBGui 显示重启要求；额外增量覆盖合并后修复的 Optimize 队列状态重复读取。
+
 ## 合并远端 main v2.08.5-v2.08.6 并适配 Vue 3
 
 - 合并远端 `main` 的 4 个发布提交，纳入 PB8 worker、Vast GPU、服务监控、行情价格快照、Copy Data 计划和优化日志生命周期修复，以及对应 API、文档和回归测试。

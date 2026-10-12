@@ -1,6 +1,8 @@
 # Vast.ai GPU queue
 
-New rentals use official PB8 revision `00ce7d0` with the PR #1871 invalid-candidate protection. The upstream HSL fix prevents a closing loss that exhausts cash from causing a false held-position candle valuation error. Existing rentals retain their original image and revision; a new rental uses the updated worker.
+Pool planning matches waiting jobs to idle rentals using each rental's recorded worker image, PB8 revision and CPU allocation. A free older rental cannot prevent renting a worker required by a newer job. Offer selection and rental job-profile choices use the same compatibility check as dispatch; unsupported jobs remain waiting with a useful message while compatible jobs continue.
+
+New rentals use official PB8 revision `b9d6692ea` with the merged PR #1871 invalid-candidate protection and native HSL budget scaling, without a separate source patch. The upstream HSL fix prevents a closing loss that exhausts cash from causing a false held-position candle valuation error. Existing rentals retain their original image and revision; a new rental uses the updated worker. Fresh calibration is pending, so new-revision jobs use conservative hardware fallbacks. GPU hardware and real checkpoint/resume acceptance are still pending.
 
 The jobs view reuses saved throughput measurements for completed, failed and cancelled jobs. It reads a finished job's optimizer log only when its throughput snapshot is still missing.
 
@@ -207,6 +209,43 @@ scenario references and reducers, GPU sizing and bounds. The rules are explicitl
 bound to the image digest and PB8 revision; an unknown image cannot use old rules.
 Market data availability/export and native runtime/device checks are additional
 stages; passing the configuration check does not guarantee a successful GPU run.
+
+### Direction checks before renting
+
+For the current worker (`00ce7d0`, matched by its complete image digest and revision),
+PBGui checks Long/Short activation in the editor and before export. Frozen queue inputs,
+including requeued jobs and calibration jobs, are checked again before market
+metadata preparation, a new rental, or assignment to that worker. An incompatible
+waiting optimizer is marked failed with the job/scenario, field path and correction
+options; prepare it again after correcting the config. Unreadable inputs remain
+waiting with an explanation. A failing performance-test watch stops visibly instead
+of repeatedly searching offers. Supported older rentals keep their previous
+assignment behavior; jobs already running are unaffected.
+
+The check applies fixed-parameter selectors, side-bound collapse, start-value
+quantization/rounding, runtime pins and scenario pins in the worker's order. Positive
+scenario exposure alone does not necessarily enable Short: positions and approved
+coins must also permit it. In particular, an exposure bound fixed at zero can collapse
+that side's positions to zero. PBGui does not automatically change your configuration.
+For Long-only, keep Short disabled throughout the effective search and scenarios.
+For Long + Short, approve the side's coins and keep its effective exposure strictly
+positive and positions valid for the dataset.
+
+The early check requires at least one active side in the materialized base and every
+scenario, using the base approved coins plus explicit config overrides. Scenario coin
+selection is used only in the later dataset context. Each scenario still receives its
+own directional check. Single-coin scenarios may activate different nonempty sets of
+sides; multicoin suites require a common topology. Checks that depend on an unknown
+prepared coin count are deferred without displaying a provisional warning or blocking queueing.
+The worker performs the final data-dependent checks.
+
+Direction errors explain the effective WE/position ranges and how to keep the side on or off. The affected base-config rows under **Bounds long/short** receive a red outline; valid neighboring bounds remain unmarked. The outline clears automatically after correction.
+
+This preflight covers direction rules, not every GPU requirement (for example HSL,
+metrics or the exposure enforcer). Nonempty fine-tune anchor plans are unsupported
+in this cloud profile. A historical traceback path such as `/opt/passivbot`, or its
+line number, does not identify the image or execution host. Without the original
+config and rental intent, the historical FET failure cannot be reconstructed.
 
 ## GPU pool and shared rentals
 
@@ -417,3 +456,7 @@ During upload, **Transferring job metadata** reports compressed configuration/ma
 Valid Pareto fronts with more than 1,000 results remain eligible for stagnation checks; all feasible points contribute to the exact hypervolume calculation.
 
 Performance comparison actions are disabled while a comparison request is running, preventing duplicate submissions.
+
+The October upstream worker candidate targets PB8 `b9d6692ea` and includes merged PR #1871 without the temporary patch. It is not the active published image yet. New HSL budget scaling is blocked during preparation and checked again against each actual rental at dispatch. Blocked jobs remain waiting; compatible following jobs can run. Activation also requires compatibility-aware pool scheduling so an idle older rental cannot suppress a required compatible rental. Old calibration profiles remain tied to their measured revision and must not be reused for the candidate.
+
+Older workers reject the new HSL field even when it is `false`. Preparation removes only that disabled field from the Cloud copy and preserves the original config. Previously frozen jobs containing it must be prepared again; their immutable snapshots are not rewritten during dispatch.

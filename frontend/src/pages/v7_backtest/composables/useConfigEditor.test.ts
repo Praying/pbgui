@@ -214,6 +214,42 @@ describe('deep links (:2023-2172)', () => {
     expect(editor.editingName.value).toBe('__new__');
   });
 
+  it('retains migration review metadata and requires the coin-age decision before saving', async () => {
+    const fetchFn = vi.fn((url: string, init?: RequestInit) => {
+      const target = String(url);
+      if (target.includes('/optimize-draft/')) {
+        return ok({
+          config: { backtest: { exchanges: ['binance'] }, live: { minimum_coin_age_days: 30 } },
+          param_status: {},
+          migration_review_values: { 'live.minimum_coin_age_days': 30 },
+          migration_report: {
+            manual_review_required: true,
+            manual_review_fields: ['live.minimum_coin_age_days'],
+            behavior_change_warnings: ['PB8 caps excess allowance.'],
+            pbgui_review_decisions: [{ code: 'minimum_coin_age_days', path: 'live.minimum_coin_age_days', pb8_age_gate_value: 30, resolved: false }],
+          },
+        });
+      }
+      return ok({});
+    });
+    const { editor } = makeEditor({ version: 'v8', apiBase: 'http://h:8000/api/backtest-v8', fetchFn: fetchFn as unknown as typeof fetch });
+    await editor.consumeUrlDeepLinks('?opt_draft_id=o1&draft_name=migrated');
+    await flush();
+
+    expect(editor.migrationDraft.value?.migration_report.behavior_change_warnings).toEqual(['PB8 caps excess allowance.']);
+    await editor.save();
+    expect(fetchFn.mock.calls.some((call) => call[1]?.method === 'PUT')).toBe(false);
+
+    editor.applyMigrationDecision(0, 'pb7_coverage');
+    expect(editor.state.minimumCoinAgeDays).toBe('0');
+    expect(editor.migrationDraft.value?.migration_report.manual_review_required).toBe(false);
+    await editor.save();
+    const put = fetchFn.mock.calls.find((call) => call[1]?.method === 'PUT');
+    expect(put).toBeDefined();
+    const body = JSON.parse(String(put?.[1]?.body)) as Record<string, unknown>;
+    expect(body.migration_report).toBeDefined();
+  });
+
   it('?queue_draft_id= opens the queue-draft modal (:2147-2161)', async () => {
     const { editor } = makeEditor();
     const handled = await editor.consumeUrlDeepLinks('?queue_draft_id=q1');

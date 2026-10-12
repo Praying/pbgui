@@ -120,14 +120,18 @@ export function buildEditorDraft(
   const rawScoring = Array.isArray(optimize.scoring) ? optimize.scoring : [];
   const rawLimits = Array.isArray(optimize.limits) || isObject(optimize.limits) ? optimize.limits : [];
   const runtime = objectValue(pbgui.optimize_runtime);
+  const botLong = objectValue(bot.long);
+  const botShort = objectValue(bot.short);
+  const runtimeOverrides = objectValue(optimize.fixed_runtime_overrides ?? runtime.overrides);
+  if (version === 'v8') migrateHslBudgetScalingOverrides(botLong, botShort, runtimeOverrides);
 
   return {
     name: deriveName(raw, fallbackName),
     raw,
     backtest,
     exchanges: normalizeExchanges(backtest.exchanges ?? backtest.exchange),
-    botLong: objectValue(bot.long),
-    botShort: objectValue(bot.short),
+    botLong,
+    botShort,
     botExtra,
     live: objectValue(raw.live),
     optimize,
@@ -142,9 +146,34 @@ export function buildEditorDraft(
       { enabled: false, scenarios: [], editIdx: -1, aggregate: { default: 'mean' } },
       { isV8: version === 'v8' },
     ),
-    runtimeOverrides: objectValue(optimize.fixed_runtime_overrides ?? runtime.overrides),
+    runtimeOverrides,
     overrideConfigs: objectValue(overrideConfigs),
   };
+}
+
+const HSL_BUDGET_SCALING_PATH = 'hsl.scale_budget_with_excess_allowance';
+
+/** Move the retired runtime override into its native per-side PB8 HSL field. */
+export function migrateHslBudgetScalingOverrides(botLong: JsonObject, botShort: JsonObject, runtimeOverrides: JsonObject): void {
+  (['long', 'short'] as const).forEach((side) => {
+    const key = `bot.${side}.hsl.scale_budget_with_excess_allowance`;
+    const value = runtimeOverrides[key];
+    if (typeof value !== 'boolean') return;
+    setPath(side === 'long' ? botLong : botShort, HSL_BUDGET_SCALING_PATH, value);
+    delete runtimeOverrides[key];
+  });
+}
+
+/** PB8 budget scaling is valid only for independent coin HSL signals. */
+export function validateHslBudgetScaling(draft: OptimizeEditorDraft, version: OptimizeVersion): void {
+  if (version !== 'v8' || String(draft.live.hsl_signal_mode || '') === 'coin') return;
+  (['long', 'short'] as const).forEach((side) => {
+    const key = `bot.${side}.hsl.scale_budget_with_excess_allowance`;
+    const botValue = getPath(side === 'long' ? draft.botLong : draft.botShort, HSL_BUDGET_SCALING_PATH, false);
+    if (botValue === true || draft.runtimeOverrides[key] === true) {
+      throw new Error(`${side} HSL budget scaling requires coin HSL mode. Select coin mode or explicitly disable scaling.`);
+    }
+  });
 }
 
 export function collectEditorConfig(draft: OptimizeEditorDraft, version: OptimizeVersion): JsonObject {

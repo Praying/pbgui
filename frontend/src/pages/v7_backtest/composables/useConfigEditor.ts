@@ -12,7 +12,13 @@ import {
 } from '../lib/advancedFields';
 import { collectBacktestConfig, finalizeBacktestConfigForSave, validateBacktestDateRanges } from '../lib/backtestCollect';
 import { backtestExchangeOptions, populateBacktestForm, type BacktestFormState } from '../lib/backtestFormModel';
-import type { BacktestSettings, BacktestVersion } from '../types';
+import type {
+  BacktestMigrationDecision,
+  BacktestMigrationDraft,
+  BacktestMigrationReport,
+  BacktestSettings,
+  BacktestVersion,
+} from '../types';
 import type { I18nT } from '../types.i18n';
 
 /**
@@ -78,6 +84,7 @@ export function useConfigEditor(options: ConfigEditorOptions) {
   const state = reactive<BacktestFormState>({ ...EMPTY_FORM, extraBt: [], coinSources: {}, marketSettingsSources: {} });
   const suite = ref<SuiteState>({ enabled: false, scenarios: [], editIdx: -1, aggregate: { default: 'mean' } });
   const paramStatus = ref<{ long: Record<string, string>; short: Record<string, string> }>({ long: {}, short: {} });
+  const migrationDraft = ref<BacktestMigrationDraft | null>(null);
   const marketSettings = ref<MarketSettingsState>({ rows: [], extras: {}, error: '' });
   const resultMetrics = ref<ResultMetricsState>({ mode: 'default', selected: [], available: [], error: '' });
   const rawError = ref<{ line: number | null; message: string } | null>(null);
@@ -108,6 +115,7 @@ export function useConfigEditor(options: ConfigEditorOptions) {
   function resetEditorUiState(): void {
     suite.value = { enabled: false, scenarios: [], editIdx: -1, aggregate: { default: 'mean' } };
     paramStatus.value = { long: {}, short: {} };
+    migrationDraft.value = null;
     marketSettings.value = { rows: [], extras: {}, error: '' };
     resultMetrics.value = { mode: 'default', selected: [], available: [], error: '' };
     coinOptions.value = [];
@@ -125,7 +133,13 @@ export function useConfigEditor(options: ConfigEditorOptions) {
   }
 
   /** showConfigEditor (:2563-2946). */
-  function openEditor(name: string, cfg: Record<string, unknown>, rawOverride?: string | null, statusOverride?: Record<string, unknown>, openOptions?: { isNew?: boolean }): void {
+  function openEditor(
+    name: string,
+    cfg: Record<string, unknown>,
+    rawOverride?: string | null,
+    statusOverride?: Record<string, unknown>,
+    openOptions?: { isNew?: boolean; migrationDraft?: BacktestMigrationDraft | null },
+  ): void {
     resetEditorUiState();
     const populated = populateBacktestForm(name, cfg, {
       isV8,
@@ -135,6 +149,9 @@ export function useConfigEditor(options: ConfigEditorOptions) {
     Object.assign(state, populated, { rawJson: rawOverride != null ? String(rawOverride) : populated.rawJson });
     const status = object(statusOverride ?? cfg._pbgui_param_status);
     paramStatus.value = { long: object(status.long) as Record<string, string>, short: object(status.short) as Record<string, string> };
+    migrationDraft.value = openOptions?.migrationDraft
+      ? JSON.parse(JSON.stringify(openOptions.migrationDraft)) as BacktestMigrationDraft
+      : null;
     if (isV8) {
       try {
         marketSettings.value = { rows: flattenMarketSettings(object(object(cfg.backtest).market_settings)), extras: marketSettingsExtras(object(object(cfg.backtest).market_settings)), error: '' };
@@ -378,7 +395,48 @@ export function useConfigEditor(options: ConfigEditorOptions) {
       notify(advancedError, 'err');
       return false;
     }
+    const pendingDecision = migrationDraft.value?.migration_report.pbgui_review_decisions
+      ?.find((decision) => decision.code === 'minimum_coin_age_days' && decision.resolved !== true);
+    if (pendingDecision) {
+      notify('Resolve every marked V7 to V8 migration choice before saving.', 'err');
+      return false;
+    }
     return true;
+  }
+
+  function applyMigrationDecision(index: number, option: string): void {
+    const report = migrationDraft.value?.migration_report;
+    const decision = report?.pbgui_review_decisions?.[index];
+    if (!report || !decision || decision.code !== 'minimum_coin_age_days') return;
+    if (option !== 'pb7_coverage' && option !== 'pb8_age_gate') return;
+    const selectedValue = option === 'pb7_coverage' ? 0 : Number(decision.pb8_age_gate_value);
+    if (!Number.isFinite(selectedValue)) return;
+    state.minimumCoinAgeDays = String(selectedValue);
+    decision.selected_option = option;
+    decision.selected_value = selectedValue;
+    decision.resolved = true;
+    const adjustments = report.pbgui_post_migration_adjustments ?? [];
+    const code = `resolve_${decision.code}`;
+    const nextAdjustment = {
+      code,
+      path: String(decision.path || ''),
+      detail: `user selected ${option} in the unsaved Backtest migration draft`,
+    };
+    report.pbgui_post_migration_adjustments = [...adjustments.filter((item) => item.code !== code), nextAdjustment];
+    recomputeMigrationReport(report);
+  }
+
+  function recomputeMigrationReport(report: BacktestMigrationReport): void {
+    const decisions = report.pbgui_review_decisions ?? [];
+    if (decisions.some((decision: BacktestMigrationDecision) => decision.resolved !== true)) return;
+    const decisionPaths = new Set(decisions.map((decision) => String(decision.path || '')));
+    report.manual_review_fields = (report.manual_review_fields ?? []).filter((path) => !decisionPaths.has(String(path)));
+    report.pbgui_post_migration_review_fields = (report.pbgui_post_migration_review_fields ?? [])
+      .filter((path) => !decisionPaths.has(String(path)));
+    report.manual_review_required = !!((report.manual_review_fields?.length ?? 0) + (report.dropped_unsupported_fields?.length ?? 0));
+    if (!report.manual_review_required) {
+      report.status = report.pbgui_post_migration_adjustments?.length ? 'ok_with_adjustments' : 'ok';
+    }
   }
 
   /** putEditorConfig (:4823-4853). */
@@ -392,7 +450,11 @@ export function useConfigEditor(options: ConfigEditorOptions) {
     const init: RequestInit = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(isV8 ? { config: cfg, override_configs: overrideSnapshot?.files ?? {} } : cfg),
+      body: JSON.stringify(isV8 ? {
+        config: cfg,
+        override_configs: overrideSnapshot?.files ?? {},
+        ...(migrationDraft.value ? { migration_report: migrationDraft.value.migration_report } : {}),
+      } : cfg),
     };
     try {
       return await requestJson(fetchFn, options.apiBase + path, init);
@@ -571,7 +633,18 @@ export function useConfigEditor(options: ConfigEditorOptions) {
         const prepared = optimizeDraftId && isV8 ? { config: cfg, param_status: object(draft.param_status) } : await prepareImported(cfg);
         const name = draftName(prepared.config, params);
         options.selectPanel('configs');
-        openEditor(name, prepared.config, JSON.stringify(prepared.config), prepared.param_status, { isNew: true });
+        const report = object(draft.migration_report) as BacktestMigrationReport;
+        const importedMigrationDraft = Object.keys(report).length > 0
+          ? {
+              migration_report: report,
+              migration_review_values: object(draft.migration_review_values),
+              migration_message: typeof draft.migration_message === 'string' ? draft.migration_message : undefined,
+            }
+          : null;
+        openEditor(name, prepared.config, JSON.stringify(prepared.config), prepared.param_status, {
+          isNew: true,
+          migrationDraft: importedMigrationDraft,
+        });
         // :2930-2932 — pre-seed the draft's whole override files per coin
         // (after coinOv.load, like the legacy order) so the mapping survives
         // into collect; v8 additionally marks them pending for the save ack.
@@ -667,6 +740,7 @@ export function useConfigEditor(options: ConfigEditorOptions) {
     state,
     suite,
     paramStatus,
+    migrationDraft,
     marketSettings,
     resultMetrics,
     rawError,
@@ -695,6 +769,7 @@ export function useConfigEditor(options: ConfigEditorOptions) {
     getPbguiDataPath,
     fillPbguiDataPath,
     applyFilters,
+    applyMigrationDecision,
     collect,
   };
 }

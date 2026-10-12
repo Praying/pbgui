@@ -14,6 +14,7 @@ import SuiteEditor from '@/shared/suiteEditor/SuiteEditor.vue';
 import ScoringLimitsEditor from './ScoringLimitsEditor.vue';
 import BotJsonEditor from './BotJsonEditor.vue';
 import GpuSettingsEditor from './GpuSettingsEditor.vue';
+import VastValidationPanel from './VastValidationPanel.vue';
 import type { OptimizeVersion } from '../config';
 import {
   buildEditorDraft,
@@ -33,12 +34,14 @@ import {
   parseJsonObject,
   scenarioLabels,
   setPath,
+  validateHslBudgetScaling,
   validatePb8ScenarioBases,
   type BoundPair,
   type JsonObject,
   type OptimizeEditorDraft,
 } from '../lib/configModel';
 import type { OhlcvStartDateJob } from '../types';
+import type { VastValidationResult } from '../lib/vastApi';
 import type { ScenarioGeneratorContext, ScenarioGeneratorPreview, ScenarioGeneratorRequest } from '@/shared/suiteEditor/suiteModel';
 
 const props = withDefaults(defineProps<{
@@ -64,11 +67,13 @@ const props = withDefaults(defineProps<{
   pymooRefDirMethodOptions?: string[];
   strategyOptions?: string[];
   pbguiDataPath?: string;
+  hostCpuCount?: number;
   loadSymbols?: (exchange: string) => Promise<{ symbols: string[]; catalog?: Record<string, string> }>;
   previewScenarioTemplate?: (payload: ScenarioGeneratorRequest) => Promise<ScenarioGeneratorPreview>;
   startOhlcvLookup?: (config: Record<string, unknown>) => Promise<OhlcvStartDateJob>;
   loadOhlcvLookup?: (jobId: string) => Promise<OhlcvStartDateJob>;
   stopOhlcvLookup?: (jobId: string) => Promise<OhlcvStartDateJob>;
+  validateVastConfig?: (config: Record<string, unknown>) => Promise<VastValidationResult>;
 }>(), { saving: false });
 const emit = defineEmits<{ close: []; save: [draft: OptimizeEditorDraft, queueAfterSave: boolean]; preflight: [draft: OptimizeEditorDraft] }>();
 const { t, te } = useI18n();
@@ -163,6 +168,11 @@ const ohlcvError = ref('');
 const ohlcvSignature = ref('');
 let ohlcvGeneration = 0;
 let ohlcvPollTimer: number | undefined;
+const vastValidation = ref<VastValidationResult | null>(null);
+const vastValidationPending = ref(false);
+let vastValidationGeneration = 0;
+let vastValidationTimer: number | undefined;
+let lastVastValidationSignature = '';
 
 function json(value: unknown): string { return JSON.stringify(value ?? {}, null, 2); }
 function csv(value: unknown): string { return Array.isArray(value) ? value.map(String).join(', ') : String(value ?? ''); }
@@ -242,8 +252,12 @@ const runtimeOverrideFields = computed<RuntimeOverrideField[]>(() => {
   };
 
   (['long', 'short'] as BotSide[]).forEach((side) => {
-    addField(`bot.${side}.hsl.enabled`, getPath(local.value?.[side === 'long' ? 'botLong' : 'botShort'], 'hsl.enabled', false), side);
-    addField(`bot.${side}.hsl.no_restart_drawdown_threshold`, getPath(local.value?.[side === 'long' ? 'botLong' : 'botShort'], 'hsl.no_restart_drawdown_threshold', 1), side);
+    const botSide = local.value?.[side === 'long' ? 'botLong' : 'botShort'];
+    addField(`bot.${side}.hsl.enabled`, getPath(botSide, 'hsl.enabled', false), side);
+    addField(`bot.${side}.hsl.no_restart_drawdown_threshold`, getPath(botSide, 'hsl.no_restart_drawdown_threshold', 1), side);
+    if (getPath(botSide, 'hsl.scale_budget_with_excess_allowance') !== undefined) {
+      addField(`bot.${side}.hsl.scale_budget_with_excess_allowance`, getPath(botSide, 'hsl.scale_budget_with_excess_allowance', false), side);
+    }
   });
   Object.entries(defaults).forEach(([key, value]) => {
     const match = key.match(/^bot\.(long|short)\./);
@@ -264,6 +278,7 @@ function isActiveHslRuntimePath(key: string): boolean {
   if (props.version !== 'v8') return true;
   const normalized = key.replace(/^bot\./, '');
   const signalMode = String(local.value?.live.hsl_signal_mode || 'coin').trim().toLowerCase();
+  if (/\.hsl\.scale_budget_with_excess_allowance$/.test(normalized)) return signalMode === 'coin';
   if (/^(long|short)\.hsl(?:\.|$)/.test(normalized)) return signalMode !== 'unified';
   if (/^hsl(?:\.|$)/.test(normalized)) return signalMode === 'unified';
   return true;
@@ -381,6 +396,9 @@ function load(source: OptimizeEditorDraft | null): void {
   tab.value = 'general';
   if (!local.value) return;
   local.value.optimize.backend = inferOptimizeBackend(local.value.optimize);
+  if (props.version === 'v8' && local.value.optimize.backend !== 'gpu' && local.value.optimize.n_cpus == null) {
+    local.value.optimize.n_cpus = 1;
+  }
   if (local.value.optimize.backend === 'gpu' && props.version === 'v8') {
     const existingGpu = isObject(local.value.optimize.gpu) ? local.value.optimize.gpu : {};
     local.value.optimize.gpu = { ...gpuDefaults(props.optimizeDefaults), ...existingGpu };
@@ -508,11 +526,25 @@ function setPolishBoundsMode(value: string): void {
   setPath(optimizeRuntime(), 'polish_bounds_mode', value);
 }
 function runtimeOverrideValue(key: string, fallback: unknown): unknown {
-  return local.value?.runtimeOverrides[canonicalRuntimeOverrideKey(key)] ?? fallback;
+  const canonicalKey = canonicalRuntimeOverrideKey(key);
+  const budgetScalingSide = canonicalKey.match(/^bot\.(long|short)\.hsl\.scale_budget_with_excess_allowance$/)?.[1] as BotSide | undefined;
+  if (budgetScalingSide && local.value) {
+    return getPath(budgetScalingSide === 'long' ? local.value.botLong : local.value.botShort, 'hsl.scale_budget_with_excess_allowance', fallback);
+  }
+  return local.value?.runtimeOverrides[canonicalKey] ?? fallback;
 }
 function setRuntimeOverride(key: string, value: unknown): void {
   if (!local.value) return;
   const canonicalKey = canonicalRuntimeOverrideKey(key);
+  const budgetScalingSide = canonicalKey.match(/^bot\.(long|short)\.hsl\.scale_budget_with_excess_allowance$/)?.[1] as BotSide | undefined;
+  if (budgetScalingSide) {
+    setPath(budgetScalingSide === 'long' ? local.value.botLong : local.value.botShort, 'hsl.scale_budget_with_excess_allowance', value);
+    delete local.value.runtimeOverrides[canonicalKey];
+    if (budgetScalingSide === 'long') botLongJson.value = json(local.value.botLong);
+    else botShortJson.value = json(local.value.botShort);
+    runtimeJson.value = json(local.value.runtimeOverrides);
+    return;
+  }
   local.value.runtimeOverrides[canonicalKey] = value;
   Object.entries(LEGACY_RUNTIME_OVERRIDE_KEYS).forEach(([legacyKey, replacement]) => {
     if (replacement === canonicalKey) delete local.value!.runtimeOverrides[legacyKey];
@@ -561,6 +593,56 @@ function currentEditorConfig(): JsonObject {
   if (!local.value) throw new Error('Optimize editor is not open');
   applyTextSections();
   return collectEditorConfig(local.value, props.version);
+}
+
+function clearVastValidationTimer(): void {
+  if (vastValidationTimer !== undefined) window.clearTimeout(vastValidationTimer);
+  vastValidationTimer = undefined;
+}
+
+function scheduleVastValidation(): void {
+  clearVastValidationTimer();
+  if (!local.value || props.version !== 'v8' || executionMode.value !== 'vast' || !props.validateVastConfig) {
+    vastValidation.value = null;
+    vastValidationPending.value = false;
+    return;
+  }
+  vastValidationTimer = window.setTimeout(() => { void runVastValidation(); }, 350);
+}
+
+async function runVastValidation(): Promise<void> {
+  if (!local.value || !props.validateVastConfig || executionMode.value !== 'vast') return;
+  let config: JsonObject;
+  try {
+    const validationDraft = cloneValue(local.value);
+    validationDraft.botLong = parseJsonObject(botLongJson.value, 'Bot long');
+    validationDraft.botShort = parseJsonObject(botShortJson.value, 'Bot short');
+    validationDraft.runtimeOverrides = normalizeRuntimeOverrideMap(parseJsonObject(runtimeJson.value, 'Runtime overrides'));
+    const parsedScoring = JSON.parse(scoringJson.value || '[]') as unknown;
+    const parsedLimits = JSON.parse(limitsJson.value || '[]') as unknown;
+    if (!Array.isArray(parsedScoring) || !Array.isArray(parsedLimits)) return;
+    validationDraft.scoring = parsedScoring;
+    validationDraft.limits = parsedLimits;
+    config = collectEditorConfig(validationDraft, props.version);
+  } catch {
+    vastValidationPending.value = false;
+    return;
+  }
+  const signature = JSON.stringify(config);
+  if (signature === lastVastValidationSignature && vastValidation.value) return;
+  lastVastValidationSignature = signature;
+  const generation = ++vastValidationGeneration;
+  vastValidationPending.value = true;
+  try {
+    const result = await props.validateVastConfig(config);
+    if (generation === vastValidationGeneration) vastValidation.value = result;
+  } catch (error) {
+    if (generation === vastValidationGeneration) {
+      vastValidation.value = { valid: false, errors: [{ path: 'validation', message: error instanceof Error ? error.message : String(error) }], warnings: [] };
+    }
+  } finally {
+    if (generation === vastValidationGeneration) vastValidationPending.value = false;
+  }
 }
 
 function applyOhlcvResult(job: OhlcvStartDateJob, mode: 'earliest' | 'all_markets', signature: string): void {
@@ -651,9 +733,24 @@ watch(() => [props.open, props.draft] as const, ([open, nextDraft], previous) =>
 onBeforeUnmount(() => {
   if (copiedTimeout) clearTimeout(copiedTimeout);
   stopOhlcvJob();
+  clearVastValidationTimer();
+  vastValidationGeneration += 1;
 });
 
 const displayedError = computed(() => localError.value || props.error);
+const vastInvalidPaths = computed(() => new Set((vastValidation.value?.errors ?? []).map((issue) => String(issue.path || '')).filter(Boolean)));
+function hasVastPath(path: string): boolean {
+  return [...vastInvalidPaths.value].some((invalidPath) => invalidPath === path || invalidPath.startsWith(`${path}.`) || path.startsWith(`${invalidPath}.`));
+}
+const configChanges = computed(() => {
+  if (props.version !== 'v8' || !isObject(props.paramStatus?.config_changes)) return [];
+  return Object.entries(props.paramStatus.config_changes).map(([path, rawChange]) => {
+    const change = isObject(rawChange) ? rawChange : {};
+    const before = change.added ? '(missing)' : JSON.stringify(change.before);
+    const after = change.removed ? '(removed)' : JSON.stringify(change.after);
+    return { path, text: `${before} → ${after}` };
+  });
+});
 const boundRows = computed(() => Object.entries(local.value?.bounds ?? {}).sort(([a], [b]) => a.localeCompare(b)));
 const boundSearchText = ref('');
 const boundCategoryFilter = ref<'all' | 'long' | 'short' | 'fixed'>('all');
@@ -732,6 +829,11 @@ const availableBackends = computed(() => {
   });
 });
 const executionMode = computed(() => String(local.value?.pbgui.execution || 'local') === 'vast' ? 'vast' : 'local');
+watch(
+  () => [local.value, botLongJson.value, botShortJson.value, scoringJson.value, limitsJson.value, runtimeJson.value, rawJson.value],
+  scheduleVastValidation,
+  { deep: true, immediate: true },
+);
 const availableStrategies = computed(() => {
   const selected = String(local.value?.live.strategy_kind || '');
   return [...new Set([...(props.strategyOptions ?? []), selected].filter(Boolean))];
@@ -815,6 +917,32 @@ function setNumber(sectionName: SectionName, key: string, value: string): void {
   if (!target) return;
   const parsed = Number(value);
   target[key] = Number.isFinite(parsed) ? parsed : value;
+}
+const optimizeCpuLimit = computed(() => Math.max(1, Math.floor(Number(props.hostCpuCount) || 64)));
+function optimizeCpuText(): string {
+  const value = local.value?.optimize.n_cpus;
+  return value === null || value === undefined ? '' : String(value);
+}
+function setOptimizeCpuCount(value: string): void {
+  if (!local.value) return;
+  const text = value.trim();
+  if (!text) {
+    local.value.optimize.n_cpus = currentBackend.value === 'gpu' && props.version === 'v8' ? null : 1;
+    return;
+  }
+  const parsed = Number(text);
+  local.value.optimize.n_cpus = Number.isFinite(parsed) ? Math.trunc(parsed) : value;
+}
+function validateOptimizeCpuCount(): void {
+  if (!local.value || props.version !== 'v8') return;
+  const value = local.value.optimize.n_cpus;
+  if (value === null && currentBackend.value === 'gpu') return;
+  if (!Number.isInteger(value) || Number(value) < 1) {
+    throw new Error('n_cpus requires a positive integer; Auto is available only for the PB8 GPU backend.');
+  }
+  if (Number(value) > optimizeCpuLimit.value) {
+    throw new Error(`n_cpus exceeds the host limit of ${optimizeCpuLimit.value} workers.`);
+  }
 }
 function nullableRngSeed(): string {
   const value = local.value?.optimize.seed;
@@ -1094,6 +1222,11 @@ function save(queueAfterSave: boolean): void {
     localError.value = '';
     suiteEditor.value?.foldDraft();
     applyTextSections();
+    validateOptimizeCpuCount();
+    validateHslBudgetScaling(local.value, props.version);
+    if (queueAfterSave && executionMode.value === 'vast' && vastValidation.value?.errors.length) {
+      throw new Error('Resolve the GPU compatibility errors before queueing.');
+    }
     if (!local.value.name.trim()) throw new Error(t('v7optimize.configNameRequired'));
     if (!local.value.exchanges.length) throw new Error(t('v7optimize.selectAtLeastOneExchange'));
     if (props.version === 'v8' && polishPercentageText.value.trim()) {
@@ -1136,6 +1269,11 @@ function preflight(): void {
           <Button type="button" variant="ghost" size="sm" class="size-8 p-0 text-secondary hover:text-primary transition-colors" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')"><PbIcon :icon="PhX" :size="17" /></Button>
         </div>
       </header>
+      <details v-if="configChanges.length" class="mx-5 mt-3 shrink-0 rounded-lg border border-warning/35 bg-warning/10 px-3 py-2" data-test="optimize-config-changes">
+        <summary class="cursor-pointer text-sm font-semibold text-warning-soft">{{ t('v7optimize.configChangesSummary', { count: configChanges.length }) }}</summary>
+        <pre class="mt-2 max-h-44 overflow-auto whitespace-pre-wrap text-xs leading-5 text-secondary">{{ configChanges.map((change) => `${change.path}: ${change.text}`).join('\n') }}</pre>
+      </details>
+      <VastValidationPanel v-if="executionMode === 'vast'" class="mx-5 mt-3 shrink-0" :result="vastValidation" :pending="vastValidationPending" />
       <nav class="opt-editor-tabs flex shrink-0 items-center gap-1.5 overflow-x-auto border-b border-border-default/80 bg-surface-deep/50 px-5 py-2 max-[600px]:px-3" :aria-label="t('v7optimize.editorNavigation')">
         <button v-for="item in tabs" :key="item.id" type="button" :data-tab="item.id" :class="{ active: tab === item.id }" @click="tab = item.id">{{ t(item.label) }}</button>
       </nav>
@@ -1527,6 +1665,8 @@ function preflight(): void {
                 v-for="[key, pair] in filteredBoundRows"
                 :key="key"
                 class="grid grid-cols-[minmax(180px,1.5fr)_minmax(140px,1fr)_minmax(80px,0.6fr)_80px_48px] items-center gap-3 px-3.5 py-2 transition-colors hover:bg-surface-deep/50"
+                :class="hasVastPath(`optimize.bounds.${key}`) ? 'bg-danger/10 ring-1 ring-inset ring-danger/50' : ''"
+                :aria-invalid="hasVastPath(`optimize.bounds.${key}`) ? 'true' : undefined"
               >
                 <!-- Parameter Column -->
                 <div class="min-w-0 flex flex-col justify-center">
@@ -1609,7 +1749,7 @@ function preflight(): void {
         <section v-else-if="tab === 'optimizer'" class="opt-tab-panel grid grid-cols-[repeat(4,minmax(0,1fr))] gap-3.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
           <label class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.backend')">backend</span><SelectRoot :model-value="currentBackend" @update:model-value="switchOptimizeBackend(String($event))"><SelectTrigger data-field="optimizer-backend" aria-label="backend" class="h-9 text-compact"><span>{{ currentBackend }}</span></SelectTrigger><SelectContent><SelectItem v-for="item in availableBackends" :key="item.value" :value="item.value">{{ item.label }}</SelectItem></SelectContent></SelectRoot></label>
           <label class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.iters')">iters</span><Input type="number" min="1" class="h-9 text-compact tabular-nums" :model-value="numberField('optimize', 'iters', 100000)" @update:model-value="setNumber('optimize', 'iters', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.n_cpus')">n_cpus</span><Input type="number" min="1" class="h-9 text-compact tabular-nums" :model-value="numberField('optimize', 'n_cpus', 1)" @update:model-value="setNumber('optimize', 'n_cpus', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.n_cpus')">n_cpus</span><Input type="number" min="1" :max="version === 'v8' ? optimizeCpuLimit : undefined" :placeholder="version === 'v8' && currentBackend === 'gpu' ? 'Auto' : '1'" class="h-9 text-compact tabular-nums" :model-value="optimizeCpuText()" @update:model-value="setOptimizeCpuCount(String($event ?? ''))" /></label>
           <label class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.pareto_max_size')">pareto_max_size</span><Input type="number" min="1" class="h-9 text-compact tabular-nums" :model-value="numberField('optimize', 'pareto_max_size', 100)" @update:model-value="setNumber('optimize', 'pareto_max_size', String($event ?? ''))" /></label>
           <label v-if="version === 'v7'" class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.max_pending_starting_evals_per_cpu')">max_pending_starting_evals_per_cpu</span><Input type="number" min="1" class="h-9 text-compact tabular-nums" :model-value="numberField('optimize', 'max_pending_starting_evals_per_cpu', 1)" @update:model-value="setNumber('optimize', 'max_pending_starting_evals_per_cpu', String($event ?? ''))" /></label>
           <label class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.round_to_n_significant_digits')">round_to_n_significant_digits</span><Input type="number" min="1" class="h-9 text-compact tabular-nums" :model-value="numberField('optimize', 'round_to_n_significant_digits', 5)" @update:model-value="setNumber('optimize', 'round_to_n_significant_digits', String($event ?? ''))" /></label>
@@ -1629,7 +1769,7 @@ function preflight(): void {
           <label class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.seed_mode')">seed_mode</span><SelectRoot v-model="seedMode"><SelectTrigger aria-label="seed_mode" class="h-9 text-compact"><span>{{ seedMode }}</span></SelectTrigger><SelectContent><SelectItem value="none">none</SelectItem><SelectItem value="self">self</SelectItem><SelectItem value="path">path</SelectItem></SelectContent></SelectRoot></label>
           <label v-if="seedMode === 'path'" class="grid gap-1.5 text-xs text-secondary col-span-3 max-[600px]:col-span-1 max-[900px]:col-span-2" data-field="seed-path"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.seed_path')">seed_path</span><Input v-model="seedPath" class="h-9 text-compact font-mono" /></label>
           <label v-if="version === 'v8'" class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.rng_seed')">rng_seed</span><Input data-field="rng-seed" type="number" step="1" class="h-9 text-compact tabular-nums" :model-value="nullableRngSeed()" @update:model-value="setNullableRngSeed(String($event ?? ''))" /></label>
-          <GpuSettingsEditor v-if="currentBackend === 'gpu' && version === 'v8'" :gpu="(local.optimize.gpu as JsonObject) || {}" :optimize-defaults="optimizeDefaults || {}" :contract="backendContract" @update:gpu="local.optimize.gpu = $event" />
+          <GpuSettingsEditor v-if="currentBackend === 'gpu' && version === 'v8'" :gpu="(local.optimize.gpu as JsonObject) || {}" :optimize-defaults="optimizeDefaults || {}" :contract="backendContract" :invalid-paths="vastInvalidPaths" @update:gpu="local.optimize.gpu = $event" />
           <template v-if="currentBackend === 'pymoo'">
             <div class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-3 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
               <label class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.algorithm')">algorithm</span><SelectRoot :model-value="pymooText('algorithm', 'auto')" @update:model-value="setPymooAlgorithm(String($event))"><SelectTrigger data-field="pymoo-algorithm" aria-label="algorithm" class="h-9 text-compact"><span>{{ pymooText('algorithm', 'auto') }}</span></SelectTrigger><SelectContent><SelectItem v-for="algorithm in availablePymooAlgorithms" :key="algorithm" :value="algorithm">{{ algorithm }}</SelectItem></SelectContent></SelectRoot></label>
@@ -1693,7 +1833,7 @@ function preflight(): void {
             <label class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.objectiveScenario')">objective scenario</span><SelectRoot :model-value="objectiveScenarioMode" @update:model-value="setObjectiveScenario(String($event))"><SelectTrigger data-field="objective-scenario" aria-label="objective scenario" class="h-9 text-compact"><span>{{ objectiveScenarioMode === 'aggregate' ? 'suite aggregate' : 'named scenario' }}</span></SelectTrigger><SelectContent><SelectItem value="aggregate">suite aggregate</SelectItem><SelectItem value="named">named scenario</SelectItem></SelectContent></SelectRoot></label>
             <label v-if="objectiveScenarioMode === 'named'" class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.scenarioLabel')">scenario label</span><Input :model-value="objectiveScenarioName" class="h-9 text-compact" @update:model-value="setObjectiveScenarioName(String($event ?? ''))" /></label>
           </div>
-          <ScoringLimitsEditor :scoring="local.scoring" :limits="local.limits" :scenario-labels="scenarioLabels(local.suite)" :version="version" :metadata="limitsMeta" :backend="currentBackend" :backend-contract="backendContract" @update:scoring="local.scoring = $event; scoringJson = json($event)" @update:limits="local.limits = $event; limitsJson = json($event)" />
+          <ScoringLimitsEditor :scoring="local.scoring" :limits="local.limits" :scenario-labels="scenarioLabels(local.suite)" :version="version" :metadata="limitsMeta" :backend="currentBackend" :backend-contract="backendContract" :invalid-paths="vastInvalidPaths" @update:scoring="local.scoring = $event; scoringJson = json($event)" @update:limits="local.limits = $event; limitsJson = json($event)" />
           <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-3 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
             <label class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.scoringJson')">scoring JSON</span><Textarea v-model="scoringJson" class="min-h-[220px] text-compact font-mono" /></label>
             <label class="grid gap-1.5 text-xs text-secondary"><span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.tip.limitsJson')">limits JSON</span><Textarea v-model="limitsJson" class="min-h-[220px] text-compact font-mono" /></label>
