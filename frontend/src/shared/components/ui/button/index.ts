@@ -10,7 +10,7 @@ export { default as Button } from './Button.vue';
  * pages on this component until the migration finishes.
  */
 export const buttonVariants = cva(
-  "inline-flex cursor-pointer select-none items-center justify-center gap-1 whitespace-nowrap rounded-sm border font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-[120ms] ease-standard active:scale-[0.985] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex cursor-pointer select-none items-center justify-center gap-1 whitespace-nowrap rounded-md border font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-[120ms] ease-standard active:scale-[0.985] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -26,7 +26,7 @@ export const buttonVariants = cva(
         outline: 'border-border-strong bg-transparent text-primary hover:bg-elevated',
       },
       size: {
-        default: 'h-8 px-3 text-sm',
+        default: 'h-8 px-3 text-sm shadow-[0_1px_0_rgb(255_255_255/0.04)_inset]',
         sm: 'h-7 px-2.5 text-xs',
         lg: 'h-9.5 px-4 text-md',
         icon: 'size-8',

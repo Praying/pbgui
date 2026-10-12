@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<PanelHeaderProps>(), {
 </script>
 
 <template>
-  <header class="flex min-w-0 items-start justify-between gap-3 border-b border-border-subtle pb-3">
+  <header class="panel-header flex min-w-0 items-start justify-between gap-3 border-b border-border-subtle pb-3">
     <div class="min-w-0">
       <component
         :is="props.headingLevel"

@@ -69,30 +69,30 @@ describe('precision engineering visual tokens', () => {
   });
 
   it('defines the shared neutral graphite surface hierarchy', () => {
-    expect(stylesheet).toContain('--color-deep: #0f0f0f;');
-    expect(stylesheet).toContain('--color-page: #161616;');
-    expect(stylesheet).toContain('--color-workspace: #161616;');
-    expect(stylesheet).toContain('--color-sidebar: #1b1b1b;');
-    expect(stylesheet).toContain('--color-input: #1e1e1e;');
-    expect(stylesheet).toContain('--color-panel: #222222;');
-    expect(stylesheet).toContain('--color-card: #2b2b2b;');
-    expect(stylesheet).toContain('--color-elevated: #2b2b2b;');
-    expect(stylesheet).toContain('--color-backdrop: rgb(15 15 15 / 0.72);');
+    expect(stylesheet).toContain('--color-deep: #091117;');
+    expect(stylesheet).toContain('--color-page: #0d171e;');
+    expect(stylesheet).toContain('--color-workspace: #101c24;');
+    expect(stylesheet).toContain('--color-sidebar: #0b151c;');
+    expect(stylesheet).toContain('--color-input: #12222c;');
+    expect(stylesheet).toContain('--color-panel: #172832;');
+    expect(stylesheet).toContain('--color-card: #1d303b;');
+    expect(stylesheet).toContain('--color-elevated: #223945;');
+    expect(stylesheet).toContain('--color-backdrop: rgb(3 10 15 / 0.78);');
   });
 
   it('defines the approved border, text, accent, and semantic ramps', () => {
-    expect(stylesheet).toContain('--color-border-subtle: #343434;');
-    expect(stylesheet).toContain('--color-border-default: #464646;');
-    expect(stylesheet).toContain('--color-border-strong: #626262;');
-    expect(stylesheet).toContain('--color-primary: #f0f0f0;');
-    expect(stylesheet).toContain('--color-secondary: #bdbdbd;');
-    expect(stylesheet).toContain('--color-muted: #999999;');
-    expect(stylesheet).toContain('--color-disabled: #737373;');
-    expect(stylesheet).toContain('--color-placeholder: #858585;');
-    expect(stylesheet).toContain('--color-accent: #8fcff2;');
-    expect(stylesheet).toContain('--color-accent-soft: #b6e1f7;');
-    expect(stylesheet).toContain('--color-accent-deep: #4fa8d3;');
-    expect(stylesheet).toContain('--color-accent-contrast: #081216;');
+    expect(stylesheet).toContain('--color-border-subtle: #263d49;');
+    expect(stylesheet).toContain('--color-border-default: #385261;');
+    expect(stylesheet).toContain('--color-border-strong: #587080;');
+    expect(stylesheet).toContain('--color-primary: #edf7fa;');
+    expect(stylesheet).toContain('--color-secondary: #b7cbd2;');
+    expect(stylesheet).toContain('--color-muted: #89a3ad;');
+    expect(stylesheet).toContain('--color-disabled: #627a84;');
+    expect(stylesheet).toContain('--color-placeholder: #718b95;');
+    expect(stylesheet).toContain('--color-accent: #75c7e5;');
+    expect(stylesheet).toContain('--color-accent-soft: #a9e0f0;');
+    expect(stylesheet).toContain('--color-accent-deep: #368eae;');
+    expect(stylesheet).toContain('--color-accent-contrast: #061217;');
     expect(stylesheet).toContain('--color-success: #7bc8a5;');
     expect(stylesheet).toContain('--color-success-soft: #a4dbc3;');
     expect(stylesheet).toContain('--color-success-deep: #397d5e;');
@@ -135,7 +135,7 @@ describe('precision engineering visual tokens', () => {
   it('keeps low-harshness elevation and focus contracts', () => {
     expect(stylesheet).toContain('--shadow-panel:');
     expect(stylesheet).toContain('--shadow-elevated:');
-    expect(stylesheet).toContain('--focus-ring: 0 0 0 3px rgb(143 207 242 / 0.3);');
+    expect(stylesheet).toContain('--focus-ring: 0 0 0 3px rgb(117 199 229 / 0.3);');
     expect(stylesheet).toContain('--ease-standard: cubic-bezier');
     expect(stylesheet).toContain('--ease-spring: cubic-bezier');
   });

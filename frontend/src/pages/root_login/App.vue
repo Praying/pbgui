@@ -130,20 +130,22 @@ async function submitLogin(): Promise<void> {
   justify-content: center;
   padding: var(--page-padding);
   background:
-    radial-gradient(ellipse 60% 45% at 50% -8%, rgb(var(--accent-rgb) / 0.1), transparent 70%),
-    radial-gradient(ellipse 45% 40% at 88% 108%, rgb(var(--success-rgb) / 0.05), transparent 70%);
+    radial-gradient(ellipse 60% 45% at 50% -8%, rgb(var(--accent-rgb) / 0.14), transparent 70%),
+    radial-gradient(ellipse 45% 40% at 88% 108%, rgb(var(--success-rgb) / 0.06), transparent 70%),
+    repeating-linear-gradient(135deg, rgb(var(--text-secondary-rgb) / 0.014) 0 1px, transparent 1px 44px),
+    var(--surface-deep);
 }
 
 .card {
-  width: min(100%, 340px);
+  width: min(100%, 360px);
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: var(--sp-3xl) var(--sp-2xl) var(--sp-2xl);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  background: var(--surface-panel);
-  box-shadow: var(--shadow-panel);
+  padding: var(--sp-4xl) var(--sp-3xl) var(--sp-3xl);
+  border: 1px solid rgb(var(--accent-rgb) / 0.2);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(145deg, rgb(var(--accent-rgb) / 0.07), var(--surface-panel) 38%);
+  box-shadow: 0 24px 58px rgb(3 10 18 / 0.42), 0 1px 0 rgb(255 255 255 / 0.06) inset;
   position: relative;
   overflow: hidden;
 }
@@ -153,8 +155,8 @@ async function submitLogin(): Promise<void> {
   content: '';
   position: absolute;
   inset: 0 0 auto;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.65), transparent);
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
 }
 
 .brand {
