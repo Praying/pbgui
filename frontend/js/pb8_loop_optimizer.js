@@ -8,11 +8,20 @@
   var starting = false, formEdited = false, setupGeneration = 0, initialSetupRestored = false, optionsReady;
   var jevEnabled=true;
   var uiError = '', uiErrorPanel = 'loops-config', definitions = [], editingName = '', editingRevision = null, editingQueue = '';
+  var pollError = '', pollErrorPanel = 'loops-config';
   var editorSource = null, sourceDefaults = null, sourceDigest = null, editorVisible = false, editorLoading = false, editorGeneration = 0, queueing = false;
   var selectedDefinitions = new Set(), selectedRuns = new Set(), expanded = new Set();
   var logGeneration=0, logOpening=false, logRun='', logOperation='';
+  var rentalSnapshots=new Map(), rentalBusy=false;
+  var rentalBudgetKey='', rentalBillingKey='', rentalBillingChecked=0, rentalBillingGeneration=0, rentalBillingRequest=null;
   var workflow = savedWorkflow();
   var knowledgeEntries=[], knowledgeLoaded=false, knowledgeError='', knowledgeSignature='';
+  var recoveryDrafts=new Map(Object.entries(workflow.recovery_drafts||{}).filter(function(pair){return /^[a-f0-9]{32}$/.test(pair[0])&&pair[1]&&typeof pair[1]==='object';}));
+  function saveRecoveryDraft(id,values){
+    var allowed=['historical_advice','ai_decision_token_limit','ai_decision_usd_limit','decision_timeout_seconds','model_call_timeout_seconds'],safe={};
+    allowed.forEach(function(key){if(Object.prototype.hasOwnProperty.call(values,key))safe[key]=values[key];});
+    recoveryDrafts.set(id,safe);workflow.recovery_drafts=Object.fromEntries(Array.from(recoveryDrafts.entries()).slice(-20));persistWorkflow();
+  }
   function savedWorkflow() { try { return JSON.parse(localStorage.getItem('pbgui.pb8.loops.workflow') || '{}') || {}; } catch (_) { return {}; } }
   function persistWorkflow() {
     workflow.selected = selected; workflow.config_selection = Array.from(selectedDefinitions); workflow.run_selection = Array.from(selectedRuns); workflow.expanded = Array.from(expanded);
@@ -50,6 +59,10 @@
     if (token !== setupGeneration) return false;
     byId('execution').value = settings.execution;
     byId('direction').value = goals.direction || 'config';
+    byId('hsl-mode').value = settings.hsl_mode || 'auto';
+    byId('historical-advice').checked=settings.historical_advice!==false;
+    [['ai-token-limit','ai_decision_token_limit'],['ai-usd-limit','ai_decision_usd_limit'],['ai-decision-time','decision_timeout_seconds'],['ai-call-time','model_call_timeout_seconds']].forEach(function(pair){byId(pair[0]).value=settings[pair[1]]==null?'':settings[pair[1]];});
+    byId('ai-confirm').checked=settings.ai_budget_confirmed===true;
     byId('coins').value = (goals.coins || []).join(', ');
     byId('positions').value = goals.positions == null ? '' : goals.positions;
     ['long','short'].forEach(function (side) { byId(side).value = (goals.positions_by_side || {})[side] == null ? '' : goals.positions_by_side[side]; });
@@ -61,7 +74,7 @@
       byId(goal + '-target').disabled = !byId(goal).checked;
     });
     byId('goals').value = goals.text || '';
-    [['runs','max_runs'],['hours','hours'],['parallel','parallel'],['patience','patience'],['validations','max_validations'],['candidates','candidates']].forEach(function (pair) { byId(pair[0]).value = settings[pair[1]]; });
+    [['rounds','max_rounds'],['runs','max_runs'],['hours','hours'],['parallel','parallel'],['patience','patience'],['validations','max_validations'],['candidates','candidates']].forEach(function (pair) { byId(pair[0]).value = settings[pair[1]] == null ? '' : settings[pair[1]]; });
     byId('run-mode').value = settings.run_limit_mode || 'config';
     ['iters','proxy','hours'].forEach(function (name) { if (settings['run_' + name] != null) byId('run-' + name).value = settings['run_' + name]; });
     hoursEdited = true;
@@ -77,7 +90,7 @@
     return true;
   }
   function defaultSettings(name, execution) {
-    return {config_name:name,execution:execution || 'cpu',scenario_enabled:false,strategy_enabled:false,goals:{coins:[],direction:'config',positions:null,positions_by_side:{},presets:['gain','drawdown','uptrend'],targets:{},text:''},run_limit_mode:'config',run_iters:null,run_proxy:null,run_hours:null,max_runs:10,hours:options.vast ? options.vast.hours : 24,parallel:1,max_validations:30,candidates:3,patience:3};
+    return {config_name:name,execution:execution || 'cpu',scenario_enabled:false,strategy_enabled:false,hsl_mode:'auto',goals:{coins:[],direction:'config',positions:null,positions_by_side:{},presets:['gain','drawdown','uptrend'],targets:{},text:''},run_limit_mode:'config',run_iters:null,run_proxy:null,run_hours:null,max_runs:10,hours:options.vast ? options.vast.hours : 24,parallel:1,max_validations:30,candidates:3,patience:3};
   }
   function editorLocation() {
     var url=new URL(location.href); if(editorVisible)url.searchParams.set('loop_edit',byId('name').value || 'new');else url.searchParams.delete('loop_edit');history.replaceState(null,'',url);
@@ -166,10 +179,10 @@
   async function request(path, body, method) {
     var response = await fetch(base + path, {credentials: 'same-origin', cache: 'no-store', headers: body ? {'Content-Type': 'application/json'} : {}, method: method || (body ? 'POST' : 'GET'), body: body ? JSON.stringify(body) : undefined});
     var data = await response.json();
-    if (!response.ok) { if (response.status === 401) { clearTimeout(timer); generation++; } throw new Error(typeof data.detail === 'string' ? data.detail : Array.isArray(data.detail) ? data.detail.map(function(item){return item.msg;}).join('; ') : 'Loop request failed'); }
+    if (!response.ok) { if (response.status === 401) { clearTimeout(timer); generation++; } throw new Error(typeof data.detail === 'string' ? data.detail : Array.isArray(data.detail) ? data.detail.map(function(item){return item.msg;}).join('; ') : data.detail && data.detail.message ? data.detail.message : 'Loop request failed'); }
     return data;
   }
-  function showMessages(){[byId('message'),document.getElementById('loops-queue-message'),document.getElementById('loops-results-message'),document.getElementById('loops-knowledge-message')].forEach(function(node){if(node){var panel=node===byId('message')?'loops-config':node.id.replace('-message','');node.textContent=panel===uiErrorPanel?uiError:'';node.className='loop-error';}});}
+  function showMessages(){[byId('message'),document.getElementById('loops-queue-message'),document.getElementById('loops-results-message'),document.getElementById('loops-knowledge-message')].forEach(function(node){if(node){var panel=node===byId('message')?'loops-config':node.id.replace('-message','');node.textContent=(panel===uiErrorPanel?uiError:'')||(panel===pollErrorPanel?pollError:'');node.className='loop-error';}});}
   function error(exc) { uiErrorPanel=(window.state && state.panel)||'loops-config';uiError=exc.message || String(exc);showMessages(); }
   function clearNativeLog() {
     logGeneration++;logOpening=false;logRun='';logOperation='';
@@ -196,8 +209,10 @@
   }
   function nativeLogButton(cell,run,jobs) {
     var available=jobs.filter(function(job){return job.log_available;});
-    var log=button(cell,'Log',function(){if(available.length===1)openNativeLog(run,available[0],false);});log.className='act-btn loop-open';log.disabled=available.length!==1;
-    log.title=available.length>1?'Expand the round to choose a job.':available.length?'Open this job’s native log.':'Available after the native job is created.';
+    var active=available.filter(function(job){return ['queued','preparing','provisioning','uploading','running','collecting','stopping'].includes(job.status);});
+    var target=active.length===1?active[0]:available.length===1?available[0]:null;
+    var log=button(cell,'Log',function(){if(target)openNativeLog(run,target,false);});log.className='act-btn loop-open';log.disabled=!target;
+    log.title=target?'Open this job’s native log.':available.length>1?'Expand the round to choose a job.':'Available after the native job is created.';
   }
   async function restoreNativeLog() {
     var url=new URL(location.href),id=url.searchParams.get('loop_log_run'),operation=url.searchParams.get('loop_log');
@@ -299,11 +314,11 @@
     ['gain', 'drawdown', 'uptrend', 'consistency', 'trades', 'robustness'].forEach(function (name) { if (byId(name).checked) { presets.push(name); var target = number(name + '-target', null); if (target !== null) targets[name] = target; } });
     var sides = {}, total = number('positions', null);
     if (byId('direction').value === 'both' && (byId('long').value !== '' || byId('short').value !== '')) { sides = {long: number('long', 0), short: number('short', 0)}; if (total === null) total = sides.long + sides.short; }
-    return {config_name: byId('config').value, execution: byId('execution').value, scenario_enabled: byId('scenario').checked, strategy_enabled: byId('strategy').checked,
+    return {config_name: byId('config').value, execution: byId('execution').value, scenario_enabled: byId('scenario').checked, strategy_enabled: byId('strategy').checked, hsl_mode: byId('hsl-mode').value,
       goals: {coins: byId('coins').value.split(/[\s,;]+/).filter(Boolean), direction: byId('direction').value, positions: total, positions_by_side: sides, presets: presets, targets: targets, text: byId('goals').value},
       run_limit_mode: byId('run-mode').value, run_iters: byId('run-mode').value === 'iters' ? number('run-iters', null) : null, run_proxy: byId('run-mode').value === 'proxy' ? number('run-proxy', null) : null, run_hours: byId('run-mode').value === 'hours' ? number('run-hours', null) : null,
-      max_runs: number('runs', 10), hours: number('hours', 24), parallel: number('parallel', 1), max_validations: number('validations', 30), candidates: number('candidates', 3), patience: number('patience', 3),
-      jev_enabled:jevEnabled,authorization: true};
+      max_rounds: number('rounds', null), max_runs: number('runs', 10), hours: number('hours', 24), parallel: number('parallel', 1), max_validations: number('validations', 30), candidates: number('candidates', 3), patience: number('patience', 3),
+      jev_enabled:jevEnabled,historical_advice:byId('historical-advice').checked,decision_timeout_seconds:number('ai-decision-time',null),model_call_timeout_seconds:number('ai-call-time',null),ai_decision_token_limit:number('ai-token-limit',null),ai_decision_usd_limit:number('ai-usd-limit',null),ai_budget_confirmed:byId('ai-confirm').checked,authorization: true};
   }
   function select(id) {
     if (selected !== id) { setupGeneration++; closeReport(); }
@@ -381,7 +396,7 @@
   function observerName(job) {
     var name=job.kind==='observer_holdout'?'Holdout':'Full Time Range';
     if(job.round>=0&&job.comparison_label)name+=' · '+job.comparison_label;
-    if(job.selected_for_full_range)name+=' · Best Holdout';
+    if(job.selected_for_full_range)name+=' · Selected candidate';
     if(job.previous_selection)name+=' · Previous selection';
     return name;
   }
@@ -423,16 +438,18 @@
     return !['incomplete','failed','not validated'].includes(cycle.status)&&(!observations.length||observations.some(function(item){return item.assessment&&item.assessment.comparable!==false&&item.assessment.simulation_complete!==false;}));
   }
   function comparisonReference(run,cycles,cycle) {
-    var previous=cycles.filter(function(item){return item.round<cycle.round&&item.score!=null&&completeComparison(item);}).pop();
+    var previous=cycles.filter(function(item){return item.round<cycle.round&&(item.ai_evaluated||item.score!=null)&&completeComparison(item);}).pop();
     if(previous)return {goals:previous.goals||[],label:'vs Loop '+(previous.round+1)+' (best exact comparison)'};
     var baseline=run.baseline&&run.baseline.assessment;
     return {goals:baseline&&baseline.comparable!==false&&baseline.simulation_complete!==false?baseline.goals||[]:[],label:'vs unchanged start'};
   }
   function overviewGoals(cell,goals,reference,complete) {
     cell.replaceChildren();cell.classList.add('loop-metric-cell');
+    goals=goals.filter(function(goal){return goal.metric||(goal.metrics||[]).length||goal.target!=null;});
     if(!goals.length){cell.appendChild(element('span','—','loop-metric-change is-neutral'));return;}
     goals.forEach(function(goal){
       var metric=goal.metric||(goal.metrics||[])[0]||'',name={gain:'Gain',drawdown:'Drawdown',uptrend:'Uptrend',consistency:'Consistency',trades:'Trades',robustness:'Robustness',custom:'Custom'}[goal.goal]||goal.goal;
+      if(goal.goal==='custom'&&metric)name={backtest_completion_ratio:'Completion',liquidated_usd:'Liquidated',liquidated:'Liquidated',exponential_fit_error:'Fit error',equity_choppiness:'Choppiness',equity_jerkiness:'Jerkiness'}[metric]||metric.replace(/_/g,' ');
       var item=element('div',undefined,'loop-metric-line'),label=element('span',name+' '+overviewValue(goal.value,metric,false));
       label.title=metric+' · '+(goal.direction==='min'?'worst window':'mean');item.appendChild(label);
       var prior=(reference.goals||[]).find(function(other){return other.goal===goal.goal&&(other.metric||(other.metrics||[])[0])===metric;});
@@ -444,17 +461,17 @@
     var job=specificJob||selectedObserver(run,round,kind);
     cell.replaceChildren();cell.classList.add('loop-metric-cell');
     if(!job||!job.simulation_complete){cell.textContent=specificJob?(specificJob.display_status||specificJob.status):observerSummary(run,round,kind);return;}
-    if(job.comparison_label)cell.title=job.comparison_label+(job.selected_for_full_range?' · Best Holdout':'');
+    if(job.comparison_label)cell.title=job.comparison_label+(job.selected_for_full_range?' · Selected candidate':'');
     ['gain','drawdown'].forEach(function(metric){var item=element('div',undefined,'loop-metric-line');item.appendChild(element('span',(metric==='gain'?'Gain ':'DD ')+overviewValue((job.metrics||{})[metric],metric,false)));overviewChange(item,(job.delta_previous||{})[metric],metric==='gain'?'max':'min',metric,round===0?'vs unchanged start':'vs Loop '+round);cell.appendChild(item);});
   }
   function userEvaluation(parent,run,round) {
     var compareActions=element('div',undefined,'panel-toolbar');parent.appendChild(compareActions);
     ['observer_holdout','observer_full_range'].forEach(function(kind){var control=button(compareActions,kind==='observer_holdout'?'Compare all Holdouts':'Compare all Full Time Ranges',function(){openEvaluationComparison(run,kind);});control.disabled=!hasEvaluationResults(run,kind);});
     parent.appendChild(element('p','Automatic backtests for your evaluation. These results are excluded from AI, JEV, goal scores, stopping decisions and learned knowledge.','muted-line'));
-    parent.appendChild(element('p','Holdout tests every successful comparison candidate. Full Time Range tests only the best Holdout, selected by target compliance and Holdout score.','muted-line'));
+    parent.appendChild(element('p','Holdout tests every successful comparison candidate. Full Time Range follows the AI-selected exact comparison winner. Historical runs may retain an earlier Holdout selection.','muted-line'));
     var jobs=(run.observer_jobs||[]).filter(function(job){return round==null||job.round===round;}).sort(function(a,b){return a.round-b.round||a.kind.localeCompare(b.kind);});
     if(!jobs.length){parent.appendChild(element('p',run.observer_enabled?'User evaluations are queued after the start comparison and each round’s exact comparison.':'No automatic user evaluations were recorded for this older run.','muted-line'));return;}
-    var table=reportTable(parent,['Round / period','Status','Holdout score','Duration','Gain','Drawdown','Recovery','ADG','Sharpe','Sortino','Fills'],jobs.map(function(job){var metrics=job.metrics||{};return [job.round<0?'Unchanged start · '+observerName(job):'Loop '+(job.round+1)+' · '+observerName(job),job.display_status||job.status,numeric(job.holdout_score),duration(job.run_started_at&&job.ended_at?job.ended_at-job.run_started_at:null)].concat(['gain','drawdown','recovery_days','adg','sharpe','sortino','trades'].map(function(metric){return observerValue(metrics[metric],metric);}));}));
+    var table=reportTable(parent,['Round / period','Status','Legacy score','Duration','Gain','Drawdown','Recovery','ADG','Sharpe','Sortino','Fills'],jobs.map(function(job){var metrics=job.metrics||{};return [job.round<0?'Unchanged start · '+observerName(job):'Loop '+(job.round+1)+' · '+observerName(job),job.display_status||job.status,numeric(job.holdout_score),duration(job.run_started_at&&job.ended_at?job.ended_at-job.run_started_at:null)].concat(['gain','drawdown','recovery_days','adg','sharpe','sortino','trades'].map(function(metric){return observerValue(metrics[metric],metric);}));}));
     Array.from(table.tBodies[0].rows).forEach(function(line,index){var job=jobs[index];backtestButton(line.cells[0],run,job);nativeLogButton(line.cells[0],run,[job]);});
     jobs.forEach(function(job){
       parent.appendChild(element('h4',(job.round<0?'Unchanged start':'Loop '+(job.round+1))+' · '+observerName(job)));
@@ -511,7 +528,7 @@
     else if(reportView==='cycle'){
       var jobs=row.jobs.filter(function(job){return job.round===reportRound;});
       if(reportTab==='overview'){
-        var overview=element('div',undefined,'form-row cols-4 loop-summary');[['Status',cycle.status],['Duration',duration(cycle.duration_seconds)],['Backtests',cycle.completed_backtests+' / '+cycle.backtests],['Validated score',numeric(cycle.score)]].forEach(function(pair){var card=element('div');card.appendChild(element('span',pair[0]));var val=element('strong',pair[1]);if(pair[0]==='Duration')val.dataset.reportDuration='';card.appendChild(val);overview.appendChild(card);});reportBody.appendChild(overview);
+        var overview=element('div',undefined,'form-row cols-4 loop-summary');[['Status',cycle.status],['Duration',duration(cycle.duration_seconds)],['Backtests',cycle.completed_backtests+' / '+cycle.backtests],['AI selection',cycle.ai_evaluated?(cycle.winner_candidate_id||'No qualified winner'):'Not recorded']].forEach(function(pair){var card=element('div');card.appendChild(element('span',pair[0]));var val=element('strong',pair[1]);if(pair[0]==='Duration')val.dataset.reportDuration='';card.appendChild(val);overview.appendChild(card);});reportBody.appendChild(overview);
         reportTable(reportBody,['Started','Finished','Timing'],[[dateText(cycle.started_at),cycle.active?'Running':dateText(cycle.ended_at),cycle.duration_estimated?'Estimated from legacy timestamps':'Recorded']]);
         reportTable(reportBody,['Job','Kind','Status','Duration'],jobs.map(function(job){return [job.name,job.kind,job.status,duration(job.run_started_at&&job.ended_at?job.ended_at-job.run_started_at:null)];}));
         jobs.filter(function(job){return job.error||job.result_error;}).forEach(function(job){reportBody.appendChild(element('p',job.name+': '+(job.error||job.result_error),'loop-error'));});
@@ -540,12 +557,13 @@
     } else {
       if(reportTab==='analysis'){reportBody.appendChild(element('h4','Goal interpretation'));reportBody.appendChild(element('p',row.interpretation||'Not recorded.','loop-analysis'));if(row.status!=='failed'){if(row.reason)reportBody.appendChild(element('p',row.reason,'loop-analysis'));if(row.last_error&&row.last_error!==row.reason)reportBody.appendChild(element('p',row.last_error,'loop-error'));}}
       else if(reportTab==='goals') {
-        var measured=cycles.filter(function(cycle){return cycle.score!=null;}), latest=measured[measured.length-1];
+        var measured=cycles.filter(function(cycle){return cycle.ai_evaluated||cycle.score!=null;}), latest=measured[measured.length-1];
         if(!latest) reportBody.appendChild(element('p','No confirmed exact-backtest comparison yet.'));
         else reportTable(reportBody,['Goal / metric'].concat(measured.map(function(cycle){return 'Loop '+(cycle.round+1);})), latest.goals.map(function(goal){return [goal.goal+' · '+goal.metrics.join(', ')].concat(measured.map(function(cycle){var item=(cycle.goals||[]).find(function(value){return value.goal===goal.goal&&value.metrics.join(',')===goal.metrics.join(',');});return item?metricValue(item.value,item)+(item.delta==null?'':item.improved?' ↑':item.delta!==0?' ↓':' ='):'—';}));}));
       }
       else {if(row.best)button(reportBody,'Download best comparison config',async function(){try{var payload=await request('/'+row.id+'/best-config'),url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,4)],{type:'application/json'})),link=element('a');link.href=url;link.download='pb8-loop-'+row.id+'.json';link.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);}catch(exc){error(exc);}});reportTable(reportBody,['Field','Value'],[['Status',row.status],['Execution',({cpu:'Local CPU',gpu:'Local GPU',vast:'Vast.ai'}[row.settings.execution]||row.settings.execution)],['AI calls',row.ai_calls],['Token reserve',row.ai_tokens_reserved],['JEV',row.jev_status||'Not recorded'],['JEV reserved cost','$'+Number(row.jev_usd_reserved||0).toFixed(4)],['Deadline',dateText(row.deadline)],['Final holdout',row.holdout_used?'Used':row.holdout_available?'Available':'Unavailable'],['PB8 revision',(row.fingerprint||{}).pb8||'Unknown'],['Data status',(row.fingerprint||{}).data_status||'Unknown'],['AI USD reserve',row.usd_status==='subscription'?'Subscription / unavailable':'$'+Number(row.ai_usd_reserved||0).toFixed(4)]]);}
     }
+    if(reportView==='run'&&reportTab==='overview')renderAIRecovery(reportBody,row);
     if(row.status==='failed'&&['overview','analysis'].includes(reportTab)&&(reportView==='run'||reportView==='initial'&&row.phase==='bootstrap'||reportView==='cycle'&&reportRound===((row.failure||{}).round==null?row.round:row.failure.round)))terminationReport(reportBody,row);
     reportSignature=JSON.stringify([reportView,reportRound,reportTab,diffOperation,diffBaseline,row],function(key,value){return ['updated_at','duration_seconds','last_observed_at'].includes(key)?undefined:value;});
     reportBody.scrollTop=scroll;if(!reportOverlay.classList.contains('is-open')){reportOverlay.classList.add('is-open');reportOverlay.setAttribute('aria-hidden','false');reportWindow.fit();document.getElementById('loop-report-close').focus();}else if(focus){var focused=document.getElementById(focus);if(focused&&reportDialog.contains(focused))focused.focus({preventScroll:true});}
@@ -586,7 +604,7 @@
       }catch(exc){if(current())error(exc);}
     });control.className='act-btn loop-open';
   }
-  function canContinueRound(cycle){return (cycle.observations||[]).some(function(item){return item.assessment&&item.assessment.comparable!==false&&item.assessment.simulation_complete!==false;});}
+  function canContinueRound(cycle){return !!cycle.winner_operation&&(cycle.observations||[]).some(function(item){return item.assessment&&item.assessment.comparable!==false&&item.assessment.simulation_complete!==false;});}
   function continueButton(parent,run,round){
     var control=button(parent,'Continue',function(){select(run.id);openReport(round==null?'run':'cycle',round==null?0:round,'overview');var count=reportBody.querySelector('input[aria-label="Additional optimizer runs"]');if(count){count.focus();count.scrollIntoView({block:'nearest'});}});control.className='act-btn loop-open';control.title=round==null?'Continue from the best exact comparison with 5, 10 or a custom number of runs.':'Continue from this round with 5, 10 or a custom number of runs.';
   }
@@ -624,7 +642,7 @@
     var confirmation=row.status==='completed'?'Confirmed':row.final_validation&&row.final_validation.length?'Unconfirmed — inspect holdout goals':'Not confirmed';
     if(row.status==='completed'&&finalAssessment&&finalAssessment.confirmation_source==='observer_holdout')confirmation=(finalAssessment.goals||[]).some(function(goal){return goal.requirement;})?'Holdout checked · numeric targets met':'Holdout checked';
     if(row.holdout_retryable)button(parent,'Retry unchanged final holdout',async function(){try{await request('/'+row.id+'/retry-holdout',{});await poll();}catch(exc){error(exc);}});
-    reportTable(parent,['Outcome','Details'],[['Search stopped',row.status==='failed'?failureReason(row):row.stop_reason||row.reason||row.status],['Best comparison',best?'Round '+(best.round==null?'unknown':best.round+1)+' · '+numeric(assessment.score):'None'],['Hard numeric targets',assessment?(assessment.hard_targets_met===false?'Violated':assessment.hard_targets_met===true?'Met':'See goal evidence'):'Unknown'],['Final confirmation',confirmation],['Start comparison',baseline?numeric(baseline.assessment.score):'Not recorded for this older run']]);
+    reportTable(parent,['Outcome','Details'],[['Search stopped',row.status==='failed'?failureReason(row):row.stop_reason||row.reason||row.status],['Best comparison',best?'Round '+(best.round==null?'unknown':best.round+1)+' · '+(best.candidate_id||'Selected'):'None'],['Hard numeric targets',assessment?(assessment.hard_targets_met===false?'Violated':assessment.hard_targets_met===true?'Met':'See goal evidence'):'Unknown'],['Final confirmation',confirmation],['Start comparison',baseline?'Exact baseline recorded':'Not recorded for this older run']]);
     if(best){reportTable(parent,['Goal / metric','Unchanged start','Best comparison','Change vs start'],assessment.goals.map(function(goal){var initial=baseline&&(baseline.assessment.goals||[]).find(function(item){return item.goal===goal.goal&&item.metric===goal.metric;});return [goal.goal+' · '+goal.metric,metricValue(initial&&initial.value,goal),metricValue(goal.value,goal),initial&&initial.value!=null?metricValue(goal.value-initial.value,goal):'Unknown'];}));}
     if(row.final_validation&&row.final_validation.length){parent.appendChild(element('h4','Final holdout'));row.final_validation.forEach(function(item){goalTable(parent,item.assessment.goals||[]);});}
     (row.jev_answers||[]).forEach(function(answer){parent.appendChild(element('p',typeof answer==='string'?answer:JSON.stringify(answer),'loop-analysis'));});
@@ -646,7 +664,80 @@
     if(!root)return;
     showMessages();
     ['config','queue','results'].forEach(function(kind){byId('nav-count-'+kind).textContent=String(kind==='config'?definitions.length:rows.filter(function(row){return kind==='results'?row.ended:!row.ended;}).length);});
-    renderConfigurations();renderRunTree('loops-queue',false);renderRunTree('loops-results',true);renderKnowledge();syncContext();
+    renderConfigurations();renderRunTree('loops-queue',false);renderRunTree('loops-results',true);renderKnowledge();syncContext();renderRental();
+  }
+  function rentalRun() {
+    var active=rows.filter(function(row){return !row.ended && row.settings.execution==='vast';});
+    var chosen=active.filter(function(row){return selectedRuns.has(row.id);});
+    return chosen.length===1?chosen[0]:!selectedRuns.size&&active.length===1?active[0]:null;
+  }
+  function renderRental() {
+    var panel=byId('rental');if(!panel)return;
+    var run=rentalRun();panel.hidden=!run;if(!run)return;
+    var data=rentalSnapshots.get(run.id),rental=data&&data.rental;
+    var summary=byId('rental-summary'),status=byId('rental-status'),extend=byId('rental-extend');
+    summary.textContent='Rental · '+run.name;
+    status.textContent=data&&data.error?data.error:!data?'Loading rental…':!rental?'No active rental is bound to this loop.':
+      'Remaining '+duration(Math.max(0,rental.deadline-Date.now()/1000))+' · Rental ends '+dateText(rental.deadline)+
+      ' · Loop ends '+dateText(rental.loop_deadline)+' · Budget $'+Number(rental.budget_usd).toFixed(2)+
+      ' · $'+Number(rental.price_hour_usd).toFixed(4)+'/hour'+
+      (rental.pending?' · Awaiting worker confirmation…':'')+(rental.error?' · '+rental.error:'');
+    extend.disabled=rentalBusy||!rental||!rental.can_extend||rental.pending;
+    if(rental){extend.textContent=rental.loop_deadline+Number(byId('rental-minutes').value)*60<=rental.deadline?'Extend loop':'Extend rental & loop';extend.title='Use existing rental time first; extend the rental only when needed. Latest budget-limited rental end: '+dateText(rental.maximum_deadline);}
+    var budget=byId('rental-budget'),save=byId('rental-budget-save'),cost=byId('rental-cost');
+    save.disabled=rentalBusy||!rental||!rental.can_edit_budget||rental.pending;
+    if(!rental){cost.textContent='';return;}
+    var key=run.id+':'+rental.worker_id;
+    if(rentalBudgetKey!==key||budget.value===budget.defaultValue||Number(budget.value)===rental.budget_usd){budget.value=String(rental.budget_usd);budget.defaultValue=budget.value;}
+    rentalBudgetKey=key;
+    var billing=rental.billing;
+    cost.textContent=billing&&billing.amount_usd!=null?'Spent on this rental: $'+Number(billing.amount_usd).toFixed(4)+
+      ' (Vast'+(billing.reported_at?' · updated '+dateText(billing.reported_at):'')+(billing.error?' · last reported; billing update unavailable':'')+')':
+      'Estimated compute: $'+Number(rental.estimated_compute_usd||0).toFixed(4)+' (transfers excluded; Vast billing '+(billing&&billing.error?'unavailable':'pending')+')';
+  }
+  function refreshRentalBilling(run,rental) {
+    if(!rental)return;
+    var key=run.id+':'+rental.worker_id;
+    if(rentalBillingKey!==key){if(rentalBillingRequest)rentalBillingRequest.abort();rentalBillingGeneration++;rentalBillingKey=key;rentalBillingChecked=0;}
+    if(Date.now()-rentalBillingChecked<60000)return;
+    rentalBillingChecked=Date.now();var token=++rentalBillingGeneration;
+    var controller=new AbortController();rentalBillingRequest=controller;
+    fetch(base+'/'+run.id+'/rental/charges',{credentials:'same-origin',cache:'no-store',signal:controller.signal})
+      .then(function(response){if(!response.ok)throw new Error('Billing unavailable');return response.json();})
+      .then(function(result){
+        if(stopped||token!==rentalBillingGeneration||result.worker_id!==rental.worker_id)return;
+        var data=rentalSnapshots.get(run.id);
+        if(data&&data.rental&&data.rental.worker_id===result.worker_id&&
+          Number((result.billing||{}).reported_at||0)>=Number((data.rental.billing||{}).reported_at||0)){data.rental.billing=result.billing;renderRental();}
+      }).catch(function(exc){
+        if(exc.name==='AbortError'||stopped||token!==rentalBillingGeneration)return;
+        var data=rentalSnapshots.get(run.id);
+        if(data&&data.rental&&data.rental.worker_id===rental.worker_id){data.rental.billing=Object.assign({},data.rental.billing||{},{error:'Billing update unavailable'});renderRental();}
+      }).finally(function(){if(token===rentalBillingGeneration)rentalBillingRequest=null;});
+  }
+  async function saveRentalBudget() {
+    var run=rentalRun(),data=run&&rentalSnapshots.get(run.id),rental=data&&data.rental;
+    if(rentalBusy||!rental||!rental.can_edit_budget||rental.pending)return;
+    var budget=Number(byId('rental-budget').value);
+    if(!Number.isFinite(budget)||budget<.1||budget>100){error(new Error('Choose a budget between $0.10 and $100.00.'));return;}
+    rentalBusy=true;renderRental();
+    try{
+      await request('/'+run.id+'/rental/budget',{worker_id:rental.worker_id,expected_deadline:rental.deadline,expected_budget_usd:rental.budget_usd,budget_usd:budget});
+      rentalSnapshots.clear();rentalSnapshots.set(run.id,{rental:Object.assign({},rental,{pending:true})});uiError='';await poll();
+    }catch(exc){error(exc);}finally{rentalBusy=false;renderRental();}
+  }
+  async function extendRental() {
+    var run=rentalRun(),data=run&&rentalSnapshots.get(run.id),rental=data&&data.rental;
+    if(rentalBusy||!rental||!rental.can_extend||rental.pending)return;
+    var minutes=Number(byId('rental-minutes').value);
+    if(!Number.isInteger(minutes)||minutes<1||minutes>1440){error(new Error('Enter 1 to 1,440 whole minutes.'));return;}
+    rentalBusy=true;renderRental();
+    try{
+      await request('/'+run.id+'/rental/extend',{worker_id:rental.worker_id,expected_deadline:rental.deadline,
+        expected_loop_deadline:rental.loop_deadline,minutes:minutes});
+      rentalSnapshots.clear();rentalSnapshots.set(run.id,{rental:Object.assign({},rental,{pending:true})});uiError='';
+      await poll();
+    }catch(exc){error(exc);}finally{rentalBusy=false;renderRental();}
   }
   function renderKnowledge(){
     var host=document.getElementById('loop-knowledge-list');if(!host)return;
@@ -694,34 +785,57 @@
     });
     if(!body.children.length){var line=element('tr'),cell=element('td','No loop configurations.');cell.colSpan=4;line.appendChild(cell);body.appendChild(line);}
   }
+  function overviewActivity(cell,run) {
+    if(run.ended)return;
+    var label=({queued:'Waiting to start',paused:'Paused',stopping:'Stopping owned jobs'})[run.status];
+    if(!label)label=({interpret:'AI planning goals',bootstrap:'AI planning first experiment',baseline:'CPU checking baseline',optimize:run.settings.execution==='cpu'?'CPU optimizing':'GPU optimizing',select:'AI selecting candidates',validate:'CPU validating candidates',evaluate:'AI evaluating results',holdout:'CPU checking final holdout',observer_confirmation:'Completing final checks'})[run.phase];
+    if(!label)return;
+    var checks=(run.jobs||[]).filter(function(job){return job.round===run.round&&job.kind==='validation';});
+    if(run.phase==='validate'&&checks.length)label+=' · '+checks.filter(function(job){return ['complete','completed'].includes(job.status);}).length+' / '+checks.length;
+    cell.appendChild(element('div',label,'loop-activity muted-line'));
+  }
+  function overviewProxy(cell,jobs) {
+    jobs.filter(function(job){return job.kind==='optimizer';}).forEach(function(job,index){
+      var count=job.proxy_evaluations,limit=job.proxy_limit;
+      var known=Number.isSafeInteger(count)&&count>=0,hasLimit=Number.isSafeInteger(limit)&&limit>0;
+      var finished=['complete','completed','failed','error','cancelled','stopped'].includes(job.status);
+      if(!known&&(!hasLimit||finished))return;
+      var text='Proxy'+(jobs.length>1?' '+(index+1):'')+' '+(known?count.toLocaleString('en-US'):'—');
+      if(hasLimit)text+=' / '+limit.toLocaleString('en-US')+(known?' · '+(count/limit*100).toLocaleString('en-US',{maximumFractionDigits:1})+'%':'');
+      cell.appendChild(element('div',text,'loop-proxy-progress muted-line'));
+    });
+  }
   function renderRunTree(panel, ended) {
     var host=document.getElementById(panel+'-table');var query=(workflow[panel+'_filter'] || '').toLowerCase(),status=workflow[panel+'_status'] || '';
     var visible=rows.filter(function(row){return !!row.ended===ended && (!query || ((row.name||row.settings.config_name)+' '+row.id).toLowerCase().includes(query)) && (!status || row.status===status);});
     var sig=JSON.stringify([visible,Array.from(expanded)],function(key,value){return ['updated_at','duration_seconds'].includes(key)?undefined:value;});
     if(host.querySelector('table[data-selecting]'))return;
     if(host.dataset.signature===sig){host.querySelectorAll('tr[data-key]').forEach(function(line){line.classList.toggle('selected',selectedRuns.has(line.dataset.selection));line.classList.toggle('is-selected',line.dataset.key===workflow.focus && !line.dataset.selection);});host.querySelectorAll('[data-clock]').forEach(function(clock){var pair=clock.dataset.clock.split(':'),row=rows.find(function(row){return row.id===pair[0];}),cycle=row && cycleRows(row).find(function(cycle){return cycle.round===Number(pair[1]);});if(cycle)clock.textContent=duration(cycle.duration_seconds);});return;}host.dataset.signature=sig;var oldScroll=host.querySelector('.loop-table-scroll'),scrollLeft=oldScroll?oldScroll.scrollLeft:0;var focused=document.activeElement,focusedRow=focused&&focused.closest('tr[data-key]'),focusKey=focusedRow&&host.contains(focusedRow)?focusedRow.dataset.key:'';host.replaceChildren();
-    var body=tableShell(host,['Name / round / job','Status','Execution','Duration','Backtests','Comparison metrics · Δ prior round','Goal score','Score change','Created','Holdout gain / DD','Full range gain / DD']);
+    var body=tableShell(host,['Name / round / job','Status','Execution','Duration','Backtests','Comparison metrics · Δ prior round','AI selection','Decision','Created','Holdout gain / DD','Full range gain / DD']);
     function line(values, depth, key, report) {values=values.slice();values.splice(5,0,'');var row=element('tr');values.forEach(function(value,index){var cell=element('td',String(value==null?'—':value));if(index===0)cell.style.paddingLeft='calc(var(--sp-md) + '+depth+' * 20px)';row.appendChild(cell);});while(row.cells.length<11)row.appendChild(element('td',''));body.appendChild(row);row.dataset.key=key;row.classList.toggle('is-selected',key===workflow.focus);row.tabIndex=0;if(report){row.addEventListener('dblclick',report);row.addEventListener('keydown',function(event){if(event.key==='Enter'){event.preventDefault();report();}});var open=button(row.cells[0],'Open',report);open.className='act-btn loop-open';}return row;}
     visible.forEach(function(run){
-      var cycles=cycleRows(run), latest=cycles.filter(function(cycle){return cycle.score!=null;}).pop(),checks=run.jobs.filter(function(job){return job.kind!=='optimizer';});
-      var parent=line([(run.name||run.settings.config_name)+' · '+run.id.slice(0,8),run.status,{cpu:'Local CPU',gpu:'Local GPU',vast:'Vast.ai'}[run.settings.execution],run.deadline==null?'—':duration((run.ended?Math.max.apply(null,run.jobs.map(function(job){return job.ended_at||run.created_at;})):Date.now()/1000)-(run.started_at||run.created_at)),checks.filter(function(job){return ['completed','complete'].includes(job.status);}).length+' / '+checks.length,run.best?numeric(run.best.assessment.score):latest?numeric(latest.score):'—','—',dateText(run.created_at)],0,run.id,function(){select(run.id);openReport('run',0,'overview');});
+      var cycles=cycleRows(run), latest=cycles.filter(function(cycle){return cycle.ai_evaluated||cycle.score!=null;}).pop(),checks=run.jobs.filter(function(job){return job.kind!=='optimizer';});
+      var parent=line([(run.name||run.settings.config_name)+' · '+run.id.slice(0,8),run.status,{cpu:'Local CPU',gpu:'Local GPU',vast:'Vast.ai'}[run.settings.execution],run.deadline==null?'—':duration((run.ended?Math.max.apply(null,run.jobs.map(function(job){return job.ended_at||run.created_at;})):Date.now()/1000)-(run.started_at||run.created_at)),checks.filter(function(job){return ['completed','complete'].includes(job.status);}).length+' / '+checks.length,run.best?(run.best.candidate_id||'Selected'):'—','—',dateText(run.created_at)],0,run.id,function(){select(run.id);openReport('run',0,'overview');});
+      overviewActivity(parent.cells[1],run);
       var bestCycle=cycles.find(function(cycle){return run.best&&cycle.round===run.best.round;})||latest;
       overviewObserver(parent.cells[9],run,latest?latest.round:-1,'observer_holdout');overviewObserver(parent.cells[10],run,latest?latest.round:-1,'observer_full_range');
       if(bestCycle){parent.cells[5].title='Best comparison · Loop '+(bestCycle.round+1);overviewGoals(parent.cells[5],bestCycle.goals||[],comparisonReference(run,cycles,bestCycle),completeComparison(bestCycle));}
       tableSelection(parent,run.id,function(){return selectedRuns;},function(){selected=run.id;workflow.focus=run.id;persistWorkflow();var url=new URL(location.href);url.searchParams.set('loop_id',selected);history.replaceState(null,'',url);renderWorkflow();});disclosure(parent.cells[0],run.id,renderWorkflow);
       if(run.ended&&run.best)continueButton(parent.cells[0],run,null);
-      var latestRound=Math.max.apply(null,run.jobs.filter(function(job){return job.kind==='optimizer';}).map(function(job){return job.round;}));nativeLogButton(parent.cells[0],run,run.jobs.filter(function(job){return job.kind==='optimizer'&&job.round===latestRound;}));
-      function observerLines(number,depth){(run.observer_jobs||[]).filter(function(job){return job.round===number;}).forEach(function(job){var native=line([(number<0?'Start · ':'')+observerName(job)+' · user evaluation',job.display_status||job.status,'Local CPU',duration(job.ended_at&&job.run_started_at?job.ended_at-job.run_started_at:null),'','','',dateText(job.created_at)],depth,run.id+':observer:'+job.operation,function(){select(run.id);openReport(number<0?'initial':'cycle',Math.max(0,number),'performance');});overviewObserver(native.cells[job.kind==='observer_holdout'?9:10],run,number,job.kind,job);nativeLogButton(native.cells[0],run,[job]);backtestButton(native.cells[0],run,job);});}
+      var latestRound=Math.max.apply(null,run.jobs.filter(function(job){return job.kind==='optimizer';}).map(function(job){return job.round;}));overviewProxy(parent.cells[1],run.jobs.filter(function(job){return job.kind==='optimizer'&&job.round===latestRound;}));nativeLogButton(parent.cells[0],run,run.jobs.filter(function(job){return job.kind==='optimizer'&&job.round===latestRound;}));
+      function observerLines(number,depth){(run.observer_jobs||[]).filter(function(job){return job.round===number;}).forEach(function(job){var native=line([(number<0?'Start · ':'')+observerName(job)+' · user evaluation',job.display_status||job.status,'Local CPU',duration(job.ended_at&&job.run_started_at?job.ended_at-job.run_started_at:null),'','','',dateText(job.created_at)],depth,run.id+':observer:'+job.operation+(job.source_round==null?'':':'+number),function(){select(run.id);openReport(number<0?'initial':'cycle',Math.max(0,number),'performance');});overviewObserver(native.cells[job.kind==='observer_holdout'?9:10],run,number,job.kind,job);nativeLogButton(native.cells[0],run,[job]);backtestButton(native.cells[0],run,job);});}
       if(!expanded.has(run.id))return;
       line(['Initial evaluation',run.bootstrap?run.bootstrap.status:'Not recorded','','','','','',''],1,run.id+':initial',function(){select(run.id);openReport('initial',0,'overview');});
       observerLines(-1,1);
       run.jobs.filter(function(job){return job.kind==='baseline';}).forEach(function(job){var baseline=line(['Start comparison',job.display_status||job.status,'Local CPU',duration(job.ended_at&&job.created_at?job.ended_at-job.created_at:null),'','','',''],1,run.id+':baseline',function(){select(run.id);openReport('initial',0,'backtests');});if(run.baseline&&run.baseline.assessment)overviewGoals(baseline.cells[5],run.baseline.assessment.goals||[],{goals:[],label:'Unchanged start'},false);nativeLogButton(baseline.cells[0],run,[job]);backtestButton(baseline.cells[0],run,job);});
       cycles.forEach(function(cycle){var jobs=run.jobs.filter(function(job){return job.round===cycle.round;}),optimizers=jobs.filter(function(job){return job.kind==='optimizer';}),validations=jobs.filter(function(job){return job.kind!=='optimizer';}),key=run.id+':'+cycle.round;
-        var round=line(['Loop '+(cycle.round+1),cycle.status,'',duration(cycle.duration_seconds),cycle.completed_backtests+' / '+cycle.backtests,numeric(cycle.score),numeric(cycle.score_delta),''],1,key,function(){select(run.id);openReport('cycle',cycle.round,'overview');});overviewObserver(round.cells[9],run,cycle.round,'observer_holdout');overviewObserver(round.cells[10],run,cycle.round,'observer_full_range');var reference=comparisonReference(run,cycles,cycle);overviewGoals(round.cells[5],cycle.goals||[],reference,completeComparison(cycle));round.cells[7].replaceChildren();overviewChange(round.cells[7],completeComparison(cycle)?cycle.score_delta:null,'max','score',reference.label);round.cells[3].dataset.clock=key;disclosure(round.cells[0],key,renderWorkflow);
+        var round=line(['Loop '+(cycle.round+1),cycle.status,'',duration(cycle.duration_seconds),cycle.completed_backtests+' / '+cycle.backtests,cycle.ai_evaluated?(cycle.winner_candidate_id||'No qualified winner'):numeric(cycle.score),cycle.ai_evaluated?'View analysis':numeric(cycle.score_delta),''],1,key,function(){select(run.id);openReport('cycle',cycle.round,'overview');});overviewObserver(round.cells[9],run,cycle.round,'observer_holdout');overviewObserver(round.cells[10],run,cycle.round,'observer_full_range');var reference=comparisonReference(run,cycles,cycle);overviewGoals(round.cells[5],cycle.goals||[],reference,completeComparison(cycle));if(cycle.ai_evaluated){round.cells[7].title=cycle.reason||'';}else{round.cells[7].replaceChildren();overviewChange(round.cells[7],completeComparison(cycle)?cycle.score_delta:null,'max','score',reference.label);}round.cells[3].dataset.clock=key;disclosure(round.cells[0],key,renderWorkflow);
+        if(cycle.round===run.round)overviewActivity(round.cells[1],run);
+        overviewProxy(round.cells[1],optimizers);
         nativeLogButton(round.cells[0],run,optimizers);
         if(run.ended&&canContinueRound(cycle))continueButton(round.cells[0],run,cycle.round);
         if(!expanded.has(key))return;
-        optimizers.forEach(function(job,index){var native=line([optimizers.length>1?'Optimizer Variant '+(index+1):'Optimizer',job.display_status||job.status,executionName(job.execution||run.settings.execution),duration(job.ended_at&&job.created_at?job.ended_at-job.created_at:null),'', '', '',dateText(job.created_at)],2,key+':'+job.operation,function(){select(run.id);openReport('cycle',cycle.round,'changes');diffOperation=job.operation;reportSignature='';updateReport();});nativeLogButton(native.cells[0],run,[job]);});
+        optimizers.forEach(function(job,index){var native=line([optimizers.length>1?'Optimizer Variant '+(index+1):'Optimizer',job.display_status||job.status,executionName(job.execution||run.settings.execution),duration(job.ended_at&&job.created_at?job.ended_at-job.created_at:null),'', '', '',dateText(job.created_at)],2,key+':'+job.operation,function(){select(run.id);openReport('cycle',cycle.round,'changes');diffOperation=job.operation;reportSignature='';updateReport();});overviewProxy(native.cells[1],[job]);nativeLogButton(native.cells[0],run,[job]);});
         observerLines(cycle.round,2);
         validations.forEach(function(job,index){var native=line([(job.kind==='holdout'?'Final holdout':'Comparison backtest')+' '+(index+1),job.display_status||job.status,executionName(job.execution||'cpu'),duration(job.ended_at&&job.created_at?job.ended_at-job.created_at:null),'','','',dateText(job.created_at)],2,key+':'+job.operation,function(){select(run.id);openReport('cycle',cycle.round,'backtests');});var observation=(cycle.observations||[]).find(function(item){return item.operation===job.operation;});if(observation&&observation.assessment)overviewGoals(native.cells[5],observation.assessment.goals||[],reference,observation.assessment.comparable!==false&&observation.assessment.simulation_complete!==false);nativeLogButton(native.cells[0],run,[job]);backtestButton(native.cells[0],run,job);});
       });
@@ -758,15 +872,62 @@
     if(selected.length!==1)return null;var id=selected[0];return panel==='queue' && id.startsWith('vast:')?{kind:'cloud',id:id.slice(5)}:{kind:{configs:'config',queue:'queue',results:'result'}[panel],id:id};
   }
   function onPanel() { if(!root)return;syncContext();if(isLoopPanel())watch(); }
-  async function action(id, name) { try { var body={action:name};if(name==='start')body.selection=await PBGuiAI.ensureSelection();await request('/' + id + '/action', body);uiError='';await poll(); } catch (exc) { error(exc); } }
+  function renderAIRecovery(parent,row) {
+    if(row.ai_pause){parent.appendChild(element('h4','AI paused · '+row.ai_pause.reason));parent.appendChild(element('p',row.ai_pause.message,'loop-analysis'));}
+    if(row.ai_evidence_status)reportTable(parent,['AI evidence','Value'],[['Mandatory pages',row.ai_evidence_status.required_pages],['Tool calls',row.ai_evidence_status.tool_calls],['Dialogs',row.ai_evidence_status.dialogs]]);
+    if(row.knowledge_summary)reportTable(parent,['Findings','Value'],[['Included',row.knowledge_summary.included],['Available',row.knowledge_summary.eligible],['Deferred',row.knowledge_summary.omitted]]);
+    (row.jobs||[]).filter(function(job){return job.optimizer_archive;}).slice(-1).forEach(function(job){reportTable(parent,['Native archive','Value'],[['Effective Pareto limit',job.optimizer_archive.effective],['Requested',job.optimizer_archive.requested],['Context',job.optimizer_archive.context]]);});
+    if(row.bootstrap_evidence_preview)reportTable(parent,['Historical advice','Value'],[['In request',row.bootstrap_evidence_preview.in_a],['Available on demand',row.bootstrap_evidence_preview.in_b]]);
+    if(row.ai_preview)reportTable(parent,['AI preview'+(row.ai_preview.provisional?' (provisional)':''),'Value'],[['Context',row.ai_preview.context],['Context source',row.ai_preview.context_pending?'Reported by normal response':row.ai_preview.context_source||'Provider'],['Effective archive limit',row.ai_preview.native_archive.effective],['Streaming',row.ai_preview.streaming?'Yes':'No'],['Per-call timeout (s)',row.ai_preview.streaming?'Progress watchdog':row.ai_preview.call_timeout_seconds||'Progress watchdog']]);
+    if(row.ai_preview&&row.ai_preview.historical_sources)reportTable(parent,['Historical preview','Value'],[['Sources',row.ai_preview.historical_sources.sources.length],['In request',row.ai_preview.historical_sources.in_a],['Available on demand',row.ai_preview.historical_sources.in_b]]);
+    if(!['queued','paused'].includes(row.status))return;
+    var values=recoveryDrafts.get(row.id)||{},saved=row.settings,sectionNode=section(parent,'AI recovery limits'),form=grid(sectionNode);
+    var fields=[['tokens','ai_decision_token_limit','Tokens per decision'],['usd','ai_decision_usd_limit','USD per decision'],['decision','decision_timeout_seconds','Optional decision timeout (s)'],['call','model_call_timeout_seconds','Optional HTTP call timeout (s)']];
+    fields.forEach(function(spec){var key=spec[1],value=Object.prototype.hasOwnProperty.call(values,key)?values[key]:saved[key],input=field(form,'recover-'+spec[0],spec[2],'number',value==null?'':value,{min:.000001,step:spec[0]==='usd'?'any':'1'},4);input.addEventListener('input',function(){values[key]=input.value;saveRecoveryDraft(row.id,values);});});
+    var advice=field(form,'recover-advice','Use historical advice','checkbox',undefined,undefined,4);advice.checked=Object.prototype.hasOwnProperty.call(values,'historical_advice')?values.historical_advice:saved.historical_advice!==false;advice.addEventListener('change',function(){values.historical_advice=advice.checked;saveRecoveryDraft(row.id,values);});
+    button(sectionNode,'Preview AI limits',function(){action(row.id,'preview');});
+    button(sectionNode,row.status==='paused'?'Resume with current AI selection':'Review and start',function(){action(row.id,row.status==='paused'?'resume':'start');});
+  }
+  async function action(id, name) {
+    try {
+      var body={action:name},row=rows.find(function(item){return item.id===id;});
+      if(name==='start'||name==='resume'||name==='preview'){
+        if(name==='preview')body.action=row.status==='paused'?'resume':'start';
+        body.selection=await PBGuiAI.ensureSelection();
+        body.ai_settings=Object.assign({},recoveryDrafts.get(id)||{});
+        Object.keys(body.ai_settings).forEach(function(key){if(key==='historical_advice')return;var value=body.ai_settings[key];body.ai_settings[key]=value===''?null:Number(value);if(value!==''&&!(body.ai_settings[key]>0))throw new Error('AI limits must be positive numbers.');});
+        var preview=await request('/'+id+'/ai-preview',body);
+        if(name==='preview'){row.ai_preview=preview;reportSignature='';renderWorkflow();return;}
+        if(preview.paid){
+          var tokenLimit=body.ai_settings.ai_decision_token_limit||row.settings.ai_decision_token_limit,usdLimit=body.ai_settings.ai_decision_usd_limit||row.settings.ai_decision_usd_limit;
+          if(!(tokenLimit>0&&usdLimit>0)){select(id);openReport('run',0,'overview');throw new Error('Set positive token and USD limits in AI recovery limits before starting paid Zen.');}
+          var accepted=await PBGuiDialogs.confirm({title:'AI spending limits',message:'Authorize up to '+tokenLimit+' tokens and $'+usdLimit+' per AI decision. Each tool follow-up re-sends its input; cache discounts are not assumed. Uncached single-call upper estimate: $'+Number(preview.uncached_call_upper_estimate_usd||0).toFixed(4)+'. Up to '+preview.maximum_decisions+' AI decisions across '+preview.maximum_attempts+' optimizer attempts (AI spending ceiling $'+Number(usdLimit*preview.maximum_decisions).toFixed(2)+'); rental charges are separate.',confirmText:'Authorize and '+name});if(!accepted)return;
+          body.ai_settings.ai_decision_token_limit=tokenLimit;body.ai_settings.ai_decision_usd_limit=usdLimit;body.ai_settings.ai_budget_confirmed=true;
+        }
+        if(row.has_interrupted_ai){
+          body.acknowledge_interrupted=await PBGuiDialogs.confirm({title:'Retry AI evidence',message:'Resume this evidence decision? Any uncertain earlier model usage remains reserved; required archives must still match their original checksums.',confirmText:'Resume'});if(!body.acknowledge_interrupted)return;
+        }
+      }
+      await request('/'+id+'/action',body);recoveryDrafts.delete(id);workflow.recovery_drafts=Object.fromEntries(recoveryDrafts);persistWorkflow();uiError='';await poll();
+    }catch(exc){error(exc);}
+  }
   async function poll() {
     var token=++generation;
     if(state.panel==='loops-instructions'){await PBGuiLoopInstructions.refresh();return;}
     var loadKnowledge=state.panel==='loops-knowledge';
     try { var values=await Promise.all([request(''),request('/configs'),loadKnowledge?request('/knowledge?limit=200').then(function(data){return {data:data};},function(exc){return {error:exc.message};}):null]);if(token!==generation)return;rows=values[0].loops;definitions=values[1].configs;
+      pollError='';
+      var rentalTarget=state.panel==='loops-queue'&&rentalRun();
+      if(rentalTarget){
+        var rentalData=await request('/'+rentalTarget.id+'/rental').catch(function(exc){return {error:exc.message};});if(token!==generation)return;
+        var previousRental=(rentalSnapshots.get(rentalTarget.id)||{}).rental;
+        if(previousRental&&rentalData.rental&&previousRental.worker_id===rentalData.rental.worker_id&&
+          Number((previousRental.billing||{}).reported_at||0)>Number((rentalData.rental.billing||{}).reported_at||0))rentalData.rental.billing=previousRental.billing;
+        rentalSnapshots.clear();rentalSnapshots.set(rentalTarget.id,rentalData);refreshRentalBilling(rentalTarget,rentalData.rental);
+      }
       if(loadKnowledge){knowledgeError=values[2].error||'';if(values[2].data){knowledgeEntries=values[2].data.entries||[];knowledgeLoaded=true;}}
       if(selected&&!rows.some(function(row){return row.id===selected;})){forgetRun(selected);uiError='The selected loop is no longer available.';}selectedRuns.forEach(function(id){if(!rows.some(function(row){return row.id===id;}))forgetRun(id);});render();await restoreNativeLog(); }
-    catch(exc){if(token===generation)error(exc);}
+    catch(exc){if(token===generation){pollErrorPanel=(window.state&&state.panel)||'loops-config';pollError=exc instanceof TypeError&&/Failed to fetch|NetworkError|Load failed/i.test(exc.message)?'Connection interrupted. Retrying automatically…':exc.message||String(exc);showMessages();}}
   }
   async function watch() {
     clearTimeout(timer);
@@ -785,6 +946,20 @@
       var toolbar=element('div',undefined,'panel-toolbar');view.appendChild(toolbar);var filter=element('input',undefined,'panel-input');filter.type='text';filter.style.maxWidth='260px';filter.placeholder='Search loop name...';filter.setAttribute('aria-label','Search AI Loops '+kind);filter.value=workflow[kind==='config'?'config_filter':panel+'_filter']||'';toolbar.appendChild(filter);filter.addEventListener('input',function(){workflow[kind==='config'?'config_filter':panel+'_filter']=filter.value;persistWorkflow();renderWorkflow();});
       if(kind!=='config'){var status=element('select',undefined,'panel-input');status.style.width='auto';choices(status,[{id:'',label:'All statuses'}].concat((kind==='queue'?['queued','running','paused','finishing','stopping']:['completed','failed','unconfirmed','stopped']).map(function(value){return {id:value,label:value};})),workflow[panel+'_status']);status.setAttribute('aria-label','Status filter');toolbar.appendChild(status);status.addEventListener('change',function(){workflow[panel+'_status']=status.value;persistWorkflow();renderWorkflow();});var message=element('p','','loop-error');message.id=panel+'-message';view.appendChild(message);var table=element('div');table.id=panel+'-table';view.appendChild(table);}
     });
+    var rentalPanel=element('div',undefined,'panel-toolbar');rentalPanel.id='loop-rental';rentalPanel.hidden=true;
+    rentalPanel.setAttribute('role','region');rentalPanel.setAttribute('aria-label','Loop rental');
+    rentalPanel.appendChild(element('strong','','muted-line')).id='loop-rental-summary';
+    var rentalStatus=element('span','','muted-line');rentalStatus.id='loop-rental-status';rentalStatus.setAttribute('role','status');rentalStatus.style.flexBasis='100%';rentalPanel.appendChild(rentalStatus);
+    var rentalCost=element('span','','muted-line');rentalCost.id='loop-rental-cost';rentalCost.setAttribute('role','status');rentalCost.style.flexBasis='100%';rentalPanel.appendChild(rentalCost);
+    var budgetLabel=element('label','Budget $');budgetLabel.htmlFor='loop-rental-budget';rentalPanel.appendChild(budgetLabel);
+    var rentalBudget=element('input',undefined,'panel-input');rentalBudget.id='loop-rental-budget';rentalBudget.type='number';rentalBudget.min='0.1';rentalBudget.max='100';rentalBudget.step='0.01';rentalBudget.style.width='90px';rentalPanel.appendChild(rentalBudget);
+    var budgetSave=button(rentalPanel,'Save budget',saveRentalBudget);budgetSave.id='loop-rental-budget-save';budgetSave.title='Recalculate the rental end after worker confirmation. Loop time stays unchanged.';
+    var rentalLabel=element('label','Extend by ');rentalLabel.htmlFor='loop-rental-minutes';rentalPanel.appendChild(rentalLabel);
+    var rentalMinutes=element('input',undefined,'panel-input');rentalMinutes.id='loop-rental-minutes';rentalMinutes.type='number';rentalMinutes.min='1';rentalMinutes.max='1440';rentalMinutes.step='1';rentalMinutes.value=String(workflow.rental_minutes||60);rentalMinutes.style.width='90px';rentalMinutes.addEventListener('input',function(){workflow.rental_minutes=rentalMinutes.value;persistWorkflow();renderRental();});rentalPanel.appendChild(rentalMinutes);
+    rentalPanel.appendChild(element('span','minutes'));
+    var rentalExtend=button(rentalPanel,'Extend rental & loop',extendRental);rentalExtend.id='loop-rental-extend';
+    rentalPanel.appendChild(element('span','Extending time uses the existing budget.','muted-line'));
+    document.getElementById('panel-loops-queue').insertBefore(rentalPanel,document.getElementById('loops-queue-table'));
     PANEL_META['loops-knowledge']={title:'AI Loops Knowledge',subtitle:''};
     var knowledgeView=element('div',undefined,'view-panel loop-panel');knowledgeView.id='panel-loops-knowledge';root.parentNode.appendChild(knowledgeView);
     var knowledgeNav=element('button','AI Loops Knowledge','sb-section');knowledgeNav.dataset.panel='loops-knowledge';knowledgeNav.addEventListener('click',function(){selectPanel('loops-knowledge');watch();});
@@ -817,6 +992,9 @@
     choices(direction, [{id:'config', label:'Use config'}, {id:'both', label:'Long and short'}, {id:'long', label:'Long'}, {id:'short', label:'Short'}]);
     field(row, 'positions', 'Total position capacity', 'number', '', {min:1, max:1000, placeholder:'From config'});
     row = grid(trading);
+    var hsl = field(row, 'hsl-mode', 'HSL', 'select', undefined, undefined, 4);
+    choices(hsl, [{id:'off',label:'Off'}, {id:'on',label:'On'}, {id:'auto',label:'Auto · AI decides'}], 'auto');
+    row = grid(trading);
     var split = element('div', undefined, 'loop-position-split span-4'); split.id = 'loop-position-split'; row.appendChild(split);
     field(split, 'long', 'Long capacity', 'number', '', {min:0, placeholder:'Optional'});
     field(split, 'short', 'Short capacity', 'number', '', {min:0, placeholder:'Optional'});
@@ -842,6 +1020,7 @@
     field(row, 'run-proxy', 'Proxy evaluations per run', 'number', 100000, {min:1, max:1000000000, step:1}, 4);
     field(row, 'run-hours', 'Hours per run', 'number', 1, {min:.001, max:168, step:'any'}, 4);
     row = grid(limits);
+    field(row, 'rounds', 'Maximum completed rounds', 'number', '', {min:1, max:200, step:1, required:true});
     field(row, 'runs', 'Maximum optimizer attempts', 'number', 10, {min:1, max:200});
     field(row, 'hours', 'Total loop hours', 'number', '', {min:.1, max:168, step:'any'});
     field(row, 'parallel', 'Parallel variants', 'number', 1, {min:1, max:16});
@@ -849,6 +1028,14 @@
     row = grid(limits);
     field(row, 'validations', 'Maximum validation backtests', 'number', 30, {min:1, max:1000}, 4);
     field(row, 'candidates', 'Candidates validated per cycle', 'number', 3, {min:1, max:12}, 4);
+
+    var aiEvidence=section(form,'AI evidence and limits');row=grid(aiEvidence);
+    field(row,'historical-advice','Use historical optimizer advice','checkbox',undefined,undefined,4).checked=true;
+    field(row,'ai-token-limit','Token limit per AI decision','number','',{min:1,step:1},4);
+    field(row,'ai-usd-limit','USD limit per AI decision (paid Zen)','number','',{min:.000001,step:'any'},4);
+    field(row,'ai-decision-time','Optional decision timeout (seconds)','number','',{min:1,step:1},4);
+    field(row,'ai-call-time','Optional HTTP call timeout (seconds)','number','',{min:1,step:1},4);
+    field(row,'ai-confirm','Confirm paid decision limits','checkbox',undefined,undefined,4);
 
     var startBar = element('div', undefined, 'loop-start-bar'); form.appendChild(startBar);
     startBar.appendChild(element('span','Queue authorizes automatic config changes, jobs and AI usage.','muted-line'));var save=button(startBar,'Save',function(){saveDefinition(false);});save.id='loop-save';var cancel=button(startBar,'Cancel',function(){editorVisible=false;workflow.draft=null;persistWorkflow();editorLocation();renderWorkflow();});
@@ -867,7 +1054,7 @@
     selected = new URL(location.href).searchParams.get('loop_id') || workflow.selected || '';selectedDefinitions=new Set(workflow.config_selection||[]);selectedRuns=new Set(workflow.run_selection|| (selected?[selected]:[]));expanded=new Set(workflow.expanded||[]);
     var reportUrl=new URL(location.href);reportView=['cycle','initial','run'].includes(reportUrl.searchParams.get('loop_view'))?reportUrl.searchParams.get('loop_view'):'';reportRound=/^\d{1,4}$/.test(reportUrl.searchParams.get('loop_cycle')||'')?Number(reportUrl.searchParams.get('loop_cycle')):0;reportTab=Object.keys(tabNames).includes(reportUrl.searchParams.get('loop_tab'))?reportUrl.searchParams.get('loop_tab'):'overview';diffOperation=/^[0-9a-f]{32}$/.test(reportUrl.searchParams.get('loop_variant')||'')?reportUrl.searchParams.get('loop_variant'):'';diffBaseline=/^(initial|[0-9a-f]{32})$/.test(reportUrl.searchParams.get('loop_compare')||'')?reportUrl.searchParams.get('loop_compare'):'';
     document.addEventListener('visibilitychange', function () { if (!document.hidden) { if (isLoopPanel()) loadOptions(true).catch(error); watch(); } }); window.addEventListener('hashchange', function () { if (isLoopPanel()) { loadOptions(true).catch(error); watch(); } });
-    window.addEventListener('pagehide', function (event) { if(reportWindow){if(event.persisted)reportWindow.cancel();else reportWindow.dispose();} stopped = true; if(diffRequest)diffRequest.abort(); diffGeneration++; clearTimeout(timer); watchGeneration++; generation++; optionsGeneration++; });
+    window.addEventListener('pagehide', function (event) { if(reportWindow){if(event.persisted)reportWindow.cancel();else reportWindow.dispose();} stopped = true; if(rentalBillingRequest)rentalBillingRequest.abort();rentalBillingGeneration++;rentalBillingChecked=0;if(diffRequest)diffRequest.abort(); diffGeneration++; clearTimeout(timer); watchGeneration++; generation++; optionsGeneration++; });
     window.addEventListener('pageshow', function (event) { if (event.persisted) { stopped = false; watch(); } });
     optionsReady = loadOptions(true);
     optionsReady.then(async function(){

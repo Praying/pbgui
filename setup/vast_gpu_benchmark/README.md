@@ -8,6 +8,40 @@ The current integration is in **PB8 Optimize**, with Cloud setup in Queue and GP
 selection in the editor. Multiple jobs share one rental and cached market data.
 See the [user guide](../../docs/help/48_vast_gpu.md).
 
+### Fresh population worker
+
+The verified candidate is now published as
+`ghcr.io/msei99/pbgui-pb8-worker:b9d6692-fresh-population-v1`, with immutable
+digest `sha256:1941f03f96af1fca2062bcf8f9fa45939e1528af2d03f3322060945e9fe140b1`.
+Job creation, validation and calibration use this image for new rentals. The
+publication receipt is `worker_release_fresh_population_b9d6692.json`; anonymous
+manifest retrieval matches the reviewed local image. Existing rental identities
+remain supported. No rental was started during publication.
+
+`Dockerfile.fresh-population` builds the unpublished local image
+`pbgui-pb8-worker:b9d6692-fresh-population-candidate` on the immutable current
+HSL CPU rolling worker. It applies only `gpu_fresh_population.patch`: fresh GPU
+populations no longer include the input bot implicitly. Explicit starting configs
+and checkpoint restore remain supported. Rust sources, the compiled extension,
+dependencies and existing worker fixes are retained.
+
+The recipe verifies the base GPU source and patch checksums before applying the
+patch. `verify_fresh_population.py` checks the resulting source hash, real NSGA-II
+sampling for three RNG seeds, explicit seed sampling, pickle checkpoint restore
+and the retained Rust source fingerprint with networking disabled.
+`worker_candidate_fresh_population.json` records these exact inputs.
+`worker_build_fresh_population.json` records the local image ID and successful
+offline container verification; it is not a registry publication receipt.
+
+```sh
+docker build --network=none -f setup/vast_gpu_benchmark/Dockerfile.fresh-population -t pbgui-pb8-worker:b9d6692-fresh-population-candidate setup/vast_gpu_benchmark
+docker run --rm --network none --entrypoint python -e PYTHONPATH=/opt/passivbot/src pbgui-pb8-worker:b9d6692-fresh-population-candidate /opt/pbgui/verify_fresh_population.py
+```
+
+Two authorized CUDA Loop rounds completed with distinct RNG seeds and candidates,
+followed by successful CPU validation and AI evaluation. Publication itself does
+not start a rental.
+
 The isolated RTX 3060 reproduction of the HSL terminal-balance valuation error,
 paired fix results, synthetic configuration generator, and exact patch/native
 provenance are documented in the
@@ -15,14 +49,29 @@ provenance are documented in the
 The historical HSL backport is retained with its reproduction evidence. The active
 worker includes both fixes directly from official upstream sources.
 
-Active worker image: `ghcr.io/msei99/pbgui-pb8-worker:b9d6692-upstream-v1`
-(pinned by manifest digest in PBGui). It uses official PB8 commit
-`b9d6692ea41266ecb4ab81d40bb5e5baef29b50a` without source overlays. Its manifest is
-`sha256:dc83342c2d4b9d643164bc064a14fa944fdc8f0d0834b25de8379343736365ae`.
-Publication provenance, anonymous pull verification and compressed layer sizes
-are recorded in `worker_release_b9d6692.json`. `worker_release.json` preserves the
-previous release's evidence; `worker_candidate.json` preserves the reviewed build
-inputs embedded in this image. Existing rentals retain their original image.
+Previous base worker image: `ghcr.io/msei99/pbgui-pb8-worker:b9d6692-hsl-cpu-rolling-v1`,
+pinned to manifest `sha256:15698800ffa48634708742425856608c403db26d6aeeb32d6cb5d05b15b0266d`.
+It retains official PB8 revision `b9d6692ea41266ecb4ab81d40bb5e5baef29b50a`,
+the rolling HSL history cache, and adaptive CUDA history-memory sizing. Auto uses
+actual per-candidate demand and available VRAM while retaining the larger of
+1 GiB or 20% total VRAM as headroom when possible; existing memory pressure uses
+the conservative fallback. Active replays, fixed batch sizes and the MPS cap are
+preserved. HSL, Unstuck and optimizer bounds remain configurable.
+
+The new CPU overlay reuses conservative HSL history prefixes and settled RED/flat
+scopes, retaining reference fallback and unchanged HSL decisions. The build uses
+the tested dependency lock and verifies all 87 focused Rust HSL tests. Its source
+fingerprint is `0f94231023292fcc96fd42c7301272509c963dfa45ec810e7b3a026cdf5a571e`.
+The wrapper requires explicit offline mode and copies exchange listing timestamps.
+
+`worker_release_hsl_cpu_rolling_b9d6692.json` records the published digest,
+anonymous manifest verification, compressed layers, source checksum and hardware
+validation. `Dockerfile.hsl-cpu-rolling` applies `hsl_cpu_rolling.patch` and
+`hsl_cpu_Cargo.lock` on the verified auto-memory worker and rebuilds the extension. Existing rentals keep their immutable base-image
+identity; an authorized in-place source overlay is recorded separately.
+
+The original upstream receipt `worker_release_b9d6692.json` remains historical
+evidence, and old rental image identities remain supported for recovery.
 
 The user explicitly approved activation in v2.08.8 with conservative uncalibrated
 hardware fallbacks. Old-revision measurements remain readable but cannot tune

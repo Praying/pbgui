@@ -19,7 +19,10 @@ from logging_helpers import human_log as _log
 from pbgui_purefunc import PBGDIR
 from pb8_loop_controller import LoopController
 from pb8_loop_backend import migrate_loop_bundle
+from vast_provider import VastError
 from pb8_loop_store import TERMINAL, LoopDeletionConflict, config_defaults, config_changes, digest, run_deletable, completed_round_observations
+
+from pb8_loop_evidence import LoopAIPause
 
 SERVICE = 'PB8Loop'
 router = APIRouter()
@@ -83,24 +86,34 @@ class LoopStart(BaseModel):
     execution: Literal['cpu', 'gpu', 'vast'] = 'cpu'
     scenario_enabled: bool = False
     strategy_enabled: bool = False
+    hsl_mode: Literal['on', 'off', 'auto'] = 'auto'
     goals: LoopGoals = Field(default_factory=LoopGoals)
     run_limit_mode: Literal['config', 'iters', 'proxy', 'hours'] = 'config'
     run_iters: int | None = Field(default=None, ge=1, le=10_000_000)
     run_proxy: int | None = Field(default=None, ge=1, le=1_000_000_000)
     run_hours: float | None = Field(default=None, ge=.001, le=168, allow_inf_nan=False)
     max_runs: int = Field(default=10, ge=1, le=200)
+    max_rounds: int = Field(ge=1, le=200, strict=True, description='Required hard upper bound on completed rounds, separate from optimizer attempts')
     hours: float = Field(default=24, ge=.1, le=168, allow_inf_nan=False)
     parallel: int = Field(default=1, ge=1, le=16)
     max_validations: int = Field(default=30, ge=1, le=1000)
     candidates: int = Field(default=2, ge=1, le=12)
     patience: int = Field(default=3, ge=1, le=100)
     jev_enabled: bool = True
+    historical_advice: bool = True
+    decision_timeout_seconds: float | None = Field(default=None, gt=0, le=604800, allow_inf_nan=False)
+    model_call_timeout_seconds: float | None = Field(default=None, gt=0, le=604800, allow_inf_nan=False)
+    ai_decision_token_limit: int | None = Field(default=None, gt=0, le=10**12)
+    ai_decision_usd_limit: float | None = Field(default=None, gt=0, le=10**6, allow_inf_nan=False)
+    ai_budget_confirmed: bool = False
     authorization: bool = False
 
     @model_validator(mode='after')
     def validate_run_limit(self):
         """Validate one explicit per-optimizer limit independently of the total loop budget."""
         field = {'iters': self.run_iters, 'proxy': self.run_proxy, 'hours': self.run_hours}
+        if self.max_rounds > self.max_runs:
+            raise ValueError('Maximum completed rounds cannot exceed maximum optimizer attempts')
         if self.run_limit_mode != 'config' and field[self.run_limit_mode] is None:
             raise ValueError('Specify the chosen per-run limit')
         if self.run_limit_mode == 'proxy' and self.execution == 'cpu':
@@ -117,6 +130,18 @@ class LoopAction(BaseModel):
     model_config = ConfigDict(extra='forbid')
     action: Literal['start', 'pause', 'resume', 'stop']
     selection: dict | None = None
+    ai_settings: dict | None = None
+    acknowledge_interrupted: bool = False
+
+
+class LoopHandover(BaseModel):
+    """Replace one owned Loop using its existing paid GPU only."""
+    model_config = ConfigDict(extra='forbid')
+    target_loop_id: str = Field(pattern=r'^[0-9a-f]{32}$')
+    worker_id: str | None = Field(default=None, pattern=r'^[0-9a-f]{32}$')
+    source_generation: int | None = Field(default=None, ge=0)
+    selection: dict | None = None
+    authorization: bool = False
 
 
 def startup():
@@ -143,6 +168,8 @@ def _error(exc):
     _log(SERVICE, f'Loop request failed: {type(exc).__name__}', level='WARNING', meta={'traceback': traceback.format_exc()})
     if isinstance(exc, FileNotFoundError):
         return HTTPException(404, 'Loop not found')
+    if isinstance(exc, LoopAIPause):
+        return HTTPException(409, {'reason': exc.reason, 'message': str(exc), 'details': exc.details})
     if isinstance(exc, LoopDeletionConflict):
         return HTTPException(409, str(exc))
     if isinstance(exc, (ValueError, AIChatError)):
@@ -190,7 +217,7 @@ def _cycle_reports(row):
             if not observations:
                 observations = [item for item in row.get('observations', []) if item.get('operation') in completed and item.get('exact')]
             if observations:
-                assessment = max(observations, key=lambda item: (item['assessment'].get('hard_targets_met', True), item['assessment']['score']))['assessment']
+                assessment = observations[0]['assessment'] if len(observations) == 1 else None
                 goal_metrics = {metric for rule in row['rubric'] for metric in rule['metrics']}
                 evidence = [{'operation':item['operation'], 'candidate_id':item['candidate']['id'],
                              'optimizer_job':item['candidate']['optimizer_job'], 'assessment':item['assessment'],
@@ -228,6 +255,9 @@ def _cycle_reports(row):
                         'active':active, 'backtests':len(checks), 'completed_backtests':passed,
                         'score':score, 'score_delta':score-previous_score if score is not None and previous_score is not None else None,
                         'goals':goals, 'reason':history.get('reason',''), 'knowledge':history.get('knowledge',''),
+                        'ai_evaluated': 'winner_operation' in history,
+                        'winner_operation': history.get('winner_operation'),
+                        'winner_candidate_id': history.get('winner_candidate_id'),
                         'observations':evidence})
         if score is not None:
             previous_score = score
@@ -237,8 +267,21 @@ def _cycle_reports(row):
 def _observer_reports(row):
     """Expose user-only metrics/deltas without mixing them into decision history."""
     from pb8_loop_observer import comparison_deltas, observer_selections
-    jobs = row.get('observer_jobs', [])
+    jobs = list(row.get('observer_jobs', []))
     selections = {item['round']: item for item in observer_selections(row)}
+    for number, selection in selections.items():
+        source_round = selection.get('source_round', number)
+        if selection.get('status') != 'selected' or source_round == number:
+            continue
+        # Display aliases retain the native operation/log/results, without
+        # persisting duplicate jobs or exposing user-only evidence to the AI.
+        for job in row.get('observer_jobs', []):
+            if (job['round'] == source_round
+                    and job.get('candidate_id') == selection['candidate_id']
+                    and job['kind'] in {'observer_holdout', 'observer_full_range'}
+                    and not any(item['round'] == number and item['kind'] == job['kind']
+                                and item.get('candidate_id') == job.get('candidate_id') for item in jobs)):
+                jobs.append(dict(job, round=number, source_round=source_round))
     def reference(number, kind):
         """Compare against the displayed round winner, never the first candidate."""
         selection = selections.get(number) or {}
@@ -260,11 +303,13 @@ def _observer_reports(row):
                       if (item.get('candidate') or {}).get('id') == job.get('candidate_id')), None)
         score = (job.get('assessment') or {}).get('score')
         reports.append({key:job.get(key) for key in ('operation','name','kind','round','status','started','candidate_id',
-                       'created_at','ended_at','run_started_at','error','metrics','reports','simulation_complete','report_done')} | {
+                       'created_at','ended_at','run_started_at','error','metrics','reports','simulation_complete','report_done','source_round')} | {
                        'observer_only':True, 'execution':'cpu', 'log_available':bool((job.get('backend') or {}).get('id')),
                        'comparison_label': 'Comparison backtest ' + str(index) if index else job.get('candidate_id'),
                        'evaluation_score':score if type(score) in (int,float) and math.isfinite(score) else None,
                        'evaluation_targets_met':(job.get('assessment') or {}).get('hard_targets_met') is True,
+                       'ai_selected': any(entry.get('winner_candidate_id') and entry.get('winner_candidate_id') == job.get('candidate_id')
+                                          for entry in row.get('history', []) if entry['round'] == job['round']),
                        'holdout_score':score if job['kind']=='observer_holdout' and type(score) in (int,float) and math.isfinite(score) else None,
                        'selected_for_full_range': selection.get('status') == 'selected' and job.get('candidate_id') == selection.get('candidate_id'),
                        'previous_selection': job['kind']=='observer_full_range' and selection.get('status') == 'selected' and job.get('candidate_id') != selection.get('candidate_id'),
@@ -283,8 +328,10 @@ def projection(row):
     from pb8_loop_observer import observer_selections
     return {key: row.get(key) for key in ('id', 'status', 'phase', 'round', 'created_at', 'started_at', 'updated_at', 'reason',
             'last_error', 'failure', 'holdout_retryable', 'stop_reason', 'continuation', 'interpretation', 'rubric', 'history', 'bootstrap', 'ai_calls', 'ai_tokens_reserved',
-            'ai_usd_reserved', 'jev_usd_reserved', 'validation_count', 'holdout_used', 'deadline')} | {
+            'ai_usd_reserved', 'jev_usd_reserved', 'validation_count', 'holdout_used', 'deadline', 'rental_handover',
+            'ai_pause', 'knowledge_summary', 'ai_evidence_status', 'bootstrap_evidence_preview', 'ai_preview')} | {
         'name': row['settings'].get('loop_name') or row['settings']['config_name'],
+        'has_interrupted_ai': bool(row.get('interrupted_ai')),
         'definition_name': row['settings'].get('definition_name'),
         'settings': row['settings'], 'fingerprint': row['fingerprint'], 'cycles': _cycle_reports(row),
         'observer_enabled':bool(row.get('observer_enabled')), 'observer_jobs':_observer_reports(row),
@@ -295,7 +342,7 @@ def projection(row):
         'holdout_available': bool(row['holdouts']),
         'best': {'assessment': best['assessment'], 'metrics': best['metrics'],
                  'candidate_id': best['candidate']['id'], 'round': next((job['round'] for job in row['jobs'] if job['operation'] == best.get('operation')), None)} if best else None,
-        'jobs': [{key: job.get(key) for key in ('operation', 'name', 'kind', 'round', 'status', 'started', 'reason', 'error', 'runner', 'executed_digest', 'run_started_at', 'limit_reached', 'results_consumed', 'result_count', 'result_error', 'created_at', 'ended_at')} | {
+        'jobs': [{key: job.get(key) for key in ('operation', 'name', 'kind', 'round', 'status', 'started', 'reason', 'error', 'runner', 'executed_digest', 'run_started_at', 'limit_reached', 'results_consumed', 'result_count', 'result_error', 'created_at', 'ended_at', 'optimizer_archive')} | {
                     'changes': _job_changes(row['initial_config'], job['config'], row['initial_overrides'], job['overrides']) if job['kind'] == 'optimizer' else [],
                     'native_iters': job['config'].get('optimize', {}).get('iters') if job['kind'] == 'optimizer' else None,
                     'candidate_optimizer': (job.get('candidate') or {}).get('optimizer_job'),
@@ -303,6 +350,7 @@ def projection(row):
                     'execution': (job.get('backend') or {}).get('execution') or (row['settings']['execution'] if job['kind'] == 'optimizer' else 'cpu'),
                     'display_status': 'Proxy limit reached' if job.get('limit_reached') == 'proxy' else 'Time limit reached' if job.get('limit_reached') else job['status'],
                     'proxy_limit': row['settings'].get('run_proxy') if job['kind'] == 'optimizer' else None,
+                    'proxy_evaluations': job.get('proxy_evaluations') if job['kind'] == 'optimizer' else None,
                  } for job in row['jobs']],
         'jev_answers': (row.get('bootstrap_jev_answers') or []) + (row.get('jev_answers') or []),
         'jev_status': 'disabled' if not row['settings'].get('jev_enabled') else 'consulted' if row.get('jev_usd_reserved', 0) else 'failed' if any('failed' in str(answer).lower() for answer in (row.get('bootstrap_jev_answers') or []) + (row.get('jev_answers') or [])) else 'not requested',
@@ -334,7 +382,7 @@ async def options(config_name: str = Query(default='', max_length=120), session:
             defaults = config_defaults(bundle['config'])
         gpu_available, gpu_reason = False, 'Choose a configuration to check GPU compatibility'
         if selected_name and not list_only:
-            settings = LoopStart(config_name=selected_name, provider='chatgpt', model='probe', execution='gpu').model_dump()
+            settings = LoopStart(config_name=selected_name, provider='chatgpt', model='probe', execution='gpu', max_rounds=1).model_dump()
 
             try:
                 args = (selected_name, settings, bundle) if source_kind else (selected_name, settings)
@@ -676,6 +724,94 @@ async def loop_instruction_version(version_id: str, session: SessionToken = Depe
         raise _error(exc) from exc
 
 
+class LoopRentalExtension(BaseModel):
+    """Bind explicit extension intent to the reviewed rental and Loop deadlines."""
+    model_config = ConfigDict(extra='forbid')
+    worker_id: str = Field(pattern=r'^[0-9a-f]{32}$')
+    expected_deadline: float = Field(allow_inf_nan=False)
+    expected_loop_deadline: float = Field(allow_inf_nan=False)
+    minutes: int = Field(strict=True, ge=1, le=1440)
+
+
+@router.get('/{loop_id}/rental')
+async def loop_rental(loop_id: str, session: SessionToken = Depends(require_auth)):
+    """Read public rental controls only for the authenticated owner's run."""
+    from pb8_loop_rental_controls import rental_snapshot
+    from vast_queue import CloudQueue
+    try:
+        row = await asyncio.to_thread(_controller.store.read, _owner(session), loop_id)
+        rental = await asyncio.to_thread(rental_snapshot, CloudQueue(), row)
+        return JSONResponse({'rental': rental}, headers={'Cache-Control': 'no-store'})
+    except VastError as exc:
+        _log(SERVICE, 'Loop rental read rejected', level='WARNING')
+        raise HTTPException(exc.status, str(exc)) from exc
+    except Exception as exc:
+        raise _error(exc) from exc
+
+
+@router.post('/{loop_id}/rental/extend', status_code=202)
+async def extend_loop_rental(loop_id: str, body: LoopRentalExtension, session: SessionToken = Depends(require_auth)):
+    """Extend this run on its current rental without increasing its budget."""
+    from pb8_loop_rental_controls import extend_rental
+    from vast_queue import CloudQueue
+    try:
+        await asyncio.to_thread(extend_rental, _controller.store, CloudQueue(), _owner(session), loop_id,
+                               body.worker_id, body.expected_deadline, body.expected_loop_deadline, body.minutes)
+        return JSONResponse({'pending': True}, status_code=202, headers={'Cache-Control': 'no-store'})
+    except VastError as exc:
+        _log(SERVICE, 'Loop rental extension rejected', level='WARNING')
+        raise HTTPException(exc.status, str(exc)) from exc
+    except Exception as exc:
+        raise _error(exc) from exc
+
+
+class LoopRentalBudget(BaseModel):
+    """Require the reviewed rental identity, deadline and budget for a budget edit."""
+    model_config = ConfigDict(extra='forbid')
+    worker_id: str = Field(pattern=r'^[0-9a-f]{32}$')
+    expected_deadline: float = Field(allow_inf_nan=False)
+    expected_budget_usd: float = Field(allow_inf_nan=False, ge=.1, le=100)
+    budget_usd: float = Field(allow_inf_nan=False, ge=.1, le=100)
+
+
+@router.post('/{loop_id}/rental/budget', status_code=202)
+async def loop_rental_budget(loop_id: str, body: LoopRentalBudget, session: SessionToken = Depends(require_auth)):
+    """Submit an explicit budget change to this owner's current rental guard."""
+    from pb8_loop_rental_controls import change_budget
+    from vast_queue import CloudQueue
+    try:
+        result = await asyncio.to_thread(change_budget, _controller.store, CloudQueue(), _owner(session), loop_id,
+                                        body.worker_id, body.expected_deadline, body.expected_budget_usd, body.budget_usd)
+        return JSONResponse(result, status_code=202, headers={'Cache-Control': 'no-store'})
+    except VastError as exc:
+        _log(SERVICE, 'Loop rental budget change rejected', level='WARNING')
+        raise HTTPException(exc.status, str(exc)) from exc
+    except Exception as exc:
+        raise _error(exc) from exc
+
+
+@router.get('/{loop_id}/rental/charges')
+async def loop_rental_charges(loop_id: str, session: SessionToken = Depends(require_auth)):
+    """Read cached provider costs independently of the Loop progress poll."""
+    from pb8_loop_rental_controls import public_billing, rental_snapshot
+    from vast_billing import instance_charges
+    from vast_queue import CloudQueue
+    try:
+        queue = CloudQueue()
+        row = await asyncio.to_thread(_controller.store.read, _owner(session), loop_id)
+        rental = await asyncio.to_thread(rental_snapshot, queue, row)
+        if not rental:
+            return JSONResponse({'worker_id': None, 'billing': None}, headers={'Cache-Control': 'no-store'})
+        billing = await asyncio.to_thread(instance_charges, queue.store, rental['worker_id'])
+        return JSONResponse({'worker_id': rental['worker_id'], 'billing': public_billing(billing)},
+                            headers={'Cache-Control': 'no-store'})
+    except VastError as exc:
+        _log(SERVICE, 'Loop rental billing read rejected', level='WARNING')
+        raise HTTPException(exc.status, str(exc)) from exc
+    except Exception as exc:
+        raise _error(exc) from exc
+
+
 @router.get('/{loop_id}/instructions')
 async def loop_run_instructions(loop_id: str, session: SessionToken = Depends(require_auth)):
     """Show the exact instruction snapshot used by a run, or label legacy fallback."""
@@ -763,6 +899,102 @@ async def loop_action(loop_id: str, body: LoopAction, session: SessionToken = De
     return await _loop_action_owned(_owner(session), loop_id, body)
 
 
+@router.post('/{loop_id}/handover')
+async def handover_loop(loop_id: str, body: LoopHandover, session: SessionToken = Depends(require_auth)):
+    """Stop/collect the source and bind a replacement to its unchanged rental."""
+    return await _handover_owned(_owner(session), loop_id, body)
+
+
+async def _handover_owned(owner, loop_id, body):
+    """Share native handover validation with the reviewed AI Loop operation."""
+    try:
+        if not body.authorization:
+            raise ValueError('Authorize replacing this Loop on its existing GPU')
+        from pb8_loop_handover import begin
+        from vast_queue import CloudQueue
+        # Verify provider/model readiness before any stop or GPU reservation.
+        target = await asyncio.to_thread(_controller.store.read, owner, body.target_loop_id)
+        if body.selection is not None and not set(body.selection) <= {'provider', 'model', 'profile', 'effort', 'service_tier'}:
+            raise ValueError('Invalid shared AI selection')
+        settings = dict(target['settings'], **(body.selection or {}))
+        await _controller.ai.preflight(owner, settings)
+        await asyncio.to_thread(begin, _controller.store, CloudQueue(), owner, loop_id, body.target_loop_id,
+                                expected_worker=body.worker_id, expected_generation=body.source_generation)
+        target = await asyncio.to_thread(_controller.store.read, owner, body.target_loop_id)
+        if target['status'] == 'queued':
+            await _loop_action_owned(owner, target['id'], LoopAction(action='start', selection=body.selection))
+        target = await asyncio.to_thread(_controller.store.read, owner, body.target_loop_id)
+        return JSONResponse(projection(target), status_code=202, headers={'Cache-Control': 'no-store'})
+    except VastError as exc:
+        _log(SERVICE, f'GPU handover rejected: {str(exc)[:1000]}', level='WARNING')
+        raise HTTPException(exc.status, str(exc)[:1000]) from exc
+    except Exception as exc:
+        raise _error(exc) from exc
+
+
+@router.post('/{loop_id}/ai-preview')
+async def ai_execution_preview(loop_id: str, body: LoopAction, session: SessionToken = Depends(require_auth)):
+    """Inspect a saved run without renting, sending model prompts or changing its source config."""
+    try:
+        owner = _owner(session)
+        row = await asyncio.to_thread(_controller.store.read, owner, loop_id)
+        if body.selection and not set(body.selection) <= {'provider','model','profile','effort','service_tier'}:
+            raise ValueError('Invalid AI selection')
+        settings = dict(row['settings'])
+        settings.update(body.selection or {})
+        if body.ai_settings:
+            allowed = {'historical_advice','decision_timeout_seconds','model_call_timeout_seconds',
+                       'ai_decision_token_limit','ai_decision_usd_limit','ai_budget_confirmed'}
+            if not set(body.ai_settings) <= allowed:
+                raise ValueError('Invalid AI budget settings')
+            settings.update(body.ai_settings)
+        checked = LoopStart.model_validate({key: value for key, value in settings.items() if key in LoopStart.model_fields})
+        settings.update(checked.model_dump(exclude={'authorization'}))
+        metadata = await _controller.ai.preflight(owner, settings, check_budget=False)
+        profile = metadata['loop_profile']
+        from pb8_loop_archive import archive_budget
+        staged = {**row, 'settings': settings, 'ai_model_profile': profile}
+        provisional = not bool(row['rubric'])
+        if provisional:
+            staged['rubric'] = [{'metrics': ['reserved_goal_metric_' + str(i) for i in range(24)]}]
+        native = archive_budget(staged, row['initial_config'])
+        from pb8_loop_archive import select_sources
+        if settings.get('historical_advice', True):
+            candidates = await asyncio.to_thread(_controller.backend.existing_candidates, staged)
+            _selected, historical = await asyncio.to_thread(select_sources, staged, {
+                'stage':'bootstrap', 'initial_config':row['initial_config'], 'rubric':staged['rubric'],
+                'goals':settings['goals'], 'evidence':{'existing_results':candidates}}, profile,
+                min(metadata.get('output_limit') or 32768, profile.get('output_tokens', 32768)), metadata=metadata)
+        else:
+            historical = {'mode':'off', 'sources':[], 'in_a':0, 'in_b':0}
+        paid = settings['provider'] == 'opencode-zen' and metadata.get('free') is not True
+        cost = metadata.get('cost') or {}
+        reserve = min(metadata.get('output_limit') or 32768, profile.get('output_tokens', 32768))
+        # Uncached per-call upper envelope; real complete payloads are reserved before each send.
+        from pb8_loop_ai_policy import paid_cost
+        one_call = paid_cost(metadata, profile['context'], reserve) if paid else None
+        maximum_decisions = 2 + 2 * settings['max_runs']
+        preview = {'provisional': provisional or profile.get('context_pending', False),
+                   'context': profile['context'], 'context_pending': profile.get('context_pending', False),
+                   'context_source': profile.get('context_source'),
+                   'native_archive': native,
+                   'historical_sources': historical,
+                   'paid': paid, 'cost': cost, 'uncached_call_upper_estimate_usd': one_call,
+                   'decision_token_limit': settings.get('ai_decision_token_limit'),
+                   'decision_usd_limit': settings.get('ai_decision_usd_limit'),
+                   'maximum_attempts': settings['max_runs'], 'streaming': profile.get('streaming', False),
+                   'maximum_decisions': maximum_decisions,
+                   'uncached_dialog_upper_estimate_usd': one_call * 134 if paid else None,
+                   'run_ai_spending_ceiling_usd': settings.get('ai_decision_usd_limit') * maximum_decisions
+                       if paid and settings.get('ai_decision_usd_limit') else None,
+                   'call_timeout_seconds': settings.get('model_call_timeout_seconds') or profile.get('call_timeout'),
+                   'decision_timeout_seconds': settings.get('decision_timeout_seconds')}
+        await asyncio.to_thread(_controller.store.update, owner, loop_id, lambda current: current.update(ai_preview=preview))
+        return JSONResponse(preview, headers={'Cache-Control': 'no-store'})
+    except Exception as exc:
+        raise _error(exc) from exc
+
+
 async def _loop_action_owned(owner, loop_id, body):
     """Run native owner-scoped actions for authenticated routes and reviewed AI tools."""
     try:
@@ -776,7 +1008,19 @@ async def _loop_action_owned(owner, loop_id, body):
                 if not set(body.selection) <= {'provider','model','profile','effort','service_tier'}:
                     raise ValueError('Invalid shared AI selection')
                 raw.update(body.selection)
+            if body.ai_settings:
+                fields = {'historical_advice','decision_timeout_seconds','model_call_timeout_seconds',
+                          'ai_decision_token_limit','ai_decision_usd_limit','ai_budget_confirmed'}
+                if not set(body.ai_settings) <= fields:
+                    raise ValueError('Invalid AI budget settings')
+                raw.update(body.ai_settings)
             settings = LoopStart.model_validate(raw).model_dump(exclude={'authorization'})
+            if body.ai_settings and body.ai_settings.get('ai_budget_confirmed'):
+                from pb8_loop_ai_policy import budget_identity
+                quote = await _controller.ai.preflight(owner, settings, check_budget=False)
+                settings['ai_budget_model'] = budget_identity(settings, quote)
+            else:
+                settings['ai_budget_model'] = waiting['settings'].get('ai_budget_model')
             if settings['execution'] == 'vast':
                 from api.vast import RentalPreferences
                 from vast_queue import CloudQueue
@@ -784,7 +1028,10 @@ async def _loop_action_owned(owner, loop_id, body):
                 queue = CloudQueue()
                 if not VastCredentialStore(queue.root).metadata()['configured']:
                     raise ValueError('Connect Vast.ai before starting a cloud loop')
-                settings['vast'] = RentalPreferences.model_validate(queue.read().get('gpu_preferences') or {}).model_dump()
+                preferences = RentalPreferences.model_validate(queue.read().get('gpu_preferences') or {}).model_dump()
+                if waiting.get('rental_handover') and waiting['settings'].get('vast') != preferences:
+                    raise ValueError('Vast preferences changed during handover; preserve the reviewed rental limits')
+                settings['vast'] = preferences
                 if settings['hours'] > settings['vast']['hours'] or settings['parallel'] > settings['vast']['max_rentals']:
                     raise ValueError('Edit this waiting loop to fit the current Rental & Automation settings')
             preferences = get_ai_chat_service().get_preferences(owner)
@@ -802,6 +1049,53 @@ async def _loop_action_owned(owner, loop_id, body):
                 current.update(initial_config=config, initial_overrides=overrides, fingerprint=fingerprint, holdouts=holdouts, comparison=comparison,
                                training_exclusions=current.get('training_exclusions', []) + exclusions, status='running', started_at=time.time(), deadline=time.time() + settings['hours'] * 3600, control_generation=current['control_generation'] + 1)
             row = await asyncio.to_thread(_controller.store.update, owner, loop_id, refresh)
+        elif body.action == 'resume':
+            waiting = await asyncio.to_thread(_controller.store.read, owner, loop_id)
+            if waiting['status'] != 'paused':
+                raise ValueError('Only a paused loop can be resumed')
+            if waiting.get('interrupted_ai') and not body.acknowledge_interrupted:
+                raise LoopAIPause('evidence_recovery', 'Review the interrupted model request before authorizing another attempt')
+            selection = body.selection or {}
+            if not set(selection) <= {'provider','model','profile','effort','service_tier'}:
+                raise ValueError('Invalid shared AI selection')
+            adjustments = body.ai_settings or {}
+            fields = {'historical_advice', 'decision_timeout_seconds', 'model_call_timeout_seconds',
+                      'ai_decision_token_limit', 'ai_decision_usd_limit', 'ai_budget_confirmed'}
+            if not set(adjustments) <= fields:
+                raise ValueError('Only AI recovery budgets and advice policy may change during resume')
+            raw = {key: value for key, value in waiting['settings'].items() if key in LoopStart.model_fields}
+            raw.update(selection)
+            raw.update(adjustments)
+            validated = LoopStart.model_validate(raw).model_dump(exclude={'authorization'})
+            validated['ai_budget_model'] = waiting['settings'].get('ai_budget_model')
+            if adjustments.get('ai_budget_confirmed'):
+                from pb8_loop_ai_policy import budget_identity
+                quote = await _controller.ai.preflight(owner, validated, check_budget=False)
+                validated['ai_budget_model'] = budget_identity(validated, quote)
+            metadata = await _controller.ai.preflight(owner, validated)
+            if waiting.get('ai_snapshot_id'):
+                from pb8_loop_evidence import EvidenceStore
+                snap = await asyncio.to_thread(EvidenceStore(_controller.store).load, owner, waiting['ai_snapshot_id'])
+                from pb8_loop_ai_v2 import validate_snapshot_budget
+                validate_snapshot_budget({**waiting, 'settings': validated}, snap, metadata)
+                for evidence_id, binding in snap['history'].items():
+                    if binding.get('required'):
+                        EvidenceStore(_controller.store).resolve(snap, '/history/' + evidence_id.replace('~','~0').replace('/','~1'))
+            def resume(current):
+                if current['status'] != 'paused' or current['control_generation'] != waiting['control_generation']:
+                    raise ValueError('Loop changed while resuming')
+                current['settings'].update(validated)
+                if (current.get('ai_pause') or {}).get('reason') == 'ai_timeout':
+                    for ledger in current.get('ai_decisions', {}).values():
+                        if ledger['round'] == current['round'] and ledger['stage'] == current['phase']:
+                            limit = current['settings'].get('decision_timeout_seconds')
+                            ledger['deadline'] = min(current['deadline'] - 60, time.time() + limit) if limit else current['deadline'] - 60
+                if current.get('interrupted_ai'):
+                    current.setdefault('interrupted_ai_audit', []).append(current.pop('interrupted_ai'))
+                current.pop('ai_pause', None)
+                current.update(status='finishing' if current['phase'] == 'holdout' else 'running',
+                               control_generation=current['control_generation'] + 1, last_error=None)
+            row = await asyncio.to_thread(_controller.store.update, owner, loop_id, resume)
         else:
             row = await asyncio.to_thread(_controller.action, owner, loop_id, body.action)
         return JSONResponse(projection(row), headers={'Cache-Control': 'no-store'})
@@ -829,23 +1123,20 @@ async def continue_loop(loop_id: str, body: LoopContinue, session: SessionToken 
         row = await asyncio.to_thread(_controller.store.read, _owner(session), loop_id)
         checkpoint = row.get('best')
         if body.round is not None:
-            candidates = completed_round_observations(row, body.round)
-            if not candidates:
-                raise ValueError('This round has no complete exact checkpoint')
-            verified = []
-            for item in candidates:
-                job = next((job for job in row['jobs'] if job['operation'] == item['operation']), None)
-                if not job or job['status'] not in {'completed', 'complete'}:
-                    continue
-                exact = await asyncio.to_thread(_controller.backend.observations, row, job)
-                if exact['assessment'].get('comparable') and exact['assessment'].get('simulation_complete', True):
-                    verified.append({**item, 'assessment': exact['assessment']})
-            if not verified:
-                raise ValueError('This round has no complete exact checkpoint')
-            candidates = verified
-            chosen = max(candidates, key=lambda item: (item['assessment'].get('hard_targets_met', True), item['assessment']['score']))
-            job = next((job for job in row['jobs'] if job['operation'] == chosen['operation']), None)
-            checkpoint = {'candidate': job['candidate'], 'metrics': chosen.get('metrics', {})} if job else None
+            history = next((entry for entry in row['history'] if entry['round'] == body.round), {})
+            operation = history.get('winner_operation')
+            if not operation:
+                raise ValueError('This round has no qualified AI-selected checkpoint')
+            job = next((job for job in row['jobs'] if job['operation'] == operation
+                        and job['kind'] in {'validation', 'baseline'}), None)
+            if not job or job['status'] not in {'completed', 'complete'}:
+                raise ValueError('The AI-selected checkpoint has no successful exact backtest')
+            exact = await asyncio.to_thread(_controller.backend.observations, row, job)
+            candidate = job.get('candidate')
+            if job['kind'] == 'baseline':
+                candidate = {'id': 'baseline', 'optimizer_job': None, 'config': row['initial_config'],
+                             'overrides': row['initial_overrides']}
+            checkpoint = {**exact, 'operation': operation, 'candidate': candidate}
         if not checkpoint or not checkpoint['candidate']:
             raise ValueError('No complete exact checkpoint is available')
         if body.round is None:
@@ -858,6 +1149,8 @@ async def continue_loop(loop_id: str, body: LoopContinue, session: SessionToken 
             checkpoint = {**checkpoint, 'assessment': exact['assessment'], 'metrics': exact['metrics']}
         if checkpoint.get('assessment', {}).get('comparable') is False or checkpoint.get('assessment', {}).get('simulation_complete') is False:
             raise ValueError('The checkpoint simulation is incomplete')
+        if checkpoint.get('assessment', {}).get('hard_targets_met') is False:
+            raise ValueError('The checkpoint violates a hard goal target')
         candidate = copy.deepcopy(checkpoint['candidate'])
         candidate['metrics'] = checkpoint.get('metrics') or candidate.get('metrics', {})
         candidate['source'] = {'run': row['id'], 'round': body.round, 'kind': 'exact_comparison'}
@@ -868,7 +1161,7 @@ async def continue_loop(loop_id: str, body: LoopContinue, session: SessionToken 
         config['backtest'] = copy.deepcopy(row['comparison'])
         raw = {key: value for key, value in row['settings'].items() if key in LoopStart.model_fields and key != 'authorization'}
         raw.update(body.selection)
-        raw.update(max_runs=body.rounds, patience=min(100, max(row['settings']['patience'], body.rounds)),
+        raw.update(max_runs=body.rounds, max_rounds=body.rounds, patience=min(100, max(row['settings']['patience'], body.rounds)),
                    max_validations=min(1000, body.rounds * row['settings']['candidates'] + 2), authorization=True)
         if raw['execution'] == 'vast':
             from api.vast import RentalPreferences

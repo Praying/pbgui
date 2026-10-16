@@ -31,7 +31,7 @@ def bundle():
 
 def settings():
     """Return saved loop settings without a separate AI selection."""
-    value = api_loop.LoopStart(config_name='original', provider='chatgpt', model='shared').model_dump()
+    value = api_loop.LoopStart(max_rounds=10, config_name='original', provider='chatgpt', model='shared').model_dump()
     return {key:child for key,child in value.items() if key not in {'authorization','provider','model','profile','effort','service_tier'}}
 
 
@@ -599,9 +599,10 @@ def test_continue_from_best_or_exact_previous_round_keeps_provenance(workflow, m
     from pb8_loop_store import evaluate
     client, controller, source, session, _ = workflow
     save(client); original = queue(client).json(); loop_id = original['id']
-    rubric = [{'goal': 'gain', 'metrics': ['gain'], 'target': 10, 'direction': 'max', 'weight': 1, 'scale': 1}]
+    rubric = [{'goal': 'gain', 'metrics': ['gain'], 'target': None, 'direction': 'max'}]
     checkpoints = []
     def completed(row):
+        row['ai_model_profile'] = {'context': 4_000_000, 'page_tokens': 1500, 'output_tokens': 1000}
         row.update(status='unconfirmed', rubric=rubric, jobs=[], history=[])
         for number in (0, 1):
             config = copy.deepcopy(row['initial_config']); config['optimize']['iters'] = 1000 + number
@@ -614,14 +615,21 @@ def test_continue_from_best_or_exact_previous_round_keeps_provenance(workflow, m
             assessment = {**evaluate({'gain': 1 + number}, rubric), 'simulation_complete': True}
             item = {'operation': job['operation'], 'candidate': candidate, 'metrics': {'gain': 1 + number}, 'assessment': assessment, 'exact': True}
             checkpoints.append(item); row['jobs'] += [optimizer, job]
-            row['history'].append({'round': number, 'assessment': assessment, 'observations': [{key: value for key, value in item.items() if key != 'candidate'}]})
+            row['history'].append({'round': number, 'assessment': assessment,
+                                   'winner_operation': item['operation'], 'winner': copy.deepcopy(item),
+                                   'observations': [{key: value for key, value in item.items() if key != 'candidate'}]})
         row['best'] = checkpoints[-1]
         if not evaluated:
             row.update(status='failed', phase='evaluate', round=1, history=row['history'][:1],
                        observations=[copy.deepcopy(checkpoints[-1])], pending_ai={'stage':'evaluate'})
+    controller.store.update(OWNER, loop_id, lambda row: row.update(ai_model_profile={'context': 4_000_000, 'page_tokens': 1500, 'output_tokens': 1000}))
     parent = controller.store.update(OWNER, loop_id, completed)
     monkeypatch.setattr(controller.backend, 'observations', lambda row, job: next(item for item in checkpoints if item['operation'] == job['operation']), raising=False)
     response = client.post('/loops/' + loop_id + '/continue', json={'round': selected_round, 'rounds': extra, 'selection': {'provider': 'chatgpt', 'model': 'shared-current'}, 'authorization': True})
+    if not evaluated:
+        assert response.status_code == 422
+        assert 'AI-selected checkpoint' in response.json()['detail']
+        return
     assert response.status_code == 201, response.text
     result = response.json(); assert result['id'] != loop_id and result['status'] == 'running'
     child = controller.store.read(OWNER, result['id']); index = 1 if selected_round is None else selected_round

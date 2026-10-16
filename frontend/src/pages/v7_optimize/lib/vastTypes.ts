@@ -102,6 +102,8 @@ export interface VastWorker {
   id?: string;
   rental_state?: string;
   status?: string;
+  cleanup_requested?: boolean;
+  cleanup_error?: string;
   awaiting_queue_start?: boolean;
   host_machine_id?: number;
   rental?: VastRental;

@@ -1,5 +1,19 @@
 # Changelog
 
+- [v2.08.15](releases/v2.08.15.md)
+
+- [v2.08.14](releases/v2.08.14.md)
+
+- [v2.08.13](releases/v2.08.13.md)
+
+- [v2.08.12](releases/v2.08.12.md)
+
+- [v2.08.11](releases/v2.08.11.md)
+
+- [v2.08.10](releases/v2.08.10.md)
+
+- [v2.08.9](releases/v2.08.9.md)
+
 - [v2.08.8](releases/v2.08.8.md)
 
 - [v2.08.7](releases/v2.08.7.md)

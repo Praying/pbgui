@@ -59,6 +59,23 @@ describe('optimize config model', () => {
     expect(config.custom_root).toEqual({ keep: true });
   });
 
+  it('keeps local CPU sizing separate from PB8 Vast GPU automatic sizing', () => {
+    const draft = buildEditorDraft({
+      pbgui: { execution: 'vast', local_n_cpus: 6 },
+      optimize: { n_cpus: 2, backend: 'gpu', gpu: { population_size: 128 } },
+    }, 'v8', 'cloud');
+
+    const config = collectEditorConfig(draft, 'v8');
+    expect(config.optimize).toMatchObject({ n_cpus: null, gpu: { population_size: 128 } });
+    expect(config.pbgui).toMatchObject({ execution: 'vast', local_n_cpus: 6 });
+
+    draft.pbgui.local_n_cpus = null;
+    draft.optimize.n_cpus = null;
+    const automaticConfig = collectEditorConfig(draft, 'v8');
+    expect(automaticConfig.optimize).toMatchObject({ n_cpus: null });
+    expect(automaticConfig.pbgui).not.toHaveProperty('local_n_cpus');
+  });
+
   it('migrates PB8 HSL budget scaling from runtime overrides into native bot HSL', () => {
     const draft = buildEditorDraft({
       bot: { long: { hsl: {} }, short: { hsl: {} } },

@@ -77,14 +77,16 @@ async function onResolveProposal(proposal: Parameters<typeof store.resolvePropos
   }
   const preview = reviewedProposal.preview || {};
   const approvalDetail =
-    preview.action === 'python_analysis'
-      ? t('ai.proposal.approvePythonDetail')
-      : t('ai.proposal.approveDetail', { autostart: preview.may_start_immediately ? t('ai.proposal.autostartEnabled') + ' ' : '' });
+    ['save_ai_loop_config', 'run_ai_loop', 'save_vast_preferences'].includes(preview.action || '')
+      ? String(preview.effect || '')
+      : preview.action === 'python_analysis'
+        ? t('ai.proposal.approvePythonDetail')
+        : t('ai.proposal.approveDetail', { autostart: preview.may_start_immediately ? t('ai.proposal.autostartEnabled') + ' ' : '' });
   const confirmed = await dialogsConfirm({
     title: t('ai.proposal.approveTitle'),
     message: proposalActionLabel(preview.action, t) + ' ' + String(preview.name || ''),
     detail: approvalDetail,
-    confirmText: t('ai.proposal.approve'),
+    confirmText: preview.action === 'save_ai_loop_config' ? t('ai.proposal.saveDefinition') : t('ai.proposal.approve'),
   });
   if (confirmed) void store.resolveProposal(reviewedProposal, true, reviewToken);
 }

@@ -15,6 +15,8 @@ from pb8_loop_ai import LoopAI, LoopAIResponseError, parse_object, validate_rubr
 from pb8_loop_backend import LoopBackend
 from pb8_loop_controller import LoopController
 from pb8_loop_store import LoopStore, authorize_native_job, evaluate, validate_change
+from tests.loop_ai_transport import LoopAI
+from pb8_loop_evidence import LoopAIPause
 
 OWNER = 'a' * 32
 RULE = [{'goal': 'gain', 'metrics': ['gain'], 'direction': 'max', 'target': 2, 'scale': 1, 'weight': 1}]
@@ -52,8 +54,9 @@ def config():
 
 def settings(**changes):
     """Validate controller settings through the public request model."""
-    value = LoopStart(config_name='source', provider='chatgpt', model='pinned', goals=LoopGoals(presets=['gain']), authorization=True).model_dump()
+    value = LoopStart(max_rounds=10, config_name='source', provider='chatgpt', model='pinned', goals=LoopGoals(presets=['gain']), authorization=True).model_dump()
     value.update(changes)
+    value['max_rounds'] = changes.get('max_rounds', min(10, value['max_runs']))
     return value
 
 
@@ -62,9 +65,10 @@ def record(tmp_path):
     """Keep all persistent evidence under a Pytest temporary directory."""
     store = LoopStore(tmp_path / 'data/loop_optimizer')
     value = store.create(OWNER, settings(), config(), {}, {'pb8': 'commit', 'data': 'shards'}, [], config()['backtest'])
-    store.update(OWNER, value['id'], lambda row: row.update(baseline_required=False, observer_enabled=False))
+    store.update(OWNER, value['id'], lambda row: row.update(baseline_required=False, observer_enabled=False, ai_model_profile={'context': 4_000_000, 'page_tokens': 1500, 'output_tokens': 65536, 'call_timeout': 60, 'streaming': False}))
     value['baseline_required'] = False
     value['observer_enabled'] = False
+    value['ai_model_profile'] = {'context': 4_000_000, 'page_tokens': 1500, 'output_tokens': 65536, 'call_timeout': 60, 'streaming': False}
     return store, value
 
 
@@ -103,16 +107,16 @@ def _warm_start_observation(row, score, exposure=2):
 
 @pytest.mark.parametrize('score,exact,comparable,complete,hard,expected', [
     (2, True, True, True, True, 'candidate_2'),
-    (1, True, True, True, True, 'baseline'),
-    (.5, True, True, True, True, 'baseline'),
+    (1, True, True, True, True, 'candidate_2'),
+    (.5, True, True, True, True, 'candidate_2'),
     (2, False, True, True, True, 'baseline'),
     (2, True, False, True, True, 'baseline'),
     (2, True, True, False, True, 'baseline'),
     (20, True, True, True, False, 'baseline'),
 ])
-def test_optimizer_start_requires_strict_exact_baseline_improvement(
+def test_optimizer_start_uses_qualified_selection_without_score_ranking(
         record, score, exact, comparable, complete, hard, expected):
-    """Observer results, invalid evidence, ties and worse candidates cannot replace the start."""
+    """Only qualified exact winners provide comparison references; legacy score has no authority."""
     from pb8_loop_store import optimizer_start_candidate
     _, row = record
     row['baseline'] = _warm_start_observation(row, 1, 1)
@@ -126,7 +130,7 @@ def test_optimizer_start_requires_strict_exact_baseline_improvement(
 
 
 def test_optimizer_job_carries_bot_but_preserves_ai_recipe_and_budget(record, tmp_path):
-    """Warm starts preserve optimizer experiments, override bundles and the fixed proxy budget."""
+    """Complete AI experiments survive even when they differ from the confirmed reference."""
     store, row = record
     row['settings'].update(run_limit_mode='proxy', run_proxy=100000)
     row['best'] = _warm_start_observation(row, 2)
@@ -137,15 +141,64 @@ def test_optimizer_job_carries_bot_but_preserves_ai_recipe_and_budget(record, tm
     before = copy.deepcopy((row, proposed))
     controller = LoopController(tmp_path, store=store, backend=FakeBackend(), ai=FakeAI())
     job = controller.job(row, 'optimizer', proposed, {}, 'Experiment')
-    assert job['config']['bot'] == row['best']['candidate']['config']['bot']
-    assert job['overrides'] == row['best']['candidate']['overrides']
-    assert job['config']['optimize'] == {**proposed['optimize'], 'iters': 10000000}
+    assert job['config']['bot'] == proposed['bot']
+    assert job['overrides'] == {}
+    assert job['optimizer_start']['bot_modified'] is True
+    assert job['optimizer_start']['overrides_modified'] is True
+    assert job['config']['optimize'] == {**proposed['optimize'], 'iters': 10000000, 'seed': job['config']['optimize']['seed'], 'pareto_max_size': job['optimizer_archive']['effective']}
     assert job['optimizer_start']['candidate_id'] == 'candidate_2'
     assert (row, proposed) == before
     for kind in ('baseline', 'validation', 'holdout', 'observer_holdout', 'observer_full_range'):
         unchanged = controller.job(row, kind, proposed, {}, 'Existing check')
         assert unchanged['config'] == proposed and unchanged['overrides'] == {}
         assert unchanged['optimizer_start'] is None
+
+
+@pytest.mark.parametrize('enabled', [True, False])
+def test_optimizer_preserves_explicit_bot_and_override_experiments(record, tmp_path, enabled):
+    """HSL/Unstuck toggles, sizing and sparse overrides survive in either direction."""
+    store, row = record
+    row['initial_config']['bot']['long'].update(hsl={'enabled': False}, unstuck={'enabled': False})
+    row['best'] = _warm_start_observation(row, 2)
+    best_bot = row['best']['candidate']['config']['bot']['long']
+    best_bot.update(hsl={'enabled': not enabled}, unstuck={'enabled': not enabled})
+    proposed = copy.deepcopy(row['best']['candidate']['config'])
+    proposed['bot']['long']['hsl']['enabled'] = enabled
+    proposed['bot']['long']['unstuck']['enabled'] = enabled
+    proposed['bot']['long']['risk']['we_excess_allowance_pct'] = .4
+    proposed['bot']['long']['strategy'] = {'ema_anchor': {'base_qty_pct': .096}}
+    proposed['optimize']['bounds'] = {'long': {'risk': {'we_excess_allowance_pct': [0, .5]},
+        'strategy': {'ema_anchor': {'base_qty_pct': [.001, .1, .0001]}}}}
+    overrides = {'BTC': {'bot': {'long': {'hsl': {'enabled': enabled}}}}}
+    before = copy.deepcopy((row, proposed, overrides))
+    job = LoopController(tmp_path, store=store, backend=FakeBackend(), ai=FakeAI()).job(
+        row, 'optimizer', proposed, overrides, 'Explicit bot experiment')
+    from pb8_loop_store import fresh_optimizer_config
+    expected_config = fresh_optimizer_config(proposed, job['config']['optimize']['seed'])
+    expected_config['optimize']['pareto_max_size'] = job['optimizer_archive']['effective']
+    assert job['config'] == expected_config
+    assert job['overrides'] == overrides
+    assert job['optimizer_start']['candidate_id'] == row['best']['candidate']['id']
+    assert job['optimizer_start']['bot_modified'] is True
+    assert (row, proposed, overrides) == before
+
+
+@pytest.mark.parametrize('change', ['direction', 'positions', 'strategy'])
+def test_explicit_bot_experiments_cannot_bypass_user_constraints(record, tmp_path, change):
+    """Keeping AI bot edits must not silently repair forbidden direction/capacity changes."""
+    store, row = record
+    proposed = copy.deepcopy(row['initial_config'])
+    if change == 'direction':
+        row['settings']['goals']['direction'] = 'long'
+        proposed['bot']['short']['risk']['n_positions'] = 1
+    elif change == 'positions':
+        row['settings']['goals']['positions'] = 1
+        proposed['bot']['long']['risk']['n_positions'] = 2
+    else:
+        proposed['live']['strategy_kind'] = 'ema_anchor'
+    with pytest.raises(ValueError):
+        LoopController(tmp_path, store=store, backend=FakeBackend(), ai=FakeAI()).job(
+            row, 'optimizer', proposed, {}, 'Forbidden change')
 
 
 def test_optimizer_start_preserves_authorized_strategy_experiment(record, tmp_path):
@@ -165,7 +218,7 @@ def test_optimizer_start_preserves_authorized_strategy_experiment(record, tmp_pa
 
 
 def test_warm_start_retains_winner_through_worse_rounds_and_restart(record, tmp_path, monkeypatch):
-    """Real cycle evaluation promotes only strict improvements and persists the seed across controllers."""
+    """Evaluation retains the confirmed reference without forcing it over complete AI experiments."""
     store, row = record
     async def isolated_operation(function, *args):
         """Keep the controller test synchronous with isolated data and no native jobs."""
@@ -191,13 +244,15 @@ def test_warm_start_retains_winner_through_worse_rounds_and_restart(record, tmp_
         assert current['phase'] == 'optimize'
         job = current['jobs'][-1]
         assert job['optimizer_start']['candidate_id'] == f'candidate_{expected}'
-        assert job['config']['bot']['long']['risk']['total_wallet_exposure_limit'] == expected
+        assert job['config']['bot'] == config()['bot']
+        assert job['optimizer_start']['bot_modified'] is True
         assert job['config']['optimize']['iters'] == 777
 
 
 def test_ai_receives_new_exact_start_before_best_is_committed(record, monkeypatch):
-    """The evaluation prompt sees the just-selected best, not stale initial bot parameters."""
+    """The evaluation prompt specifies fresh populations without a winning starting bot."""
     store, row = record
+    row['observer_jobs'] = [{'metrics': {'gain': 'HUMAN_ONLY_OBSERVER_RESULT'}}]
     winner = _warm_start_observation(row, 2)
     class AI(LoopAI):
         """Capture the real provider payload without using a provider."""
@@ -206,10 +261,15 @@ def test_ai_receives_new_exact_start_before_best_is_committed(record, monkeypatc
             return {'output_limit': 16000}
         async def _request(self, current, metadata, content, output_tokens):
             """Verify the fresh seed while retaining the original input separately."""
-            assert content['optimizer_start']['candidate_id'] == winner['candidate']['id']
-            assert content['optimizer_start']['bot'] == winner['candidate']['config']['bot']
+            assert 'optimizer_start' not in content
+            assert content['search_policy']['population'] == 'fresh_random'
+            assert content['search_policy']['winner_use'] == 'comparison_only'
+            assert content['hsl_mode'] == 'auto'
             assert content['initial_config'] == row['initial_config']
-            return '{"finish":false}', {'tokens': None, 'usd': None}
+            assert content['loop_id'] == row['id']
+            assert content['max_rounds'] == row['settings']['max_rounds']
+            assert 'HUMAN_ONLY_OBSERVER_RESULT' not in json.dumps(content)
+            return '{"winner_operation":null,"finish":true}', {'tokens': None, 'usd': None}
     asyncio.run(AI(store).decide(row, 'evaluate', {'best': winner}))
 
 
@@ -307,7 +367,7 @@ class FakeBackend:
         return candidate['config']
 
     def observations(self, row, job):
-        return {'metrics': {'gain': 1}, 'exact': True, 'assessment': evaluate({'gain': 1}, RULE)}
+        return {'metrics': {'gain': 1}, 'exact': True, 'assessment': {**evaluate({'gain': 1}, RULE), 'simulation_complete': True}}
 
     def stop(self, row, job):
         self.stops.append(job['operation'])
@@ -324,7 +384,159 @@ class FakeAI:
         if stage == 'select':
             return {'candidate_ids': [evidence['candidates'][0]['id']]}
         changed = copy.deepcopy(row['initial_config']); changed['optimize']['iters'] = 777
-        return {'finish': False, 'reason': 'Try more iterations', 'knowledge': 'Gain below target', 'variants': [{'config': changed, 'overrides': {}}]}
+        options = evidence.get('winner_options', {})
+        winner = max(options, key=lambda key: options[key]['metrics']['gain']) if options else None
+        return {'winner_operation': winner, 'finish': False, 'reason': 'Compare exact gain and try more iterations', 'knowledge': 'Gain below target', 'variants': [{'config': changed, 'overrides': {}}]}
+
+
+@pytest.mark.parametrize('limit', [1, 2])
+def test_hard_completed_round_ceiling_overrides_ai_continuation(record, tmp_path, limit):
+    """A persistent AI request to continue cannot launch round N+1, even after restart."""
+    store, row = record
+    store.update(OWNER, row['id'], lambda current: current['settings'].update(max_rounds=limit, max_runs=200))
+    backend = FakeBackend()
+    seen = []
+    class AI(FakeAI):
+        """Capture exact progress and ensure user-only observer data stays private."""
+        async def decide(self, current, stage, evidence):
+            assert 'HUMAN_ONLY_HOLDOUT' not in json.dumps(evidence)
+            if stage == 'evaluate':
+                seen.append(evidence)
+            return await super().decide(current, stage, evidence)
+    store.update(OWNER, row['id'], lambda current: current.update(observer_jobs=[{'metrics': 'HUMAN_ONLY_HOLDOUT'}]))
+    async def run():
+        for _ in range(limit * 6 + 5):
+            controller = LoopController(tmp_path, store=store, backend=backend, ai=AI())
+            await controller.tick(OWNER, row['id'])
+    asyncio.run(run())
+    current = store.read(OWNER, row['id'])
+    assert len(current['history']) == limit
+    assert len([job for job in current['jobs'] if job['kind'] == 'optimizer']) == limit
+    assert current['stop_reason'] == 'Maximum completed rounds reached'
+    assert seen[-1]['remaining_rounds'] == 0
+    assert seen[-1]['completed_rounds_after_evaluation'] == limit
+    assert seen[-1]['loop_id'] == row['id']
+
+
+@pytest.mark.parametrize('limit', [None, 0, -1, True, 1.5, '25'])
+def test_round_ceiling_is_explicit_and_integral(limit):
+    """Missing or malformed round authorization must fail at the API boundary."""
+    values = dict(config_name='source', provider='chatgpt', model='test', max_runs=200)
+    if limit is not None:
+        values['max_rounds'] = limit
+    with pytest.raises(ValueError):
+        LoopStart(**values)
+
+
+def test_one_hundred_rounds_are_allowed():
+    """The ceiling is chosen by the user and is not hardcoded to 25."""
+    assert LoopStart(config_name='source', provider='chatgpt', model='test', max_runs=200, max_rounds=100).max_rounds == 100
+
+
+def test_legacy_queue_without_round_ceiling_cannot_start(record, tmp_path):
+    """An old saved run must be configured explicitly instead of receiving an inferred limit."""
+    store, row = record
+    def legacy(current):
+        current.update(status='queued')
+        current['settings'].pop('max_rounds')
+    store.update(OWNER, row['id'], legacy)
+    controller = LoopController(tmp_path, store=store, backend=FakeBackend(), ai=FakeAI())
+    with pytest.raises(ValueError, match='Maximum completed rounds'):
+        controller.action(OWNER, row['id'], 'start')
+    assert store.read(OWNER, row['id'])['status'] == 'queued'
+
+
+@pytest.mark.parametrize('change,success', [({}, True), ({'proxy_evaluations': 99999}, False),
+    ({'limit_reached': None}, False), ({'error': 'worker failed'}, False),
+    ({'results_consumed': False}, False), ({'result_count': 0}, False), ({'status': 'failed'}, False)])
+def test_ai_receives_clean_proxy_completion_only_with_collected_work(change, success):
+    """Quota cancellation counts as success; user cancellation and missing results do not."""
+    from pb8_loop_store import optimizer_execution_evidence
+    job = dict(status='cancelled', limit_reached='proxy', proxy_evaluations=106496,
+               results_consumed=True, result_count=1, error=None)
+    job.update(change)
+    evidence = optimizer_execution_evidence(job, dict(run_limit_mode='proxy', run_proxy=100000))
+    assert (evidence['status'] == 'completed') is success
+    assert evidence['backend_status'] == job['status']
+    assert evidence['completed_evolution_proxy'] == job['proxy_evaluations']
+    if success:
+        assert evidence['completion_reason'] == 'proxy_limit_reached'
+        assert evidence['proxy_overshoot'] == 6496
+
+
+@pytest.mark.parametrize('selection', ['profitable', 'retain', 'unknown', 'violation', 'incomplete', 'missing', 'null'])
+def test_ai_exact_winner_is_authoritative_but_cannot_bypass_validation(record, tmp_path, monkeypatch, selection):
+    """Low legacy scores cannot overrule AI selection; invalid selections never advance."""
+    store, row = record
+    rules = [{'goal': 'gain', 'metrics': ['gain'], 'direction': 'max', 'target': None},
+             {'goal': 'drawdown', 'metrics': ['drawdown'], 'direction': 'min', 'target': .5}]
+    baseline = _warm_start_observation(row, 1, 1)
+    baseline['operation'] = 'baseline_check'
+    observations = []
+    for name, gain, dd, complete in [('profitable', 2.6449, .4796, True),
+                                      ('violation', 5, .6, True), ('incomplete', 10, .1, False)]:
+        item = _warm_start_observation(row, gain, gain)
+        item.update(operation=name, metrics={'gain': gain, 'drawdown': dd})
+        item['assessment'] = {**evaluate(item['metrics'], rules), 'simulation_complete': complete,
+                              'score': -1000 if name == 'profitable' else 1000}
+        observations.append(item)
+    def initialize(current):
+        """Use only synthetic completed jobs and exact observations in temporary storage."""
+        current.update(phase='evaluate', rubric=rules, baseline=baseline, observations=observations,
+                       jobs=[{'operation': item['operation'], 'kind': 'validation', 'round': 0,
+                              'status': 'completed'} for item in observations])
+    row = store.update(OWNER, row['id'], initialize)
+    class AI(FakeAI):
+        """Choose explicitly without consulting the backend score."""
+        async def decide(self, current, stage, evidence):
+            assert set(evidence['winner_options']) == {'baseline_check', 'profitable'}
+            decision = await super().decide(current, stage, evidence)
+            if selection == 'missing':
+                decision.pop('winner_operation')
+            else:
+                decision['winner_operation'] = {'retain': 'baseline_check', 'null': None}.get(selection, selection)
+            return decision
+    async def isolated(function, *args):
+        """Run the fake backend and isolated store without external resources."""
+        return function(*args)
+    monkeypatch.setattr('pb8_loop_controller.owned_thread', isolated)
+    controller = LoopController(tmp_path, store=store, backend=FakeBackend(), ai=AI())
+    if selection in {'profitable', 'retain'}:
+        asyncio.run(controller._tick(row))
+        current = store.read(OWNER, row['id'])
+        expected = 'profitable' if selection == 'profitable' else 'baseline_check'
+        assert current['best']['operation'] == expected
+        assert current['history'][0]['winner_operation'] == expected
+        assert current['jobs'][-1]['optimizer_start']['candidate_id'] == current['best']['candidate']['id']
+    else:
+        with pytest.raises(ValueError, match='AI must|AI selected'):
+            asyncio.run(controller._tick(row))
+        assert not store.read(OWNER, row['id'])['history']
+
+
+def test_goal_evidence_has_no_weighted_score():
+    """A ceiling is checked without rewarding unused risk or computing a total score."""
+    rules = [{'goal': 'drawdown', 'metrics': ['dd'], 'direction': 'min', 'target': .5}]
+    low, high = [evaluate({'dd': dd}, rules) for dd in (.01, .49)]
+    assert low['hard_targets_met'] and high['hard_targets_met']
+    assert low['score'] is None and high['score'] is None
+
+
+def test_candidate_evidence_is_not_shortlisted_by_goal_score(record, tmp_path, monkeypatch):
+    """Every bounded native Pareto artifact reaches AI selection, including entries after twelve."""
+    from api import optimize_v8 as opt
+    store, row = record
+    files = [tmp_path / f'{index}.json' for index in range(600)]
+    monkeypatch.setattr(opt, '_resolve_result_path', lambda value: tmp_path)
+    monkeypatch.setattr(opt, '_pareto_files_for_listing', lambda directory: (directory, files))
+    monkeypatch.setattr(opt, '_read_json', lambda path: {**config(), 'metrics': {'gain': int(path.stem)}})
+    monkeypatch.setattr(opt, '_pareto_summary', lambda data, reducer: data['metrics'])
+    candidates = LoopBackend(tmp_path, store)._result_candidates(row,
+        {'path': 'isolated', 'result': 'isolated', 'modified': 1},
+        {'operation': 'optimizer', 'config': config(), 'overrides': {}})
+    assert len(candidates) == 600
+    assert candidates[-1]['metrics']['gain'] == 599
+    assert all('guidance_score' not in candidate for candidate in candidates)
 
 
 def test_invalid_gpu_variant_is_repaired_before_job_allocation(record, tmp_path, monkeypatch):
@@ -419,7 +631,8 @@ def test_explicit_additional_rounds_survive_early_ai_finish_and_repair(record, t
             if stage == 'evaluate':
                 seen.append(evidence['required_rounds_remaining'])
                 if not evidence.get('repair_error'):
-                    return {'finish': True, 'reason': 'A good candidate is already retained'}
+                    decision = await super().decide(current, stage, evidence)
+                    return {**decision, 'finish': True, 'variants': [], 'reason': 'A good candidate is already retained'}
             return await super().decide(current, stage, evidence)
     backend = FakeBackend()
     async def run():
@@ -472,7 +685,7 @@ def test_invalid_acknowledged_json_can_be_repaired(record):
     current = store.read(OWNER, row['id'])
     assert current['pending_ai'] is None
     assert current['ai_calls'] == 1
-    assert current['ai_tokens_reserved'] > 16000
+    assert current['ai_tokens_reserved'] > 0
 
 
 def test_model_context_limit_prevents_request(record):
@@ -480,10 +693,10 @@ def test_model_context_limit_prevents_request(record):
     store, row = record
     class AI(LoopAI):
         async def preflight(self, owner, settings):
-            return {'context': 1}
+            return {'loop_profile': {'context': 1, 'page_tokens': 1500}}
         async def _request(self, *args):
             pytest.fail('Context overflow must reject before transport')
-    with pytest.raises(ValueError, match='context allowance'):
+    with pytest.raises(LoopAIPause, match='context budget'):
         asyncio.run(AI(store).decide(row, 'interpret', {}))
 
 
@@ -552,6 +765,89 @@ def test_seed_and_checkpoint_options_are_not_silently_replaced(tmp_path, monkeyp
         opt._runtime_options_from_config(dict(value, pbgui={'optimize_runtime': {'mode': 'checkpoint_resume', 'source': '../outside'}}))
 
 
+def test_evaluation_wire_format_retains_all_reports_and_lossless_configs():
+    """Remove repeated evidence without a score shortlist or missing measurements."""
+    from pb8_loop_ai import compact_evaluation_content
+    initial = {'shared': 'x' * 20_000, 'bot': {'long': {'ema': 10}}, 'literal.key': {'remove': 1}}
+    observations = []
+    options = {}
+    for index in range(6):
+        candidate_config = copy.deepcopy(initial)
+        candidate_config['bot']['long']['ema'] += index
+        candidate_config['literal.key'].pop('remove')
+        report = {'gain': 1.25 + index, 'unrelated_but_retained': 123.5}
+        observation = {'operation':str(index), 'candidate':{'id':str(index), 'config':candidate_config, 'metrics':{'optimizer_gain':index}},
+                       'metrics':report, 'per_report':[copy.deepcopy(report) for _ in range(8)]}
+        observation['per_report'][1].pop('unrelated_but_retained')
+        observation['per_report'][2]['unrelated_but_retained'] = None
+        observations.append(observation)
+        options[str(index)] = {'candidate_id':str(index), 'metrics':report, 'per_report':observation['per_report']}
+    original = {'initial_config':initial, 'rubric':[{'metrics':['gain']}], 'evaluation_contract':{},
+                'knowledge':[{'observations':[{'metrics':{'gain':1.5,'unused_old_metric':7}}]}],
+                'evidence':{'observations':observations,'winner_options':options,'baseline':None,'best':None}}
+    before = copy.deepcopy(original)
+    wire = compact_evaluation_content(original)
+    assert original == before
+    assert set(wire['evidence']['winner_options']) == set(options)
+    assert len(wire['evidence']['observations']) == 6
+    for old, new in zip(observations, wire['evidence']['observations']):
+        assert len(new['per_report']) == len(old['per_report']) and new['metrics'] == old['metrics']
+        table = new['per_report_extra']
+        reports = [{**report, **{key: table['rows'][index][column] for column, key in enumerate(table['columns'])
+                                if column not in table['missing'].get(str(index), [])}}
+                   for index, report in enumerate(new['per_report'])]
+        assert reports == old['per_report']
+        assert new['candidate']['metrics'] == old['candidate']['metrics']
+        rebuilt = copy.deepcopy(initial)
+        for change in new['candidate']['config_from_initial']['set']:
+            parent = rebuilt
+            for segment in change['path'][:-1]:
+                parent = parent[segment]
+            parent[change['path'][-1]] = change['value']
+        for path in new['candidate']['config_from_initial']['remove']:
+            parent = rebuilt
+            for segment in path[:-1]:
+                parent = parent[segment]
+            del parent[path[-1]]
+        assert rebuilt == old['candidate']['config']
+    assert wire['knowledge'][0]['observations'][0]['metrics'] == {'gain':1.5}
+    assert len(json.dumps(wire)) < len(json.dumps(original)) / 2
+
+
+def test_round_archive_accepts_multiple_bounded_exact_observations(record):
+    """Six real-sized reports may exceed the config limit without losing evidence."""
+    store, row = record
+    entry = {'status': 'observed_exact', 'observations': [{'detail': 'x' * 120_000, 'operation': str(i)} for i in range(6)]}
+    store.remember(row, 'large-round', entry)
+    saved = store.knowledge(row['owner'])['entries'][-1]
+    assert len(saved['observations']) == 6
+    assert saved['observations'][5]['detail'] == entry['observations'][5]['detail']
+    store.remember(row, 'large-round', entry)
+    assert len(store.knowledge(row['owner'])['entries']) == 1
+    with pytest.raises(ValueError, match='Credentials'):
+        store.remember(row, 'secret-round', {'observations': [{'api_key': 'forbidden'}]})
+    with pytest.raises(ValueError, match='512 KB'):
+        store.remember(row, 'oversize-observation', {'observations': [{'detail': 'x' * (513 * 1024)}]})
+
+
+@pytest.mark.parametrize('suffix,comparable', [('_usd', True), ('_btc', False)])
+def test_exact_smoothness_legacy_names_use_only_native_usd_metrics(record, tmp_path, monkeypatch, suffix, comparable):
+    """Unqualified legacy names retain quote-equity semantics, never BTC/proxies."""
+    from api import backtest_v8 as bt
+    store, row = record
+    names = ('exponential_fit_error', 'equity_choppiness', 'equity_jerkiness')
+    row['rubric'] = [{'goal':'uptrend', 'metrics':[name], 'direction':'min', 'target':None} for name in names]
+    report = {name + suffix: i + .25 for i, name in enumerate(names)} | {'backtest_completion_ratio':1}
+    path = tmp_path / 'analysis.json'
+    path.write_text(json.dumps(report))
+    monkeypatch.setattr(bt, '_result_analysis_paths', lambda name: [path])
+    monkeypatch.setattr(bt, '_read_json', lambda path: json.loads(path.read_text()))
+    result = LoopBackend(tmp_path, store).observations(row, {'name':'job'})
+    assert result['assessment']['comparable'] is comparable
+    if comparable:
+        assert all(result['per_report'][0][name] == report[name + suffix] for name in names)
+
+
 def test_fixed_metric_aggregation_requires_each_report_to_pass(record, tmp_path, monkeypatch):
     """A good first scenario cannot hide a failing second scenario."""
     from api import backtest_v8 as bt
@@ -581,12 +877,12 @@ def test_owner_api_only_lists_own_loops(record, tmp_path, monkeypatch):
 def test_paid_ai_usage_is_recorded_and_reconciled(record):
     """A paid API call reserves output cost and reconciles acknowledged token usage."""
     store, row = record
-    row = store.update(OWNER, row['id'], lambda value: value['settings'].update(provider='opencode-zen'))
+    row = store.update(OWNER, row['id'], lambda value: value['settings'].update(provider='opencode-zen', ai_budget_confirmed=True, ai_decision_token_limit=10_000_000, ai_decision_usd_limit=10))
     class AI(LoopAI):
         async def preflight(self, owner, settings):
-            return {'cost': {'input':1,'output':2}, 'output_limit':16000}
+            return {'cost': {'input':1,'output':2}, 'output_limit':16000, 'protocol':'chat'}
         async def _request(self, *args):
-            return '{"rubric":[]}', {'tokens':{'input_tokens':100,'output_tokens':200},'usd':None}
+            return json.dumps({'rubric': [dict(RULE[0], goal=key) for key in set(self.store.read(OWNER, row['id'])['settings']['goals']['presets']) | ({'custom'} if self.store.read(OWNER, row['id'])['settings']['goals'].get('text') else set())]}), {'tokens':{'input_tokens':100,'output_tokens':200},'usd':None}
     asyncio.run(AI(store).decide(row, 'interpret', {}))
     current = store.read(OWNER, row['id'])
     assert current['ai_usd_reserved'] == pytest.approx(.0005)
@@ -608,7 +904,7 @@ def test_unacknowledged_ai_request_retains_budget_and_cannot_repeat(record):
         asyncio.run(ai.decide(row, 'interpret', {}))
     current = store.read(OWNER, row['id'])
     assert current['pending_ai']
-    with pytest.raises(ValueError, match='interrupted'):
+    with pytest.raises(LoopAIPause, match='interrupted'):
         asyncio.run(ai.decide(current, 'interpret', {}))
     assert store.read(OWNER, row['id'])['ai_calls'] == 1
 
@@ -625,10 +921,15 @@ def test_loop_output_uses_model_allowance_and_context(record, metadata, expected
     class AI(LoopAI):
         """Capture output budgets without a provider call."""
         async def preflight(self, owner, settings):
-            return metadata
+            return {**metadata, 'loop_profile': {**row['ai_model_profile'], **({'context': metadata['context']} if metadata.get('context') else {})}}
         async def _request(self, current, model, content, output_tokens):
             dispatched.append(output_tokens)
-            return '{}', {'tokens': None, 'usd': None}
+            return json.dumps({'rubric': RULE}), {'tokens': None, 'usd': None}
+    if expected is None:
+        with pytest.raises(LoopAIPause):
+            asyncio.run(AI(store).decide(row, 'interpret', {}))
+        assert not dispatched
+        return
     asyncio.run(AI(store).decide(row, 'interpret', {}))
     if expected is not None:
         assert dispatched == [expected]
@@ -642,6 +943,7 @@ def _loop_chat_for_payloads(payloads):
     from ai_chat import AIChatService
     class Response:
         """Simulate the HTTP context only."""
+        status = 200
         async def __aenter__(self):
             return self
         async def __aexit__(self, *args):
@@ -649,7 +951,7 @@ def _loop_chat_for_payloads(payloads):
     class Session:
         """No remote requests and no enabled tools."""
         def post(self, url, **kwargs):
-            assert 'tools' not in kwargs['json']
+            assert len(kwargs['json']['tools']) == 1
             return Response()
     class Chat:
         """Reuse production text extraction against deterministic replies."""
@@ -681,7 +983,7 @@ def _loop_chat_for_payloads(payloads):
 def test_acknowledged_native_rejections_clear_pending_and_record_usage(record, protocol, payload, error):
     """Rejected replies are accounted for and repairable, never ambiguous duplicate requests."""
     store, row = record
-    row = store.update(OWNER, row['id'], lambda value: value['settings'].update(provider='opencode-zen', effort=''))
+    row = store.update(OWNER, row['id'], lambda value: value['settings'].update(provider='opencode-zen', effort='', ai_budget_confirmed=True, ai_decision_token_limit=10_000_000, ai_decision_usd_limit=10))
     payload = copy.deepcopy(payload)
     payload['usage'] = {'prompt_tokens': 100, 'completion_tokens': 200}
     class AI(LoopAI):
@@ -720,7 +1022,7 @@ def test_incomplete_native_reply_enters_controller_repair_before_launch(record, 
     assert current['jobs'] == [] and not backend.starts
     asyncio.run(controller.tick(OWNER, row['id']))
     current = store.read(OWNER, row['id'])
-    assert current['status'] == 'running' and current['phase'] == 'optimize'
+    assert current['status'] == 'running' and current['phase'] == 'optimize', current.get('last_error')
     assert current['rubric'] == RULE and current['ai_calls'] == 2
     assert current['last_error'] is None and current['repair_error'] is None and current['errors'] == 0
     assert not backend.starts
@@ -731,7 +1033,7 @@ def test_repeated_incomplete_bootstrap_replies_end_with_consistent_status(record
     store, row = record
     def bootstrap(current):
         current['settings'].update(provider='opencode-go', effort='')
-        current.update(phase='bootstrap', rubric=RULE, bootstrap_candidates=[],
+        current.update(phase='bootstrap', rubric=RULE, bootstrap_candidates=[{'id':'historical', 'optimizer_job':'saved', 'config':current['initial_config'], 'metrics':{'gain':1}, 'source':{'run':'saved','path':'saved','modified':1}}],
                        bootstrap={'status': 'evaluating', 'candidate_count': 0})
     row = store.update(OWNER, row['id'], bootstrap)
     replies = [{'choices': [{'finish_reason': 'length'}]} for _ in range(3)]
@@ -744,7 +1046,7 @@ def test_repeated_incomplete_bootstrap_replies_end_with_consistent_status(record
     for _ in range(3):
         asyncio.run(controller.tick(OWNER, row['id']))
     current = store.read(OWNER, row['id'])
-    assert current['status'] == 'failed' and current['errors'] == 3
+    assert current['status'] == 'failed' and current['errors'] == 3, current.get('last_error')
     assert current['pending_ai'] is None
     assert current['bootstrap']['status'] == 'failed'
     assert current['bootstrap']['reason'] == current['reason']
@@ -825,7 +1127,7 @@ def test_pause_blocks_new_native_and_cloud_starts(record, tmp_path):
 def test_failed_attempt_consumes_run_limit(record, tmp_path):
     """A started failed optimizer is counted and cannot create a further attempt."""
     store, row = record
-    row = store.update(OWNER, row['id'], lambda value:value['settings'].update(max_runs=1))
+    row = store.update(OWNER, row['id'], lambda value:value['settings'].update(max_runs=1, max_rounds=1))
     backend = FakeBackend()
     controller = LoopController(tmp_path, store=store, backend=backend, ai=FakeAI())
     job = controller.job(row,'optimizer',config(),{},'Failed actual attempt')
@@ -918,6 +1220,7 @@ def test_shared_reasoning_reaches_native_loop_request(record, protocol, wire_key
     sent = {}
     class Response:
         """Isolated HTTP context without a real provider connection."""
+        status = 200
         async def __aenter__(self):
             return self
         async def __aexit__(self, *args):
@@ -954,8 +1257,8 @@ def test_ai_usage_is_not_a_separate_loop_stop_limit(record):
         async def preflight(self, owner, settings):
             return {}
         async def _request(self, *args):
-            return '{}', {}
-    assert asyncio.run(AI(store).decide(row, 'interpret', {})) == {}
+            return json.dumps({'rubric': RULE}), {}
+    assert asyncio.run(AI(store).decide(row, 'interpret', {})) == {'rubric': RULE}
     assert store.read(OWNER, row['id'])['ai_calls'] == 1001
 
 
@@ -980,7 +1283,7 @@ def test_vast_loop_duration_inherits_and_obeys_saved_rental_limit(tmp_path, monk
     monkeypatch.setattr(api_loop, '_controller', SimpleNamespace(create=create))
     monkeypatch.setattr(api_loop, 'projection', lambda row: row)
     monkeypatch.setattr(api_loop, '_log', lambda *args, **kwargs: None)
-    values = {'config_name':'source', 'provider':'chatgpt','model':'pinned','execution':'vast','authorization':True}
+    values = {'max_rounds':10, 'config_name':'source', 'provider':'chatgpt','model':'pinned','execution':'vast','authorization':True}
     if requested is not None:
         values['hours'] = requested
     body = LoopStart(**values)
@@ -1006,7 +1309,7 @@ def test_vast_loop_duration_inherits_and_obeys_saved_rental_limit(tmp_path, monk
 def test_invalid_per_run_limits_are_rejected(values):
     """Missing, incompatible and oversized per-run limits cannot enter controller state."""
     with pytest.raises(ValueError):
-        LoopStart(config_name='source', provider='chatgpt', model='pinned', **values)
+        LoopStart(max_rounds=10, config_name='source', provider='chatgpt', model='pinned', **values)
 
 
 @pytest.mark.parametrize('mode,value', [('iters',500), ('hours',1), ('proxy',1000)])
@@ -1034,7 +1337,7 @@ def test_run_limit_stops_only_owned_optimizer_and_preserves_partial_results(reco
         """Model a running optimizer and its native completed stop signal."""
         def poll(self, current, job):
             return {'status':'stopped' if job['operation'] in self.stops else 'running', 'started':True,
-                    'source':{'started_at':1000}, 'proxy_evaluations':100 if expired else 99}
+                    'source':{'started_at':1000}, 'proxy_evaluations':None if job['operation'] in self.stops else 100 if expired else 99}
         def stop(self, current, job):
             assert self.store.read(OWNER, row['id'])['jobs'][0]['limit_reached'] == mode
             super().stop(current, job)
@@ -1050,6 +1353,7 @@ def test_run_limit_stops_only_owned_optimizer_and_preserves_partial_results(reco
     assert len(backend.stops) == int(expired)
     assert not backend.cleanups and not backend.starts
     assert current['jobs'][0]['run_started_at'] == 1000
+    assert current['jobs'][0]['proxy_evaluations'] == (100 if expired else 99)
     if expired and not paused:
         assert current['phase'] == 'select' and current['candidates']
     replacement = LoopController(tmp_path,store=store,backend=backend,ai=FakeAI())
@@ -1203,7 +1507,7 @@ def test_interpretation_request_contains_exact_required_goal_ids(record):
             return {'output_limit':16000}
         async def _request(self, record, metadata, content, output_tokens):
             assert content['required_goal_ids'] == ['custom','drawdown','gain','uptrend']
-            return '{"rubric":[]}', {'status':'subscription'}
+            return json.dumps({'rubric': [dict(RULE[0], goal=key) for key in set(self.store.read(OWNER, row['id'])['settings']['goals']['presets']) | ({'custom'} if self.store.read(OWNER, row['id'])['settings']['goals'].get('text') else set())]}), {'status':'subscription'}
     asyncio.run(AI(store).decide(row, 'interpret', {}))
 
 
@@ -1308,7 +1612,7 @@ def test_saved_results_adjust_first_optimizer_and_survive_restart(record, tmp_pa
     assert len(backend.starts)==1 and ai.stages==['interpret','bootstrap']
 
 
-@pytest.mark.parametrize('invalid', ['unchanged','protected_scenario','too_many'])
+@pytest.mark.parametrize('invalid', ['unchanged','seed_only','protected_scenario','too_many'])
 def test_initial_adjustment_cannot_bypass_policy(record,tmp_path,invalid):
     """Saved evidence cannot bypass Scenario protection or per-loop parallel limits."""
     store,row=record;backend=SavedResultBackend()
@@ -1318,6 +1622,7 @@ def test_initial_adjustment_cannot_bypass_policy(record,tmp_path,invalid):
             if stage!='bootstrap':return await super().decide(row,stage,evidence)
             changed=copy.deepcopy(row['initial_config'])
             if invalid=='protected_scenario':changed['backtest']['start_date']='2020-01-15'
+            if invalid=='seed_only':changed['optimize']['seed']=12345
             variants=[{'config':changed,'overrides':{}}]
             if invalid=='too_many':variants=variants*2
             return {'variants':variants}
@@ -1462,9 +1767,9 @@ def test_saved_candidate_lookup_is_bounded_exact_and_readonly(record,tmp_path,mo
     monkeypatch.setattr(opt,'_list_results',lambda:sources)
     monkeypatch.setattr(opt,'_all_results_first',lambda path:None)
     candidates=LoopBackend(tmp_path,store).existing_candidates(row)
-    assert len(candidates)==3
-    assert {item['source']['run'] for item in candidates}=={'run_0','run_1','run_2'}
-    assert candidates[0]['metrics']['gain']==3
+    assert len(candidates)==4
+    assert {item['source']['run'] for item in candidates}=={'run_0','run_1','run_2','run_3'}
+    assert [item['metrics']['gain'] for item in candidates] == [1, 2, 3, 4]
     assert {str(p):p.read_bytes() for p in root.rglob('*.json')}==before
 
 
@@ -1700,7 +2005,7 @@ def test_cloud_metric_policy_reaches_ai_with_custom_instruction_snapshot(record)
             assert 'adg_strategy_eq' in policy['allowed_metrics']
             assert policy['exact_goal_metrics_restricted'] is False
             assert content['goals'] == current['settings']['goals']
-            return '{"rubric":[]}', {'status': 'subscription'}
+            return json.dumps({'rubric': [dict(RULE[0], goal=key) for key in set(self.store.read(OWNER, row['id'])['settings']['goals']['presets']) | ({'custom'} if self.store.read(OWNER, row['id'])['settings']['goals'].get('text') else set())]}), {'status': 'subscription'}
     asyncio.run(AI(store).decide(row, 'interpret', {}))
 
 
@@ -1737,7 +2042,8 @@ def test_job_projection_reports_actual_pinned_changes_and_candidate_links(record
     changed['optimize']['limits']=[{'metric':'strategy_eq_recovery_days_max','value':.25}]
     row['best'] = _warm_start_observation(row, 2)
     row['best']['candidate']['overrides'] = {'BTC':{'bot':{'long':{'risk':{'n_positions':3}}}}}
-    optimizer=controller.job({**row,'round':1},'optimizer',changed,{},'Recovery objective')
+    optimizer=controller.job({**row,'round':1},'optimizer',changed,
+        row['best']['candidate']['overrides'],'Recovery objective')
     candidate={'id':'candidate','optimizer_job':optimizer['operation']}
     validation=controller.job(row,'validation',config(),{},'Fixed comparison',candidate=candidate)
     row['jobs']=[optimizer,validation]
@@ -1766,7 +2072,7 @@ def test_next_cycle_requires_completed_owned_exact_backtest(record,tmp_path,evid
     candidate=backend.candidates(row,optimizer)[0]
     check=controller.job(row,'validation',config(),{},'Fixed comparison',candidate=candidate)
     check.update(status='running' if evidence_kind=='pending' else 'completed',started=True)
-    assessment=evaluate({'gain':1},RULE)
+    assessment={**evaluate({'gain':1},RULE), 'simulation_complete': True}
     if evidence_kind=='incomparable':assessment['comparable']=False
     observation={'operation':'not_owned' if evidence_kind=='unowned' else check['operation'],
                  'candidate':candidate,'metrics':{'gain':1},'exact':evidence_kind!='proxy','assessment':assessment}
@@ -1844,7 +2150,7 @@ def test_cycle_report_exposes_completed_checks_while_ai_evaluates(record):
     row['observations']=[{'operation':'b'*32,'exact':True,'candidate':{'id':'result','optimizer_job':'a'*32},
                           'assessment':evaluate({'gain':1},RULE),'metrics':{'gain':1,'unrelated':7}}]
     cycle=_cycle_reports(row)[0]
-    assert cycle['score']==.5 and cycle['completed_backtests']==1 and cycle['active']
+    assert cycle['score'] is None and cycle['completed_backtests']==1 and cycle['active']
     assert cycle['observations'][0]['candidate_id']=='result'
     assert cycle['observations'][0]['metrics']=={'gain':1}
 
@@ -1874,6 +2180,7 @@ def test_new_loop_runs_unchanged_baseline_before_any_optimizer(tmp_path):
     """Even a planned initial optimizer cannot launch until the baseline has completed."""
     store = LoopStore(tmp_path / 'loops')
     row = store.create(OWNER, settings(), config(), {}, {'pb8': 'commit', 'data': 'shards'}, [], config()['backtest'])
+    store.update(OWNER, row['id'], lambda current: current.update(ai_model_profile={'context': 4_000_000, 'page_tokens': 1500, 'output_tokens': 1000}))
     backend = FakeBackend(); controller = LoopController(tmp_path, store=store, backend=backend, ai=FakeAI())
     async def run():
         await controller.tick(OWNER, row['id'])
@@ -2101,3 +2408,30 @@ def test_generated_holdout_survives_real_loop_queue_and_observer(tmp_path, monke
     assert holdout['backtest']['end_date'] == '2026-10-03'
     assert all(s['end_date'] < '2026-05-25' for s in row['comparison']['scenarios'])
     assert not holdout.get('pbgui', {}).get('scenario_template')
+
+
+def test_proxy_progress_persists_missing_and_older_samples(record, tmp_path):
+    """Expose completed native counters without inventing zero or losing known progress."""
+    from api.loop_optimizer_v8 import projection
+    store, row = record
+    class Backend(FakeBackend):
+        """Return isolated native progress samples without launching any process."""
+        sample = None
+        def poll(self, current, job):
+            """Keep this fixture job running while changing only the sampled counter."""
+            return {'status':'running', 'started':True, 'proxy_evaluations':self.sample}
+    backend = Backend()
+    controller = LoopController(tmp_path, store=store, backend=backend, ai=FakeAI())
+    job = controller.job(row, 'optimizer', config(), {}, 'Progress test')
+    job.update(backend={'id':'native', 'execution':'gpu'}, status='running', started=True)
+    row = store.update(OWNER, row['id'], lambda current: current.update(
+        jobs=[job], settings=dict(current['settings'], run_limit_mode='proxy', run_proxy=100000)))
+    for sample, expected in [(None,None),(0,0),(12345,12345),(None,12345),(12000,12345),
+                             (-1,12345),(True,12345),(50000,50000)]:
+        backend.sample = sample
+        row = asyncio.run(controller.sync_jobs(store.read(OWNER,row['id']), launch=False))
+        exposed = projection(row)['jobs'][0]
+        assert exposed['proxy_evaluations'] == expected
+        assert exposed['proxy_limit'] == 100000
+        assert store.read(OWNER,row['id'])['jobs'][0].get('proxy_evaluations') == expected
+    assert not backend.starts and not backend.stops

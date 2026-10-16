@@ -268,6 +268,9 @@ describe('AI proposal pure helpers', () => {
     const t = (key: string) => key;
     expect(proposalActionLabel('save', t)).toBe('ai.proposal.actionSave');
     expect(proposalActionLabel('python_analysis', t)).toBe('ai.proposal.actionPythonAnalysis');
+    expect(proposalActionLabel('save_ai_loop_config', t)).toBe('ai.proposal.actionSaveAiLoopConfig');
+    expect(proposalActionLabel('run_ai_loop', t)).toBe('ai.proposal.actionRunAiLoop');
+    expect(proposalActionLabel('save_vast_preferences', t)).toBe('ai.proposal.actionSaveVastPreferences');
     expect(proposalActionLabel('mystery', t)).toBe('ai.proposal.actionDefault');
   });
 
@@ -276,6 +279,8 @@ describe('AI proposal pure helpers', () => {
     expect(proposalDetail({ action: 'python_analysis', code_bytes: 120, input_summary: { bytes: 80 } }, t)).toContain('120');
     expect(proposalDetail({ action: 'python_analysis', code_bytes: 120, input_summary: { bytes: 80 } }, t)).toContain('80');
     expect(proposalDetail({ action: 'save', changed_count: 2 }, t)).toContain('2');
+    expect(proposalDetail({ action: 'run_ai_loop', effect: 'Run the loop', changed_count: 3 }, t)).toContain('Run the loop');
+    expect(proposalDetail({ action: 'run_ai_loop', effect: 'Run the loop', changed_count: 3 }, t)).toContain('3');
   });
 
   it('reviews proposals as JSON and diffs missing values', () => {

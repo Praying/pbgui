@@ -67,6 +67,12 @@ export function proposalActionLabel(action: string | undefined, t: (key: string)
       return t('ai.proposal.actionSaveDashboardLayout');
     case 'python_analysis':
       return t('ai.proposal.actionPythonAnalysis');
+    case 'save_ai_loop_config':
+      return t('ai.proposal.actionSaveAiLoopConfig');
+    case 'run_ai_loop':
+      return t('ai.proposal.actionRunAiLoop');
+    case 'save_vast_preferences':
+      return t('ai.proposal.actionSaveVastPreferences');
     default:
       return t('ai.proposal.actionDefault');
   }
@@ -107,6 +113,9 @@ export function proposalDetail(preview: ProposalPreview, t: (key: string, params
       columns: String((preview.layout || {}).columns || 0),
       changes: String(preview.changed_count || 0),
     });
+  }
+  if (['save_ai_loop_config', 'run_ai_loop', 'save_vast_preferences'].includes(preview.action || '')) {
+    return `${String(preview.effect || '')} · ${String(preview.changed_count || 0)} ${t('ai.proposal.changes')}`;
   }
   return t('ai.proposal.detailChangedFields', { count: String(preview.changed_count || 0) }) + (preview.may_start_immediately ? ' · ' + t('ai.proposal.mayStart') : '');
 }

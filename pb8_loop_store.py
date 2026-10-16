@@ -19,6 +19,34 @@ ACTIVE = {'running', 'finishing'}
 MAX_JSON_BYTES = 32 * 1024 * 1024
 
 
+def round_limit(settings):
+    """Require an explicit persisted round ceiling before any automatic work."""
+    value = settings.get('max_rounds')
+    attempts = settings.get('max_runs')
+    if type(value) is not int or type(attempts) is not int or not 1 <= value <= attempts <= 200:
+        raise ValueError('Configure Maximum completed rounds (1 to maximum optimizer attempts) before starting the loop')
+    return value
+
+
+def optimizer_execution_evidence(job, settings):
+    """Explain intentional quota cancellation without disguising real interruptions."""
+    result = {key: copy.deepcopy(job.get(key)) for key in
+              ('operation', 'status', 'reason', 'error', 'config', 'executed_config', 'runner',
+               'limit_reached', 'proxy_evaluations', 'result_count', 'results_consumed')}
+    result['backend_status'] = job.get('status')
+    count, target = job.get('proxy_evaluations'), settings.get('run_proxy')
+    quota_complete = (settings.get('run_limit_mode') == 'proxy' and job.get('limit_reached') == 'proxy'
+                      and type(count) is int and type(target) is int and count >= target
+                      and job.get('status') in {'cancelled', 'stopped', 'complete', 'completed'}
+                      and not job.get('error') and job.get('results_consumed') is True
+                      and (job.get('result_count') or 0) > 0)
+    result.update(status='completed' if quota_complete else job.get('status'),
+                  completion_reason='proxy_limit_reached' if quota_complete else None,
+                  completed_evolution_proxy=count,
+                  proxy_overshoot=max(0, count - target) if type(count) is int and type(target) is int else None)
+    return result
+
+
 def completed_round_observations(record, number):
     """Recover exact checkpoints even if AI evaluation never reached history commit."""
     history = next((item for item in record['history'] if item['round'] == number), None)
@@ -165,24 +193,11 @@ def config_defaults(config):
 
 
 def optimizer_start_candidate(record):
-    """Select the retained exact winner, never worse than the unchanged baseline."""
+    """Identify the qualified comparison reference; never create a seed population."""
     candidate = {'id': 'baseline', 'config': record['initial_config'],
                  'overrides': record['initial_overrides'], 'optimizer_job': None}
     best = record.get('best') or {}
-    baseline = record.get('baseline') or {}
-
-    def rank(observation):
-        assessment = observation.get('assessment') or {}
-        score = assessment.get('score')
-        if (not observation.get('exact') or not assessment.get('comparable', True)
-                or assessment.get('simulation_complete') is False
-                or type(score) not in (int, float) or not math.isfinite(score)):
-            return None
-        return (assessment.get('hard_targets_met', True), score)
-
-    best_rank, baseline_rank = rank(best), rank(baseline)
-    if (best_rank is not None and isinstance(best.get('candidate'), dict)
-            and (baseline_rank is None or best_rank > baseline_rank)):
+    if qualified_winner(best) and isinstance(best.get('candidate'), dict):
         candidate = best['candidate']
     return {'candidate_id': candidate['id'], 'optimizer_job': candidate.get('optimizer_job'),
             'bot': copy.deepcopy(candidate['config']['bot']),
@@ -190,22 +205,105 @@ def optimizer_start_candidate(record):
             'overrides': copy.deepcopy(candidate.get('overrides', {}))}
 
 
+def fresh_optimizer_config(config, seed=None):
+    """Drop inherited populations/resumes without changing the experiment's search space."""
+    result = copy.deepcopy(config)
+    optimize = result.setdefault('optimize', {})
+    for key in ('starting_configs', 'starting_config', 'checkpoint'):
+        optimize.pop(key, None)
+    if seed is not None:
+        optimize['seed'] = seed
+    pbgui = result.setdefault('pbgui', {})
+    pbgui['optimize_runtime'] = {'mode': 'fresh'}
+    for key in ('optimize_seed_mode', 'optimize_seed_path', 'starting_config'):
+        pbgui.pop(key, None)
+    return result
+
+
+def hsl_policy_sides(settings, config):
+    """Resolve the user-pinned HSL switch, enabling only active trading sides."""
+    mode = settings.get('hsl_mode', 'auto')
+    if mode not in {'on', 'off', 'auto'}:
+        raise ValueError('HSL must be On, Off or Auto')
+    if mode == 'auto':
+        return {}
+    direction = settings['goals']['direction']
+    if direction == 'config':
+        direction = configured_direction(config)
+    return {side: mode == 'on' and direction in {'both', side} for side in ('long', 'short')}
+
+
+def apply_hsl_policy(settings, config, overrides):
+    """Apply an explicit HSL choice to a private initial bundle, including coin patches."""
+    config, overrides = copy.deepcopy(config), copy.deepcopy(overrides)
+    for side, enabled in hsl_policy_sides(settings, config).items():
+        config['bot'][side].setdefault('hsl', {})['enabled'] = enabled
+        optimize = config.setdefault('optimize', {})
+        runtime = optimize.setdefault('fixed_runtime_overrides', {})
+        _hsl_override_values(runtime, side, replacement=enabled)
+        runtime[f'bot.{side}.hsl.enabled'] = enabled
+        optimize.get('bounds', {}).get(side, {}).get('hsl', {}).pop('enabled', None)
+        patches = list(overrides.values()) + [row.get('overrides') or {} for row in
+                                             config.get('backtest', {}).get('scenarios', [])]
+        for override in patches:
+            _hsl_override_values(override, side, replacement=enabled)
+    return config, overrides
+
+
+def _hsl_override_values(override, side, replacement=None):
+    """Read or replace HSL leaves, including dotted parent-subtree overrides."""
+    found = []
+    def walk(value, prefix=''):
+        for key, child in list(value.items()):
+            key_path = key.strip()
+            path = prefix + '.' + key_path if prefix else key_path
+            if path == f'bot.{side}.hsl.enabled':
+                found.append(child)
+                if replacement is not None:
+                    value[key] = replacement
+            elif isinstance(child, dict):
+                walk(child, path)
+    walk(override)
+    return found
+
+
+def validate_hsl_policy(record, config, overrides):
+    """Reject AI/candidate attempts to bypass a fixed HSL switch at any effective layer."""
+    for side, enabled in hsl_policy_sides(record['settings'], record['initial_config']).items():
+        path = f'bot.{side}.hsl.enabled'
+        if config['bot'][side].get('hsl', {}).get('enabled') is not enabled:
+            raise ValueError(f'HSL {record["settings"]["hsl_mode"]} must remain fixed for {side}')
+        runtime = config.get('optimize', {}).get('fixed_runtime_overrides', {})
+        if any(value is not enabled for value in _hsl_override_values(runtime, side)):
+            raise ValueError('A runtime override changes the fixed HSL mode')
+        bounds = config.get('optimize', {}).get('bounds', {}).get(side, {}).get('hsl', {})
+        if 'enabled' in bounds:
+            values = bounds['enabled']
+            if not isinstance(values, list) or any(value != enabled for value in values):
+                raise ValueError('Search bounds change the fixed HSL mode')
+        patches = list(overrides.values()) + [row.get('overrides') or {} for row in
+                                             config.get('backtest', {}).get('scenarios', [])]
+        for override in patches:
+            if any(value is not enabled for value in _hsl_override_values(override, side)):
+                raise ValueError('A coin or scenario override changes the fixed HSL mode')
+
+
 def apply_optimizer_start(record, config, overrides):
-    """Seed bot parameters without replacing the AI's optimizer experiment."""
+    """Validate the AI's complete experiment without overwriting proposed bot edits."""
     start = optimizer_start_candidate(record)
     config, overrides = copy.deepcopy(config), copy.deepcopy(overrides)
-    # A user-authorized strategy switch needs its own compatible bot template.
-    # Never insert the old strategy's parameters into that experiment.
+    # The incumbent is comparison evidence only. A complete proposal may change
+    # even a value back to its initial default; do not infer intent or copy a bot
+    # from an earlier round into the new experiment.
     compatible = config['live'].get('strategy_kind', 'trailing_martingale') == start['strategy_kind']
-    if compatible:
-        config['bot'] = start['bot']
-        overrides = start['overrides']
     config = apply_run_limit(record['settings'], config)
     validate_change(record, config, overrides)
     return config, overrides, {'candidate_id': start['candidate_id'] if compatible else None,
                               'optimizer_job': start['optimizer_job'] if compatible else None,
-                              'reason': 'Best exact comparison bot; original on baseline tie' if compatible
-                              else 'Explicit strategy change requires a compatible starting bot'}
+                              'bot_modified': config['bot'] != start['bot'],
+                              'overrides_modified': overrides != start['overrides'],
+                              'reason': 'Fresh random population; incumbent retained for comparison only' if compatible
+                              else 'Explicit strategy change uses the proposed compatible bot'}
 
 
 def apply_run_limit(settings, config):
@@ -306,6 +404,7 @@ def validate_change(record, config, overrides):
     bounded_json(overrides)
     if not all(isinstance(config.get(key), dict) for key in ('backtest', 'bot', 'live', 'optimize')):
         raise ValueError('A complete PB8 optimizer configuration is required')
+    validate_hsl_policy(record, config, overrides)
     if not record['settings']['scenario_enabled'] and scenario_state(config) != scenario_state(record['initial_config']):
         raise ValueError('Scenario Editor is disabled; its effective settings must remain unchanged')
     initial = record['initial_config']
@@ -406,9 +505,16 @@ def validate_change(record, config, overrides):
     return config
 
 
+def qualified_winner(observation):
+    """Require exact, complete, comparable evidence satisfying every hard target."""
+    assessment = (observation or {}).get('assessment') or {}
+    return bool(observation and observation.get('exact') and assessment.get('comparable')
+                and assessment.get('simulation_complete') and assessment.get('hard_targets_met'))
+
+
 def evaluate(metrics, rubric):
     """Apply the pinned measurable goal rules without inventing missing observations."""
-    score, achieved, evidence = 0.0, True, []
+    achieved, evidence = True, []
     for rule in rubric:
         values = [metrics[key] for key in rule['metrics'] if isinstance(metrics.get(key), (int, float))
                   and not isinstance(metrics[key], bool) and math.isfinite(metrics[key])]
@@ -417,13 +523,11 @@ def evaluate(metrics, rubric):
         measurable = value is not None and target is not None
         passed = measurable and (value >= target if rule['direction'] == 'max' else value <= target)
         achieved = achieved and (passed if target is not None else rule['goal'] != 'custom' and value is not None)
-        if value is not None:
-            scale = max(abs(target or 0), rule.get('scale', 1), 1e-9)
-            score += rule['weight'] * (value / scale if rule['direction'] == 'max' else -value / scale)
-        evidence.append({'goal': rule['goal'], 'metric': next((k for k in rule['metrics'] if k in metrics), None),
+        evidence.append({'goal': rule['goal'], 'metric': next((k for k in rule['metrics'] if k in metrics),
+                                                            next(iter(rule['metrics']), None)),
                          'value': value, 'target': target, 'confirmed': bool(passed), 'requirement': target is not None,
                          'direction': rule['direction'], 'reducer': 'worst' if rule['direction'] == 'min' else 'mean'})
-    return {'score': score, 'achieved': bool(rubric and achieved and any(rule.get('target') is not None for rule in rubric)),
+    return {'score': None, 'achieved': bool(rubric and achieved and any(rule.get('target') is not None for rule in rubric)),
             'hard_targets_met': all(item['confirmed'] for item in evidence if item['requirement']),
             'comparable': bool(any(item['value'] is not None for item in evidence) and all(item['value'] is not None for item, rule in zip(evidence, rubric) if rule['metrics'])), 'goals': evidence}
 
@@ -687,7 +791,28 @@ class LoopStore:
             archive = ensure_private_directory(path.parent / 'evidence') / (digest(evidence_id) + '.json')
             if any(item['id'] == evidence_id for item in knowledge['entries']):
                 return
-            value = {**bounded_json(entry), 'id': evidence_id, 'loop': record['id'],
+            if archive.exists() or archive.is_symlink():
+                original = json.loads(read_regular_file_nofollow(archive, self.root))
+                if original.get('id') != evidence_id or original.get('loop') != record['id']:
+                    raise ValueError('Existing evidence archive identity mismatch')
+                # The mutable 200-entry UI index can evict an old ID. That must
+                # never authorize rewriting an already referenced original.
+                knowledge['entries'] = (knowledge['entries'] + [original])[-200:]
+                if original.get('holdout') and original['holdout'] not in knowledge['used_holdouts']:
+                    knowledge['used_holdouts'].append(original['holdout'])
+                atomic_write_private_text(path, json.dumps(knowledge, indent=4) + '\n')
+                return
+            # A round contains several full exact reports/configs. Validate each
+            # observation with the existing strict per-object bound instead of
+            # applying the single-config limit to the whole evidence archive.
+            if isinstance(entry.get('observations'), list):
+                validated = bounded_json({key: item for key, item in entry.items() if key != 'observations'})
+                validated['observations'] = [bounded_json(item) for item in entry['observations']]
+                if len(json.dumps(validated, allow_nan=False).encode()) > 8 * 1024 * 1024:
+                    raise ValueError('Round evidence exceeds 8 MB')
+            else:
+                validated = bounded_json(entry)
+            value = {**validated, 'id': evidence_id, 'loop': record['id'],
                      'fingerprint': record['fingerprint'], 'created_at': time.time()}
             atomic_write_private_text(archive, json.dumps(value, indent=4) + '\n')
             contradictions = value.get('contradicts') or []

@@ -920,23 +920,35 @@ function setNumber(sectionName: SectionName, key: string, value: string): void {
 }
 const optimizeCpuLimit = computed(() => Math.max(1, Math.floor(Number(props.hostCpuCount) || 64)));
 function optimizeCpuText(): string {
-  const value = local.value?.optimize.n_cpus;
+  const value = executionMode.value === 'vast' && Object.prototype.hasOwnProperty.call(local.value?.pbgui || {}, 'local_n_cpus')
+    ? local.value?.pbgui.local_n_cpus
+    : local.value?.optimize.n_cpus;
   return value === null || value === undefined ? '' : String(value);
 }
 function setOptimizeCpuCount(value: string): void {
   if (!local.value) return;
   const text = value.trim();
   if (!text) {
-    local.value.optimize.n_cpus = currentBackend.value === 'gpu' && props.version === 'v8' ? null : 1;
+    if (executionMode.value === 'vast' && props.version === 'v8') {
+      local.value.optimize.n_cpus = null;
+      delete local.value.pbgui.local_n_cpus;
+    } else {
+      local.value.optimize.n_cpus = currentBackend.value === 'gpu' && props.version === 'v8' ? null : 1;
+    }
     return;
   }
   const parsed = Number(text);
-  local.value.optimize.n_cpus = Number.isFinite(parsed) ? Math.trunc(parsed) : value;
+  if (executionMode.value === 'vast' && props.version === 'v8') {
+    local.value.optimize.n_cpus = null;
+    local.value.pbgui.local_n_cpus = Number.isFinite(parsed) ? Math.trunc(parsed) : value;
+  } else {
+    local.value.optimize.n_cpus = Number.isFinite(parsed) ? Math.trunc(parsed) : value;
+  }
 }
 function validateOptimizeCpuCount(): void {
   if (!local.value || props.version !== 'v8') return;
-  const value = local.value.optimize.n_cpus;
-  if (value === null && currentBackend.value === 'gpu') return;
+  const value = executionMode.value === 'vast' ? local.value.pbgui.local_n_cpus : local.value.optimize.n_cpus;
+  if (value == null && (currentBackend.value === 'gpu' || executionMode.value === 'vast')) return;
   if (!Number.isInteger(value) || Number(value) < 1) {
     throw new Error('n_cpus requires a positive integer; Auto is available only for the PB8 GPU backend.');
   }

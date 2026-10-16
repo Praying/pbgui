@@ -55,6 +55,21 @@ def approve(service, result):
     return service.approve(OWNER, proposal.id, proposal.payload_digest, CHAT)
 
 
+def test_ai_must_explicitly_configure_round_ceiling(environment):
+    """The model sees a required ceiling and cannot save a proposal without it."""
+    service, store, _, _ = environment
+    async def scenario():
+        schema = (await service.dispatch(OWNER, CHAT, 'get_ai_loop_configs', {}))['schema']
+        assert 'max_rounds' in schema['required']
+        assert 'default' not in schema['properties']['max_rounds']
+        with pytest.raises(AICapabilityError, match='max_rounds'):
+            await service.dispatch(OWNER, CHAT, 'propose_ai_loop_config', {
+                'name': 'missing_limit', 'config_name': 'HYPE', 'settings': {'max_runs': 200}})
+        assert not store.definitions(OWNER)
+        assert not service.proposals
+    asyncio.run(scenario())
+
+
 def test_vast_rtx3060_settings_require_approval_and_preserve_other_limits(environment):
     """Two rentals must change GPU requirements, not optimizer variant counts."""
     service, _, rental, applied = environment
@@ -104,7 +119,7 @@ def test_cloud_loop_proposal_rejects_unsupported_scoring_before_review(environme
         """Exercise the public capability dispatcher without model or rental access."""
         with pytest.raises(AICapabilityError, match='gain_strategy_eq'):
             await service.dispatch(OWNER, CHAT, 'propose_ai_loop_config', {
-                'name': 'invalid_cloud', 'config_name': 'HYPE', 'settings': {'execution': 'vast', 'hours': 12}})
+                'name': 'invalid_cloud', 'config_name': 'HYPE', 'settings': {'max_rounds': 10, 'execution': 'vast', 'hours': 12}})
         assert store.definitions(OWNER) == []
         assert not service.proposals
     asyncio.run(scenario())
@@ -117,12 +132,15 @@ def test_loop_create_edit_and_owner_isolation(environment):
     async def scenario():
         result = await service.dispatch(OWNER, CHAT, 'propose_ai_loop_config', {
             'name': 'HYPE_loop', 'config_name': 'HYPE', 'settings': {
-                'execution': 'vast', 'hours': 12, 'max_runs': 25, 'run_limit_mode': 'proxy',
+                'execution': 'vast', 'hours': 12, 'max_runs': 25, 'max_rounds': 25, 'hsl_mode': 'off', 'run_limit_mode': 'proxy',
                 'run_proxy': 100000, 'goals': {'coins': ['HYPE'], 'direction': 'long',
                     'presets': ['gain','drawdown','uptrend'], 'targets': {'drawdown': 0.5}}}})
         assert store.definitions(OWNER) == []
+        assert all(change.get('path') for change in result['preview']['changes'])
+        assert any(change['path'] == 'run_proxy' and change['after'] == 100000 for change in result['preview']['changes'])
         await approve(service, result)
         saved = store.definition(OWNER, 'HYPE_loop')
+        assert saved['settings']['hsl_mode'] == 'off'
         assert saved['settings']['max_runs'] == 25
         assert saved['settings']['run_proxy'] == 100000
         assert saved['settings']['parallel'] == 1
@@ -162,7 +180,7 @@ def test_loop_stale_revision_is_rejected(environment):
 
     async def scenario():
         p = await service.dispatch(OWNER, CHAT, 'propose_ai_loop_config', {
-            'name': 'demo', 'config_name': 'HYPE', 'settings': {}})
+            'name': 'demo', 'config_name': 'HYPE', 'settings': {'max_rounds': 10}})
         await approve(service, p)
         p = await service.dispatch(OWNER, CHAT, 'propose_ai_loop_config', {
             'name': 'demo', 'config_name': 'HYPE', 'revision': 1, 'settings': {'max_runs': 25}})
@@ -225,7 +243,7 @@ def test_recovery_after_loop_save_does_not_duplicate_definition(environment):
 
     async def scenario():
         created = await service.dispatch(OWNER, CHAT, 'propose_ai_loop_config', {
-            'name': 'recovered', 'config_name': 'HYPE', 'settings': {}})
+            'name': 'recovered', 'config_name': 'HYPE', 'settings': {'max_rounds': 10}})
         proposal = service.proposals[created['proposal_id']]
         journal = service._journal_payload(proposal, phase='prepared')
         service._write_private_json(service.journal_root / f'{proposal.id}.json', journal)
@@ -264,7 +282,7 @@ def native_runs(environment, monkeypatch):
     service, store, rental, applied = environment
     selection = {'provider': 'chatgpt', 'model': 'gpt-test', 'profile': 'main', 'effort': 'high', 'service_tier': ''}
     monkeypatch.setattr(runtime, 'get_ai_chat_service', lambda: SimpleNamespace(get_preferences=lambda owner: {'selection': selection}))
-    settings = runtime.LoopStart(config_name='HYPE', provider='chatgpt', model='gpt-test',
+    settings = runtime.LoopStart(max_rounds=25, config_name='HYPE', provider='chatgpt', model='gpt-test',
         execution='vast', hours=12, max_runs=25, parallel=1, run_limit_mode='proxy', run_proxy=100000).model_dump(
             exclude={'authorization', 'provider', 'model', 'profile', 'effort', 'service_tier'})
     store.save_definition(OWNER, 'native_loop', settings, {'config': {}, 'override_configs': {}}, {'kind': 'config', 'id': 'HYPE'}, None)
@@ -334,6 +352,43 @@ def test_native_loop_queue_requires_approval_and_is_idempotent(native_runs, oper
         assert listed['runs'][0]['status'] == result['run_status']
         with pytest.raises(AICapabilityError):
             await service.dispatch('c' * 32, CHAT, 'get_ai_loop_runs', {'loop_id': result['id']})
+    asyncio.run(scenario())
+
+
+def test_reviewed_replace_uses_existing_worker_without_normal_start(native_runs, monkeypatch):
+    """The AI can explicitly replace an owned Loop through the native handover API."""
+    from api import loop_optimizer_v8 as runtime
+    service, store, _, calls, _ = native_runs
+    definition = store.definition(OWNER, 'native_loop')
+    source = store.create(OWNER, definition['settings'], {}, {}, {}, [], {})
+    worker_id = 'c' * 32
+    def worker(loops, queue, owner, identifier):
+        """Inspect only the expected owned source during proposal preparation."""
+        assert loops is store and owner == OWNER and identifier == source['id']
+        return loops.read(owner, identifier), {'id': worker_id}
+    async def handover(owner, identifier, body):
+        """Record the dedicated transition; normal queue/start must not substitute for it."""
+        assert owner == OWNER and identifier == source['id']
+        assert body.authorization and body.worker_id == worker_id
+        assert body.source_generation == source['control_generation']
+        assert store.read(owner, body.target_loop_id)['settings']['ai_queue_proposal']
+        calls.append(('handover', identifier, body.target_loop_id))
+        store.update(owner, identifier, lambda r: r.update(status='stopping'))
+        store.update(owner, body.target_loop_id, lambda r: r.update(status='running',
+            rental_handover={'source_id': identifier, 'worker_id': worker_id, 'status': 'collecting'}))
+    monkeypatch.setattr('pb8_loop_handover.source_worker', worker)
+    monkeypatch.setattr(runtime, '_handover_owned', handover)
+    async def scenario():
+        """Freeze source/rental identity at review and expose pending transfer to the model."""
+        proposal = await service.dispatch(OWNER, CHAT, 'propose_ai_loop_run', {
+            'operation': 'replace', 'name': 'native_loop', 'revision': 1, 'loop_id': source['id']})
+        assert store.read(OWNER, source['id'])['status'] == 'running' and calls == []
+        assert proposal['preview']['worker_id'] == worker_id
+        result = await approve(service, proposal)
+        assert result['rental_handover']['worker_id'] == worker_id
+        assert [call[0] for call in calls] == ['queue', 'handover']
+        await approve(service, proposal)
+        assert [call[0] for call in calls] == ['queue', 'handover']
     asyncio.run(scenario())
 
 
@@ -432,7 +487,7 @@ def diagnostic_run(environment, tmp_path, monkeypatch):
     from api.loop_optimizer_v8 import LoopStart
     import vast_jobs
     service, store, _, _ = environment
-    row = store.create(OWNER, LoopStart(config_name='source', provider='chatgpt', model='test').model_dump(), {}, {}, {}, [], {})
+    row = store.create(OWNER, LoopStart(max_rounds=10, config_name='source', provider='chatgpt', model='test').model_dump(), {}, {}, {}, [], {})
     operation = 'd' * 32
     native = {'loop_id': row['id'], 'loop_owner': OWNER}
     root = tmp_path / 'logs'; root.mkdir()

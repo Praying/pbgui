@@ -1,5 +1,11 @@
 # Unreleased
 
+## 合并远端 main v2.08.9-v2.08.15 并适配 Vue 3
+
+- 合并远端 `main` 的 v2.08.9 至 v2.08.15，纳入 PB8 AI Loop 证据与恢复流程、Vast GPU worker/租赁生命周期、监控日志缓存、认证与 API、发布文档及对应回归测试。
+- 在 Vue 3 + Tailwind CSS v4.3 的 AI Chat 页面补齐 AI Loop、AI Loop 运行和 Vast.ai 偏好提案的本地化标签、详情和显式审批文案；在 PB8 Optimize 页面适配 Vast 租赁结束/删除等待状态、清理错误展示，以及云端执行下本地 CPU 与 GPU 自动 sizing 的配置语义。
+- 保留当前 Vue3 工作区和共享组件契约，补充相关 Vitest 回归测试；API serial 从远端 `3255` 递增至 `3256`，使运行中的 PBGui 显示重启要求。
+
 ## 合并远端 main v2.08.7-v2.08.8 并适配 Vue 3
 
 - 合并远端 `main` 的 4 个提交，纳入 PB8 October 配置兼容、Vast GPU 方向校验与 worker candidate、凭据同步补跑、CoinData/Cluster 修复，以及 v2.08.7-v2.08.8 发布文档和回归测试。

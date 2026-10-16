@@ -71,4 +71,22 @@ describe('VastRentalPanel', () => {
     await wrapper.setProps({ jobs: [{ ...job, rental: { ...job.rental!, id: 'c'.repeat(32), budget_usd: 5 } }] });
     expect((wrapper.get('[data-test="rental-budget"]').element as HTMLInputElement).value).toBe('5');
   });
+
+  it('keeps cleanup state visible while a Vast rental termination is pending', () => {
+    const job = { ...runningJob(), status: 'stopping', error: undefined };
+    const worker: VastWorker = {
+      id: job.rental!.id,
+      rental_state: 'destroy_pending',
+      cleanup_requested: true,
+      cleanup_error: 'Provider deletion confirmation is delayed.',
+      rental: job.rental,
+    };
+    const wrapper = mount(VastRentalPanel, {
+      props: { jobs: [job], worker, queuePaused: false, busy: false },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    expect(wrapper.text()).toContain('Deletion pending');
+    expect(wrapper.text()).toContain('Provider deletion confirmation is delayed.');
+  });
 });

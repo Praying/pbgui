@@ -8,7 +8,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXCLUDED_PARTS = {".local-work", "tests", "data", "pb7", "upstream", "vendor", "generated", ".git", ".venv", "venv", ".cursor", ".claude", "node_modules", "design-preview", "ai"}
+EXCLUDED_PARTS = {".local-work", ".worktrees", "tests", "data", "pb7", "upstream", "vendor", "generated", ".git", ".venv", "venv", ".cursor", ".claude", "node_modules", "design-preview", "ai"}
 DOCUMENTED_SCRIPT_DIRS = {
     "scripts": "One-off maintenance and diagnostic scripts are human-facing CLIs.",
     "tools": "Developer audit and comparison tools intentionally report to stdout.",
@@ -16,6 +16,7 @@ DOCUMENTED_SCRIPT_DIRS = {
 PRINT_ALLOWLIST = {
     "frontend/codemod_colors.py": "One-off color-token migration CLI for the palette rework.",
     "frontend/codemod_type_scale.py": "One-off typography-token migration CLI for the type-scale rework.",
+    "setup/vast_gpu_benchmark/verify_fresh_population.py": "Offline worker-verification CLI emits its non-secret validation result as JSON.",
     "setup/vast_gpu_benchmark/resolve_local_inception.py": "Isolated resolver returns machine-readable candle metadata to its parent on stdout.",
     "setup/vast_gpu_benchmark/sync_input.py": "Remote input-sync helper returns a JSON manifest on stdout to its caller.",
     "setup/vast_gpu_benchmark/cloud_worker.py": "Remote worker stdout is the machine-readable SSH control protocol.",

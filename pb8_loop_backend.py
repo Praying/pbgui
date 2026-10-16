@@ -8,7 +8,7 @@ import time
 
 from fastapi import HTTPException
 
-from pb8_loop_store import digest, evaluate, validate_change, apply_run_limit, windows, configured_direction
+from pb8_loop_store import digest, evaluate, validate_change, apply_run_limit, windows, configured_direction, fresh_optimizer_config, apply_hsl_policy, validate_hsl_policy
 from file_lock import advisory_file_lock
 
 SERVICE = 'PB8Loop'
@@ -90,7 +90,7 @@ class LoopBackend:
         config = apply_run_limit(settings, config)
         config.setdefault('optimize', {})['backend'] = 'pymoo' if settings['execution'] == 'cpu' else 'gpu'
         config.setdefault('pbgui', {})['execution'] = 'vast' if settings['execution'] == 'vast' else 'local'
-        config['pbgui'].setdefault('optimize_runtime', {'mode': 'fresh'})
+        config = fresh_optimizer_config(config)
         goals = settings['goals']
         use_config = goals['direction'] == 'config'
         direction = configured_direction(config) if use_config else goals['direction']
@@ -116,6 +116,7 @@ class LoopBackend:
                 if not isinstance(config['live'].get('approved_coins'), dict):
                     config['live']['approved_coins'] = {}
                 config['live'].setdefault('approved_coins', {})[side] = goals['coins'] if active else []
+        config, overrides = apply_hsl_policy(settings, config, overrides)
         normalize_suite_coins(config)
         runtime = opt.pb8_runtime_status()
         if not runtime.get('ready'):
@@ -205,7 +206,10 @@ class LoopBackend:
         from api import optimize_v8 as opt, backtest_v8 as bt
         config, overrides, name = copy.deepcopy(job['config']), job['overrides'], job['name']
         self.authorized(record, observer=bool(job.get('observer_only')))
+        validate_hsl_policy(record, config, overrides)
         if job['kind'] == 'optimizer':
+            if fresh_optimizer_config(config) != config:
+                raise ValueError('AI Loop optimizers require a fresh random population')
             validate_change(record, config, overrides)
             prepared = opt._save_config_bundle(name, config, override_payloads=overrides, preserve_hsl_runtime_overrides=True)
             validate_change(record, prepared, overrides)
@@ -299,6 +303,10 @@ class LoopBackend:
 
     def _rent(self, record):
         """Rent only for owned jobs within the frozen and current shared limits."""
+        if record.get('rental_handover'):
+            # A reviewed replacement is bound to one existing rental, including
+            # after failure/deletion. Never silently buy another GPU for it.
+            return
         from vast_queue import CloudQueue
         from vast_pool import select_offer
         queue = CloudQueue()
@@ -404,10 +412,19 @@ class LoopBackend:
             name, _cloud_id = self._result_origin(source)
             if name == record['settings']['config_name'] and source not in sources:
                 sources.append(source)
-                if len(sources) == 3:
-                    break
+                # All eligible sources are counted; the AI evidence budget selects whole sources later.
         result = []
-        for source in sources:
+        def timestamp(item):
+            """Result listings use either Unix time or an ISO date string."""
+            from datetime import datetime, timezone
+            value = item.get('modified') or 0
+            if isinstance(value, str):
+                try:
+                    return datetime.fromisoformat(value.replace('Z', '+00:00')).replace(tzinfo=timezone.utc).timestamp()
+                except ValueError:
+                    return 0
+            return float(value)
+        for source in sorted(sources, key=lambda item: (item['path'] != preferred, -timestamp(item), item['path'])):
             job = {'operation': 'saved_' + digest([source['result'], source['modified']])[:24],
                    'config': record['initial_config'], 'overrides': record['initial_overrides']}
             try:
@@ -415,7 +432,7 @@ class LoopBackend:
             except (ValueError, RuntimeError, OSError, HTTPException) as exc:
                 from logging_helpers import human_log
                 human_log(SERVICE, f'Saved optimizer evidence unavailable: {type(exc).__name__}', level='WARNING')
-        return sorted(result, key=lambda row: row['guidance_score'], reverse=True)[:12]
+        return result
 
     def _result_candidates(self, record, source, job):
         """Load native Pareto metrics/configs without mutating source results."""
@@ -423,7 +440,7 @@ class LoopBackend:
         directory = opt._resolve_result_path(source['path'])
         _pareto_dir, files = opt._pareto_files_for_listing(directory)
         artifacts = []
-        for path in files[:512]:
+        for path in files:
             try:
                 artifacts.append((path.name, opt._read_json(path)))
             except (RuntimeError, ValueError, OSError) as exc:
@@ -442,11 +459,17 @@ class LoopBackend:
             candidate_id = 'c_' + digest([job['operation'], artifact])[:24]
             result.append({'id': candidate_id, 'optimizer_job': job['operation'], 'config': config,
                            'overrides': job['overrides'], 'metrics': metrics,
-                           'source': {'run': source['result'], 'modified': source['modified'], 'artifact': artifact},
-                           'guidance_score': evaluate(metrics, record['rubric'])['score']})
+                           'source': {'run': source['result'], 'path': source['path'], 'modified': source['modified'], 'artifact': artifact},
+                           'native_semantics': {'scoring': copy.deepcopy(data.get('optimize', {}).get('scoring')),
+                                                'objectives': copy.deepcopy((data.get('metrics') or {}).get('objectives')),
+                                                'constraint_violation': (data.get('metrics') or {}).get('constraint_violation')}})
         if not result:
             raise ValueError('Optimizer result contains no usable candidate metrics')
-        return sorted(result, key=lambda row: row['guidance_score'], reverse=True)[:12]
+        for candidate in result:
+            candidate['source'].update(available_artifacts=len(files), loaded_artifacts=len(artifacts),
+                                       usable_candidates=len(result), unreadable_artifacts=max(0, len(files) - len(artifacts)),
+                                       artifacts_without_metrics=max(0, len(artifacts) - len(result)))
+        return result
 
     def validation_config(self, record, candidate, holdout=False):
         config = copy.deepcopy(candidate['config'])
@@ -499,6 +522,10 @@ class LoopBackend:
             if not isinstance(value, dict):
                 return
             for key, item in value.items():
+                # Native liquidation indicators are factual booleans, not
+                # missing metrics. Keep unrelated booleans out of scoring.
+                if type(item) is bool and key in ('liquidated', 'liquidated_usd', 'liquidated_btc'):
+                    item = int(item)
                 if isinstance(item, (int, float)) and not isinstance(item, bool) and math.isfinite(item):
                     metrics[prefix + key] = item
                     metrics.setdefault(key, item)
@@ -508,6 +535,16 @@ class LoopBackend:
         for report in reports:
             metrics = {}
             collect(report)
+            # PB8's expanded analysis retains the common liquidation flag
+            # without a currency suffix. This is a 0/1 flag, not a USD amount.
+            if 'liquidated_usd' not in metrics and type(report.get('liquidated')) is bool:
+                metrics['liquidated_usd'] = int(report['liquidated'])
+            # PB8 names quote-currency equity smoothness with an explicit USD
+            # suffix. Preserve older goal names as aliases of those same exact
+            # observations, never substitute BTC equity or a proxy metric.
+            for name in ('exponential_fit_error', 'equity_choppiness', 'equity_jerkiness'):
+                if name not in metrics and name + '_usd' in metrics:
+                    metrics[name] = metrics[name + '_usd']
             per_report.append(metrics)
         keys = set.intersection(*(set(item) for item in per_report))
         directions = {key: rule['direction'] for rule in record['rubric'] for key in rule['metrics']}
@@ -566,4 +603,14 @@ class LoopBackend:
         queue = CloudQueue()
         for worker in queue.workers():
             if worker.get('loop_id') == record['id'] and worker.get('loop_owner') == record['owner']:
+                handover = worker.get('loop_handover') or {}
+                if (handover.get('status') == 'collecting' and handover.get('source_id') == record['id']
+                        and handover.get('owner') == record['owner']):
+                    continue
                 queue.store.control(worker['id'], 'cleanup')
+
+    def handover_step(self, record):
+        """Resume durable rental transfer without starting a new rental."""
+        from pb8_loop_handover import advance
+        from vast_queue import CloudQueue
+        return advance(self.store, CloudQueue(), record)

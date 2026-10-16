@@ -480,6 +480,25 @@ def _safe_codex_turn_error(error: object, status: str = "failed") -> str:
     return "ChatGPT response failed without a recognized cause. This does not establish a Free-plan restriction."
 
 
+def _safe_codex_request_error(error: object) -> str:
+    """Preserve RPC failure categories without retaining raw provider payloads."""
+    error = error if isinstance(error, dict) else {}
+    message = str(error.get("message") or "")[:16000].lower()
+    if "input exceeds the maximum length" in message:
+        return "The ChatGPT request exceeds the runtime input limit. Reduce the request size."
+    reason = _safe_codex_turn_error(error)
+    if reason != _safe_codex_turn_error({}):
+        return reason
+    code = error.get("code")
+    if code == -32603:
+        return "ChatGPT encountered a temporary server error. Try again later."
+    if code in (-32700, -32600, -32601, -32602):
+        return "ChatGPT runtime rejected the request format or parameters."
+    # An unclassified RPC rejection is not evidence of a permanent account
+    # failure. Loop callers may retry it within their existing bounded policy.
+    return "ChatGPT runtime request failed"
+
+
 class CodexRuntime:
     """Small async JSON-RPC client for the official bundled Codex app-server."""
 
@@ -856,7 +875,11 @@ class CodexRuntime:
         }
         if self.research_mode:
             from ai_research import RESEARCH_INSTRUCTIONS
-            if dynamic_tools:
+            if dynamic_tools and not (
+                getattr(self, "loop_evidence_mode", False) is True
+                and getattr(self, "research_analysis_only", False) is True
+                and len(dynamic_tools) == 1 and dynamic_tools[0].get("name") == "loop_evidence"
+            ):
                 raise AIChatError("Research cannot have PBGui tools")
             params["cwd"] = getattr(self, "research_cwd", str(self.workspace))
             params["baseInstructions"] = RESEARCH_INSTRUCTIONS
@@ -873,6 +896,10 @@ class CodexRuntime:
             params["baseInstructions"] = getattr(self, "loop_instructions", SUMMARY_INSTRUCTIONS)
             params["config"]["web_search"] = "disabled"
             params["config"]["features"]["standalone_web_search"] = False
+            if getattr(self, "loop_evidence_mode", False):
+                profile = self.loop_evidence_profile
+                params["config"]["tool_output_token_limit"] = profile.get("tool_output_tokens", 8192)
+                params["config"]["model_auto_compact_token_limit"] = int(profile["context"] * .75)
         if model:
             params["model"] = model
         if dynamic_tools:
@@ -956,8 +983,17 @@ class CodexRuntime:
                         raise inactive_error() from exc
                     method = str(event.get("method") or "")
                     payload = event.get("params") if isinstance(event.get("params"), dict) else {}
+                    # Compaction is a thread notification and may carry no turn ID.
+                    # It invalidates Loop coverage even in that native wire shape.
+                    loop_compaction = (getattr(self, "loop_evidence_mode", False)
+                                       and method == "thread/compacted" and payload.get("threadId") == thread_id)
+                    loop_event_handler = getattr(self, "loop_event_handler", None)
+                    if loop_compaction and callable(loop_event_handler):
+                        loop_event_handler(method, payload)
                     if not self._matches_turn(payload, turn_id):
                         continue
+                    if getattr(self, "loop_evidence_mode", False) and not loop_compaction and callable(loop_event_handler):
+                        loop_event_handler(method, payload)
                     if self.research_mode and method == "model/rerouted":
                         raise AIChatError("Research provider changed the selected model; request stopped")
                     if self.research_mode and method == "item/started":
@@ -969,6 +1005,9 @@ class CodexRuntime:
                             # Observability only: multi-asset research can need many searches.
                             # The idle deadline and isolated tool allowlist still apply.
                             self.research_web_calls += 1
+                        elif (kind == "dynamicToolCall" and getattr(self, "loop_evidence_mode", False)
+                              and (item.get("tool") or item.get("name")) == "loop_evidence"):
+                            pass
                         elif kind not in {"userMessage", "agentMessage", "reasoning", "contextCompaction"}:
                             raise AIChatError("Unexpected tool in isolated research; research stopped")
                     if self.research_mode:
@@ -984,6 +1023,9 @@ class CodexRuntime:
                                        "item/reasoning/summaryTextDelta"}
                             and isinstance(payload.get("delta"), str) and bool(payload["delta"])
                         )
+                        if (getattr(self, "loop_evidence_mode", False)
+                                and method == "loop/evidenceProgress"):
+                            progress = True
                         if progress:
                             deadline = asyncio.get_running_loop().time() + timeout_seconds
                             if isinstance(loop_diagnostics, dict):
@@ -1101,7 +1143,7 @@ class CodexRuntime:
                     if future is None or future.done():
                         continue
                     if "error" in message:
-                        future.set_exception(AIChatError("ChatGPT runtime request failed"))
+                        future.set_exception(AIChatError(_safe_codex_request_error(message["error"])))
                     else:
                         future.set_result(message.get("result"))
                     continue
@@ -3203,6 +3245,7 @@ class AIChatService:
                 "context": int(metadata.get("context") or 0),
                 "output_limit": int(metadata.get("output_limit") or 0),
                 "tools": bool(metadata.get("tools", metadata.get("protocol") == "chat")),
+                "loop_tool_support": metadata.get("loop_tool_support") is True,
             }
             for model_id, metadata in catalog.items()
             if model_id in available
@@ -3291,6 +3334,7 @@ class AIChatService:
                     "cost": cost if isinstance(cost, dict) else {},
                     "reasoning": bool(raw_metadata.get("reasoning")),
                     "tools": raw_metadata.get("tool_call") is not False,
+                    "loop_tool_support": raw_metadata.get("tool_call") is True,
                     "reasoning_variants": self._reasoning_variants(
                         raw_metadata, protocol, model_id, output_limit
                     ),

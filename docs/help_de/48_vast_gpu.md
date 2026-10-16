@@ -2,7 +2,7 @@
 
 Die Pool-Planung ordnet wartende Jobs freien Mieten anhand des gespeicherten Worker-Images, der PB8-Revision und der CPU-Zuteilung zu. Eine freie ältere Miete verhindert nicht die Anmietung eines Workers, den ein neuerer Job benötigt. Angebotssuche und Job-Profilauswahl einer Miete verwenden dieselbe Kompatibilitätsprüfung wie der Dispatch; unpassende Jobs bleiben mit einem Hinweis wartend, passende Jobs laufen weiter.
 
-Neue Mieten verwenden die offizielle PB8-Revision `b9d6692ea` mit der gemergten Absicherung ungültiger Kandidaten aus PR #1871 und nativer HSL-Budget-Skalierung, ohne separaten Quellcode-Patch. Der enthaltene HSL-Fix verhindert einen falschen Candle-Bewertungsfehler, wenn ein schließender Verlusttrade das Guthaben aufbraucht. Bestehende Mieten behalten ihr ursprüngliches Image und ihre Revision; eine neue Miete verwendet den aktualisierten Worker. Bis zur Neukalibrierung verwenden Jobs der neuen Revision konservative Hardware-Fallbacks. GPU-Hardwaretests und echte Checkpoint-/Resume-Abnahmen stehen noch aus.
+Neue Mieten verwenden die offizielle PB8-Revision `b9d6692ea` mit der gemergten Absicherung ungültiger Kandidaten aus PR #1871 sowie den veröffentlichten HSL-History-Cache- und adaptiven CUDA-Speicheranpassungen. Der Upstream-HSL-Fix verhindert einen falschen Candle-Bewertungsfehler, wenn ein schließender Verlusttrade das Guthaben aufbraucht. Bestehende Mieten behalten ihr ursprüngliches Image und ihre Revision. Neukalibrierung und echte Checkpoint-/Resume-Abnahmen stehen noch aus; gezielte Offline-Tests und ein begrenzter Speicher-/Ergebnisvergleich auf einer RTX 3060 sind bestanden.
 
 Die Job-Ansicht verwendet gespeicherte Durchsatzmessungen für abgeschlossene, fehlgeschlagene und abgebrochene Jobs erneut. Das Optimizer-Log eines beendeten Jobs wird nur gelesen, wenn die Durchsatzmessung noch fehlt.
 
@@ -43,11 +43,13 @@ PB8-Queue und Performance History zeigen **Est. coin candles / candidate**. Die 
 
 Zwei bis vier Runs markieren und mit **Compare configs** unterschiedliche Aufgaben vergleichen. **Compare hardware** verlangt weiterhin identische verifizierte Workload-Fingerprints. Proxy/min und Exact/min bleiben getrennt. **Minutes / 1k exact** = 1.000 ÷ gemessene Exact/min; **USD / 1k exact** = 1.000 ÷ gemessene Exact/USD. Dies sind Hochrechnungen aus dem gemessenen Durchsatz ohne Startzeit, Leerlauf und Transfers, keine Prognose der gesamten Mietkosten. Bei null oder unbekanntem Durchsatz erscheint **—**. GPU, CPU-Zuteilung, Worker-Version, Strategie und Sucheinstellungen beeinflussen ebenfalls den Durchsatz; der Config-Vergleich isoliert keine Hardwareleistung.
 
+Eine automatische Batchgröße bleibt auch in der Ausführungskonfiguration leer. Dadurch kann PB8 die tatsächlichen Pakete abstimmen, HSL-Arbeitsspeicher aus dem freien GPU-Speicher zuweisen und internen Fortschritt melden. Für CUDA-HSL bemisst Auto den History-Speicher am tatsächlichen Paketbedarf und freien VRAM. Wenn verfügbar, bleibt der größere Wert aus 1 GiB oder 20 % des gesamten VRAM als Reserve. Die Berechnung erfolgt zwischen abgeschlossenen Replays; bei Speicherdruck bleibt die Zuteilung konservativ, und MPS behält die bisherige Obergrenze. Explizite Batchgrößen und manuell gewählte Mietprofile bleiben fest.
+
 ## Optimizer Settings
 
 **Queue Settings** enthält nur den lokalen Autostart, die CPU-Anzahl, CPU-Override und die Auswahl der PBGui-Marktdaten.
 
-Die Queue-Sidebar bietet fünf getrennte Vast.ai-Buttons:
+Öffne **PB8 Optimize → Vast.ai** über den eigenen Sidebar-Eintrag, unabhängig von Queue. Seine fünf Einstellungsbereiche erscheinen unter der Hauptnavigation:
 
 - **Account**: API-Key, Verbindungstest und Guthaben. Zugangsdaten mit **Save key** speichern.
 - **GPU & Offers**: Hardware-Anforderungen, maximaler Stundenpreis, Angebotsvorschau und manuelles Rent. Speichern mit **Save GPU requirements**.
@@ -62,7 +64,7 @@ Beim ersten Aufruf von GPU & Offers öffnet sich Account, falls noch kein Key ei
 1. Auf der [Keys-Seite der Vast-Konsole](https://console.vast.ai/manage-keys/) anmelden und unter **API Keys** auf **+New** klicken.
 2. Den Key `PBGui` nennen. Benutzerdefinierte/eingeschränkte Rechte wählen und die folgenden Kategorien aktivieren.
 3. **Create** klicken und den einmalig angezeigten Key kopieren.
-4. In PBGui **PB8 Optimize → Account** öffnen. Unter **Vast API key** einfügen, **Save key** und danach **Test connection & refresh balance** klicken.
+4. In PBGui **PB8 Optimize → Vast.ai → Account** öffnen. Unter **Vast API key** einfügen, **Save key** und danach **Test connection & refresh balance** klicken.
 
 | Berechtigung | Verwendung in PBGui |
 | --- | --- |
@@ -143,7 +145,9 @@ Die Vorschau zeigt CPU-Modell/Zuteilung, GPU-Speicherbandbreite, maximale Mietda
 und Kompatibilität zusätzlich zu Preis, Transferkosten, Netzwerk, Standort und
 Zuverlässigkeit. **Details** klappt PCIe-Generation/Lanes/Bandbreite sowie
 Datenträgermodell und Lesegeschwindigkeit auf, ohne einen GPU-Typ auszuwählen.
-Fehlende Angaben erscheinen als **Unknown**. CUDA unter 13 oder unbekannte CUDA
+Fehlende Angaben erscheinen als **Unknown**. Fehlende oder ungültige numerische
+Metriken erscheinen ebenfalls als **Unknown**, ohne die Anzeige abzubrechen.
+CUDA unter 13 oder unbekannte CUDA
 sowie bekannte zu kurze Verfügbarkeit werden standardmäßig ausgeblendet.
 **Show incompatible hosts** zeigt sie mit Begründung; geänderte Filter mit
 **Preview available GPUs** anwenden. Kompatibilität ist eine Prüfung der
@@ -308,7 +312,11 @@ erhalten, damit hochgeladene Daten und der Worker-Cache für Folgeläufe verfüg
 bleiben. Sofortige Bereinigung sowie 5 Minuten, 30 Minuten oder 1 Stunde Leerlauf
 bleiben auswählbar. Mit **Custom** unter **When idle** lässt sich eine eigene Leerlaufzeit in Minuten eingeben (auf ganze Sekunden gerundet). Eine frühere Mietfrist beendet die Miete weiterhin. Die GPU-Karte zeigt die aktive Regel und verbleibende Zeit.
 Neue passende Jobs heben einen laufenden Countdown auf. Auch eine
-pausierte Queue unterliegt dieser Leerlaufregel. Erst **deletion_verified**
+pausierte Queue unterliegt dieser Leerlaufregel. GPU-Karten zeigen auch nach dem Neuladen **Ending rental** oder **Deletion pending** sowie Fehler bei der Provider-Bereinigung. **Retry cleanup** wiederholt den bestehenden Beendigungsauftrag ohne neue Mietfreigabe; ein bereits freigegebener automatischer Ersatz bleibt freigegeben. Die Karte bleibt bis zur bestätigten Provider-Löschung sichtbar.
+
+PBGui teilt die Anfragedrosselung zwischen seinen lokalen Prozessen: vorsorglich mindestens fünf Sekunden je Endpoint, nach HTTP 429 automatisch größere Abstände bis 60 Sekunden und eine gemeinsame exponentielle Wiederholungspause von 30–300 Sekunden (bei Provider-Vorgabe länger). Erfolgreiche Aufrufe anderer Endpoints setzen den Backoff eines fehlschlagenden Endpoints nicht zurück; erfolgreiche Aufrufe verringern dessen Abstand schrittweise. Angenommene Löschaufträge werden höchstens einmal pro Minute wiederholt, während frische Abwesenheitsprüfungen weiterlaufen. Vast dokumentiert Endpoint-/Identitäts- und Burst-Limits ohne feste Zahlen; diese Werte sind PBGui-Einstellungen, keine Provider-Quoten. Siehe [Vast API-Limits](https://docs.vast.ai/api-reference/rate-limits-and-errors).
+
+Erst **deletion_verified**
 bestätigt die Löschung; blosses Stoppen kann weitere Speicherkosten verursachen.
 
 ## Grenzen und Wiederaufnahme
@@ -394,7 +402,11 @@ Während der Image-Bereitstellung zählt der Fortschrittsbalken erkannte Image-S
 Uploads zeigen an SSH übergebene Bytes, Prozent und mittlere Geschwindigkeit, danach die Eingabeprüfung. Die Kostenkachel verwendet die von Vast gemeldeten Instanzkosten statt einer berechneten Job-Schätzung.
 
 Optimizer-Logs werden während des Starts alle 15 Sekunden aktualisiert, auch vor
-der ersten Auswertung. Vorbereitete Offline-Pakete können öffentliche Markt-Caches
+der ersten Auswertung. Vast läuft immer mit `backtest.offline=true`, auch wenn
+die lokale Ausgangskonfiguration Downloads erlaubt. PBGui liefert Kerzendaten,
+öffentliche Markt-Snapshots und Erstkerzen-Metadaten vor dem Optimizer-Start.
+Fehlende Eingaben führen zu einem klaren Fehler statt zu Börsen-Downloads auf Vast.
+Vorbereitete Offline-Pakete können öffentliche Markt-Caches
 enthalten; deren ursprüngliches Alter bleibt erhalten. Abgelaufene Caches blockieren den Start.
 
 **Vast instance charges** zeigt den Betrag der Billing-API für die gesamte

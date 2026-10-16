@@ -123,6 +123,11 @@ export function buildEditorDraft(
   const botLong = objectValue(bot.long);
   const botShort = objectValue(bot.short);
   const runtimeOverrides = objectValue(optimize.fixed_runtime_overrides ?? runtime.overrides);
+  if (version === 'v8' && String(optimize.backend || '').trim().toLowerCase() === 'gpu') {
+    const gpu = objectValue(optimize.gpu);
+    if (gpu.population_size == null && optimize.population_size != null) gpu.population_size = cloneValue(optimize.population_size);
+    optimize.gpu = gpu;
+  }
   if (version === 'v8') migrateHslBudgetScalingOverrides(botLong, botShort, runtimeOverrides);
 
   return {
@@ -182,6 +187,16 @@ export function collectEditorConfig(draft: OptimizeEditorDraft, version: Optimiz
   const bot = { ...objectValue(config.bot), ...objectValue(draft.botExtra) };
   const optimize = { ...objectValue(config.optimize), ...objectValue(draft.optimize) };
   const pbgui = { ...objectValue(config.pbgui), ...objectValue(draft.pbgui) };
+
+  if (version === 'v8' && String(pbgui.execution || '').trim().toLowerCase() === 'vast') {
+    const localCpu = pbgui.local_n_cpus ?? optimize.n_cpus;
+    optimize.n_cpus = null;
+    if (localCpu == null || localCpu === '') delete pbgui.local_n_cpus;
+    else pbgui.local_n_cpus = cloneValue(localCpu);
+  }
+  if (version === 'v8' && String(optimize.backend || '').trim().toLowerCase() === 'gpu') {
+    optimize.population_size = null;
+  }
 
   if (draft.name.trim()) backtest.base_dir = `backtests/pbgui/${draft.name.trim()}`;
   else delete backtest.base_dir;

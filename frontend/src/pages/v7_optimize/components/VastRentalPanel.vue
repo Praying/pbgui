@@ -29,6 +29,8 @@ const reserveDraft = ref<number | null>(null);
 
 const activeRental = computed(() => props.jobs.find((job) => job.rental)?.rental || props.worker?.rental || null);
 const activeJobs = computed(() => props.jobs.filter((job) => !['completed', 'cancelled', 'failed'].includes(String(job.status))));
+const rentalEnding = computed(() => Boolean(props.worker?.cleanup_requested || props.worker?.rental_state === 'destroy_pending' || props.worker?.status === 'destroy_pending'));
+const rentalStopping = computed(() => rentalEnding.value || Boolean(props.worker?.status === 'stopping'));
 const canAdjustRental = computed(() => Boolean(
   activeRental.value?.id &&
   activeRental.value.deadline !== undefined &&
@@ -108,6 +110,11 @@ function submitReserve(): void {
           </p>
         </div>
         <span v-if="activeRental.deadline" class="text-xs tabular-nums text-secondary">{{ t('v7optimize.cloudRentalDeadline') }}: {{ new Date(activeRental.deadline * 1000).toLocaleString() }}</span>
+      </div>
+      <div v-if="rentalStopping" class="grid gap-1 rounded-md border border-warning/35 bg-warning/10 px-3 py-2 text-xs" role="status">
+        <strong class="text-warning-soft">{{ rentalEnding ? t('v7optimize.cloudDeletionPending') : t('v7optimize.cloudRentalEnding') }}</strong>
+        <span class="text-secondary">{{ rentalEnding ? t('v7optimize.cloudDeletionPendingDetail') : t('v7optimize.cloudRentalStoppingDetail') }}</span>
+        <span v-if="props.worker?.cleanup_error" class="text-danger-soft">{{ props.worker.cleanup_error }}</span>
       </div>
 
       <div class="grid gap-3 lg:grid-cols-3">
