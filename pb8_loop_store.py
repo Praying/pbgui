@@ -744,9 +744,15 @@ class LoopStore:
             path.unlink()
 
     def create(self, owner, settings, config, overrides, fingerprint, holdouts, comparison, queued=False, training_exclusions=None):
+        """Create a durable run; chat-bound runs use reviewed default instructions only."""
+        binding = (settings.get('source') or {}).get('loop_request')
+        instructions = self.instruction_version(owner, 'default' if binding else None)
+        if binding:
+            from ai_loop_request import validate_request
+            validate_request(settings, binding, instructions['digest'])
         loop_id = uuid.uuid4().hex
         record = {'id': loop_id, 'owner': identifier(owner), 'settings': bounded_json(settings),
-                  'ai_instructions': self.instruction_version(owner),
+                  'ai_instructions': instructions,
                   'initial_config': bounded_json(config), 'initial_overrides': bounded_json(overrides),
                   'fingerprint': fingerprint, 'holdouts': holdouts, 'comparison': comparison,
                   'training_exclusions': bounded_json(holdouts if training_exclusions is None else training_exclusions),
@@ -783,6 +789,23 @@ class LoopStore:
             return {'schema': 1, 'entries': [], 'used_holdouts': []}
         return json.loads(read_regular_file_nofollow(path, self.root))
 
+    def reset_knowledge(self, owner):
+        """Archive and clear learning, retaining Holdout accounting and original run evidence."""
+        path = self.owner_dir(owner) / 'knowledge.json'
+        with advisory_file_lock(path):
+            if any(row['status'] not in TERMINAL for row in self.list(owner)):
+                raise ValueError('Stop all queued, active and paused Loops before resetting knowledge')
+            knowledge = self.knowledge(owner)
+            backup = ensure_private_directory(path.parent / 'knowledge_resets') / (uuid.uuid4().hex + '.json')
+            atomic_write_private_text(backup, json.dumps(knowledge, indent=4, allow_nan=False) + '\n')
+            reset_at = time.time()
+            count = len(knowledge['entries'])
+            knowledge.update(entries=[], learning_reset_at=reset_at)
+            atomic_write_private_text(path, json.dumps(knowledge, indent=4, allow_nan=False) + '\n')
+        from logging_helpers import human_log
+        human_log(SERVICE, f'User-requested learning reset archived {count} entries; Holdout accounting retained')
+        return {'cleared_entries': count, 'reset_at': reset_at, 'backup': str(backup)}
+
     def remember(self, record, evidence_id, entry):
         """Append once; archive full evidence before trimming the model-context index."""
         path = self.owner_dir(record['owner']) / 'knowledge.json'
@@ -795,6 +818,8 @@ class LoopStore:
                 original = json.loads(read_regular_file_nofollow(archive, self.root))
                 if original.get('id') != evidence_id or original.get('loop') != record['id']:
                     raise ValueError('Existing evidence archive identity mismatch')
+                if original.get('created_at', 0) <= knowledge.get('learning_reset_at', 0):
+                    return
                 # The mutable 200-entry UI index can evict an old ID. That must
                 # never authorize rewriting an already referenced original.
                 knowledge['entries'] = (knowledge['entries'] + [original])[-200:]
