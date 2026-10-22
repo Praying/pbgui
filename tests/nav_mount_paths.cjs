@@ -61,6 +61,14 @@ function browser(apiBase = prefix + '/api/balance-calc', mount = prefixArg) {
     document: {
       readyState: 'loading', visibilityState: 'visible', body: element(), head: {appendChild: item => assets.push(item)},
       createElement: () => element(), getElementById: id => nodes[id] || null,
+      querySelector(selector) {
+        for (const part of selector.split(',')) {
+          const match = part.trim().match(/^#([\w-]+)(?:\.([\w-]+))?$/);
+          const node = match && nodes[match[1]];
+          if (node && (!match[2] || node.classList.contains(match[2]))) return node;
+        }
+        return null;
+      },
       querySelectorAll: selector => selector === '.nav-item[data-page]' ? navItems : [],
       addEventListener(name, handler) { documentListeners[name] = handler; }
     }
@@ -118,7 +126,11 @@ async function main() {
     b.nodes['pbgui-guide-btn'].click();
     assert.equal(c.location.href, app + c.testNav.FASTAPI_PAGES['help'] + '?topic=38_balance_calc');
     b.nodes['pbgui-ai-btn'].click();
-    assert.equal(b.assets.at(-2).href, prefix + '/app/css/ai_drawer.css?v=22');
+    assert.equal(b.assets.at(-2).href, prefix + '/app/css/ai_drawer.css?v=27');
+    assert.equal(b.assets.at(-1).src, prefix + '/app/js/shared_help_overlay.js?v=9');
+    b.assets.at(-1).onerror();
+    assert.equal(c.location.href, app + '/app/help.html?v=1775');
+    b.nodes['pbgui-ai-btn'].click();
     assert.equal(b.assets.at(-1).src, prefix + '/app/js/pbgui_dialogs.js?v=11');
     b.assets.at(-1).onload();
     // Follow the current local dependency chain before the drawer's usage module.
@@ -138,7 +150,7 @@ async function main() {
     assert.equal(b.assets.at(-1).src, prefix + '/app/js/jev_transfer_preview.js?v=1');
     c.PBGuiJevTransferPreview = {review() {}};
     b.assets.at(-1).onload();
-    assert.equal(b.assets.at(-1).src, prefix + '/app/js/ai_drawer.js?v=70');
+    assert.equal(b.assets.at(-1).src, prefix + '/app/js/ai_drawer.js?v=77');
     b.nodes['pbgui-notify-btn'].click();
     assert.equal(b.assets.at(-1).src, prefix + '/app/js/log_viewer_panel.js?v=50');
     let viewerOptions;

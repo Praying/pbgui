@@ -43,7 +43,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response, WebSocke
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
+from api.http_compression import ConditionalStaticFiles, HTTPCompressionMiddleware
 
 from secure_files import harden_sensitive_paths
 from api_pid_handoff import (
@@ -75,6 +75,7 @@ from api.auth import (
     unauthenticated_page_redirect,
 )
 from api.ai import router as ai_router
+from api.support_debug import router as support_debug_router
 from ai_chat import shutdown as ai_chat_shutdown
 from ai_capabilities import (
     restart_block_reason as ai_restart_block_reason,
@@ -1112,6 +1113,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Inside request-context and origin guards; event streams and archives bypass it.
+app.add_middleware(HTTPCompressionMiddleware, minimum_size=1024, compresslevel=6)
+
 
 @app.middleware("http")
 async def redirect_unauthenticated_page(request: Request, call_next):
@@ -1131,6 +1135,7 @@ app.add_middleware(BrowserOriginMiddleware)
 
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(ai_router, prefix="/api/ai", tags=["ai"])
+app.include_router(support_debug_router, prefix="/api/debug", tags=["debug"])
 app.include_router(api_keys_router, prefix="/api/api-keys", tags=["api-keys"])
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["dashboard"])
 app.include_router(dashboards_router, prefix="/api/dashboards", tags=["dashboards"])
@@ -1200,7 +1205,7 @@ async def append_notify_log(request: Request, session: SessionToken = Depends(re
 
 frontend_dir = Path(__file__).parent / "frontend"
 if frontend_dir.exists():
-    app.mount("/app", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+    app.mount("/app", ConditionalStaticFiles(directory=str(frontend_dir), html=True), name="frontend")
 
 
 # ── WebSocket endpoints ───────────────────────────────────────
@@ -1731,12 +1736,12 @@ def help_main_page(request: Request, session: SessionToken = Depends(require_aut
 
 # ── REST endpoints ────────────────────────────────────────────
 
-@app.get("/static/plotly.min.js")
-def serve_plotly_js():
+@app.api_route("/static/plotly.min.js", methods=["GET", "HEAD"])
+async def serve_plotly_js(request: Request):
     """Serve Plotly.js from the local Python package (no CDN needed)."""
     import plotly as _plotly
     path = Path(_plotly.__file__).parent / "package_data" / "plotly.min.js"
-    return FileResponse(str(path), media_type="application/javascript")
+    return await ConditionalStaticFiles(directory=path.parent).get_response(path.name, request.scope)
 
 
 @app.get("/", include_in_schema=False)

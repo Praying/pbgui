@@ -497,7 +497,7 @@ def _call_helper(operation: str, **payload) -> dict:
     """Execute one helper request in PB8's Python environment."""
     if operation in {"prepare", "load", "validate_overrides", "validate_optimizer_overrides",
                      "default", "result_metrics", "optimize_metadata", "optimize_metadata_static",
-                     "coin_override_metadata", "exchange_metadata", "optimizer_backend_contract"}:
+                     "coin_override_metadata", "exchange_metadata", "optimizer_backend_contract", "optimize_preflight"}:
         # Reuse the lifespan-owned helper for local config work. Propagate validation
         # and shutdown errors unchanged; a cold retry would hide failures and double work.
         return _call_migration_helper(operation, **payload)
@@ -757,10 +757,12 @@ def read_pb8_backup_metadata(path: Path | str) -> dict:
     return {key: config[key] for key in ("pbgui", "coin_overrides") if key in config}
 
 
-def load_pb8_config(path: Path | str) -> dict:
-    """Load and canonicalize a PB8 config through the installed PB8 loader."""
+def load_pb8_config(path: Path | str, *, use_cache: bool = True) -> dict:
+    """Canonicalize a config; revision-aware readers may bypass cache reads/writes."""
     source = Path(path).resolve()
     key = str(source)
+    if not use_cache:
+        return copy.deepcopy(_call_helper("load", config_path=key)["config"])
     signature = _file_signature(source)
     fingerprint = _runtime_fingerprint()
     with _cache_lock:

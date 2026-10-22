@@ -118,6 +118,10 @@ class LoopBackend:
                 config['live'].setdefault('approved_coins', {})[side] = goals['coins'] if active else []
         config, overrides = apply_hsl_policy(settings, config, overrides)
         normalize_suite_coins(config)
+        from pb8_loop_store import validate_cloud_loop_config
+        validate_cloud_loop_config(config, settings['execution'])
+        from ai_loop_search_limits import exposure_ceiling, validate_exposure_ceiling
+        validate_exposure_ceiling(config, exposure_ceiling(settings))
         runtime = opt.pb8_runtime_status()
         if not runtime.get('ready'):
             raise ValueError('PB8 runtime is not ready')
@@ -196,8 +200,8 @@ class LoopBackend:
 
     def authorized(self, record, observer=False):
         current = self.store.read(record['owner'], record['id'])
-        allowed = {'running', 'finishing', 'completed', 'unconfirmed', 'failed'} if observer else {'running', 'finishing'}
-        if current['status'] not in allowed or time.time() >= current['deadline'] - 60:
+        allowed = {'running', 'finishing', 'completed', 'unconfirmed', 'failed', 'stopping', 'stopped'} if observer else {'running', 'finishing'}
+        if current['status'] not in allowed or (not observer and time.time() >= current['deadline'] - 60):
             raise ValueError('Loop is paused, stopped or its time allowance is exhausted')
         return current
 
@@ -207,6 +211,9 @@ class LoopBackend:
         config, overrides, name = copy.deepcopy(job['config']), job['overrides'], job['name']
         self.authorized(record, observer=bool(job.get('observer_only')))
         validate_hsl_policy(record, config, overrides)
+        if job['kind'] in {'optimizer', 'baseline', 'validation'}:
+            from ai_loop_search_limits import exposure_ceiling, validate_exposure_ceiling
+            validate_exposure_ceiling(config, exposure_ceiling(record['settings']))
         if job['kind'] == 'optimizer':
             if fresh_optimizer_config(config) != config:
                 raise ValueError('AI Loop optimizers require a fresh random population')
@@ -428,15 +435,17 @@ class LoopBackend:
             job = {'operation': 'saved_' + digest([source['result'], source['modified']])[:24],
                    'config': record['initial_config'], 'overrides': record['initial_overrides']}
             try:
-                result.extend(self._result_candidates(record, source, job))
+                result.extend(self._result_candidates(record, source, job, historical=True))
             except (ValueError, RuntimeError, OSError, HTTPException) as exc:
                 from logging_helpers import human_log
                 human_log(SERVICE, f'Saved optimizer evidence unavailable: {type(exc).__name__}', level='WARNING')
         return result
 
-    def _result_candidates(self, record, source, job):
+    def _result_candidates(self, record, source, job, *, historical=False):
         """Load native Pareto metrics/configs without mutating source results."""
         from api import optimize_v8 as opt
+        from ai_loop_windows import protected_holdout_plan, historical_training_windows
+        protected = historical and protected_holdout_plan(record) is not None
         directory = opt._resolve_result_path(source['path'])
         _pareto_dir, files = opt._pareto_files_for_listing(directory)
         artifacts = []
@@ -446,12 +455,22 @@ class LoopBackend:
             except (RuntimeError, ValueError, OSError) as exc:
                 from logging_helpers import human_log
                 human_log(SERVICE, f'Optimizer candidate unavailable: {type(exc).__name__}', level='WARNING')
+        native_loaded = len(artifacts)
+        coverage = None
+        if not historical:
+            from pb8_loop_candidates import supplemental_candidates
+            artifacts, coverage = supplemental_candidates(record, job, directory, artifacts, opt._pareto_summary)
         if not artifacts:
             first = opt._all_results_first(directory / 'all_results.bin')
             if first:
                 artifacts.append(('all_results.bin', first))
         result = []
         for artifact, data in artifacts:
+            proof = None
+            if protected:
+                proof = historical_training_windows(record, data.get('backtest'))
+                if proof is None:
+                    continue
             metrics = opt._pareto_summary(data, 'mean')
             if not metrics:
                 continue
@@ -463,12 +482,16 @@ class LoopBackend:
                            'native_semantics': {'scoring': copy.deepcopy(data.get('optimize', {}).get('scoring')),
                                                 'objectives': copy.deepcopy((data.get('metrics') or {}).get('objectives')),
                                                 'constraint_violation': (data.get('metrics') or {}).get('constraint_violation')}})
+            if proof is not None:
+                result[-1]['source']['training_windows'] = proof
         if not result:
             raise ValueError('Optimizer result contains no usable candidate metrics')
         for candidate in result:
-            candidate['source'].update(available_artifacts=len(files), loaded_artifacts=len(artifacts),
-                                       usable_candidates=len(result), unreadable_artifacts=max(0, len(files) - len(artifacts)),
+            candidate['source'].update(available_artifacts=len(files), loaded_artifacts=native_loaded,
+                                       usable_candidates=len(result), unreadable_artifacts=max(0, len(files) - native_loaded),
                                        artifacts_without_metrics=max(0, len(artifacts) - len(result)))
+        if coverage is not None:
+            result[0]['source']['training_candidate_coverage'] = coverage
         return result
 
     def validation_config(self, record, candidate, holdout=False):
@@ -516,6 +539,8 @@ class LoopBackend:
         if not paths:
             raise ValueError('Exact validation results are not yet available')
         reports = [bt._read_json(path) for path in paths]
+        from pb8_loop_reports import report_contexts
+        contexts = report_contexts(paths, reports, job, bt._read_json)
         metrics = {}
         import math
         def collect(value, prefix=''):
@@ -561,7 +586,7 @@ class LoopBackend:
         assessment['hard_targets_met'] = all(evaluate(item, record['rubric'])['hard_targets_met'] for item in per_report)
         assessment['qualification'] = 'incomplete' if not complete else ('target violated' if not assessment['hard_targets_met'] else 'comparable')
         return {'metrics': metrics, 'reports': len(reports), 'exact': True,
-                'per_report': per_report, 'assessment': assessment}
+                'per_report': per_report, 'per_report_context': contexts, 'assessment': assessment}
 
     def failed_before_data(self, record, job):
         """Prove the specific schema failure using an owned native state and absent reports."""

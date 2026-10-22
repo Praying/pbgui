@@ -17,7 +17,7 @@
  * (:585-591); the shared apiFetch adds the header the same session accepts.
  */
 
-import { computed, ref, type Ref } from 'vue';
+import { computed, ref, watch, type Ref } from 'vue';
 import { apiFetch, ApiError } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
 import { getBoot } from '@/shared/boot';
@@ -116,6 +116,46 @@ export function useRunInstances(options: {
   const pendingForced = ref<{ name: string; mode: ForcedMode; expectedVersion?: number } | null>(null);
   const forcedBusy = ref(false);
   let loadGeneration = 0; // :581
+
+  const navigationStorageKey = `pbgui:run:${adapter.version}:navigation:v1`;
+  let restoringNavigation = true;
+
+  function restoreNavigation(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.sessionStorage.getItem(navigationStorageKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as {
+        search?: unknown;
+        status?: unknown;
+        sort?: { col?: unknown; asc?: unknown };
+      };
+      if (typeof saved.search === 'string') filterSearch.value = saved.search;
+      if (typeof saved.status === 'string' && saved.status.length <= 64) filterStatus.value = saved.status;
+      if (saved.sort && typeof saved.sort.col === 'string' && typeof saved.sort.asc === 'boolean') {
+        sort.value = { col: saved.sort.col, asc: saved.sort.asc };
+      }
+    } catch {
+      // Invalid or unavailable browser storage must not block the run list.
+    } finally {
+      restoringNavigation = false;
+    }
+  }
+
+  function persistNavigation(): void {
+    if (restoringNavigation || typeof window === 'undefined') return;
+    try {
+      window.sessionStorage.setItem(
+        navigationStorageKey,
+        JSON.stringify({ search: filterSearch.value, status: filterStatus.value, sort: sort.value }),
+      );
+    } catch {
+      // Storage quota and privacy-mode failures are non-fatal.
+    }
+  }
+
+  restoreNavigation();
+  watch([filterSearch, filterStatus, sort], persistNavigation, { deep: true });
 
   const rows = computed(() => filterAndSortInstances(instances.value, filterSearch.value, filterStatus.value, sort.value));
   const pb8Hosts = computed(() => pb8WarningHosts(instances.value, adapter.isV8)); // :770-788

@@ -687,7 +687,8 @@
       { page: 'info_market_data_fastapi', icon: 'desktop', label: 'Market Data'       },
       { page: 'info_hl_limits',       icon: 'chart-line', label: 'Hyperliquid Limits' },
       { page: 'info_balance_calc',    icon: 'wallet',     label: 'Balance Calculator' },
-      { page: 'info_ai_chat',         icon: 'sparkle',    label: 'AI Chat'             },
+      { page: 'info_ai_chat',         icon: 'sparkle',    label: 'AI Setup'            },
+      { page: 'info_debug_export',    icon: 'wrench',     label: 'Debug export'        },
       { page: 'help',                 icon: 'file-text',  label: 'Help'                }
     ]},
     { id: 'pbv7', label: 'PBv7', items: [
@@ -985,7 +986,7 @@
           + '<span id="pbgui-auth-mode-pill" role="status">' + esc(navT('nav.no_login', 'NO LOGIN')) + '</span>'
           + '<span id="pbgui-master-pill"><span class="pbgui-master-label">' + esc(navT('nav.master', 'Master')) + '</span><span id="pbgui-master-name"></span></span>'
           + '<button class="nav-action-btn restart" id="pbgui-restart-btn"><span class="nav-restart-dot"></span>' + esc(navT('nav.restart', 'Restart')) + '</button>'
-          + '<button class="nav-action-btn notify" id="pbgui-notify-btn" title="' + esc(navT('nav.notification_log', 'Notification log')) + '" aria-label="' + esc(navT('nav.notification_log', 'Notification log')) + '">' + notificationIcon + '</button>'
+          + '<button class="nav-action-btn notify" id="pbgui-notify-btn" title="' + esc(navT('nav.notification_log', 'Notification log')) + '" aria-label="' + esc(navT('nav.notification_log', 'Notification log')) + '" aria-controls="pbgui-notify-panel" aria-haspopup="dialog" aria-expanded="false">' + notificationIcon + '</button>'
           + '<span class="nav-divider" aria-hidden="true"></span>'
           + '<button class="nav-action-btn alerts" id="pbgui-alert-btn" title="' + esc(navT('nav.vpsmonitor_alerts', 'VPSMonitor alerts')) + '" aria-label="' + esc(navT('nav.vpsmonitor_alerts', 'VPSMonitor alerts')) + '">' + alertsIcon + ' <span class="nav-badge" id="pbgui-alert-badge">0/0</span></button>'
           + '<button class="nav-action-btn accent" id="pbgui-ai-btn" title="' + esc(navT('nav.open_ai_assistant', 'Open AI assistant')) + '" aria-label="' + esc(navT('nav.open_ai_assistant', 'Open AI assistant')) + '" aria-expanded="false" aria-controls="pbgui-ai-drawer" style="display:none">' + aiIcon + ' ' + esc(navT('nav.ai', 'AI')) + '</button>'
@@ -1021,6 +1022,9 @@
      NOTIFICATION LOG PANEL
      ════════════════════════════════════ */
   var _notifyViewer = null;
+  var _notifyOpenRequested = false;
+  var _notifyOpenGeneration = 0;
+  var _notifyViewerLoad = null;
   var _navAlerts = { items: [], history: [], summary: { new_count: 0, ack_count: 0, total_active: 0 } };
   var _alertsTimer = null;
   var _alertsRequest = null;
@@ -1034,6 +1038,9 @@
     if (document.getElementById('pbgui-notify-panel')) return;
     var d = document.createElement('div');
     d.id = 'pbgui-notify-panel';
+    d.setAttribute('role', 'dialog');
+    d.setAttribute('aria-labelledby', 'pbgui-notify-title');
+    d.setAttribute('aria-hidden', 'true');
     d.innerHTML =
       '<div class="pnr pnr-n" data-dir="n"></div>' +
       '<div class="pnr pnr-s" data-dir="s"></div>' +
@@ -1045,19 +1052,38 @@
       '<div class="pnr pnr-se" data-dir="se"></div>' +
       '<div id="pbgui-notify-hdr">' +
         '<span id="pbgui-notify-title">' + esc(navT('nav.notifications', 'Notifications')) + '</span>' +
-        '<button id="pbgui-notify-close">\u2715</button>' +
+        '<button id="pbgui-notify-close" aria-label="' + esc(navT('nav.close_notification_log', 'Close notification log')) + '">\u2715</button>' +
       '</div>' +
       '<div id="pbgui-notify-target" style="flex:1;min-height:0;overflow:hidden"></div>';
     document.body.appendChild(d);
   }
 
-  function _ensureLogViewer(cb) {
+  function _ensureLogViewer(cb, onError) {
     // A classic-script class is a global lexical binding, not a window property.
     if (typeof LogViewerPanel === 'function') { cb(); return; }
+    // Only the latest opening owns completion; keep one script in flight.
+    if (_notifyViewerLoad) {
+      _notifyViewerLoad.ready = cb;
+      _notifyViewerLoad.failed = onError;
+      return;
+    }
     var s = document.createElement('script');
-    s.src = _appPath('/app/js/log_viewer_panel.js?v=48');
-    s.onload = cb;
-    s.onerror = function() { console.warn('Failed to load log_viewer_panel.js'); };
+    var load = { ready: cb, failed: onError };
+    _notifyViewerLoad = load;
+    function finish() {
+      if (_notifyViewerLoad !== load) return;
+      _notifyViewerLoad = null;
+      s.onload = s.onerror = null;
+      s.remove();
+      if (typeof LogViewerPanel === 'function') {
+        load.ready();
+      } else {
+        console.warn('Failed to load log_viewer_panel.js');
+        if (load.failed) load.failed();
+      }
+    }
+    s.src = _appPath('/app/js/log_viewer_panel.js?v=50');
+    s.onload = s.onerror = finish;
     document.head.appendChild(s);
   }
 
@@ -1125,9 +1151,51 @@
     return value || 'info';
   }
 
+  var lastReportableError = null;
+  async function reportSupportError(options, trigger) {
+    options = options || {};
+    if (trigger && trigger.dataset.reportUrl) { window.open(trigger.dataset.reportUrl, '_blank', 'noopener,noreferrer'); return; }
+    var target = window.open('about:blank', '_blank');
+    if (target) target.opener = null;
+    var controller = new AbortController(), timeout = setTimeout(function () { controller.abort(); }, 15000);
+    function cancel() { controller.abort(); }
+    window.addEventListener('pagehide', cancel, {once:true});
+    if (trigger) trigger.disabled = true;
+    try {
+      var area = String(options.area || cfg().current || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80) || 'unknown';
+      var payload = {area:area, message:String(options.message || '').slice(0,4000), detail:String(options.detail || '').slice(0,8000)};
+      if (/^[a-f0-9]{32}$/.test(options.loop_id || '')) payload.loop_id = options.loop_id;
+      var response = await fetch(_appPath('/api/debug/error-context'), {method:'POST', credentials:'same-origin', cache:'no-store',
+        headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload), signal:controller.signal});
+      var result = await response.json();
+      if (!response.ok || !/^[a-f0-9]{32}$/.test(result.context_id || '')) throw new Error('Cannot prepare error report');
+      var url = window.location.origin + _appPath('/api/debug/main_page') + '?context=' + result.context_id;
+      if (target && !target.closed) target.location.replace(url);
+      else if (trigger) { trigger.dataset.reportUrl = url; trigger.textContent = 'Open report'; }
+      return url;
+    } catch (_) {
+      if (target && !target.closed) target.close();
+      if (trigger) trigger.textContent = 'Retry report';
+      return null;
+    } finally { clearTimeout(timeout); window.removeEventListener('pagehide', cancel); if (trigger) trigger.disabled = false; }
+  }
+  window.PBGuiSupport = {reportError:reportSupportError};
+  function rememberSupportError(message) {
+    lastReportableError = {message:String(message).slice(0,4000)};
+    var bell = document.getElementById('pbgui-notify-btn');
+    if (!bell) return;
+    var action = document.getElementById('pbgui-report-error-btn');
+    if (!action) {
+      action = document.createElement('button'); action.id = 'pbgui-report-error-btn'; action.type = 'button'; action.className = 'nav-action-btn';
+      action.addEventListener('click', function () { reportSupportError(lastReportableError, action); }); bell.after(action);
+    }
+    action.textContent = 'Report error'; action.title = 'Report the most recent error'; delete action.dataset.reportUrl;
+  }
+
   function logUiNotification(message, level) {
     var text = String(message == null ? '' : message).trim();
     if (!text) return;
+    if (_normalizeNotificationLevel(level) === 'err') rememberSupportError(text);
     fetch(_getAppBase() + '/api/notify_log', {
       method: 'POST',
       credentials: 'same-origin',
@@ -1168,19 +1236,25 @@
     }, { once: true });
   }
 
+  window.addEventListener('error', function (event) { if (event.message) rememberSupportError(event.message); });
+  window.addEventListener('unhandledrejection', function (event) { var reason = event.reason; rememberSupportError(reason && reason.message || 'Unhandled JavaScript error'); });
   window.PBGuiNotify = window.PBGuiNotify || {};
   window.PBGuiNotify.log = logUiNotification;
   window.PBGuiNotify.installHooks = installNotificationHooks;
+  window.PBGuiNotify.closePanel = closeNotifyPanel;
 
   function toggleNotifyPanel() {
     var panel = document.getElementById('pbgui-notify-panel');
     if (!panel) return;
-    if (panel.classList.contains('visible')) {
+    if (_notifyOpenRequested || panel.classList.contains('visible')) {
       closeNotifyPanel();
       return;
     }
+    _notifyOpenRequested = true;
+    var generation = ++_notifyOpenGeneration;
+    var openingFocus = document.activeElement;
     _ensureLogViewer(function() {
-      if (_notifyViewer) { _notifyViewer.close(); _notifyViewer = null; }
+      if (!_notifyOpenRequested || generation !== _notifyOpenGeneration || _notifyViewer) return;
       _notifyViewer = new LogViewerPanel({
         containerId: 'pbgui-notify-target',
         wsBase: _getWsBase(),
@@ -1197,15 +1271,37 @@
         panel.style.left = ''; panel.style.top = '';
       }
       panel.classList.add('visible');
+      panel.setAttribute('aria-hidden', 'false');
+      var button = document.getElementById('pbgui-notify-btn');
+      if (button) button.setAttribute('aria-expanded', 'true');
       _bindNotifyDrag(panel);
       _bindNotifyResize(panel);
+      var closeButton = document.getElementById('pbgui-notify-close');
+      var higherOverlay = document.querySelector(
+        '#pbgui-confirm-ovl.visible, #pbgui-dialog-ovl.visible, ' +
+        '#pbgui-alert-ovl.visible, #pbgui-about-ovl.visible, #pbgui-shared-help-ovl.visible'
+      );
+      // Completion must not take focus from a newer interaction or a higher dialog.
+      if (closeButton && !higherOverlay && document.activeElement === openingFocus) closeButton.focus();
+    }, function() {
+      if (generation === _notifyOpenGeneration) closeNotifyPanel();
     });
   }
 
-  function closeNotifyPanel() {
+  function closeNotifyPanel(options) {
     var panel = document.getElementById('pbgui-notify-panel');
+    var wasVisible = panel && panel.classList.contains('visible');
+    var returnFocus = wasVisible && ((options && options.restoreFocus) || panel.contains(document.activeElement));
+    _notifyOpenRequested = false;
+    ++_notifyOpenGeneration;
     if (panel) panel.classList.remove('visible');
     if (_notifyViewer) { _notifyViewer.close(); _notifyViewer = null; }
+    var button = document.getElementById('pbgui-notify-btn');
+    if (button) {
+      button.setAttribute('aria-expanded', 'false');
+      if (returnFocus) button.focus();
+    }
+    if (panel) panel.setAttribute('aria-hidden', 'true');
   }
 
   function buildAlertOverlay() {
@@ -1682,6 +1778,7 @@
     'info_market_data_fastapi': '/api/market-data/main_page',
     'info_hl_limits':  '/api/vps-manager/hyperliquid-limits/main_page',
     'info_ai_chat':      '/api/ai/main_page',
+    'info_debug_export': '/api/debug/main_page',
     'system_api_keys':   '/api/api-keys/main_page',
     'system_profit_sweep': '/api/profit-sweep/main_page',
     'system_transfers':  '/api/profit-sweep/transfers/main_page',
@@ -1707,6 +1804,7 @@
 
   /* Every registered page must resolve to an existing EN/DE shared-help topic. */
   var GUIDE_TOPICS = {
+    'info_debug_export': '50_debug_export',
     '/':                           '19_welcome',
     'dashboards':                  '33_dashboard',
     'info_coin_data':              '27_coin_data',
@@ -1851,6 +1949,26 @@
     var c = cfg();
     var guideTopic = GUIDE_TOPICS[c.current] || '00_overview';
     installNotificationHooks();
+    if (!window.PBGuiSupportDiagnostics) {
+      var debugStorage = 'pbgui.debug.browser-events', browserEvents = [];
+      try { browserEvents = JSON.parse(sessionStorage.getItem(debugStorage) || '[]').filter(function (item) {
+        return item && ['javascript_error','unhandled_rejection'].includes(item.kind)
+          && /^[A-Za-z0-9_.-]{0,120}$/.test(item.file || '') && typeof item.time === 'number';
+      }).slice(-50).map(function (item) { return {kind:item.kind,file:item.file || '',line:Number(item.line)||0,column:Number(item.column)||0,time:item.time}; }); } catch (_) {}
+      function captureBrowserEvent(event) {
+        var file = '';
+        try { var source = new URL(event.filename || '', location.href); if (source.pathname.indexOf('/app/') >= 0) file = source.pathname.split('/').pop(); } catch (_) {}
+        browserEvents.push({kind:event.type === 'error' ? 'javascript_error' : 'unhandled_rejection',
+          file:/^[A-Za-z0-9_.-]{0,120}$/.test(file) ? file : '', line:Number(event.lineno)||0,
+          column:Number(event.colno)||0,time:Date.now()});
+        browserEvents = browserEvents.slice(-50);
+        try { sessionStorage.setItem(debugStorage,JSON.stringify(browserEvents)); } catch (_) {}
+      }
+      window.addEventListener('error', captureBrowserEvent);
+      window.addEventListener('unhandledrejection', captureBrowserEvent);
+      window.PBGuiSupportDiagnostics = {snapshot:function(){return {events:browserEvents.slice(),
+        viewport:{width:innerWidth,height:innerHeight},language:/^[A-Za-z-]{2,20}$/.test(navigator.language) ? navigator.language : 'unknown',browser:(navigator.userAgent.match(/(?:Firefox|Edg|Chrome|Version)\/[0-9.]+/) || ['unknown'])[0]};}};
+    }
 
     /* URL construction uses the application base; origin checks stay origin-only. */
     var apiOrigin = _getAppBase();
@@ -1980,7 +2098,7 @@
       _aiDrawerLoading = true;
       var link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = _appPath('/app/css/ai_drawer.css?v=22');
+      link.href = _appPath('/app/css/ai_drawer.css?v=27');
       document.head.appendChild(link);
       function loadDrawerScript() {
         var dependencies = [
@@ -2014,7 +2132,7 @@
           return;
         }
         var script = document.createElement('script');
-        script.src = _appPath('/app/js/ai_drawer.js?v=70');
+        script.src = _appPath('/app/js/ai_drawer.js?v=77');
         script.onload = function () { _aiDrawerLoading = false; if (show && window.PBGuiAI && window.PBGuiAI.open) window.PBGuiAI.open(); window.dispatchEvent(new Event('pbgui:ai-ready')); };
         script.onerror = function () { _aiDrawerLoading = false; };
         document.head.appendChild(script);
@@ -2091,10 +2209,13 @@
       });
     }
 
-    /* Esc key closes about overlay */
+    /* Escape closes one overlay, in stacking order. */
     document.addEventListener('keydown', function (e) {
       var confirmOvl = document.getElementById('pbgui-confirm-ovl');
       if (e.key === 'Escape') {
+        // Shared dialogs may run before or after this handler. Respect both orders.
+        var sharedDialog = document.getElementById('pbgui-dialog-ovl');
+        if (e.defaultPrevented || (sharedDialog && sharedDialog.classList.contains('visible'))) return;
         if (openNavGroupButton) {
           closeOpenNavGroup(true);
           return;
@@ -2108,7 +2229,18 @@
           closeAlertOverlay();
           return;
         }
-        if (aboutOvl) aboutOvl.classList.remove('visible');
+        if (aboutOvl && aboutOvl.classList.contains('visible')) {
+          aboutOvl.classList.remove('visible');
+          return;
+        }
+        // The separate Guide owns Escape while its overlay is open.
+        var helpOvl = document.getElementById('pbgui-shared-help-ovl');
+        if (helpOvl && helpOvl.classList.contains('visible')) return;
+        var notifyPanel = document.getElementById('pbgui-notify-panel');
+        if (_notifyOpenRequested || (notifyPanel && notifyPanel.classList.contains('visible'))) {
+          closeNotifyPanel({ restoreFocus: true });
+          return;
+        }
       }
       if (e.key === 'Enter' && confirmOvl && confirmOvl.classList.contains('visible')) {
         if (e.target && e.target.id === 'pbgui-confirm-cancel') return;
