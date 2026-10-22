@@ -173,13 +173,16 @@ function setStatus(message: string, isError = false): void {
   else statusMessage.value = message;
 }
 function selectRequestedRoute(routes: TransferRoute[]): void {
-  const requested = pendingTransfer.value?.user === selectedUser.value
-    ? pendingTransfer.value.route
-    : new URLSearchParams(window.location.search).get('route') || '';
-  selectedRouteId.value = routes.some((route) => route.id === requested) ? requested : routes[0]?.id || '';
-  const pendingAmount = pendingTransfer.value?.user === selectedUser.value && pendingTransfer.value.route === selectedRouteId.value
-    ? pendingTransfer.value.amount
-    : '';
+  const hasRoute = (id: string): boolean => routes.some((route) => route.id === id);
+  const pending = pendingTransfer.value?.user === selectedUser.value ? pendingTransfer.value : null;
+  const urlRoute = new URLSearchParams(window.location.search).get('route') || '';
+  // Priority: retained pending operation > the user's current choice > deep-linked route > first route.
+  // Automatic refreshes must never reset a direction the user already picked.
+  selectedRouteId.value = pending && hasRoute(pending.route) ? pending.route
+    : hasRoute(selectedRouteId.value) ? selectedRouteId.value
+    : hasRoute(urlRoute) ? urlRoute
+    : routes[0]?.id || '';
+  const pendingAmount = pending && pending.route === selectedRouteId.value ? pending.amount : '';
   if (pendingAmount) amount.value = pendingAmount;
   else if (selectedRoute.value?.minimum_amount && Number(amount.value) < Number(selectedRoute.value.minimum_amount)) amount.value = selectedRoute.value.minimum_amount;
 }
@@ -198,14 +201,20 @@ async function loadUsers(): Promise<void> {
     loading.value = false;
   }
 }
-async function loadAccount(name: string): Promise<void> {
+async function loadAccount(name: string, options: { readonly background?: boolean } = {}): Promise<void> {
   if (!users.value.some((user) => user.name === name)) return;
   const generation = ++accountRequestGeneration;
+  // A background refresh of the account already on screen must not blank the
+  // preview: clearing it unmounts the route options and disables the direction
+  // select mid-interaction every time the poll lands.
+  const isStableRefresh = options.background === true && selectedUser.value === name && preview.value !== null;
   selectedUser.value = name;
-  preview.value = null;
-  operations.value = [];
-  errorMessage.value = '';
-  actionPending.value = true;
+  if (!isStableRefresh) {
+    preview.value = null;
+    operations.value = [];
+    errorMessage.value = '';
+    actionPending.value = true;
+  }
   try {
     const [nextPreview, operationResponse] = await Promise.all([
       apiFetch<TransferPreview>(`${apiBase}/transfers/preview/${encodeURIComponent(name)}`),
@@ -214,17 +223,21 @@ async function loadAccount(name: string): Promise<void> {
     if (generation !== accountRequestGeneration || selectedUser.value !== name) return;
     preview.value = nextPreview;
     operations.value = operationResponse.operations || [];
+    errorMessage.value = '';
     selectRequestedRoute(nextPreview.routes || []);
   } catch (error) {
+    if (generation !== accountRequestGeneration || selectedUser.value !== name) return;
     setStatus(detailOf(error), true);
   } finally {
-    actionPending.value = false;
+    if (!isStableRefresh && generation === accountRequestGeneration) actionPending.value = false;
   }
 }
 
+let pollInFlight = false;
 function refreshSelectedAccount(): void {
-  if (document.hidden || actionPending.value || !selectedUser.value) return;
-  void loadAccount(selectedUser.value);
+  if (document.hidden || actionPending.value || pollInFlight || !selectedUser.value) return;
+  pollInFlight = true;
+  void loadAccount(selectedUser.value, { background: true }).finally(() => { pollInFlight = false; });
 }
 
 function handleVisibilityChange(): void {
@@ -344,7 +357,7 @@ onUnmounted(() => {
             <p class="rounded-md border border-accent/25 bg-accent/5 p-3 text-sm text-secondary">{{ t('transfers.accountingNotice') }}</p>
             <p v-if="preview?.route_note" class="rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning">{{ preview.route_note }}</p>
             <p v-if="preview?.blocked_reason" class="rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning"><PbIcon :icon="PhWarning" /> {{ preview.blocked_reason }}</p>
-            <div class="transfer-controls grid items-start gap-3 md:grid-cols-[minmax(220px,1.4fr)_minmax(180px,1fr)_auto]"><label class="grid gap-1 text-sm font-medium text-primary">{{ t('transfers.direction') }}<SelectRoot v-model="selectedRouteId" :disabled="!preview?.routes?.length || actionPending"><SelectTrigger class="h-9" :placeholder="t('transfers.selectRoute')" /><SelectContent><SelectItem v-for="route in preview?.routes || []" :key="route.id" :value="route.id">{{ routeLabel(route.id) }}</SelectItem></SelectContent></SelectRoot></label><label class="grid gap-1 text-sm font-medium text-primary">{{ t('transfers.amount') }} ({{ selectedRoute?.asset || 'USDC' }})<Input v-model="amount" type="number" min="0.000001" step="any" inputmode="decimal" :disabled="actionPending" /><span v-if="selectedRoute" class="text-xs text-muted">{{ t('transfers.amountRange', { min: selectedRoute.minimum_amount, max: selectedRoute.max_transferable, asset: selectedRoute.asset || 'USDC' }) }}</span></label><Button class="md:mt-6" variant="primary" :disabled="!canSubmit || actionPending" @click="reviewTransfer"><PbIcon :icon="PhArrowsLeftRight" /> {{ t('transfers.review') }}</Button></div>
+            <div class="transfer-controls grid items-start gap-3 md:grid-cols-[minmax(220px,1.4fr)_minmax(180px,1fr)_auto]"><label class="grid gap-1 text-sm font-medium text-primary">{{ t('transfers.direction') }}<SelectRoot v-model="selectedRouteId" :disabled="!preview?.routes?.length || actionPending"><SelectTrigger class="h-9"><span :class="selectedRoute ? undefined : 'text-placeholder'">{{ selectedRoute ? routeLabel(selectedRoute.id) : t('transfers.selectRoute') }}</span></SelectTrigger><SelectContent><SelectItem v-for="route in preview?.routes || []" :key="route.id" :value="route.id">{{ routeLabel(route.id) }}</SelectItem></SelectContent></SelectRoot></label><label class="grid gap-1 text-sm font-medium text-primary">{{ t('transfers.amount') }} ({{ selectedRoute?.asset || 'USDC' }})<Input v-model="amount" type="number" min="0.000001" step="any" inputmode="decimal" :disabled="actionPending" /><span v-if="selectedRoute" class="text-xs text-muted">{{ t('transfers.amountRange', { min: selectedRoute.minimum_amount, max: selectedRoute.max_transferable, asset: selectedRoute.asset || 'USDC' }) }}</span></label><Button class="md:mt-6" variant="primary" :disabled="!canSubmit || actionPending" @click="reviewTransfer"><PbIcon :icon="PhArrowsLeftRight" /> {{ t('transfers.review') }}</Button></div>
             <section v-if="isVault" class="border-t border-border-default pt-4"><div class="mb-3 flex items-start justify-between gap-2"><div><h3 class="font-semibold text-primary">{{ t('transfers.positions') }}</h3><p class="text-sm text-secondary">{{ t('transfers.positionImpact') }}</p></div><span class="shrink-0 rounded-full border border-border-default px-2 py-1 text-xs text-secondary">{{ preview?.position_count || 0 }}</span></div><EmptyState v-if="!preview?.positions?.length" :title="t('transfers.noPositions')" class="py-8!" /><div v-else class="pbgui-table-wrap"><table class="pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[900px]:min-w-[760px]"><thead><tr><th>{{ t('transfers.coin') }}</th><th>{{ t('transfers.side') }}</th><th class="text-right!">{{ t('transfers.size') }}</th><th class="text-right!">{{ t('transfers.positionValue') }}</th><th class="text-right!">{{ t('transfers.entry') }}</th><th class="text-right!">{{ t('transfers.unrealizedPnl') }}</th><th class="text-right!">{{ t('transfers.liquidation') }}</th><th>{{ t('transfers.leverage') }}</th></tr></thead><tbody><tr v-for="position in preview.positions" :key="`${position.coin}-${position.side}`"><td class="font-mono text-primary">{{ position.coin }}</td><td class="font-semibold uppercase" :class="position.side === 'long' ? 'text-success' : 'text-danger'">{{ position.side }}</td><td class="text-right font-mono tabular-nums">{{ position.size }}</td><td class="text-right font-mono tabular-nums">{{ position.position_value }}</td><td class="text-right font-mono tabular-nums">{{ position.entry_price }}</td><td class="text-right font-mono tabular-nums">{{ position.unrealized_pnl }}</td><td class="text-right font-mono tabular-nums">{{ position.liquidation_price }}</td><td>{{ position.leverage_type }}</td></tr></tbody></table></div></section>
           </div>
         </section>
