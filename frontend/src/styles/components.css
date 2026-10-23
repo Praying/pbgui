@@ -117,6 +117,19 @@
     flex: 1;
   }
 
+  /* Readable-width variant for form and card pages. transfers, balance_calc
+     and hl_limits hold no wide tables, but inherited the full-bleed shell, so
+     on a 2560px display a metric card stretched to ~2100px with its three
+     numbers pinned to the far left. Cap the content at the workspace width
+     (1680px, the same ceiling the standard shell uses) and centre it; the
+     header and rail still span the viewport. These pages pad their own
+     wrapper, so the variant adds width and centring only, never padding. Table-dense pages deliberately
+     do not opt in. */
+  .data-page-shell--readable .app-shell__main {
+    width: min(100%, var(--workspace-max-width));
+    margin-inline: auto;
+  }
+
   /* ── Core workbench shell (fixed-height pages) ───────────────── */
 
   /*
@@ -1954,6 +1967,33 @@
     }
 
     .workbench-rail--collapsed .workbench-rail__groups {
+      display: none;
+    }
+
+    /* The collapsed mobile rail is a 64px top bar: brand + expand toggle. The
+       footer's two preference buttons (density, theme) stacked vertically are
+       105px tall and overflowed it, clipping the theme button off-screen. In
+       the bar they sit side by side, icon-only, vertically centred. They keep
+       their full labelled form in the expanded drawer. */
+    .workbench-rail--collapsed .workbench-rail__foot {
+      flex: 0 0 auto;
+      flex-direction: row;
+      align-items: center;
+      gap: var(--sp-xs);
+      padding: 0 var(--sp-sm);
+      border-top: 0;
+    }
+
+    .workbench-rail--collapsed .workbench-rail__foot .workbench-rail__ai-btn {
+      width: 40px;
+      min-height: 40px;
+      padding: 0;
+      justify-content: center;
+    }
+
+    /* The AI opener is a destination, not a preference; in the 64px bar it has
+       no room and is reachable from the expanded drawer. */
+    .workbench-rail--collapsed .workbench-rail__foot #pbgui-ai-btn {
       display: none;
     }
 

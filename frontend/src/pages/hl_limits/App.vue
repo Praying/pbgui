@@ -233,7 +233,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AppShell page-key="info_hl_limits" :page-title="t('misc.hlLimits.title')" class="data-page-shell data-page-shell--hl-limits">
+  <AppShell page-key="info_hl_limits" :page-title="t('misc.hlLimits.title')" class="data-page-shell data-page-shell--readable data-page-shell--hl-limits">
     <div class="pbgui-ambient flex min-h-0 w-full flex-1 flex-col gap-[var(--component-gap)] overflow-y-auto p-[var(--page-padding)]">
 
       <p class="m-0 max-w-[72ch] text-sm leading-relaxed text-secondary">{{ t('misc.hlLimits.description') }}</p>

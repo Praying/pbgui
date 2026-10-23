@@ -104,3 +104,31 @@ describe('theme channels keep the dark rendering identical', () => {
     expect(block).toContain('color-scheme: light;');
   });
 });
+
+describe('control boundary token', () => {
+  const lin = (c: number): number => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const lum = (hex: string): number => {
+    const n = (i: number) => Number.parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+    return 0.2126 * lin(n(0)) + 0.7152 * lin(n(1)) + 0.0722 * lin(n(2));
+  };
+  const ratio = (a: string, b: string): number => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+  const block = (start: string): string => {
+    const i = stylesheet.indexOf(start);
+    return stylesheet.slice(i, stylesheet.indexOf('\n}', i));
+  };
+  const value = (css: string, name: string): string => css.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`))![1]!;
+
+  it('keeps a control outline at >=3:1 against its input surface in both themes (WCAG 1.4.11)', () => {
+    const dark = block('@theme {');
+    const light = block("[data-theme='light'] {");
+    expect(ratio(value(dark, '--color-border-control'), value(dark, '--color-input'))).toBeGreaterThanOrEqual(3);
+    expect(ratio(value(light, '--color-border-control'), value(light, '--color-input'))).toBeGreaterThanOrEqual(3);
+  });
+
+  it('is used by every interactive ui/ control instead of the decorative card hairline', () => {
+    for (const rel of ['input/Input.vue', 'textarea/Textarea.vue', 'select/SelectTrigger.vue', 'checkbox/Checkbox.vue', 'radio-group/RadioItem.vue', 'switch/Switch.vue']) {
+      const src = readFileSync(resolve(process.cwd(), 'src/shared/components/ui', rel), 'utf8');
+      expect(src, rel).toContain('border-border-control');
+    }
+  });
+});

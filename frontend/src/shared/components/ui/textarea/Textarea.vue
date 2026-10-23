@@ -36,7 +36,7 @@ defineExpose({
     :aria-describedby="field?.describedBy"
     :aria-invalid="field?.invalid || undefined"
     :class="cn(
-      'flex min-h-16 w-full resize-y rounded-sm border border-border-default bg-input px-2 py-1.5 font-mono text-sm text-primary outline-none transition-colors duration-snap ease-standard placeholder:text-placeholder focus-visible:border-accent disabled:cursor-not-allowed disabled:opacity-45 aria-invalid:border-danger/60',
+      'flex min-h-16 w-full resize-y rounded-sm border border-border-control bg-input px-2 py-1.5 font-mono text-sm text-primary outline-none transition-colors duration-snap ease-standard placeholder:text-placeholder focus-visible:border-accent disabled:cursor-not-allowed disabled:opacity-45 aria-invalid:border-danger/60',
       props.class,
     )"
   />

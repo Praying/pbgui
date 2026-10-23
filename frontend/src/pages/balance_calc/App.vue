@@ -101,7 +101,7 @@ onMounted(() => {
 
 <template>
   <AppShell
-    class="data-page-shell data-page-shell--balance-calc"
+    class="data-page-shell data-page-shell--readable data-page-shell--balance-calc"
     page-key="info_balance_calc"
     :page-title="t('misc.balance.title')"
   >

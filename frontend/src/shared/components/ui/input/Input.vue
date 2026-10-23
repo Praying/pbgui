@@ -55,7 +55,7 @@ const sizeClasses = {
    re-resolves through the cn() merge on every render. */
 const inputClass = computed(() =>
   cn(
-    'flex w-full min-w-0 rounded-md border border-border-default bg-input px-2 text-primary outline-none transition-[border-color,background-color,box-shadow] duration-snap ease-standard placeholder:text-placeholder focus-visible:border-accent focus-visible:bg-page disabled:cursor-not-allowed disabled:opacity-45 aria-invalid:border-danger/60',
+    'flex w-full min-w-0 rounded-md border border-border-control bg-input px-2 text-primary outline-none transition-[border-color,background-color,box-shadow] duration-snap ease-standard placeholder:text-placeholder focus-visible:border-accent focus-visible:bg-page disabled:cursor-not-allowed disabled:opacity-45 aria-invalid:border-danger/60',
     sizeClasses[props.size],
     props.class,
   ),

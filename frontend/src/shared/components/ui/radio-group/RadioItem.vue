@@ -12,7 +12,7 @@ const props = defineProps<RadioGroupItemProps & { class?: HTMLAttributes['class'
     data-slot="radio-item"
     v-bind="{ ...props, class: undefined }"
     :class="cn(
-      'aspect-square size-4 shrink-0 cursor-pointer rounded-full border border-border-strong bg-input transition-colors duration-snap ease-standard data-[state=checked]:border-accent disabled:cursor-not-allowed disabled:opacity-45',
+      'aspect-square size-4 shrink-0 cursor-pointer rounded-full border border-border-control bg-input transition-colors duration-snap ease-standard data-[state=checked]:border-accent disabled:cursor-not-allowed disabled:opacity-45',
       props.class,
     )"
   >

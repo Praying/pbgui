@@ -236,6 +236,11 @@
   --color-border-subtle: #263d49;
   --color-border-default: #385261;
   --color-border-strong: #587080;
+  /* The boundary of an interactive control (input, select, checkbox, switch).
+     WCAG 1.4.11 asks for 3:1 against the surface the control sits on, which the
+     decorative card hairline (border-default, ~1.8:1) deliberately does not meet.
+     Kept separate so cards stay light while controls stay findable. */
+  --color-border-control: #587080;
 
   /* ── Text ───────────────────────────────────────────────────── */
   --color-primary: #edf7fa;
@@ -526,14 +531,15 @@
   --color-border-selected: rgb(11 110 146 / 0.40);
 
   /* Borders */
-  --color-border-subtle: #d3dde3;
+  --color-border-subtle: #c2cbd1;
   --color-border-default: #b9c8d1;
-  --color-border-strong: #8ea3af;
+  --color-border-strong: #697982;
+  --color-border-control: #838e94;
 
   /* Text */
   --color-primary: #0f1f27;
   --color-secondary: #3a525e;
-  --color-muted: #566e7a;
+  --color-muted: #556d79;
   --color-disabled: #8a9ea8;
   --color-placeholder: #6a808b;
 

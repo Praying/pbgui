@@ -22,7 +22,7 @@ const delegatedProps = computed(() => {
     data-slot="select-trigger"
     v-bind="delegatedProps"
     :class="cn(
-      'flex h-(--control-height-md) w-full cursor-pointer items-center justify-between gap-2 rounded-sm border border-border-default bg-input px-2 text-sm text-primary outline-none transition-colors duration-snap ease-standard data-[placeholder]:text-placeholder hover:border-border-strong focus-visible:border-accent disabled:cursor-not-allowed disabled:opacity-45 [&>span]:truncate',
+      'flex h-(--control-height-md) w-full cursor-pointer items-center justify-between gap-2 rounded-sm border border-border-control bg-input px-2 text-sm text-primary outline-none transition-colors duration-snap ease-standard data-[placeholder]:text-placeholder hover:border-border-strong focus-visible:border-accent disabled:cursor-not-allowed disabled:opacity-45 [&>span]:truncate',
       props.class,
     )"
   >
