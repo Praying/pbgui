@@ -1,5 +1,13 @@
 # Unreleased
 
+## 引入 CDS 设计纪律：五档动效、双密度与交互守卫
+
+- 按 `cds-frontend` 技能重整前端设计令牌，保留现有石墨 + 冰蓝配色，仅引入其架构与方法：新增五档动效标尺（`--transition-duration-fast/snap/base/sheet/slow` = 60/120/200/300/450ms）与三条缓动曲线（`--ease-out`、`--ease-snap`、`--ease-overshoot`），可用 `duration-fast`…`duration-slow` 工具类；旧的 `--motion-fast/normal/slow` 改为指向新标尺的别名，约 155 处既有调用点无需改动。`prefers-reduced-motion` 改为只压缩时长、不再删除状态变化，并清零动画延迟。
+- 新增双密度系统：`<html data-density="compact">` 将控件从 28/32/38px 收紧到 24/28/32px，侧栏底部新增密度切换按钮并持久化偏好（`pbgui-density`），刷新后保持；触屏设备（`pointer: coarse`）自动维持舒适密度以保证点击热区。ui/ 组件层（Button/Input/SelectTrigger）改用 `--control-height-*` 令牌驱动高度，密度因此对全部已迁移页面生效。
+- 补齐 CDS 的两项交互守卫：AI 对话输入框与标签筛选、新建仪表盘对话框的 Enter 键加入 IME 判断（`isComposing` / `keyCode 229`），中文、日文输入法确认候选词时不再误发送；新增共享 `useStreamingScroll`，AI 消息列表、`LogViewer`、`QueueLogTerminal` 的流式滚动仅在用户仍处于底部且 150ms 内未主动滚动时才自动钉底，并新增「跳到最新」按钮。
+- 将 `rounded-[Npx]` 等任意值圆角、`duration-[var(--motion-*)]` 任意值时长统一收敛到设计令牌；样板页（系统欢迎、内部划转、利润归集）同时移除控件高度覆盖，改由密度令牌决定。新增 `motion-tokens`、`useStreamingScroll`、`useDensity`、`Composer` 四组 Vitest 回归测试；`Button`/`Input`/`Select` 测试改为断言令牌类名而非固定高度。
+- 全站清除控件固定高度：`h-7`/`h-8`/`h-9`/`h-7.5`/`h-8.5`/`size-8`/`size-9` 等 157 处改为 `h-(--control-height-sm|md|lg)`，覆盖 v7 优化配置编辑器（88 处）、评分限额编辑器、回测配置/结果面板、帮助页、配置导入与 OHLCV 预检对话框、套件编辑器等 20 个文件；复选框行、开关行、多选筛选容器等 `min-h-*` 行容器一并改用令牌。密度切换由此对全部已迁移页面生效，不再只影响三个样板页。`ConfigEditorModal` 新增回归测试，防止固定高度重新引入。
+
 ## 修复系统/内部划转「方向」无法选中
 
 - 修复「方向」选择在自动刷新后被重置回第一个路由的问题：保留用户当前选择，仅在存在待确认划转、URL 深链指定或所选路由失效时重新选取，恢复帮助文档与旧版面板承诺的"刷新保留所选路由"行为。
