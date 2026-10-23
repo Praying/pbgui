@@ -17,6 +17,10 @@
 - 图表跟随主题：新增 `themeColors()` 与 Plotly 外观改写（`themedPlotly`），在每页 `getPlotly()` 处一次性接入，覆盖 v7 回测、优化、Pareto、策略探索与仪表盘共 ~15 处出图点，只改背景、文字、网格与零线，不改序列颜色；深色下返回同一对象。仪表盘的盈亏/TWE/实时状态色改为返回 `var(--success|warning|danger)`，入场价线（canvas，无法用 var()）按当前主题取值。
 - 深色渲染保持逐像素一致：用同一 worktree 构建 651976ed 与当前树，在 18 个页面上截图比对，侧栏之外 0 个像素不同（唯一差异是侧栏新增的主题按钮）。纯黑接触阴影单独使用 `--shadow-ink-rgb`（深色为 `0 0 0`），避免被统一成偏蓝的 `--shadow-rgb`。
 - 控件：v7 回测的三处原生交易所多选与 Pareto 候选筛选迁移到新的 `ui/select/MultiSelect`（reka-ui `multiple` 模式，沿用 `ExchangeMultiSelect` 的有序模型与 `data-test` 钩子），删除 `useToggleMultiSelect` 的鼠标按下补丁；套件编辑器两个原生单选迁移到 `ui/Select`；表格行内 `size-7` 图标按钮改用 `--control-height-sm`。`src/` 内不再有原生 `<select>` 控件。
+- 浅色主题图表实测并修正：用应用自己的 `darkPlotLayout` → `themedPlotLayout` 在真实 Chrome 中渲染 Plotly 的 2D 散点与 WebGL 3D 曲面。发现两处问题并修复——Plotly 会静默丢弃现代 `rgb(r g b / a)` 语法的透明度（网格线变成纯黑实线），主题色改为输出 `rgba(r,g,b,a)`；3D 场景框与极坐标环在近白底上 12% 的墨色几乎不可见（实测 0.12 / 0.35 / 0.6），浅色下分别提高到 0.45 / 0.40。深色数值不变，18 个页面与已推送基线逐像素比对仍为 0 差异。
+- 浅色交互态实测：焦点环、下拉弹层（不透明、与页面可区分）、禁用态（0.45 透明度 + not-allowed）、聚焦输入框与按钮文字对比度均通过；24 个页面的文字对比度扫描无低对比项。
+- 修复长期失败的 `pbgui_icons` 测试：遗留回退页 `ai_chat.html` 与 `support_debug.html` 没有在导航脚本前加载 `pbgui_icons.js`，其余 21 页都有。
+- 修复仪表盘测试的偶发失败：根因是测试用固定的两次 `flushPromises()` 去猜异步链深度（fetch → json → nextTick → 渲染），整套并行时链更深，于是每次是不同的用例失败（WidgetOrders、WidgetIncome 轮流），而单文件运行总是通过。新增 `shared/testing/settle`，按「连续两轮宏任务没有新的 fetch」判定静默，并在 vitest 假定时器下自动退化为微任务排空；dashboard_editor 的 9 个套件共 182 处等待改用它。修复前原测试在完整套件中约 1/8 失败，修复后连续 22 次完整运行全部通过（4702 项）。
 
 ## 修复系统/内部划转「方向」无法选中（待确认划转锁定）
 

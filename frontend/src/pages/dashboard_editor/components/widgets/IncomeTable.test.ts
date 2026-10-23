@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DOMWrapper, enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { DOMWrapper, enableAutoUnmount, mount } from '@vue/test-utils';
+import { settle } from '@/shared/testing/settle';
 import type { VueWrapper } from '@vue/test-utils';
 import IncomeTable from './IncomeTable.vue';
 import { openSelect, selectOptionElements, selectOptionTexts } from '@/shared/testing/select';
@@ -83,7 +84,7 @@ function docMouseUp(): void {
 async function clickRow(wrapper: VueWrapper, id: number): Promise<void> {
   await row(wrapper, id).trigger('mousedown', { button: 0, clientY: TOPS[String(id)]! });
   docMouseUp();
-  await flushPromises();
+  await settle();
 }
 
 beforeEach(() => {
@@ -167,7 +168,7 @@ describe('IncomeTable selection (render.js:1173-1233, 1250-1268)', () => {
     expect(row(wrapper, 3).classes()).not.toContain('di-sel');
     await wrapper.get('thead th').trigger('mousedown', { button: 0 });
     docMouseUp();
-    await flushPromises();
+    await settle();
     expect(wrapper.findAll('tbody tr.di-sel')).toHaveLength(0);
   });
 
@@ -179,7 +180,7 @@ describe('IncomeTable selection (render.js:1173-1233, 1250-1268)', () => {
     expect(wrapper.findAll('tbody tr.di-sel')).toHaveLength(0);
     docMouseMove(100);
     docMouseUp();
-    await flushPromises();
+    await settle();
     expect(wrapper.findAll('tbody tr.di-sel')).toHaveLength(3);
   });
 
@@ -191,7 +192,7 @@ describe('IncomeTable selection (render.js:1173-1233, 1250-1268)', () => {
     await row(wrapper, 3).trigger('mousedown', { button: 0, clientY: 100 });
     docMouseMove(120);
     docMouseUp();
-    await flushPromises();
+    await settle();
     expect(row(wrapper, 3).classes()).not.toContain('di-sel');
     expect(row(wrapper, 1).classes()).not.toContain('di-sel');
     expect(row(wrapper, 2).classes()).not.toContain('di-sel');
@@ -202,7 +203,7 @@ describe('IncomeTable selection (render.js:1173-1233, 1250-1268)', () => {
     await row(wrapper, 3).trigger('mousedown', { button: 0, clientY: 100 });
     docMouseMove(120); /* rows 3 and 1 */
     docMouseUp();
-    await flushPromises();
+    await settle();
     expect(row(wrapper, 3).classes()).toContain('di-sel');
     expect(row(wrapper, 1).classes()).toContain('di-sel');
     expect(row(wrapper, 2).classes()).not.toContain('di-sel');
@@ -316,7 +317,7 @@ describe('IncomeTable delete flows (render.js:1275-1311, 1351-1401)', () => {
     expect(wrapper.find('.di-confirm-msg svg').exists()).toBe(true);
     expect(fetchMock).not.toHaveBeenCalled();
     await wrapper.get('.di-btn-yes').trigger('click');
-    await flushPromises();
+    await settle();
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/dashboard/income/delete_ids',
       expect.objectContaining({ body: JSON.stringify({ ids: [2, 3] }) }) /* JS integer keys iterate ascending — legacy Object.keys(selected) too */
@@ -347,7 +348,7 @@ describe('IncomeTable delete flows (render.js:1275-1311, 1351-1401)', () => {
       'Delete all income for ALL users with timestamp ≤ 2024-01-25 16:26:40?'
     );
     await wrapper.get('.di-btn-yes').trigger('click');
-    await flushPromises();
+    await settle();
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/dashboard/income/delete_older',
       expect.objectContaining({ body: JSON.stringify({ users: ['ALL'], cutoff_ms: 1706200000000 }) })
@@ -364,7 +365,7 @@ describe('IncomeTable delete flows (render.js:1275-1311, 1351-1401)', () => {
       'Delete all income for alice, bob with timestamp ≤ 2024-01-25 16:26:40?'
     );
     await wrapper.get('.di-btn-yes').trigger('click');
-    await flushPromises();
+    await settle();
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/dashboard/income/delete_older',
       expect.objectContaining({ body: JSON.stringify({ users: ['alice', 'bob'], cutoff_ms: 1706200000000 }) })
@@ -377,7 +378,7 @@ describe('IncomeTable delete flows (render.js:1275-1311, 1351-1401)', () => {
     await clickRow(wrapper, 3);
     await wrapper.findAll('.di-actions .di-btn')[0]!.trigger('click');
     await wrapper.get('.di-btn-yes').trigger('click');
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.di-status').text()).toBe('Error: boom');
   });
 
@@ -387,7 +388,7 @@ describe('IncomeTable delete flows (render.js:1275-1311, 1351-1401)', () => {
     await clickRow(wrapper, 3);
     await wrapper.findAll('.di-actions .di-btn')[0]!.trigger('click');
     await wrapper.get('.di-btn-yes').trigger('click');
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.di-status').isVisible()).toBe(true);
     vi.advanceTimersByTime(4000);
     await wrapper.vm.$nextTick();
@@ -417,7 +418,7 @@ describe('IncomeTable backup/restore panel (render.js:1314-1321, 1403-1469)', ()
     await clickRow(wrapper, 3);
     await wrapper.get('.di-actions .di-btn:nth-of-type(3)').trigger('click');
     expect(fetchMock).toHaveBeenCalledWith('/api/dashboard/income/backups');
-    await flushPromises();
+    await settle();
     await openSelect(wrapper, '.di-backup-select');
     expect(selectOptionTexts()).toEqual([
       'pbgui-a.db — 2024-01-01 10:00:00',
@@ -436,7 +437,7 @@ describe('IncomeTable backup/restore panel (render.js:1314-1321, 1403-1469)', ()
       'Restore database from pbgui-b.db — 2024-01-02 11:00:00?'
     );
     await wrapper.get('.di-btn-yes').trigger('click');
-    await flushPromises();
+    await settle();
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/dashboard/income/restore',
       expect.objectContaining({ body: JSON.stringify({ path: '/db/pbgui-b.db' }) })
@@ -452,7 +453,7 @@ describe('IncomeTable backup/restore panel (render.js:1314-1321, 1403-1469)', ()
     const wrapper = mountTable();
     await clickRow(wrapper, 3);
     await wrapper.get('.di-actions .di-btn:nth-of-type(3)').trigger('click');
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.di-backup').text()).toContain('No backups available.');
   });
 
@@ -466,10 +467,10 @@ describe('IncomeTable backup/restore panel (render.js:1314-1321, 1403-1469)', ()
     const wrapper = mountTable();
     await clickRow(wrapper, 3);
     await wrapper.get('.di-actions .di-btn:nth-of-type(3)').trigger('click');
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.di-backup').text()).toContain('Loading backups…');
     resolveJson?.({ backups: [] });
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.di-backup').text()).toContain('No backups available.');
   });
 
@@ -478,7 +479,7 @@ describe('IncomeTable backup/restore panel (render.js:1314-1321, 1403-1469)', ()
     const wrapper = mountTable();
     await clickRow(wrapper, 3);
     await wrapper.get('.di-actions .di-btn:nth-of-type(3)').trigger('click');
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.di-backup').text()).toContain('Error loading backups');
   });
 
@@ -487,12 +488,12 @@ describe('IncomeTable backup/restore panel (render.js:1314-1321, 1403-1469)', ()
     const wrapper = mountTable();
     await clickRow(wrapper, 3);
     await wrapper.get('.di-actions .di-btn:nth-of-type(3)').trigger('click');
-    await flushPromises();
+    await settle();
     fetchMock.mockClear();
     fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: false }) });
     await wrapper.findAll('.di-backup .di-btn')[0]!.trigger('click');
     await wrapper.get('.di-btn-yes').trigger('click');
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.di-status').text()).toBe('Restore failed.');
   });
 
@@ -501,13 +502,13 @@ describe('IncomeTable backup/restore panel (render.js:1314-1321, 1403-1469)', ()
     const wrapper = mountTable();
     await clickRow(wrapper, 3);
     await wrapper.get('.di-actions .di-btn:nth-of-type(3)').trigger('click');
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.di-backup').isVisible()).toBe(true);
     await wrapper.findAll('.di-backup .di-btn')[1]!.trigger('click');
     expect(wrapper.find('.di-backup').isVisible()).toBe(false);
     /* reopening then clearing the selection also hides it (updateActions) */
     await wrapper.get('.di-actions .di-btn:nth-of-type(3)').trigger('click');
-    await flushPromises();
+    await settle();
     await clickRow(wrapper, 3);
     expect(wrapper.find('.di-backup').isVisible()).toBe(false);
   });
@@ -533,7 +534,7 @@ describe('IncomeTable data-refresh resets (legacy full-rebuild semantics)', () =
     const wrap = wrapper.get('.di-table-wrap').element;
     wrap.scrollTop = 250;
     await wrapper.setProps({ rows: [...ROWS] });
-    await flushPromises();
+    await settle();
     expect(wrap.scrollTop).toBe(250);
   });
 

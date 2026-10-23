@@ -51,9 +51,9 @@ describe('themedPlotLayout', () => {
   it('turns white-on-dark grid lines into ink-on-light, so they do not vanish', () => {
     setLight();
     const out = themedPlotLayout(DARK_LAYOUT) as typeof DARK_LAYOUT;
-    expect(out.yaxis.gridcolor).toBe('rgb(15 31 39 / 0.12)');
-    expect(out.yaxis.zerolinecolor).toBe('rgb(15 31 39 / 0.18)');
-    expect(out.xaxis.gridcolor).toBe('rgb(15 31 39 / 0.12)');
+    expect(out.yaxis.gridcolor).toBe('rgba(15,31,39,0.12)');
+    expect(out.yaxis.zerolinecolor).toBe('rgba(15,31,39,0.18)');
+    expect(out.xaxis.gridcolor).toBe('rgba(15,31,39,0.12)');
   });
 
   it('leaves transparent legends, geometry and unknown colours alone', () => {

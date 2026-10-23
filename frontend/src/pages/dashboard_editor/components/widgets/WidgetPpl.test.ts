@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
-import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
+import { settle } from '@/shared/testing/settle';
 import { defineComponent } from 'vue';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
@@ -96,7 +97,7 @@ function mountPpl(options: {
 describe('WidgetPpl', () => {
   it('writes the legacy ensure-defaults block and fetches ppl_data (editor:1790-1801)', async () => {
     const { env } = mountPpl();
-    await flushPromises();
+    await settle();
     expect(env.store.state['dashboard_ppl_users_1_2']).toEqual(['ALL']);
     expect(env.store.state['dashboard_ppl_period_1_2']).toBe('THIS_MONTH');
     expect(env.store.state['dashboard_ppl_sum_period_1_2']).toBe('MONTH');
@@ -107,7 +108,7 @@ describe('WidgetPpl', () => {
 
   it('renders the legacy title/icon and the profit + loss traces', async () => {
     const { wrapper } = mountPpl();
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.dt-title').text()).toBe('Profits and Losses');
     expect(wrapper.find('.dt-icon svg').exists()).toBe(true);
     expect(react.mock.calls[0]![1]).toEqual([
@@ -136,7 +137,7 @@ describe('WidgetPpl', () => {
 
   it('renders the sum-period select with DAY/WEEK/MONTH (editor:1807-1817)', async () => {
     const { wrapper } = mountPpl();
-    await flushPromises();
+    await settle();
     await openSelect(wrapper, '.dt-ctrl-sel');
     expect(selectOptionTexts()).toEqual(['DAY', 'WEEK', 'MONTH']);
     expect(wrapper.get('.dt-ctrl-sel').text()).toContain('MONTH');
@@ -144,7 +145,7 @@ describe('WidgetPpl', () => {
 
   it('captures the fractional zoom, writes the state and refetches on a sum-period switch', async () => {
     const { wrapper, env } = mountPpl();
-    await flushPromises();
+    await settle();
     /* simulate a user zoom: 4 bars, x-range [1, 3] → frac [0.25, 0.75] */
     const gd = wrapper.get('.dt-chart').element as HTMLElement & {
       layout?: Record<string, unknown>;
@@ -161,7 +162,7 @@ describe('WidgetPpl', () => {
     expect(getSavedZoom('1_2')).toEqual({
       xrange: null, yrange: [9, 10], fracRange: [0.25, 0.75],
     });
-    await flushPromises();
+    await settle();
     expect(env.fetch).toHaveBeenLastCalledWith(
       '/api/dashboard/ppl_data?users=ALL&period=THIS_MONTH&sum_period=WEEK'
     );
@@ -169,7 +170,7 @@ describe('WidgetPpl', () => {
 
   it('remaps the fractional zoom onto the new bar count after the sum-period switch', async () => {
     const { wrapper, env } = mountPpl();
-    await flushPromises();
+    await settle();
     const gd = wrapper.get('.dt-chart').element as HTMLElement & {
       layout?: Record<string, unknown>;
       data?: unknown[];
@@ -191,7 +192,7 @@ describe('WidgetPpl', () => {
       }),
     });
     await pickSelectOption(wrapper, '.dt-ctrl-sel', 'WEEK');
-    await flushPromises();
+    await settle();
     const layout = react.mock.calls[1]![2] as Record<string, unknown>;
     expect((layout.xaxis as Record<string, unknown>).range).toEqual([2, 6]);
     expect((layout.xaxis as Record<string, unknown>).autorange).toBe(false);
@@ -200,7 +201,7 @@ describe('WidgetPpl', () => {
 
   it('shows the no-data state for empty bars', async () => {
     const { wrapper } = mountPpl({ payload: { ...PPL_PAYLOAD, bars: [] } });
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.dt-nodata').text()).toBe('No data for the selected period.');
     expect(react).not.toHaveBeenCalled();
   });

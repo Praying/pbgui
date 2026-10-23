@@ -22,9 +22,9 @@ describe('themeColors', () => {
   });
 
   it('builds grid ink from the overlay channels, white on dark and dark on light', () => {
-    expect(themeColors().grid).toBe('rgb(255 255 255 / 0.12)');
+    expect(themeColors().grid).toBe('rgba(255,255,255,0.12)');
     document.documentElement.style.setProperty('--overlay-rgb', '15 31 39');
-    expect(themeColors().grid).toBe('rgb(15 31 39 / 0.12)');
+    expect(themeColors().grid).toBe('rgba(15,31,39,0.12)');
   });
 
   it('reports the current theme from the attribute', () => {

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
-import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
+import { settle } from '@/shared/testing/settle';
 import { defineComponent } from 'vue';
 import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
@@ -102,7 +103,7 @@ const TOP_DATA_URL = '/api/dashboard/top_data?users=ALL&period=THIS_MONTH&top=10
 describe('WidgetTop', () => {
   it('fetches the legacy top_data URL with default config on mount (editor:1244-1247)', async () => {
     const { env } = mountTop();
-    await flushPromises();
+    await settle();
     expect(env.fetch).toHaveBeenCalledWith(TOP_DATA_URL);
   });
 
@@ -113,7 +114,7 @@ describe('WidgetTop', () => {
 
   it('renders the legacy chrome: title, icon, daterange and the chart traces', async () => {
     const { wrapper } = mountTop();
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.dt-title').text()).toBe('Top Symbols');
     expect(wrapper.find('.dt-icon svg').exists()).toBe(true);
     expect(wrapper.get('.dt-daterange').text()).toBe('From: 2025-01-01  To: 2025-01-31');
@@ -132,7 +133,7 @@ describe('WidgetTop', () => {
 
   it('renders the topN/period/users controls with the legacy values', async () => {
     const { wrapper } = mountTop();
-    await flushPromises();
+    await settle();
     const num = wrapper.get('input.dt-ctrl-num');
     expect(num.attributes('min')).toBe('1');
     expect(num.attributes('max')).toBe('500');
@@ -155,7 +156,7 @@ describe('WidgetTop', () => {
 
   it('shows the no-data state for empty rows (render.js:766-772)', async () => {
     const { wrapper } = mountTop({ payload: { rows: [], from_date: '', to_date: '' } });
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.dt-nodata').text()).toBe('No data for the selected period.');
     expect(wrapper.find('.dt-chart').exists()).toBe(false);
     expect(react).not.toHaveBeenCalled();
@@ -163,18 +164,18 @@ describe('WidgetTop', () => {
 
   it('shows the data-unavailable error when the fetch fails (editor:1340-1346)', async () => {
     const { wrapper } = mountTop({ fetchError: true });
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.dt-status').text()).toBe('⚠ Data unavailable');
   });
 
   it('writes the topN state, schedules a sync and refetches on the number control (editor:1256-1260)', async () => {
     const { wrapper, env } = mountTop();
-    await flushPromises();
+    await settle();
     const syncSpy = vi.spyOn(env.store, 'scheduleSync');
     await wrapper.get('input.dt-ctrl-num').setValue('25');
     expect(env.store.state['dashboard_top_symbols_top_1_2']).toBe(25);
     expect(syncSpy).toHaveBeenCalledTimes(1);
-    await flushPromises();
+    await settle();
     expect(env.fetch).toHaveBeenLastCalledWith(
       '/api/dashboard/top_data?users=ALL&period=THIS_MONTH&top=25'
     );
@@ -182,11 +183,11 @@ describe('WidgetTop', () => {
 
   it('writes the legacy default CUSTOM range when the period select picks CUSTOM (editor:1267-1276)', async () => {
     const { wrapper, env } = mountTop();
-    await flushPromises();
+    await settle();
     await pickSelectOption(wrapper, '.dt-ctrl-sel', 'CUSTOM');
     const period = env.store.state['dashboard_top_symbols_period_1_2'];
     expect(period).toMatch(/^CUSTOM:\d{4}-\d{2}-\d{2}:\d{4}-\d{2}-\d{2}$/);
-    await flushPromises();
+    await settle();
     expect(env.fetch.mock.calls.some(([url]) =>
       url === '/api/dashboard/top_data?users=ALL&period=' + encodeURIComponent(String(period)) + '&top=10'
     )).toBe(true);
@@ -194,7 +195,7 @@ describe('WidgetTop', () => {
 
   it('passes plain period values through on the period select (editor:1274-1276)', async () => {
     const { wrapper, env } = mountTop();
-    await flushPromises();
+    await settle();
     await pickSelectOption(wrapper, '.dt-ctrl-sel', 'TODAY');
     expect(env.store.state['dashboard_top_symbols_period_1_2']).toBe('TODAY');
   });
@@ -206,7 +207,7 @@ describe('WidgetTop', () => {
         dashboard_top_symbols_period_1_2: 'CUSTOM:2025-01-01:2025-01-31',
       },
     });
-    await flushPromises();
+    await settle();
     const dates = wrapper.findAll('input.dt-ctrl-date');
     expect(dates).toHaveLength(2);
     expect((dates[0]!.element as HTMLInputElement).value).toBe('2025-01-01');
@@ -225,7 +226,7 @@ describe('WidgetTop', () => {
         dashboard_top_symbols_period_1_2: 'CUSTOM:2025-01-01:NOW',
       },
     });
-    await flushPromises();
+    await settle();
     const now = wrapper.get('.dt-ctrl-now-wrap [role="checkbox"]');
     expect(now.attributes('aria-checked')).toBe('true');
     const dates = wrapper.findAll('input.dt-ctrl-date');
@@ -238,10 +239,10 @@ describe('WidgetTop', () => {
 
   it('commits the users multi-select to state and refetches (editor:1332-1335)', async () => {
     const { wrapper, env } = mountTop();
-    await flushPromises();
+    await settle();
     wrapper.findComponent(MultiSelectDropdown).vm.$emit('update:modelValue', ['alice']);
     expect(env.store.state['dashboard_top_symbols_users_1_2']).toEqual(['alice']);
-    await flushPromises();
+    await settle();
     // any-call match (not last): under full-suite load the refetch can land
     // after a later scheduled fetch — the assertion's intent is that a
     // users-scoped refetch happened, not that it was the final call
@@ -252,7 +253,7 @@ describe('WidgetTop', () => {
 
   it('does not write default config keys to state (legacy TOP has no ensure-defaults block)', async () => {
     const { env } = mountTop();
-    await flushPromises();
+    await settle();
     expect(env.store.state['dashboard_top_symbols_users_1_2']).toBeUndefined();
     expect(env.store.state['dashboard_top_symbols_period_1_2']).toBeUndefined();
     expect(env.store.state['dashboard_top_symbols_top_1_2']).toBeUndefined();
@@ -265,7 +266,7 @@ describe('WidgetTop', () => {
         dashboard_height_1_2: 300,
       },
     });
-    await flushPromises();
+    await settle();
     const chart = wrapper.findComponent(PlotlyChart);
     expect(chart.props('height')).toBe(300);
     expect(chart.props('zoomPos')).toBeNull(); // TOP never preserves zoom

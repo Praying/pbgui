@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
-import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
+import { settle } from '@/shared/testing/settle';
 import { defineComponent } from 'vue';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
@@ -96,7 +97,7 @@ afterEach(() => {
 describe('WidgetBalance', () => {
   it('fetches the legacy balance URL with ALL users on mount (editor:1176-1177)', async () => {
     const { env } = mountBalance();
-    await flushPromises();
+    await settle();
     expect(env.fetch).toHaveBeenCalledWith('/api/dashboard/balance?users=ALL');
   });
 
@@ -107,13 +108,13 @@ describe('WidgetBalance', () => {
 
   it('shows the data-unavailable error when the fetch fails (editor:1207-1215)', async () => {
     const { wrapper } = mountBalance({ fetchError: true });
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.db-status').text()).toBe('⚠ Data unavailable');
   });
 
   it('renders the totals header with the legacy formatting (render.js:502-508)', async () => {
     const { wrapper } = mountBalance();
-    await flushPromises();
+    await settle();
     const items = wrapper.findAll('.db-total-item');
     expect(items).toHaveLength(3);
     expect(items[0]!.find('label').text()).toBe('Total Balance');
@@ -126,7 +127,7 @@ describe('WidgetBalance', () => {
 
   it('renders the icon, users control and edit-mode trash in the header order', async () => {
     const { wrapper } = mountBalance();
-    await flushPromises();
+    await settle();
     const header = wrapper.get('.db-header');
     expect(header.find('.dt-icon svg').exists()).toBe(true);
     expect(header.find('.db-user-sel label').text()).toBe('Users:');
@@ -138,13 +139,13 @@ describe('WidgetBalance', () => {
 
   it('hides the trash in view mode', async () => {
     const { wrapper } = mountBalance({ viewOnly: true });
-    await flushPromises();
+    await settle();
     expect(wrapper.find('.dt-trash').exists()).toBe(false);
   });
 
   it('renders the table headers and rows (renderBalanceRows, render.js:428-449)', async () => {
     const { wrapper } = mountBalance();
-    await flushPromises();
+    await settle();
     expect(wrapper.findAll('.db-table thead th').map((th) => th.text())).toEqual([
       'User', 'Date', 'Balance USDT', 'uPnl', 'TWE %',
     ]);
@@ -169,37 +170,37 @@ describe('WidgetBalance', () => {
 
   it('shows the no-data state for empty rows (render.js:557-564)', async () => {
     const { wrapper } = mountBalance({ payload: { rows: [], totals: { balance: 0, upnl: 0, we: 0 } } });
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.db-nodata').text()).toBe('No balance data.');
     expect(wrapper.find('.db-table').exists()).toBe(false);
   });
 
   it('shows the source status line aged from the fetch (render.js:551-555)', async () => {
     const { wrapper } = mountBalance();
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.db-status').text()).toBe('DB fallback: now');
   });
 
   it('marks the cell auto-height when no height is stored (editor:1198-1203)', async () => {
     const { env } = mountBalance();
-    await flushPromises();
+    await settle();
     expect(env.store.autoHeightCells['1_2']).toBe(true);
   });
 
   it('does not mark auto-height when a height is stored', async () => {
     const { env } = mountBalance({ config: { dashboard_type_1_2: 'BALANCE', dashboard_height_1_2: 300 } });
-    await flushPromises();
+    await settle();
     expect(env.store.autoHeightCells['1_2']).toBeUndefined();
   });
 
   it('commits the users multi-select to state, syncs and refetches (editor:1185-1188)', async () => {
     const { wrapper, env } = mountBalance();
-    await flushPromises();
+    await settle();
     const syncSpy = vi.spyOn(env.store, 'scheduleSync');
     wrapper.findComponent(MultiSelectDropdown).vm.$emit('update:modelValue', ['alice']);
     expect(env.store.state['dashboard_balance_users_1_2']).toEqual(['alice']);
     expect(syncSpy).toHaveBeenCalledTimes(1);
-    await flushPromises();
+    await settle();
     expect(env.fetch).toHaveBeenLastCalledWith('/api/dashboard/balance?users=alice');
   });
 
@@ -207,7 +208,7 @@ describe('WidgetBalance', () => {
     const { wrapper, env } = mountBalance({
       config: { dashboard_type_1_2: 'BALANCE', dashboard_balance_users_1_2: ['alice'] },
     });
-    await flushPromises();
+    await settle();
     /* REST fetch first, then the immediate live refresh (editor:1154) */
     expect(env.fetch).toHaveBeenNthCalledWith(1, '/api/dashboard/balance?users=alice');
     expect(env.fetch).toHaveBeenNthCalledWith(2, '/api/dashboard/balance?users=alice&live=1');
@@ -225,7 +226,7 @@ describe('WidgetBalance', () => {
     });
     /* first REST response, then the live refresh response */
     env.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => livePayload });
-    await flushPromises();
+    await settle();
     const trs = wrapper.findAll('.db-table tbody tr');
     expect(trs).toHaveLength(1);
     expect(trs[0]!.findAll('td')[2]!.text()).toBe('2000.00');
@@ -237,7 +238,7 @@ describe('WidgetBalance', () => {
 
   it('does not poll for ALL users (editor:1128)', async () => {
     const { env } = mountBalance();
-    await flushPromises();
+    await settle();
     expect(env.fetch).toHaveBeenCalledTimes(1);
   });
 });

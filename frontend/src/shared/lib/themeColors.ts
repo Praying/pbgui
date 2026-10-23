@@ -42,10 +42,17 @@ function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-/** `rgb(var(--overlay-rgb) / a)`, resolved to a literal string a canvas accepts. */
+/**
+ * The overlay ink at `alpha`, as `rgba(r,g,b,a)`.
+ *
+ * The legacy comma form is deliberate. Plotly's colour parser accepts the
+ * modern `rgb(r g b / a)` syntax but silently DROPS the alpha (it renders
+ * `stroke-opacity: 1`), which turned light-theme gridlines into solid black.
+ * `rgba(r,g,b,a)` is honoured by Plotly, lightweight-charts and plain canvas.
+ */
 function overlay(alpha: number): string {
-  const channels = cssVar('--overlay-rgb') || '255 255 255';
-  return `rgb(${channels} / ${alpha})`;
+  const channels = (cssVar('--overlay-rgb') || '255 255 255').split(/[\s,]+/).filter(Boolean).slice(0, 3);
+  return `rgba(${channels.join(',')},${alpha})`;
 }
 
 export function themeColors(): ThemeColors {

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DOMWrapper, enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { DOMWrapper, enableAutoUnmount, mount } from '@vue/test-utils';
+import { settle } from '@/shared/testing/settle';
 import { computed, defineComponent, reactive, ref } from 'vue';
 import { useManageActions, type ManageFetch } from '../../composables/useManageActions';
 import { rowKey, type ManageControlState } from '../../lib/manageLogic';
@@ -113,10 +114,10 @@ function actionTriggerAt(tr: HTMLElement): HTMLElement {
    wrapper cannot reach it). */
 async function openActionSelect(tr: HTMLElement): Promise<HTMLElement[]> {
   await new DOMWrapper(actionTriggerAt(tr)).trigger('keydown', { key: 'Enter' });
-  await flushPromises();
+  await settle();
   await new Promise((resolve) => setTimeout(resolve, 0));
   document.body.dispatchEvent(new Event('pointerup', { bubbles: true, cancelable: true }));
-  await flushPromises();
+  await settle();
   const content = document.body.querySelector('[data-slot="select-content"]');
   return content ? Array.from(content.querySelectorAll<HTMLElement>('[role="option"]')) : [];
 }
@@ -127,7 +128,7 @@ async function pickRowAction(tr: HTMLElement, label: string): Promise<void> {
   if (!option) throw new Error(`action option "${label}" not found among ${options.map((el) => el.textContent?.trim())}`);
   await new DOMWrapper(option).trigger('pointerup');
   await new Promise((resolve) => setTimeout(resolve, 0));
-  await flushPromises();
+  await settle();
 }
 
 function runBtnAt(tr: HTMLElement): HTMLButtonElement {
@@ -140,19 +141,19 @@ function statusEl(): HTMLElement {
 
 async function click(el: Element): Promise<void> {
   el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-  await flushPromises();
+  await settle();
 }
 
 async function input(el: HTMLInputElement, value: string): Promise<void> {
   el.value = value;
   el.dispatchEvent(new Event('input', { bubbles: true }));
-  await flushPromises();
+  await settle();
 }
 
 describe('PositionsManageModal — chrome and rows (render.js:2881-3000)', () => {
   it('renders the teleported modal with the title, note and 16 table headers', async () => {
     const { wrapper } = mountModal();
-    await flushPromises();
+    await settle();
     expect(document.querySelector('#dp-manage-modal')).not.toBeNull();
     expect(document.querySelector('#dp-manage-modal .dp-modal-title')!.textContent).toBe('Manage positions');
     expect(document.querySelector('#dp-manage-modal .dp-note')!.textContent).toContain('Market close sends');
@@ -166,7 +167,7 @@ describe('PositionsManageModal — chrome and rows (render.js:2881-3000)', () =>
 
   it('renders 8 resize handles and the initial centered geometry (render.js:2903-2909, 3163)', async () => {
     mountModal();
-    await flushPromises();
+    await settle();
     const handles = document.querySelectorAll('#dp-manage-modal .dp-resize-handle');
     expect(Array.from(handles).map((h) => (h as HTMLElement).dataset.dir)).toEqual([
       'n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw',
@@ -182,14 +183,14 @@ describe('PositionsManageModal — chrome and rows (render.js:2881-3000)', () =>
 
   it('sizes the table wrap by row count (render.js:2263-2265)', async () => {
     mountModal();
-    await flushPromises();
+    await settle();
     const wrap = document.querySelector<HTMLElement>('#dp-manage-modal .dp-manage-wrap')!;
     expect(wrap.style.maxHeight).toBe('130px'); /* 38 + 2×46 */
   });
 
   it('shows the empty-state row without positions (render.js:2704-2714)', async () => {
     mountModal({ rows: [] });
-    await flushPromises();
+    await settle();
     const trs = document.querySelectorAll('#dp-manage-modal .dp-manage-table tbody tr');
     expect(trs[0]!.textContent).toBe('No open positions.');
   });
@@ -198,7 +199,7 @@ describe('PositionsManageModal — chrome and rows (render.js:2881-3000)', () =>
 describe('PositionsManageModal — row controls (render.js:2693-2879)', () => {
   it('defaults the action to market_close with amount |size| and the priced quote', async () => {
     const { env } = mountModal();
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     expect(actionTriggerAt(tr).textContent).toBe('Market close amount');
     expect(inputAt(tr, '.dp-manage-amount:not(.dp-manage-quote)').value).toBe('2');
@@ -210,14 +211,14 @@ describe('PositionsManageModal — row controls (render.js:2693-2879)', () => {
 
   it('marks the USDC quote placeholder for USDC symbols (render.js:2299-2303, 2792-2793)', async () => {
     mountModal({ rows: [{ ...ROWS[0]!, symbol: 'BTCUSDC' }] });
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     expect(inputAt(tr, '.dp-manage-quote').placeholder).toBe('USDC');
   });
 
   it('offers the four actions and disables unsupported market closes (render.js:2741-2755)', async () => {
     mountModal({ rows: [{ ...ROWS[0]!, market_close_supported: false, market_close_reason: 'Not verified' }] });
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     const opts = await openActionSelect(tr);
     expect(opts.map((o) => [o.dataset.value, o.textContent?.trim(), o.hasAttribute('data-disabled')])).toEqual([
@@ -234,7 +235,7 @@ describe('PositionsManageModal — row controls (render.js:2693-2879)', () => {
 
   it('switches the run button per action (render.js:2643-2645)', async () => {
     mountModal();
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     await pickRowAction(tr, 'Panic symbol');
     expect(runBtnAt(tr).textContent).toBe('Panic');
@@ -249,7 +250,7 @@ describe('PositionsManageModal — row controls (render.js:2693-2879)', () => {
 
   it('applies the 25/50/100% quick buttons to amount and quote (render.js:2816-2831)', async () => {
     mountModal();
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     const quick = tr.querySelectorAll<HTMLButtonElement>('.dp-quick button');
     expect(quick).toHaveLength(3);
@@ -263,7 +264,7 @@ describe('PositionsManageModal — row controls (render.js:2693-2879)', () => {
 
   it('converts typed amounts into the quote (render.js:2775-2782)', async () => {
     mountModal();
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     await input(inputAt(tr, '.dp-manage-amount:not(.dp-manage-quote)'), '1');
     expect(inputAt(tr, '.dp-manage-quote').value).toBe('110');
@@ -271,7 +272,7 @@ describe('PositionsManageModal — row controls (render.js:2693-2879)', () => {
 
   it('converts typed quotes into the amount at the close price (render.js:2796-2807)', async () => {
     mountModal();
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     await input(inputAt(tr, '.dp-manage-quote'), '55');
     expect(inputAt(tr, '.dp-manage-amount:not(.dp-manage-quote)').value).toBe('0.5');
@@ -281,10 +282,10 @@ describe('PositionsManageModal — row controls (render.js:2693-2879)', () => {
 
   it('re-defaults untouched amounts when the row size changes live (render.js:2553-2559)', async () => {
     const { wrapper } = mountModal();
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     await wrapper.setProps({ rows: [{ ...ROWS[0]!, size: 4 }, ROWS[1]!] });
-    await flushPromises();
+    await settle();
     const tr0 = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     expect(inputAt(tr0, '.dp-manage-amount:not(.dp-manage-quote)').value).toBe('4');
     expect(tr0).toBe(tr); /* same keyed row — no remount */
@@ -292,18 +293,18 @@ describe('PositionsManageModal — row controls (render.js:2693-2879)', () => {
 
   it('keeps a typed amount across live row updates (legacy isManageEditing deferral)', async () => {
     const { wrapper } = mountModal();
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     await input(inputAt(tr, '.dp-manage-amount:not(.dp-manage-quote)'), '1.25');
     await wrapper.setProps({ rows: [{ ...ROWS[0]!, upnl: 99 }, ROWS[1]!] });
-    await flushPromises();
+    await settle();
     const tr0 = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     expect(inputAt(tr0, '.dp-manage-amount:not(.dp-manage-quote)').value).toBe('1.25');
   });
 
   it('selects the clicked row and emits the selection (render.js:2723-2727)', async () => {
     const { env } = mountModal();
-    await flushPromises();
+    await settle();
     const trs = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr');
     await click(trs[1]!);
     expect(trs[1]!.className).toContain('dp-sel');
@@ -314,7 +315,7 @@ describe('PositionsManageModal — row controls (render.js:2693-2879)', () => {
 describe('PositionsManageModal — market-close validation (render.js:2840-2869)', () => {
   it('rejects unsupported rows with the reason', async () => {
     mountModal({ rows: [{ ...ROWS[0]!, market_close_supported: false, market_close_reason: 'Exchange not verified' }] });
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     await click(runBtnAt(tr));
     expect(statusEl().className).toContain('err');
@@ -323,7 +324,7 @@ describe('PositionsManageModal — market-close validation (render.js:2840-2869)
 
   it('rejects zero and unparsable amounts', async () => {
     mountModal();
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     await input(inputAt(tr, '.dp-manage-amount:not(.dp-manage-quote)'), '0');
     await click(runBtnAt(tr));
@@ -335,7 +336,7 @@ describe('PositionsManageModal — market-close validation (render.js:2840-2869)
       rows: [{ ...ROWS[0]!, exchange: 'hyperliquid' }],
       closePrice: { price: 100, min_cost: 10 },
     });
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     /* the fresh close price drives the quote: 2 × 100 */
     expect(inputAt(tr, '.dp-manage-quote').value).toBe('200');
@@ -357,7 +358,7 @@ describe('PositionsManageModal — fresh close price (render.js:2363-2387)', () 
       rows: [ROWS[0]!, { ...ROWS[1]!, exchange: 'hyperliquid' }],
       closePrice: { price: 42, min_cost: 1 },
     });
-    await flushPromises();
+    await settle();
     expect(vi.mocked(globalThis.fetch)).toHaveBeenCalledTimes(1);
     expect(vi.mocked(globalThis.fetch)).toHaveBeenCalledWith(
       '/api/dashboard/positions/close_price?user=bob&symbol=ETHUSDT&side=short'
@@ -366,20 +367,20 @@ describe('PositionsManageModal — fresh close price (render.js:2363-2387)', () 
     const tr1 = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[1]!;
     expect(inputAt(tr1, '.dp-manage-quote').value).toBe('126'); /* 3 × 42 */
     await wrapper.setProps({ rows: [ROWS[0]!, { ...ROWS[1]!, exchange: 'hyperliquid' }] });
-    await flushPromises();
+    await settle();
     expect(vi.mocked(globalThis.fetch)).toHaveBeenCalledTimes(1); /* loaded flag sticks */
   });
 
   it('non-hyperliquid rows never fetch a fresh price', async () => {
     mountModal();
-    await flushPromises();
+    await settle();
     expect(vi.mocked(globalThis.fetch)).not.toHaveBeenCalled();
   });
 
   it('surfaces close-price failures and stops retrying', async () => {
     const failing = vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({ detail: 'boom' }) });
     mountModal({ rows: [{ ...ROWS[0]!, exchange: 'hyperliquid' }], closePriceFetch: failing });
-    await flushPromises();
+    await settle();
     expect(statusEl().textContent).toBe('boom');
     /* the loaded flag sticks — no retry on the next rows change */
     expect(failing).toHaveBeenCalledTimes(1);
@@ -390,7 +391,7 @@ describe('PositionsManageModal — action requests (render.js:2453-2508)', () =>
   it('POSTs the market_close body and reports success (render.js:2479-2480)', async () => {
     vi.useFakeTimers();
     const { env } = mountModal();
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     await click(runBtnAt(tr));
     expect(env.manageFetch).toHaveBeenCalledTimes(1);
@@ -411,7 +412,7 @@ describe('PositionsManageModal — action requests (render.js:2453-2508)', () =>
 
   it('remembers the precision hint from a failed market close (render.js:2348-2357)', async () => {
     const { env } = mountModal({ manageError: 'minimum amount precision of 0.5 required' });
-    await flushPromises();
+    await settle();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
     /* a sub-precision amount passes local validation, then the server
        rejects it and the hint blocks it from re-running (render.js:2642) */
@@ -432,7 +433,7 @@ describe('PositionsManageModal — action requests (render.js:2453-2508)', () =>
       status: 200,
       json: async () => ({ ok: true, dry_run: true, config: { live: { user: 'alice' } } }),
     });
-    await flushPromises();
+    await settle();
     const previewBtn = Array.from(document.querySelectorAll<HTMLButtonElement>('#dp-manage-modal .dp-modal-actions button'))
       .find((b) => b.textContent === 'Preview Panic')!;
     await click(previewBtn);
@@ -464,7 +465,7 @@ describe('PositionsManageModal — action requests (render.js:2453-2508)', () =>
 
   it('runs the all-position actions from the footer with the selected user (render.js:3025-3072)', async () => {
     const { env } = mountModal({ selectedRow: ROWS[1] });
-    await flushPromises();
+    await settle();
     const panic = Array.from(document.querySelectorAll<HTMLButtonElement>('#dp-manage-modal .dp-modal-actions button'))
       .find((b) => b.textContent === 'Panic')!;
     await click(panic);
@@ -478,7 +479,7 @@ describe('PositionsManageModal — action requests (render.js:2453-2508)', () =>
 
   it('footer buttons follow the selection/busy state (render.js:2657-2691)', async () => {
     mountModal({ rows: [] });
-    await flushPromises();
+    await settle();
     const preview = Array.from(document.querySelectorAll<HTMLButtonElement>('#dp-manage-modal .dp-modal-actions button'))
       .find((b) => b.textContent === 'Preview Panic')!;
     expect(preview.disabled).toBe(true);
@@ -488,7 +489,7 @@ describe('PositionsManageModal — action requests (render.js:2453-2508)', () =>
 
   it('closes from the head and footer close buttons (render.js:3023-3024)', async () => {
     const { env } = mountModal();
-    await flushPromises();
+    await settle();
     await click(document.querySelector('#dp-manage-modal .dp-modal-close')!);
     expect(env.close).toHaveBeenCalledTimes(1);
     const closeOnly = Array.from(document.querySelectorAll<HTMLButtonElement>('#dp-manage-modal .dp-modal-actions button'))
@@ -501,17 +502,17 @@ describe('PositionsManageModal — action requests (render.js:2453-2508)', () =>
 describe('PositionsManageModal — drag and resize (render.js:3074-3182)', () => {
   it('drags the modal from the head within the viewport clamps', async () => {
     mountModal();
-    await flushPromises();
+    await settle();
     const head = document.querySelector<HTMLElement>('#dp-manage-modal .dp-modal-head')!;
     head.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 100, clientY: 100 }));
     document.dispatchEvent(new MouseEvent('mousemove', { clientX: 500, clientY: 300 }));
-    await flushPromises();
+    await settle();
     const style = document.querySelector<HTMLElement>('#dp-manage-modal .dp-modal')!.getAttribute('style')!;
     expect(style).toContain('left: 416px'); /* 16 + (500-100) */
     expect(style).toContain('top: 424px'); /* 224 + (300-100) */
     /* clamped at innerWidth-80 / innerHeight-48 */
     document.dispatchEvent(new MouseEvent('mousemove', { clientX: 5000, clientY: 5000 }));
-    await flushPromises();
+    await settle();
     const style2 = document.querySelector<HTMLElement>('#dp-manage-modal .dp-modal')!.getAttribute('style')!;
     expect(style2).toContain('left: 944px');
     expect(style2).toContain('top: 720px');
@@ -522,22 +523,22 @@ describe('PositionsManageModal — drag and resize (render.js:3074-3182)', () =>
 
   it('does not drag from the close button (render.js:3078)', async () => {
     mountModal();
-    await flushPromises();
+    await settle();
     const close = document.querySelector<HTMLElement>('#dp-manage-modal .dp-modal-close')!;
     close.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 0, clientY: 0 }));
     document.dispatchEvent(new MouseEvent('mousemove', { clientX: 400, clientY: 400 }));
-    await flushPromises();
+    await settle();
     const style = document.querySelector<HTMLElement>('#dp-manage-modal .dp-modal')!.getAttribute('style')!;
     expect(style).toContain('left: 16px'); /* unchanged */
   });
 
   it('resizes from the se handle with viewport clamps', async () => {
     mountModal();
-    await flushPromises();
+    await settle();
     const handle = document.querySelector<HTMLElement>('.dp-resize-se')!;
     handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 500, clientY: 300 }));
     document.dispatchEvent(new MouseEvent('mousemove', { clientX: 600, clientY: 350 }));
-    await flushPromises();
+    await settle();
     const style = document.querySelector<HTMLElement>('#dp-manage-modal .dp-modal')!.getAttribute('style')!;
     expect(style).toContain('height: 370px'); /* 320 + 50 */
     /* width clamped to innerWidth - left - 12 = 996 */
@@ -548,11 +549,11 @@ describe('PositionsManageModal — drag and resize (render.js:3074-3182)', () =>
 
   it('enforces the 640×280 minimum from the nw handle', async () => {
     mountModal();
-    await flushPromises();
+    await settle();
     const handle = document.querySelector<HTMLElement>('.dp-resize-nw')!;
     handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 20, clientY: 230 }));
     document.dispatchEvent(new MouseEvent('mousemove', { clientX: 3000, clientY: 3000 }));
-    await flushPromises();
+    await settle();
     const style = document.querySelector<HTMLElement>('#dp-manage-modal .dp-modal')!.getAttribute('style')!;
     expect(style).toContain('width: 640px');
     expect(style).toContain('height: 280px');
@@ -561,25 +562,25 @@ describe('PositionsManageModal — drag and resize (render.js:3074-3182)', () =>
 
   it('keeps the user geometry when rows change (render.js:2270-2276)', async () => {
     const { wrapper } = mountModal();
-    await flushPromises();
+    await settle();
     const handle = document.querySelector<HTMLElement>('.dp-resize-se')!;
     handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 500, clientY: 300 }));
     document.dispatchEvent(new MouseEvent('mousemove', { clientX: 600, clientY: 350 }));
     document.dispatchEvent(new MouseEvent('mouseup'));
-    await flushPromises();
+    await settle();
     const many: PositionRow[] = Array.from({ length: 8 }, (_, i) => ({ ...ROWS[0]!, symbol: 'S' + i + 'USDT' }));
     await wrapper.setProps({ rows: many });
-    await flushPromises();
+    await settle();
     const style = document.querySelector<HTMLElement>('#dp-manage-modal .dp-modal')!.getAttribute('style')!;
     expect(style).toContain('height: 370px'); /* unchanged — user-resized */
   });
 
   it('re-fits the dialog height when rows grow without user resize (render.js:2267-2277)', async () => {
     const { wrapper } = mountModal();
-    await flushPromises();
+    await settle();
     const many: PositionRow[] = Array.from({ length: 8 }, (_, i) => ({ ...ROWS[0]!, symbol: 'S' + i + 'USDT' }));
     await wrapper.setProps({ rows: many });
-    await flushPromises();
+    await settle();
     const style = document.querySelector<HTMLElement>('#dp-manage-modal .dp-modal')!.getAttribute('style')!;
     expect(style).toContain('height: 596px'); /* min(672, max(280, min(640, 190+406))) */
     expect(document.querySelector<HTMLElement>('#dp-manage-modal .dp-manage-wrap')!.style.maxHeight).toBe('406px');
@@ -592,7 +593,7 @@ describe('PositionsConfigPreviewModal', () => {
       props: { title: 'T', config: { a: 1 } },
       attachTo: document.createElement('div'),
     });
-    await flushPromises();
+    await settle();
     const preview = document.querySelector('.dp-preview')!;
     expect(preview.querySelector('.vjs-tree')).not.toBeNull();
     expect(preview.textContent).toContain('"a"');
@@ -602,7 +603,7 @@ describe('PositionsConfigPreviewModal', () => {
 
   it('renders a null config as an empty tree', async () => {
     mount(PositionsConfigPreviewModal, { props: { title: 'T', config: null } });
-    await flushPromises();
+    await settle();
     expect(document.querySelector('.dp-preview')!.querySelector('.vjs-tree')).not.toBeNull();
     expect(document.querySelector('.dp-preview')!.textContent).toContain('{}');
   });

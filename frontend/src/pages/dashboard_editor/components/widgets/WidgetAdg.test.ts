@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
+import { settle } from '@/shared/testing/settle';
 import { defineComponent } from 'vue';
 import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
@@ -89,7 +90,7 @@ function mountAdg(options: {
 describe('WidgetAdg', () => {
   it('writes the legacy ensure-defaults block and fetches adg_data', async () => {
     const { env } = mountAdg();
-    await flushPromises();
+    await settle();
     expect(env.store.state['dashboard_adg_users_1_2']).toEqual(['ALL']);
     expect(env.store.state['dashboard_adg_period_1_2']).toBe('THIS_MONTH');
     expect(env.store.state['dashboard_adg_mode_1_2']).toBe('bar');
@@ -98,7 +99,7 @@ describe('WidgetAdg', () => {
 
   it('renders the literal ADG title (untranslated in legacy, render.js:4015) and ADG traces', async () => {
     const { wrapper } = mountAdg();
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.dt-title').text()).toBe('ADG');
     expect(wrapper.find('.dt-icon svg').exists()).toBe(true);
     expect(react.mock.calls[0]![1]).toEqual([
@@ -116,7 +117,7 @@ describe('WidgetAdg', () => {
 
   it('renders the balance summary line before the daterange (render.js:4024-4031)', async () => {
     const { wrapper } = mountAdg();
-    await flushPromises();
+    await settle();
     const ranges = wrapper.findAll('.dt-daterange');
     expect(ranges).toHaveLength(2);
     expect(ranges[0]!.text()).toBe(
@@ -129,13 +130,13 @@ describe('WidgetAdg', () => {
     const { wrapper } = mountAdg({
       payload: { ...ADG_PAYLOAD, starting_balance: undefined },
     });
-    await flushPromises();
+    await settle();
     expect(wrapper.findAll('.dt-daterange')).toHaveLength(1);
   });
 
   it('shows the no-data state for empty bars', async () => {
     const { wrapper } = mountAdg({ payload: { ...ADG_PAYLOAD, bars: [] } });
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.dt-nodata').text()).toBe('No data for the selected period.');
     expect(react).not.toHaveBeenCalled();
   });

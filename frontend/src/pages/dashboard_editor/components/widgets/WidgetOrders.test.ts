@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { settle } from '@/shared/testing/settle';
 import { defineComponent } from 'vue';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
@@ -230,10 +231,6 @@ function linkedConfig(extra: Record<string, unknown> = {}): Record<string, unkno
   };
 }
 
-async function settle(): Promise<void> {
-  await flushPromises();
-  await flushPromises();
-}
 
 beforeEach(() => {
   resetDashboardStore();

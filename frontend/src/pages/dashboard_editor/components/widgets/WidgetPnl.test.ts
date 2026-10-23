@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
-import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
+import { settle } from '@/shared/testing/settle';
 import { defineComponent } from 'vue';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
@@ -97,7 +98,7 @@ function mountPnl(options: {
 describe('WidgetPnl', () => {
   it('writes the legacy ensure-defaults block into state (editor:1522-1524)', async () => {
     const { env } = mountPnl();
-    await flushPromises();
+    await settle();
     expect(env.store.state['dashboard_pnl_users_1_2']).toEqual(['ALL']);
     expect(env.store.state['dashboard_pnl_period_1_2']).toBe('THIS_MONTH');
     expect(env.store.state['dashboard_pnl_mode_1_2']).toBe('bar');
@@ -105,13 +106,13 @@ describe('WidgetPnl', () => {
 
   it('fetches the legacy pnl_data URL (editor:1525-1527)', async () => {
     const { env } = mountPnl();
-    await flushPromises();
+    await settle();
     expect(env.fetch).toHaveBeenCalledWith('/api/dashboard/pnl_data?users=ALL&period=THIS_MONTH&mode=bar');
   });
 
   it('renders the legacy title/icon/daterange and bar traces', async () => {
     const { wrapper } = mountPnl();
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.dt-title').text()).toBe('Daily PNL');
     expect(wrapper.find('.dt-icon svg').exists()).toBe(true);
     expect(wrapper.get('.dt-daterange').text()).toBe('From: 2025-01-01  To: 2025-01-02');
@@ -130,29 +131,29 @@ describe('WidgetPnl', () => {
 
   it('uses the server mode for the trace shape (render.js:1596 `(data && data.mode) || "bar"`)', async () => {
     mountPnl({ payload: { ...PNL_PAYLOAD, mode: 'line' } });
-    await flushPromises();
+    await settle();
     expect((react.mock.calls[0]![1] as Record<string, unknown>[])[0]!.type).toBe('scatter');
   });
 
   it('writes the mode state and refetches on the mode select (editor:1554-1557)', async () => {
     const { wrapper, env } = mountPnl();
-    await flushPromises();
+    await settle();
     await pickSelectOption(wrapper, '.dt-ctrl-sel', 'line');
     expect(env.store.state['dashboard_pnl_mode_1_2']).toBe('line');
-    await flushPromises();
+    await settle();
     expect(env.fetch).toHaveBeenLastCalledWith('/api/dashboard/pnl_data?users=ALL&period=THIS_MONTH&mode=line');
   });
 
   it('shows the no-data state for empty bars and clears the zoom memory (render.js:1734-1740)', async () => {
     const { wrapper } = mountPnl({ payload: { ...PNL_PAYLOAD, bars: [] } });
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.dt-nodata').text()).toBe('No data for the selected period.');
     expect(react).not.toHaveBeenCalled();
   });
 
   it('wires zoom preservation: zoomPos + applyRangeZoom (render.js:1630-1637)', async () => {
     const { wrapper } = mountPnl();
-    await flushPromises();
+    await settle();
     const chart = wrapper.findComponent(PlotlyChart);
     expect(chart.props('zoomPos')).toBe('1_2');
     expect(chart.props('applyZoom')).toBe(applyRangeZoom);
@@ -160,7 +161,7 @@ describe('WidgetPnl', () => {
 
   it('shows the data-unavailable error when the fetch fails', async () => {
     const { wrapper } = mountPnl({ fetchError: true });
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.dt-status').text()).toBe('⚠ Data unavailable');
   });
 });

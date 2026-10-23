@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
-import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
+import { settle } from '@/shared/testing/settle';
 import { nextTick } from 'vue';
 import { createI18n } from '@/shared/i18n';
 import App from './App.vue';
@@ -109,8 +110,7 @@ afterEach(() => {
 describe('editor shell (editor:458-487)', () => {
   it('renders the legacy shell layout without the disabled migration watermark', async () => {
     const wrapper = mountApp();
-    await flushPromises();
-
+    await settle();
     expect(wrapper.find('.editor-wrapper').exists()).toBe(true);
     expect(wrapper.find('.editor-sticky-top').exists()).toBe(true);
     expect(wrapper.find('.editor-header').exists()).toBe(true);
@@ -124,27 +124,27 @@ describe('editor shell (editor:458-487)', () => {
 
   it('sets the document title from i18n (legacy dash.editorTitle)', async () => {
     mountApp();
-    await flushPromises();
+    await settle();
     expect(document.title).toBe('Dashboard Editor');
   });
 
   it('applies the standalone body class in standalone mode', async () => {
     mountApp('?name=Draft&standalone=1');
-    await flushPromises();
+    await settle();
     expect(document.body.classList.contains('standalone-mode')).toBe(true);
     expect(document.body.classList.contains('view-mode')).toBe(false);
   });
 
   it('applies the view-mode body class and not standalone in view mode', async () => {
     mountApp('?name=Draft&view_only=1');
-    await flushPromises();
+    await settle();
     expect(document.body.classList.contains('view-mode')).toBe(true);
     expect(document.body.classList.contains('standalone-mode')).toBe(false);
   });
 
   it('applies no mode classes for the plain edit mode', async () => {
     mountApp('?name=Draft');
-    await flushPromises();
+    await settle();
     expect(document.body.className).toBe('');
   });
 });
@@ -152,8 +152,7 @@ describe('editor shell (editor:458-487)', () => {
 describe('init (editor:2636-2705)', () => {
   it('loads users then the pending config in edit mode and renders the grid', async () => {
     const wrapper = mountApp('?name=Draft&standalone=1');
-    await flushPromises();
-
+    await settle();
     expect(fetchMock.mock.calls[0]?.[0]).toBe(`${API}/dashboard/users`);
     expect(fetchMock.mock.calls[1]?.[0]).toBe(`${API}/dashboard/pending_full?name=Draft`);
     expect(useDashboardStore().rows).toBe(2);
@@ -173,8 +172,7 @@ describe('init (editor:2636-2705)', () => {
       return json({});
     });
     mountApp('?name=ViewMe&view_only=1');
-    await flushPromises();
-
+    await settle();
     expect(fetchMock).toHaveBeenCalledWith(`${API}/dashboards/ViewMe`);
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('pending_full'))).toBe(false);
     expect(useDashboardStore().cols).toBe(2);
@@ -191,7 +189,7 @@ describe('init (editor:2636-2705)', () => {
       return json({});
     });
     mountApp('?name=Saved&standalone=1');
-    await flushPromises();
+    await settle();
     expect(useDashboardStore().rows).toBe(3);
   });
 
@@ -202,7 +200,7 @@ describe('init (editor:2636-2705)', () => {
       return json({ found: false, config: {} });
     });
     const wrapper = mountApp('?name=NewOne&standalone=1');
-    await flushPromises();
+    await settle();
     expect(useDashboardStore().rows).toBe(1);
     expect(wrapper.findAll('.editor-cell')).toHaveLength(1);
   });
@@ -211,7 +209,7 @@ describe('init (editor:2636-2705)', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     fetchMock.mockRejectedValue(new Error('network down'));
     const wrapper = mountApp('?name=X&standalone=1');
-    await flushPromises();
+    await settle();
     /* store still falls back to the fresh 1×1 (legacy parity) … */
     expect(useDashboardStore().rows).toBe(1);
     /* … but the user sees the error state instead of a silent dead canvas */
@@ -222,7 +220,7 @@ describe('init (editor:2636-2705)', () => {
     /* retry re-runs init against a healthy backend and restores the grid */
     defaultFetch();
     await wrapper.get('[data-state="error"] button').trigger('click');
-    await flushPromises();
+    await settle();
     expect(wrapper.find('[data-state="error"]').exists()).toBe(false);
     expect(wrapper.findAll('.editor-cell').length).toBeGreaterThan(0);
     errorSpy.mockRestore();
@@ -232,11 +230,9 @@ describe('init (editor:2636-2705)', () => {
 describe('save/cancel flows (editor:2707-2742)', () => {
   it('pbgui_trigger_save posts the config and answers with pbgui_editor_saved', async () => {
     mountApp('?name=Draft&standalone=1');
-    await flushPromises();
-
+    await settle();
     await message({ type: 'pbgui_trigger_save' });
-    await flushPromises();
-
+    await settle();
     const post = fetchMock.mock.calls.find((c) => String(c[0]).includes('/dashboards/'));
     expect(post).toBeTruthy();
     expect(post?.[0]).toBe(`${API}/dashboards/Draft`);
@@ -250,9 +246,9 @@ describe('save/cancel flows (editor:2707-2742)', () => {
 
   it('shows the saved status after a successful save (editor:2712-2721)', async () => {
     const wrapper = mountApp('?name=Draft&standalone=1');
-    await flushPromises();
+    await settle();
     await message({ type: 'pbgui_trigger_save' });
-    await flushPromises();
+    await settle();
     expect(wrapper.find('#status').text()).toBe('saved');
     expect(wrapper.find('#status').classes()).toContain('saved');
   });
@@ -264,11 +260,9 @@ describe('save/cancel flows (editor:2707-2742)', () => {
       return json({ found: false, config: {} });
     });
     const wrapper = mountApp('?standalone=1');
-    await flushPromises();
-
+    await settle();
     await message({ type: 'pbgui_trigger_save' });
-    await flushPromises();
-
+    await settle();
     expect(wrapper.find('#status').text()).toBe('Please enter a dashboard name.');
     expect(wrapper.find('#status').classes()).toContain('error');
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/dashboards/'))).toBe(false);
@@ -286,9 +280,9 @@ describe('save/cancel flows (editor:2707-2742)', () => {
       return json({});
     });
     const wrapper = mountApp('?name=Draft&standalone=1');
-    await flushPromises();
+    await settle();
     await message({ type: 'pbgui_trigger_save' });
-    await flushPromises();
+    await settle();
     expect(wrapper.find('#status').text()).toBe('offline');
     expect(wrapper.find('#status').classes()).toContain('error');
     expect(parentPost).not.toHaveBeenCalled();
@@ -296,7 +290,7 @@ describe('save/cancel flows (editor:2707-2742)', () => {
 
   it('pbgui_trigger_cancel answers with pbgui_editor_cancelled and the original name', async () => {
     mountApp('?name=Orig&standalone=1');
-    await flushPromises();
+    await settle();
     await message({ type: 'pbgui_trigger_cancel' });
     expect(parentPost).toHaveBeenCalledWith(
       { type: 'pbgui_editor_cancelled', original_name: 'Orig' },
@@ -306,10 +300,9 @@ describe('save/cancel flows (editor:2707-2742)', () => {
 
   it('pbgui_trigger_view_save saves the layout and answers pbgui_view_saved (editor:617-626, 2739)', async () => {
     mountApp('?name=ViewMe&view_only=1');
-    await flushPromises();
+    await settle();
     await message({ type: 'pbgui_trigger_view_save' });
-    await flushPromises();
-
+    await settle();
     const post = fetchMock.mock.calls.find(
       (c) => String(c[0]).includes('/dashboards/') && (c[1] as RequestInit | undefined)?.method === 'POST'
     );
@@ -319,7 +312,7 @@ describe('save/cancel flows (editor:2707-2742)', () => {
 
   it('ignores non-object message data (editor:2734)', async () => {
     mountApp();
-    await flushPromises();
+    await settle();
     await message('nope');
     expect(parentPost).not.toHaveBeenCalled();
   });
@@ -328,10 +321,10 @@ describe('save/cancel flows (editor:2707-2742)', () => {
 describe('status sync with the store (editor:541-544, 600-610)', () => {
   it('mirrors doSync statuses into the badge', async () => {
     const wrapper = mountApp('?name=Draft&standalone=1');
-    await flushPromises();
+    await settle();
     const store = useDashboardStore();
     await store.doSync();
-    await flushPromises();
+    await settle();
     expect(wrapper.find('#status').text()).toBe('saved');
     expect(wrapper.find('#status').classes()).toContain('saved');
   });
@@ -340,7 +333,7 @@ describe('status sync with the store (editor:541-544, 600-610)', () => {
 describe('dropdown close-on-click (editor:2744-2747)', () => {
   it('closes every open dropdown on any document click', async () => {
     mountApp();
-    await flushPromises();
+    await settle();
     openMselDropdown(() => undefined);
     expect(isMselOpen()).toBe(true);
     document.body.click();
@@ -351,14 +344,14 @@ describe('dropdown close-on-click (editor:2744-2747)', () => {
 describe('WebSocket orchestration (editor:2749-2826)', () => {
   it('connects to /ws/dashboard derived from the api base', async () => {
     mountApp('?name=Draft&standalone=1');
-    await flushPromises();
+    await settle();
     expect(FakeWebSocket.instances).toHaveLength(1);
     expect(FakeWebSocket.instances[0]?.url).toBe('ws://pbgui.test:8000/ws/dashboard');
   });
 
   it('rebuilds affected cells 300 ms after an income_updated event', async () => {
     const wrapper = mountApp('?name=Draft&standalone=1');
-    await flushPromises();
+    await settle();
     const ws = FakeWebSocket.instances[0];
     expect(ws).toBeTruthy();
     const store = useDashboardStore();
@@ -367,7 +360,7 @@ describe('WebSocket orchestration (editor:2749-2826)', () => {
     ws?.onmessage?.({ data: JSON.stringify({ type: 'income_updated' }) });
     /* the PNL cell (1_1) must remount: epoch bump changes the widget key */
     await new Promise((resolve) => setTimeout(resolve, 320));
-    await flushPromises();
+    await settle();
     expect(store.epochOf(1, 1)).toBe(pnlBefore + 1);
     /* empty cell (2_1) untouched */
     expect(store.epochOf(2, 1)).toBe(emptyBefore);
@@ -377,7 +370,7 @@ describe('WebSocket orchestration (editor:2749-2826)', () => {
 
   it('skips positions_updated rebuilds for cells with an active live poll (editor:2807)', async () => {
     mountApp('?name=Draft&standalone=1');
-    await flushPromises();
+    await settle();
     const ws = FakeWebSocket.instances[0];
     expect(ws).toBeTruthy();
     const store = useDashboardStore();
@@ -386,12 +379,12 @@ describe('WebSocket orchestration (editor:2749-2826)', () => {
     setLivePositionsActive('2_1', true);
     ws?.onmessage?.({ data: JSON.stringify({ type: 'positions_updated' }) });
     await new Promise((resolve) => setTimeout(resolve, 320));
-    await flushPromises();
+    await settle();
     expect(store.epochOf(2, 1)).toBe(before); /* live poll owns the refresh */
     setLivePositionsActive('2_1', false);
     ws?.onmessage?.({ data: JSON.stringify({ type: 'positions_updated' }) });
     await new Promise((resolve) => setTimeout(resolve, 320));
-    await flushPromises();
+    await settle();
     expect(store.epochOf(2, 1)).toBe(before + 1); /* rebuilt once not live */
   });
 });

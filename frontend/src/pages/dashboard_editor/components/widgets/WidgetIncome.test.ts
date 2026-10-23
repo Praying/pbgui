@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
+import { settle } from '@/shared/testing/settle';
 import { pickSelectOption } from '@/shared/testing/select';
 import type { VueWrapper } from '@vue/test-utils';
 import { defineComponent } from 'vue';
@@ -124,7 +125,7 @@ afterEach(() => {
 describe('WidgetIncome config + fetch (editor:1352-1389)', () => {
   it('writes the legacy ensure-defaults block into state (editor:1357-1361)', async () => {
     const { env } = mountIncome();
-    await flushPromises();
+    await settle();
     expect(env.store.state['dashboard_income_users_1_2']).toEqual(['ALL']);
     expect(env.store.state['dashboard_income_period_1_2']).toBe('THIS_MONTH');
     expect(env.store.state['dashboard_income_last_1_2']).toBe(0);
@@ -141,7 +142,7 @@ describe('WidgetIncome config + fetch (editor:1352-1389)', () => {
         dashboard_income_filter_1_2: 1.5,
       },
     });
-    await flushPromises();
+    await settle();
     expect(env.fetch).toHaveBeenCalledWith(
       '/api/dashboard/income_data?users=alice&period=TODAY&last_n=50&filter=1.5'
     );
@@ -149,13 +150,13 @@ describe('WidgetIncome config + fetch (editor:1352-1389)', () => {
 
   it('fetches the legacy income_data URL with the ALL default (editor:1381-1385)', async () => {
     const { env } = mountIncome();
-    await flushPromises();
+    await settle();
     expect(env.fetch).toHaveBeenCalledWith('/api/dashboard/income_data?users=ALL&period=THIS_MONTH&last_n=0&filter=0');
   });
 
   it('shows the loading state first and the data-unavailable error on failure', async () => {
     const loading = mountIncome({ payload: undefined, fetchError: true });
-    await flushPromises();
+    await settle();
     expect(loading.wrapper.get('.dt-status').text()).toBe('⚠ Data unavailable');
   });
 });
@@ -163,7 +164,7 @@ describe('WidgetIncome config + fetch (editor:1352-1389)', () => {
 describe('WidgetIncome chrome (render.js:903-1009)', () => {
   it('renders the Income title, 💰 icon, controls and daterange', async () => {
     const { wrapper } = mountIncome();
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.dt-title').text()).toBe('Income');
     expect(wrapper.find('.dt-icon svg').exists()).toBe(true);
     expect(wrapper.get('.dt-daterange').text()).toBe('From: 2024-01-01  To: 2024-01-31');
@@ -173,7 +174,7 @@ describe('WidgetIncome chrome (render.js:903-1009)', () => {
 
   it('renders the Last N + Filter + Users control labels in legacy order', async () => {
     const { wrapper } = mountIncome();
-    await flushPromises();
+    await settle();
     const labels = wrapper.findAll('.dt-meta-lbl').map((l) => l.text());
     expect(labels).toEqual(['Period', 'Last N', 'Filter', 'Users']);
   });
@@ -182,7 +183,7 @@ describe('WidgetIncome chrome (render.js:903-1009)', () => {
 describe('WidgetIncome chart mode (server mode=chart, render.js:1016-1018)', () => {
   it('mounts IncomeChart (not the table) with the server traces', async () => {
     const { wrapper } = mountIncome();
-    await flushPromises();
+    await settle();
     expect(wrapper.findComponent(IncomeChart).exists()).toBe(true);
     expect(wrapper.findComponent(IncomeTable).exists()).toBe(false);
     expect(wrapper.getComponent(IncomeChart).props('traces')).toEqual(CHART_PAYLOAD.traces);
@@ -191,7 +192,7 @@ describe('WidgetIncome chart mode (server mode=chart, render.js:1016-1018)', () 
 
   it('renders the no-data state when the chart payload has no traces', async () => {
     const { wrapper } = mountIncome({ payload: { ...CHART_PAYLOAD, traces: [] } });
-    await flushPromises();
+    await settle();
     expect(wrapper.get('.dt-nodata').text()).toBe('No data for the selected period.');
     expect(wrapper.findComponent(PlotlyChart).exists()).toBe(false);
   });
@@ -203,7 +204,7 @@ describe('WidgetIncome table mode (server mode=table, render.js:1014-1015)', () 
       config: { dashboard_type_1_2: 'INCOME', dashboard_income_last_1_2: 100 },
       payload: TABLE_PAYLOAD,
     });
-    await flushPromises();
+    await settle();
     expect(wrapper.findComponent(IncomeTable).exists()).toBe(true);
     expect(wrapper.findComponent(IncomeChart).exists()).toBe(false);
     const table = wrapper.getComponent(IncomeTable);
@@ -217,7 +218,7 @@ describe('WidgetIncome table mode (server mode=table, render.js:1014-1015)', () 
 
   it('defaults mode to chart when the payload omits it (render.js:860/1011)', async () => {
     const { wrapper } = mountIncome({ payload: { traces: CHART_PAYLOAD.traces } });
-    await flushPromises();
+    await settle();
     expect(wrapper.findComponent(IncomeChart).exists()).toBe(true);
   });
 });
@@ -225,11 +226,11 @@ describe('WidgetIncome table mode (server mode=table, render.js:1014-1015)', () 
 describe('WidgetIncome controls (editor:1391-1473)', () => {
   it('writes last_n and refetches on the Last N change (editor:1450-1458)', async () => {
     const { wrapper, env } = mountIncome({ payload: TABLE_PAYLOAD });
-    await flushPromises();
+    await settle();
     const input = wrapper.findAll('input.dt-ctrl-num')[0]!;
     await input.setValue('100');
     expect(env.store.state['dashboard_income_last_1_2']).toBe(100);
-    await flushPromises();
+    await settle();
     expect(env.fetch).toHaveBeenLastCalledWith(
       '/api/dashboard/income_data?users=ALL&period=THIS_MONTH&last_n=100&filter=0'
     );
@@ -239,7 +240,7 @@ describe('WidgetIncome controls (editor:1391-1473)', () => {
     const { wrapper, env } = mountIncome({
       config: { dashboard_type_1_2: 'INCOME', dashboard_income_last_1_2: 40 },
     });
-    await flushPromises();
+    await settle();
     const input = wrapper.findAll('input.dt-ctrl-num')[0]!;
     await input.setValue('abc');
     expect(env.store.state['dashboard_income_last_1_2']).toBe(0);
@@ -247,11 +248,11 @@ describe('WidgetIncome controls (editor:1391-1473)', () => {
 
   it('writes the filter value and refetches (editor:1459-1468)', async () => {
     const { wrapper, env } = mountIncome();
-    await flushPromises();
+    await settle();
     const input = wrapper.findAll('input.dt-ctrl-num')[1]!;
     await input.setValue('2.5');
     expect(env.store.state['dashboard_income_filter_1_2']).toBe(2.5);
-    await flushPromises();
+    await settle();
     expect(env.fetch.mock.calls.some(([url]) =>
       url === '/api/dashboard/income_data?users=ALL&period=THIS_MONTH&last_n=0&filter=2.5'
     )).toBe(true);
@@ -259,10 +260,10 @@ describe('WidgetIncome controls (editor:1391-1473)', () => {
 
   it('writes the period through PeriodControls and refetches (editor:1391-1411)', async () => {
     const { wrapper, env } = mountIncome();
-    await flushPromises();
+    await settle();
     await pickSelectOption(wrapper, '.dt-ctrl-sel', 'TODAY');
     expect(env.store.state['dashboard_income_period_1_2']).toBe('TODAY');
-    await flushPromises();
+    await settle();
     /* not LastCalledWith: the debounced scheduleSync POST may land after the
        refetch now that the listbox interaction takes real-timer hops */
     expect(env.fetch).toHaveBeenCalledWith(
@@ -272,10 +273,10 @@ describe('WidgetIncome controls (editor:1391-1473)', () => {
 
   it('switching Last N>0 renders the table once table data arrives', async () => {
     const { wrapper } = mountIncome({ payload: TABLE_PAYLOAD });
-    await flushPromises();
+    await settle();
     const input = wrapper.findAll('input.dt-ctrl-num')[0]!;
     await input.setValue('50');
-    await flushPromises();
+    await settle();
     expect(wrapper.findComponent(IncomeTable).exists()).toBe(true);
   });
 });
@@ -306,7 +307,7 @@ describe('WidgetIncome cell pre-height freeze (editor:1474-1490)', () => {
 
   it('freezes the cell at its pre-table height when nothing is stored', async () => {
     const { wrapper } = mountIncome({ payload: TABLE_PAYLOAD, hostClass: 'editor-cell cell-wrap' });
-    await flushPromises();
+    await settle();
     const cell = wrapper.element as HTMLElement;
     expect(cell.classList.contains('editor-cell')).toBe(true);
     expect(cell.style.height).toBe('420px');
@@ -319,17 +320,17 @@ describe('WidgetIncome cell pre-height freeze (editor:1474-1490)', () => {
       payload: TABLE_PAYLOAD,
       hostClass: 'editor-cell cell-wrap',
     });
-    await flushPromises();
+    await settle();
     expect((wrapper.element as HTMLElement).style.height).toBe('');
   });
 
   it('skips the freeze for auto-height cells (editor:1483)', async () => {
     const store = useDashboardStore();
     const { wrapper } = mountIncome({ payload: TABLE_PAYLOAD, hostClass: 'editor-cell cell-wrap' });
-    await flushPromises();
+    await settle();
     expect((wrapper.element as HTMLElement).style.height).toBe('420px');
     store.resetCellHeight(1, 2); /* dblclick reset → auto-height flag */
-    await flushPromises();
+    await settle();
     /* the watcher must CLEAR the frozen inline height (legacy dblclick
        editor:2439-2441: cellEl.style.height = '') */
     expect((wrapper.element as HTMLElement).style.height).toBe('');
@@ -363,7 +364,7 @@ describe('WidgetIncome cell pre-height freeze (editor:1474-1490)', () => {
       template: '<div class="cell-wrap"><WidgetIncome /></div>',
     });
     mount(host, { attachTo: cellEl });
-    await flushPromises();
+    await settle();
     expect(cellEl.style.height).toBe('500px');
     cellEl.remove();
   });
@@ -372,11 +373,11 @@ describe('WidgetIncome cell pre-height freeze (editor:1474-1490)', () => {
 describe('WidgetIncome reload (editor:1497 onReload)', () => {
   it('refetches through the IncomeTable onReload prop', async () => {
     const { wrapper, env } = mountIncome({ payload: TABLE_PAYLOAD });
-    await flushPromises();
+    await settle();
     env.fetch.mockClear();
     const reload = wrapper.getComponent(IncomeTable).props('onReload') as () => void;
     reload();
-    await flushPromises();
+    await settle();
     expect(env.fetch).toHaveBeenCalledTimes(1);
     expect(env.fetch).toHaveBeenCalledWith('/api/dashboard/income_data?users=ALL&period=THIS_MONTH&last_n=0&filter=0');
   });

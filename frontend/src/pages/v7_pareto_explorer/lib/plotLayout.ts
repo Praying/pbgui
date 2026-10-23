@@ -18,21 +18,29 @@ const DARK = {
   bg: '#10141d',
   text: '#e8ecf4',
   grid: 'rgba(255,255,255,0.12)',
+  sceneGrid: 'rgba(255,255,255,0.12)',
   zeroline: 'rgba(255,255,255,0.18)',
   polarGrid: 'rgba(255,255,255,0.16)',
   polarLine: 'rgba(255,255,255,0.22)',
 } as const;
 
-function palette(): typeof DARK | { bg: string; text: string; grid: string; zeroline: string; polarGrid: string; polarLine: string } {
+type Palette = { bg: string; text: string; grid: string; sceneGrid: string; zeroline: string; polarGrid: string; polarLine: string };
+
+function palette(): Palette {
   if (currentTheme() !== 'light') return DARK;
   const c = themeColors();
   const ink = (a: number) => `rgba(15,31,39,${a})`;
-  return { bg: c.surface, text: c.text, grid: ink(0.12), zeroline: ink(0.2), polarGrid: ink(0.16), polarLine: ink(0.24) };
+  /* 2D grids stay faint (0.12): they sit behind data on a clean plane. The 3D
+     scene box and polar rings are the chart's only frame, and on a near-white
+     surface a 12% ink wash disappears entirely (verified by rendering the real
+     WebGL scene at 0.12 / 0.35 / 0.6). They need a firmer ink than white-on-dark
+     ever did, because light-on-dark has far more luminance headroom. */
+  return { bg: c.surface, text: c.text, grid: ink(0.12), sceneGrid: ink(0.45), zeroline: ink(0.2), polarGrid: ink(0.4), polarLine: ink(0.55) };
 }
 
 function sceneAxis(source: unknown): PlotlyLayout {
   const P = palette();
-  return { backgroundcolor: P.bg, gridcolor: P.grid, color: P.text, ...((source as PlotlyLayout) || {}) };
+  return { backgroundcolor: P.bg, gridcolor: P.sceneGrid, color: P.text, ...((source as PlotlyLayout) || {}) };
 }
 
 function polarAxis(source: unknown): PlotlyLayout {
