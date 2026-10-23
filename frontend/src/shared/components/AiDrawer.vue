@@ -162,9 +162,9 @@ function onQuickReply(actionId: string, value: string): void {
 
 <template>
   <Transition
-    enter-active-class="transition-transform duration-[180ms] ease-standard"
+    enter-active-class="transition-transform duration-sheet ease-out"
     enter-from-class="translate-x-full"
-    leave-active-class="transition-transform duration-[180ms] ease-standard"
+    leave-active-class="transition-transform duration-base ease-out"
     leave-to-class="translate-x-full"
   >
     <aside

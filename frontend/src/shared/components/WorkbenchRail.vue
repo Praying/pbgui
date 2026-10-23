@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
-import { PhSidebarSimple, PhSparkle } from '@phosphor-icons/vue';
+import { PhGridFour, PhRows, PhSidebarSimple, PhSparkle } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import type { NavigationGroup, NavigationItem, PageSection } from '@/shared/navigation';
 import { markAiUserInteraction, useAiDrawerAvailable } from '@/shared/ai/drawer';
 import { toggleAiDrawer, useAiDrawer } from '@/shared/ai/useAiDrawer';
+import { useDensity } from '@/shared/composables/useDensity';
 import IconButton from './IconButton.vue';
 import PbIcon from './PbIcon.vue';
 
@@ -33,6 +34,7 @@ const { t } = useI18n();
    real user click also cancels preference-based auto-open. */
 const { available: aiAvailable } = useAiDrawerAvailable();
 const { isOpen: aiDrawerOpen } = useAiDrawer();
+const { density, toggleDensity } = useDensity();
 
 function onAiButtonClick(): void {
   markAiUserInteraction();
@@ -344,8 +346,26 @@ onBeforeUnmount(() => {
       </section>
     </div>
 
-    <div v-if="aiAvailable" class="workbench-rail__ai">
+    <div class="workbench-rail__foot">
       <button
+        type="button"
+        id="pbgui-density-btn"
+        class="workbench-rail__ai-btn workbench-rail__density-btn"
+        data-testid="density-toggle"
+        :title="t(density === 'compact' ? 'nav.densityComfortable' : 'nav.densityCompact')"
+        :aria-label="t(density === 'compact' ? 'nav.densityComfortable' : 'nav.densityCompact')"
+        :aria-pressed="density === 'compact' ? 'true' : 'false'"
+        @click="toggleDensity"
+      >
+        <PbIcon :icon="density === 'compact' ? PhRows : PhGridFour" :size="18" />
+        <span v-if="!visuallyCollapsed" class="workbench-rail__ai-label">{{ t('nav.density') }}</span>
+        <span v-if="!visuallyCollapsed" class="workbench-rail__ai-kbd" aria-hidden="true">
+          {{ t(density === 'compact' ? 'nav.densityCompactShort' : 'nav.densityComfortableShort') }}
+        </span>
+      </button>
+
+      <button
+        v-if="aiAvailable"
         type="button"
         id="pbgui-ai-btn"
         class="workbench-rail__ai-btn"

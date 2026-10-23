@@ -75,6 +75,9 @@ let searchTimer: ReturnType<typeof setTimeout> | null = null;
 const activeTerm = ref('');
 const activeIsRegex = ref(false);
 let atBottom = true;
+/** Last deliberate scroll gesture; the auto-pin backs off just after one. */
+let lastTerminalScrollAt = 0;
+const SCROLL_QUIET_MS = 150;
 
 function wsBase(): string {
   return wsOrigin();
@@ -350,16 +353,22 @@ function onTerminalScroll(): void {
   const el = terminalEl.value;
   if (!el) return;
   atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 40;
+  lastTerminalScrollAt = Date.now();
 }
 
-/* Keep the view pinned to the bottom while streaming, like the legacy terminal. */
+/* Keep the view pinned to the bottom while streaming, like the legacy
+   terminal — but only while the user is still there. A log that scrolls
+   itself back down on the next line makes reading history impossible, so
+   the scroll listener records the last deliberate scroll and pin() honours
+   it for a short quiet window (see useStreamingScroll). */
 watch(
   () => lines.value.length,
   () => {
-    if (!atBottom) return;
     void nextTick(() => {
       const el = terminalEl.value;
-      if (el) el.scrollTop = el.scrollHeight;
+      if (!el || !atBottom) return;
+      if (Date.now() - lastTerminalScrollAt < SCROLL_QUIET_MS) return;
+      el.scrollTop = el.scrollHeight;
     });
   },
 );

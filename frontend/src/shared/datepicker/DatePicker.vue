@@ -220,7 +220,7 @@ const canToday = computed(() => {
         <div v-for="d in ['M', 'T', 'W', 'T', 'F', 'S', 'S']" :key="d" class="grid h-7.5 place-items-center pb-1 text-xs text-secondary">{{ d }}</div>
         <template v-for="(week, wi) in weeks" :key="wi">
           <template v-for="(cell, ci) in week" :key="wi + '-' + ci">
-            <div v-if="cell" class="dp-day grid h-7.5 cursor-pointer place-items-center rounded-sm text-sm text-primary transition-colors duration-[120ms] ease-standard" :class="{ 'dp-disabled': cell.disabled, selected: cell.selected, today: cell.today }" @click="pick(cell.day)">{{ cell.day }}</div>
+            <div v-if="cell" class="dp-day grid h-7.5 cursor-pointer place-items-center rounded-sm text-sm text-primary transition-colors duration-snap ease-standard" :class="{ 'dp-disabled': cell.disabled, selected: cell.selected, today: cell.today }" @click="pick(cell.day)">{{ cell.day }}</div>
             <div v-else></div>
           </template>
         </template>

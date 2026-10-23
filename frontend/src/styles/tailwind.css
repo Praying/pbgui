@@ -150,6 +150,10 @@
   --spacing-4xl: 40px;
 
   /* ── Border radius ──────────────────────────────────────────── */
+  /* --radius-xs is pinned to px like the rest: Tailwind's default is
+     0.125rem, which against the 15px root computes to 1.875px and would
+     disagree with every other step in this scale. */
+  --radius-xs: 2px;
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
@@ -162,9 +166,40 @@
   --shadow-elevated: 0 24px 52px rgb(3 10 18 / 0.42), 0 1px 0 rgb(255 255 255 / 0.09) inset;
   --shadow-modal: 0 24px 70px rgb(3 10 18 / 0.72);
 
-  /* ── Motion ─────────────────────────────────────────────────── */
+  /* ── Motion ─────────────────────────────────────────────────────
+     Five durations, three curves. Every transition in the app picks a
+     step from this scale instead of a raw `ms` literal, so press
+     feedback, hover, panel reveals and sheet motion stay in one rhythm.
+
+       fast   60ms   press / focus ring — must feel instantaneous
+       snap  120ms   hover, color and border changes (the workhorse)
+       base  200ms   layout-adjacent fades, disclosure
+       sheet 300ms   drawers and page entry
+       slow  450ms   spring release, settle after an overshoot
+
+     Curves:
+       --ease-standard   the house curve (unchanged; 121 call sites)
+       --ease-spring     legacy overshoot, kept for existing call sites
+       --ease-out        decelerating exit — content arriving on screen
+       --ease-snap       near-instant start, long tail — used on press
+       --ease-overshoot  small overshoot — release after a press
+
+     All five durations resolve as `duration-<name>` utilities
+     (duration-fast, duration-sheet, …). The old --motion-fast/normal/slow
+     names still exist as aliases in the legacy block below; they now
+     point here, so the ~155 existing var(--motion-*) call sites moved
+     onto this scale without a call-site sweep. */
+  --transition-duration-fast: 60ms;
+  --transition-duration-snap: 120ms;
+  --transition-duration-base: 200ms;
+  --transition-duration-sheet: 300ms;
+  --transition-duration-slow: 450ms;
+
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.3, 0.4, 1);
+  --ease-out: cubic-bezier(0.165, 0.84, 0.44, 1);
+  --ease-snap: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-overshoot: cubic-bezier(0.34, 1.3, 0.64, 1);
 
   /* ── Surfaces (neutral graphite terminal palette) ───────────── */
   --color-deep: #091117;
@@ -282,7 +317,6 @@
   --rail-expanded-width: 248px;
   --rail-collapsed-width: 68px;
   --workspace-max-width: 1680px;
-
   /* ── Surface aliases ────────────────────────────────────────── */
   --bg-page: var(--color-page);
   --bg-panel: var(--color-panel);
@@ -364,9 +398,13 @@
   --surface-list-rgb: var(--bg-panel-rgb);
 
   /* ── Motion, focus and layering ─────────────────────────────── */
-  --motion-fast: 120ms;
-  --motion-normal: 180ms;
-  --motion-slow: 260ms;
+  /* Aliases onto the @theme scale above. The three legacy steps keep
+     their historical names so the existing call sites did not need a
+     sweep; new code should use duration-<name> / var(--ease-*) and
+     pick from the five-step scale. */
+  --motion-fast: var(--transition-duration-snap);
+  --motion-normal: var(--transition-duration-base);
+  --motion-slow: var(--transition-duration-sheet);
   --focus-ring: 0 0 0 3px rgb(117 199 229 / 0.3);
   --focus-ring-offset: 2px;
   --z-navigation: 200;
@@ -388,6 +426,36 @@
   --red: var(--danger);
   --blue: var(--info);
   --font: var(--font-family);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Density — one attribute switches every control's geometry.
+
+   AppShell sets `data-density` on <html> and persists the choice, so
+   the attribute is present before first paint and Compact users never
+   see a Comfortable flash. Pages and ui/ components size themselves
+   from --control-height-* / --input-h / --btn-h, so nothing else needs
+   a second code path. Comfortable is the historical geometry; keep the
+   :root values above as its definition and override only here.
+   ═══════════════════════════════════════════════════════════════ */
+
+[data-density='compact'] {
+  --control-height-sm: 24px;
+  --control-height-md: 28px;
+  --control-height-lg: 32px;
+  /* Table rows tighten with the controls they hold. */
+  --row-height: 28px;
+  --row-height-dense: 24px;
+}
+
+/* Touch and coarse pointers keep the comfortable hit area regardless of
+   the density setting — a 24px control is not a 24px target on glass. */
+@media (pointer: coarse) {
+  [data-density='compact'] {
+    --control-height-sm: 28px;
+    --control-height-md: 32px;
+    --control-height-lg: 38px;
+  }
 }
 
 /* Keep page-level whitespace predictable across viewport sizes. Component
@@ -667,6 +735,12 @@
     border-width: 0;
   }
 
+  /* Reduced motion: collapse duration, never remove the state change.
+     A 0.01ms transition still ends on the final frame — the border,
+     background or transform lands instantly instead of never arriving.
+     Scroll behaviour is the one thing that does get switched off (smooth
+     scrolling is pure motion), and infinite looping decorations are
+     stopped after one pass so nothing flickers forever. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -675,6 +749,10 @@
       animation-iteration-count: 1 !important;
       scroll-behavior: auto !important;
       transition-duration: 0.01ms !important;
+      transition-delay: 0s !important;
+      /* Stagger and entrance offsets are decorative: zero them so the
+         final frame is the resting state, not a mid-animation pose. */
+      animation-delay: 0s !important;
     }
   }
 }

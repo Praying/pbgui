@@ -20,6 +20,12 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 function onKeydown(event: KeyboardEvent): void {
+  // Enter commits an IME candidate (Chinese/Japanese/Korean input). Sending
+  // there would push a half-typed sentence, so the composing keypress is
+  // ignored; the user's next Enter, after composition ends, sends.
+  // keyCode 229 covers Safari and older Chromium, where isComposing is
+  // still false for the keydown that ends composition.
+  if (event.isComposing || event.keyCode === 229) return;
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
     emit('send');

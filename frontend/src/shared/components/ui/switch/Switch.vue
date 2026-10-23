@@ -29,13 +29,13 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
     data-slot="switch"
     v-bind="forwarded"
     :class="cn(
-      'peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-border-default bg-secondary/16 transition-colors duration-[120ms] ease-standard data-[state=checked]:border-accent/50 data-[state=checked]:bg-accent/45 disabled:cursor-not-allowed disabled:opacity-45',
+      'peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-border-default bg-secondary/16 transition-colors duration-snap ease-standard data-[state=checked]:border-accent/50 data-[state=checked]:bg-accent/45 disabled:cursor-not-allowed disabled:opacity-45',
       props.class,
     )"
   >
     <SwitchThumb
       data-slot="switch-thumb"
-      class="pointer-events-none block size-3.5 translate-x-0.5 rounded-full bg-secondary shadow transition-transform duration-[120ms] ease-standard data-[state=checked]:translate-x-[18px] data-[state=checked]:bg-accent-soft"
+      class="pointer-events-none block size-3.5 translate-x-0.5 rounded-full bg-secondary shadow transition-transform duration-snap ease-standard data-[state=checked]:translate-x-[18px] data-[state=checked]:bg-accent-soft"
     />
   </SwitchRoot>
 </template>

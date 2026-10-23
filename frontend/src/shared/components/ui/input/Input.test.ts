@@ -35,16 +35,16 @@ describe('Input', () => {
     const wrapper = mount(Input, { props: { disabled: true } });
     const input = wrapper.get('input');
     expect(input.classes()).toContain('bg-input');
-    expect(input.classes()).toContain('h-8');
+    expect(input.classes()).toContain('h-(--control-height-md)');
     expect(input.attributes('disabled')).toBeDefined();
   });
 
   it('scales with the Button-matching size variants', () => {
-    expect(mount(Input, { props: { size: 'sm' } }).get('input').classes()).toContain('h-7');
-    expect(mount(Input).get('input').classes()).toContain('h-8');
+    expect(mount(Input, { props: { size: 'sm' } }).get('input').classes()).toContain('h-(--control-height-sm)');
+    expect(mount(Input).get('input').classes()).toContain('h-(--control-height-md)');
     const lg = mount(Input, { props: { size: 'lg' } }).get('input').classes();
-    expect(lg).toContain('h-9.5');
-    expect(lg).not.toContain('h-8');
+    expect(lg).toContain('h-(--control-height-lg)');
+    expect(lg).not.toContain('h-(--control-height-md)');
   });
 
   it('merges caller classes after the base chrome', () => {

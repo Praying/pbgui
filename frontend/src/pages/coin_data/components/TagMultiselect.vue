@@ -77,6 +77,9 @@ function onInput(): void {
 }
 
 function onKeydown(event: KeyboardEvent): void {
+  // This input filters tags by typing: Enter during IME composition commits
+  // a candidate, not a selection. Let the IME own it.
+  if (event.isComposing || event.keyCode === 229) return;
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
     event.preventDefault();
     if (!open.value) open.value = true;
@@ -125,7 +128,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
 <template>
   <div
     ref="wrap"
-    class="ms-wrap coin-tags-control relative flex flex-wrap items-center gap-[3px] min-h-8 cursor-text border rounded-lg px-1 py-0.5"
+    class="ms-wrap coin-tags-control relative flex flex-wrap items-center gap-[3px] min-h-(--control-height-md) cursor-text border rounded-lg px-1 py-0.5"
     id="tag-filter-wrap"
     @mousedown="onWrapMousedown"
   >

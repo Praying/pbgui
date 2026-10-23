@@ -472,10 +472,13 @@
     margin-right: 0;
   }
 
-  /* ── AI assistant drawer opener (bottom of the rail) ── */
+  /* ── AI assistant drawer opener + density switch (bottom of the rail) ── */
 
-  .workbench-rail__ai {
+  .workbench-rail__foot {
+    display: flex;
     flex: 0 0 auto;
+    flex-direction: column;
+    gap: var(--sp-xs);
     padding: var(--sp-sm);
     border-top: 1px solid var(--border-subtle);
   }
@@ -532,6 +535,35 @@
   .workbench-rail--collapsed .workbench-rail__ai-btn {
     justify-content: center;
     padding: 0;
+  }
+
+  /* Density switch: same geometry as the AI opener, but quiet — it is a
+     preference, not a destination, so it carries no accent fill and is the
+     first thing to collapse to an icon. */
+  .workbench-rail__density-btn {
+    min-height: 32px;
+    border-color: transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 500;
+    box-shadow: none;
+  }
+
+  .workbench-rail__density-btn:hover {
+    border-color: var(--border-subtle);
+    background: var(--surface-hover);
+    color: var(--text-primary);
+    box-shadow: none;
+  }
+
+  .workbench-rail__density-btn[aria-pressed='true'] {
+    color: var(--accent-soft);
+  }
+
+  .workbench-rail__density-btn .workbench-rail__ai-kbd {
+    border-color: var(--border-subtle);
+    background: rgb(0 0 0 / 0.2);
+    color: var(--text-muted);
   }
 
   /* ── Rail section children (accordion under the active page) ── */

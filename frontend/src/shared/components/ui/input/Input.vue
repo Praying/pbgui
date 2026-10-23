@@ -46,16 +46,16 @@ defineExpose({
 });
 
 const sizeClasses = {
-  sm: 'h-7 text-xs',
-  default: 'h-8 text-sm',
-  lg: 'h-9.5 text-md',
+  sm: 'h-(--control-height-sm) text-xs',
+  default: 'h-(--control-height-md) text-sm',
+  lg: 'h-(--control-height-lg) text-md',
 } as const;
 
 /* computed so a reactive caller `class` (e.g. conditional error tones)
    re-resolves through the cn() merge on every render. */
 const inputClass = computed(() =>
   cn(
-    'flex w-full min-w-0 rounded-md border border-border-default bg-input px-2 text-primary outline-none transition-[border-color,background-color,box-shadow] duration-[120ms] ease-standard placeholder:text-placeholder focus-visible:border-accent focus-visible:bg-page disabled:cursor-not-allowed disabled:opacity-45 aria-invalid:border-danger/60',
+    'flex w-full min-w-0 rounded-md border border-border-default bg-input px-2 text-primary outline-none transition-[border-color,background-color,box-shadow] duration-snap ease-standard placeholder:text-placeholder focus-visible:border-accent focus-visible:bg-page disabled:cursor-not-allowed disabled:opacity-45 aria-invalid:border-danger/60',
     sizeClasses[props.size],
     props.class,
   ),

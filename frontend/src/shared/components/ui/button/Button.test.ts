@@ -9,7 +9,9 @@ describe('Button', () => {
     const button = wrapper.get('button');
     expect(button.text()).toBe('Run');
     expect(button.classes()).toContain('bg-elevated');
-    expect(button.classes()).toContain('h-8');
+    // Height comes from the density token, not a fixed step: Compact
+    // (24/28/32px) and Comfortable (28/32/38px) share one code path.
+    expect(button.classes()).toContain('h-(--control-height-md)');
   });
 
   it('maps every semantic variant onto the accent/status token classes', () => {
@@ -30,10 +32,10 @@ describe('Button', () => {
 
   it('supports the compact size and the square icon size', () => {
     const sm = mount(Button, { props: { size: 'sm' } });
-    expect(sm.get('button').classes()).toContain('h-7');
+    expect(sm.get('button').classes()).toContain('h-(--control-height-sm)');
 
     const icon = mount(Button, { props: { size: 'icon' } });
-    expect(icon.get('button').classes()).toContain('size-8');
+    expect(icon.get('button').classes()).toContain('size-(--control-height-md)');
   });
 
   it('blocks interaction while loading and announces it', () => {

@@ -165,6 +165,9 @@ const isScrolledUp = ref(false);
 const terminalEl = ref<HTMLElement | null>(null);
 
 let atBottom = true;
+/** Last deliberate scroll gesture; the auto-pin backs off just after one. */
+let lastTerminalScrollAt = 0;
+const SCROLL_QUIET_MS = 150;
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const stream = useLogStream({
@@ -361,22 +364,35 @@ function onTerminalScroll(): void {
   if (!element) return;
   atBottom = element.scrollTop + element.clientHeight >= element.scrollHeight - 40;
   isScrolledUp.value = !atBottom && stream.lines.value.length > 20;
+  lastTerminalScrollAt = Date.now();
 }
 
 function scrollToBottom(): void {
   atBottom = true;
   isScrolledUp.value = false;
+  lastTerminalScrollAt = 0;
   const element = terminalEl.value;
-  if (element) element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' });
+  if (!element) return;
+  // Smooth scrolling is itself motion; honour the OS preference.
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    element.scrollTop = element.scrollHeight;
+  } else {
+    element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' });
+  }
 }
 
+/* Follow the tail only while the user is at it and has not just scrolled:
+   lines arrive faster than a reader can react, so without the quiet window
+   a wheel gesture gets overridden by the next batch. */
 watch(
   () => stream.lines.value.length,
   () => {
     if (!atBottom) return;
     void nextTick(() => {
       const element = terminalEl.value;
-      if (element) element.scrollTop = element.scrollHeight;
+      if (!element) return;
+      if (Date.now() - lastTerminalScrollAt < SCROLL_QUIET_MS) return;
+      element.scrollTop = element.scrollHeight;
     });
   }
 );
@@ -613,7 +629,7 @@ defineExpose({
         <template v-if="showHost">
           <span class="text-xs text-secondary">{{ t('shared.log.host') }}</span>
           <SelectRoot :model-value="stream.host.value" @update:model-value="onHostSelect(String($event))">
-            <SelectTrigger class="h-8 w-auto min-w-[130px] text-xs" data-test="log-host-select">
+            <SelectTrigger class="h-(--control-height-md) w-auto min-w-[130px] text-xs" data-test="log-host-select">
               <span>{{ stream.host.value === LOCAL_LOG_HOST ? t('shared.log.local') : stream.host.value }}</span>
             </SelectTrigger>
             <SelectContent>
@@ -626,7 +642,7 @@ defineExpose({
         <template v-if="!showSidebar && isLocalTarget">
           <span class="text-xs text-secondary">{{ t('shared.log.files') }}:</span>
           <SelectRoot :model-value="stream.streamFile.value" @update:model-value="onFileSelect(String($event))">
-            <SelectTrigger class="h-8 min-w-[170px] font-mono text-xs" data-test="log-file-select">
+            <SelectTrigger class="h-(--control-height-md) min-w-[170px] font-mono text-xs" data-test="log-file-select">
               <span>{{ stream.streamFile.value || t('shared.log.noFile') }}</span>
             </SelectTrigger>
             <SelectContent>
@@ -665,7 +681,7 @@ defineExpose({
           type="button"
           variant="ghost"
           size="sm"
-          class="h-6 px-1.5 font-mono text-micro font-bold transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard"
+          class="h-6 px-1.5 font-mono text-micro font-bold transition-[color,background-color,border-color] duration-snap ease-standard"
           :class="levelButtonClass(level)"
           :data-lvl="level"
           :aria-pressed="visibleLevels.has(level)"
@@ -906,7 +922,7 @@ defineExpose({
           type="button"
           variant="secondary"
           size="sm"
-          class="absolute bottom-3 right-4 h-7 gap-1 border-border-default bg-panel/90 text-xs shadow-md backdrop-blur-sm hover:bg-elevated"
+          class="absolute bottom-3 right-4 h-(--control-height-sm) gap-1 border-border-default bg-panel/90 text-xs shadow-md backdrop-blur-sm hover:bg-elevated"
           data-test="scroll-bottom"
           @click="scrollToBottom"
         >

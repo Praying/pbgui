@@ -60,6 +60,9 @@ function submit(): void {
 }
 
 function onKeydown(event: KeyboardEvent): void {
+  // The dashboard name is free text, so Enter may be committing an IME
+  // candidate. Escape is not an IME key and stays live either way.
+  if (event.isComposing || event.keyCode === 229) return;
   if (event.key === 'Enter') submit();
   if (event.key === 'Escape') emit('close');
 }

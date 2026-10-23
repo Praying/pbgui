@@ -42,7 +42,7 @@ describe('Select', () => {
     expect(trigger.attributes('aria-expanded')).toBe('false');
     expect(trigger.text()).toContain('Pick one');
     expect(trigger.classes()).toContain('bg-input');
-    expect(trigger.classes()).toContain('h-8');
+    expect(trigger.classes()).toContain('h-(--control-height-md)');
     expect(trigger.find('svg').exists()).toBe(true); // caret icon
   });
 

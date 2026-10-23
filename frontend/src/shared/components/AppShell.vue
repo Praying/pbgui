@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { WORKBENCH_NAVIGATION, type PageSection } from '@/shared/navigation';
 import { initAiPageMeta } from '@/shared/ai/context';
 import { setupAiDrawerAutoOpen } from '@/shared/ai/drawer';
+import { initDensity } from '@/shared/composables/useDensity';
 import StatusStrip from './StatusStrip.vue';
 import WorkbenchRail from './WorkbenchRail.vue';
 import WorkspaceHeader from './WorkspaceHeader.vue';
@@ -81,6 +82,11 @@ function readCollapsedPreference(): boolean {
 }
 
 const railCollapsed = ref(readCollapsedPreference());
+
+/* Restore the density preference before the shell's first paint commits.
+   Called during setup (not onMounted) so the attribute is already on
+   <html> when the initial render measures any control. */
+initDensity();
 
 /* Install the window.PBGuiAI bridge (page meta + context facade) so the
    shared AI drawer can collect this page's context the same way it does
