@@ -408,7 +408,7 @@ body #pbgui-dialog-box {
   background:
     radial-gradient(circle at 100% 0%, rgb(var(--accent-rgb) / 0.08), transparent 20rem),
     linear-gradient(145deg, rgb(var(--bg-panel-rgb) / 0.99), rgb(var(--bg-page-rgb) / 0.99));
-  box-shadow: var(--shadow-modal), inset 0 1px 0 rgb(255 255 255 / 0.07);
+  box-shadow: var(--shadow-modal), inset 0 1px 0 rgb(var(--highlight-rgb) / 0.07);
 }
 
 body #pbgui-dialog-header {

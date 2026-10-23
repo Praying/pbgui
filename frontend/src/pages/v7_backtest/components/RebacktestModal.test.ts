@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { toggleSelectOptions } from '@/shared/testing/select';
 import RebacktestModal from './RebacktestModal.vue';
 
 /*
@@ -33,8 +34,7 @@ describe('RebacktestModal (:7895-7956)', () => {
     expect((wrapper.find('[data-test="rbt-start"]').element as HTMLInputElement).value).toBe('2023-01-01');
     expect((wrapper.find('[data-test="rbt-end"]').element as HTMLInputElement).value).toBe('2023-02-01');
     expect((wrapper.find('[data-test="rbt-balance"]').element as HTMLInputElement).value).toBe('500');
-    const selected = Array.from((wrapper.find('[data-test="rbt-exchanges"]').element as HTMLSelectElement).selectedOptions).map((o) => o.value);
-    expect(selected).toEqual(['bybit', 'okx']);
+    expect(wrapper.get('[data-test="rbt-exchanges"]').text()).toBe('bybit, okx');
     expect(wrapper.find('[data-test="rbt-pbgui-data"]').attributes('aria-checked')).toBe('false');
     const marketDataLabel = wrapper.find('label[for="rbt-pbgui-data"]');
     expect(marketDataLabel.text()).toBe('Use PBGui Market Data');
@@ -79,25 +79,14 @@ describe('RebacktestModal (:7895-7956)', () => {
 
   it('toggles one exchange per click without clearing the other selections (v1.98.31)', async () => {
     const wrapper = mountModal();
-    const select = wrapper.find('[data-test="rbt-exchanges"]').element as HTMLSelectElement;
-    const bybit = Array.from(select.options).find((o) => o.value === 'bybit') as HTMLOptionElement;
-    const binance = Array.from(select.options).find((o) => o.value === 'binance') as HTMLOptionElement;
-    // 已选 bybit + okx；单击已选的 bybit → 仅移除 bybit，okx 保留
-    bybit.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
-    await wrapper.vm.$nextTick();
-    let selected = Array.from(select.selectedOptions).map((o) => o.value);
-    expect(selected).toEqual(['okx']);
-    // 单击未选的 binance → 追加，okx 保留
-    binance.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
-    await wrapper.vm.$nextTick();
-    selected = Array.from(select.selectedOptions).map((o) => o.value);
-    expect(selected).toEqual(['binance', 'okx']); // selectedOptions 按 DOM 顺序
-    // v-model 同步了 change 派发
-    expect((wrapper.vm as unknown as { exchanges: string[] }).exchanges).toEqual(['binance', 'okx']);
-    // 非左键不拦截
-    bybit.dispatchEvent(new MouseEvent('mousedown', { button: 2, bubbles: true }));
-    await wrapper.vm.$nextTick();
-    expect(Array.from(select.selectedOptions).map((o) => o.value)).toEqual(['binance', 'okx']);
+    const model = () => (wrapper.vm as unknown as { exchanges: string[] }).exchanges;
+    // seeded bybit + okx; choosing the selected bybit removes only bybit, okx stays
+    await toggleSelectOptions(wrapper, '[data-test="rbt-exchanges"]', ['bybit']);
+    expect(model()).toEqual(['okx']);
+    // choosing the unselected binance appends it, okx stays; options keep their own order
+    await toggleSelectOptions(wrapper, '[data-test="rbt-exchanges"]', ['binance']);
+    expect(model()).toEqual(['binance', 'okx']);
+    expect(wrapper.get('[data-test="rbt-exchanges"]').text()).toBe('binance, okx');
   });
 
 });

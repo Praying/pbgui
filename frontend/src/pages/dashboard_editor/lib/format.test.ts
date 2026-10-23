@@ -16,44 +16,44 @@ import { setDashTranslator } from './i18n';
 
 describe('tweColor (render.js:372)', () => {
   it('is green below 100', () => {
-    expect(tweColor(-50)).toBe(PRECISION_PALETTE.success.base);
-    expect(tweColor(0)).toBe(PRECISION_PALETTE.success.base);
-    expect(tweColor(99.99)).toBe(PRECISION_PALETTE.success.base);
+    expect(tweColor(-50)).toBe('var(--success)');
+    expect(tweColor(0)).toBe('var(--success)');
+    expect(tweColor(99.99)).toBe('var(--success)');
   });
 
   it('is orange from 100 up to 200', () => {
-    expect(tweColor(100)).toBe(PRECISION_PALETTE.warning.base);
-    expect(tweColor(199.99)).toBe(PRECISION_PALETTE.warning.base);
+    expect(tweColor(100)).toBe('var(--warning)');
+    expect(tweColor(199.99)).toBe('var(--warning)');
   });
 
   it('is red from 200 up', () => {
-    expect(tweColor(200)).toBe(PRECISION_PALETTE.danger.base);
-    expect(tweColor(1000)).toBe(PRECISION_PALETTE.danger.base);
+    expect(tweColor(200)).toBe('var(--danger)');
+    expect(tweColor(1000)).toBe('var(--danger)');
   });
 
   it('treats NaN as red (legacy: all comparisons false)', () => {
-    expect(tweColor(Number.NaN)).toBe(PRECISION_PALETTE.danger.base);
+    expect(tweColor(Number.NaN)).toBe('var(--danger)');
   });
 
   it('treats Infinity as red', () => {
-    expect(tweColor(Number.POSITIVE_INFINITY)).toBe(PRECISION_PALETTE.danger.base);
+    expect(tweColor(Number.POSITIVE_INFINITY)).toBe('var(--danger)');
   });
 });
 
 describe('upnlColor (render.js:373)', () => {
   it('is green for zero and positive', () => {
-    expect(upnlColor(0)).toBe(PRECISION_PALETTE.success.base);
-    expect(upnlColor(-0)).toBe(PRECISION_PALETTE.success.base);
-    expect(upnlColor(12.34)).toBe(PRECISION_PALETTE.success.base);
+    expect(upnlColor(0)).toBe('var(--success)');
+    expect(upnlColor(-0)).toBe('var(--success)');
+    expect(upnlColor(12.34)).toBe('var(--success)');
   });
 
   it('is red for negative', () => {
-    expect(upnlColor(-0.01)).toBe(PRECISION_PALETTE.danger.base);
-    expect(upnlColor(-500)).toBe(PRECISION_PALETTE.danger.base);
+    expect(upnlColor(-0.01)).toBe('var(--danger)');
+    expect(upnlColor(-500)).toBe('var(--danger)');
   });
 
   it('treats NaN as red (NaN >= 0 is false)', () => {
-    expect(upnlColor(Number.NaN)).toBe(PRECISION_PALETTE.danger.base);
+    expect(upnlColor(Number.NaN)).toBe('var(--danger)');
   });
 });
 
@@ -232,5 +232,22 @@ describe('live source/badge labels (editor:1048-1062)', () => {
 
   afterEach(() => {
     setDashTranslator(null);
+  });
+});
+
+describe('status colours are theme-aware', () => {
+  it('returns var() references for DOM style bindings, never dark-only literals', () => {
+    for (const value of [tweColor(0), tweColor(150), tweColor(300), upnlColor(1), upnlColor(-1)]) {
+      expect(value).toMatch(/^var\(--(success|warning|danger)\)$/);
+    }
+  });
+
+  it('resolves the entry line from the live theme so a canvas can paint it', () => {
+    document.documentElement.style.setProperty('--color-success', '#1c7350');
+    try {
+      expect(positionEntryColor(101, 100, 'long')).toBe('#1c7350');
+    } finally {
+      document.documentElement.removeAttribute('style');
+    }
   });
 });

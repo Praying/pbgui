@@ -932,7 +932,7 @@ async function testConnection(): Promise<void> {
           :aria-expanded="advancedOpen"
           @click="advancedOpen = !advancedOpen"
         >
-          <span class="mr-1 grid size-7 place-items-center rounded-md border border-secondary/12 bg-secondary/5 text-accent-soft">
+          <span class="mr-1 grid size-(--control-height-sm) place-items-center rounded-md border border-secondary/12 bg-secondary/5 text-accent-soft">
             <PbIcon :icon="PhSlidersHorizontal" :size="15" />
           </span>
           {{ t('misc.apikeys.advancedOptional') }}

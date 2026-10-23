@@ -85,3 +85,22 @@ describe('radius scale', () => {
     expect(declaration('--radius-xs')).toBe('2px');
   });
 });
+
+describe('theme channels keep the dark rendering identical', () => {
+  it('defaults the shadow, highlight and overlay channels to the literals the CSS used before', () => {
+    // The old rules were `rgb(255 255 255 / a)` highlights/washes and near-black
+    // shadows. Routing them through variables only preserves dark if the
+    // defaults equal those literals.
+    expect(declaration('--highlight-rgb')).toBe('255 255 255');
+    expect(declaration('--overlay-rgb')).toBe('255 255 255');
+    expect(declaration('--shadow-rgb')).toBe('3 10 18');
+  });
+
+  it('swaps all three channels under the light theme', () => {
+    const light = stylesheet.slice(stylesheet.indexOf("[data-theme='light'] {"));
+    const block = light.slice(0, light.indexOf('\n}\n'));
+    expect(block).toContain('--shadow-rgb: 31 56 71;');
+    expect(block).toContain('--overlay-rgb: 15 31 39;');
+    expect(block).toContain('color-scheme: light;');
+  });
+});

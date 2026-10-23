@@ -5,6 +5,7 @@ import { WORKBENCH_NAVIGATION, type PageSection } from '@/shared/navigation';
 import { initAiPageMeta } from '@/shared/ai/context';
 import { setupAiDrawerAutoOpen } from '@/shared/ai/drawer';
 import { initDensity } from '@/shared/composables/useDensity';
+import { initTheme } from '@/shared/composables/useTheme';
 import StatusStrip from './StatusStrip.vue';
 import WorkbenchRail from './WorkbenchRail.vue';
 import WorkspaceHeader from './WorkspaceHeader.vue';
@@ -87,6 +88,7 @@ const railCollapsed = ref(readCollapsedPreference());
    Called during setup (not onMounted) so the attribute is already on
    <html> when the initial render measures any control. */
 initDensity();
+initTheme();
 
 /* Install the window.PBGuiAI bridge (page meta + context facade) so the
    shared AI drawer can collect this page's context the same way it does

@@ -230,7 +230,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
               <Button type="button" variant="default" size="sm" @click="editCoin(coin)">
                 {{ store.editCoin.value === coin ? t('editor.overrides.editing') : t('editor.overrides.edit') }}
               </Button>
-              <Button type="button" variant="danger" size="sm" class="size-7 shrink-0 rounded-md p-0" :title="t('common.delete')" :aria-label="t('common.delete')" @click="store.removeCoin(coin)"><PbIcon :icon="PhX" :size="16" /></Button>
+              <Button type="button" variant="danger" size="sm" class="size-(--control-height-sm) shrink-0 rounded-md p-0" :title="t('common.delete')" :aria-label="t('common.delete')" @click="store.removeCoin(coin)"><PbIcon :icon="PhX" :size="16" /></Button>
             </TdActions>
           </tr>
         </tbody>
@@ -344,7 +344,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
                   <Input v-else v-model="store.inlineValues[section.key + '.' + param]" type="text" size="sm" class="w-[100px]" />
                 </td>
                 <TdActions>
-                  <Button type="button" variant="danger" size="sm" class="size-7 shrink-0 rounded-md p-0" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeParam(section, param)"><PbIcon :icon="PhX" :size="16" /></Button>
+                  <Button type="button" variant="danger" size="sm" class="size-(--control-height-sm) shrink-0 rounded-md p-0" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeParam(section, param)"><PbIcon :icon="PhX" :size="16" /></Button>
                 </TdActions>
               </tr>
             </tbody>

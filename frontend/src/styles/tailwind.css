@@ -162,9 +162,13 @@
 
   /* ── Elevation ──────────────────────────────────────────────── */
   /* Neutral shadows and highlights keep depth separate from the palette. */
-  --shadow-panel: 0 18px 34px rgb(3 10 18 / 0.28), 0 1px 0 rgb(255 255 255 / 0.07) inset;
-  --shadow-elevated: 0 24px 52px rgb(3 10 18 / 0.42), 0 1px 0 rgb(255 255 255 / 0.09) inset;
-  --shadow-modal: 0 24px 70px rgb(3 10 18 / 0.72);
+  /* Shadows read --shadow-rgb / --highlight-rgb so the light theme can swap
+     the ink without redefining every shadow: dark surfaces cast near-black
+     shadows and catch a white top highlight; light surfaces cast a cool
+     blue-grey shadow and have no highlight to catch. */
+  --shadow-panel: 0 18px 34px rgb(var(--shadow-rgb) / 0.28), 0 1px 0 rgb(var(--highlight-rgb) / 0.07) inset;
+  --shadow-elevated: 0 24px 52px rgb(var(--shadow-rgb) / 0.42), 0 1px 0 rgb(var(--highlight-rgb) / 0.09) inset;
+  --shadow-modal: 0 24px 70px rgb(var(--shadow-rgb) / 0.72);
 
   /* ── Motion ─────────────────────────────────────────────────────
      Five durations, three curves. Every transition in the app picks a
@@ -211,6 +215,10 @@
   --color-card: #1d303b;
   --color-elevated: #223945;
   --color-backdrop: rgb(3 10 15 / 0.78);
+  /* Neutral overlay ink for hairlines, hover wash and progress tracks. White on
+     dark, near-black on light. Use `bg-overlay/4` instead of `bg-white/4`: a
+     literal white wash is invisible on a light surface. */
+  --color-overlay: rgb(var(--overlay-rgb));
 
   /* ── Interaction states ──────────────────────────────────────
      These semantic surfaces keep hover and selection treatments aligned
@@ -395,6 +403,15 @@
 
   /* Channel triplets for alpha variants of neutral text and surfaces —
      use rgb(var(--text-secondary-rgb) / α) instead of raw rgba literals. */
+  --shadow-rgb: 3 10 18;
+  /* Pure-black contact shadow (tight 1-4px drop under small controls). Kept
+     separate from --shadow-rgb so dark stays byte-identical to the literal
+     rgb(0 0 0 / a) these rules always used. */
+  --shadow-ink-rgb: 0 0 0;
+  --highlight-rgb: 255 255 255;
+  /* Neutral overlay ink: the hover/divider tint that is white on dark and
+     near-black on light (replaces literal bg-white/N and rgb(255 255 255 / a)). */
+  --overlay-rgb: 255 255 255;
   --text-secondary-rgb: 183 203 210;
   --bg-page-rgb: 13 23 30;
   --bg-panel-rgb: 23 40 50;
@@ -467,6 +484,107 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   Light theme — `<html data-theme="light">`.
+
+   Dark is the default and the only theme the app shipped with, so every
+   token above is the dark value and this block overrides only what must
+   change. Utilities (bg-panel, text-primary, border-border-subtle…)
+   resolve through these variables, so no page needs a second code path.
+
+   Palette contrast is checked against WCAG AA (4.5:1 body text, 3:1
+   placeholder) for every text role on every surface it can sit on:
+   primary/secondary/muted and the accent/success/warning/danger text
+   ramps on page, panel, card, elevated, input and sidebar — 73 pairs.
+   Surfaces step from a cool off-white page to pure-white panels so
+   elevation still reads without relying on shadow alone.
+
+   `*-soft` is the readable-text stop on dark surfaces (a light tint); on
+   light surfaces the readable stop is the darker one, so -soft is the
+   darker value here. `*-deep` stays a fill/tint stop, used at low alpha.
+   ═══════════════════════════════════════════════════════════════ */
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --color-deep: #e4ebef;
+  --color-page: #f4f7f9;
+  --color-workspace: #eef3f6;
+  --color-sidebar: #e9eff3;
+  --color-input: #ffffff;
+  --color-panel: #ffffff;
+  --color-card: #f1f5f8;
+  --color-elevated: #e6edf2;
+  --color-backdrop: rgb(15 31 39 / 0.45);
+
+  /* Interaction states: tint with ink instead of with light */
+  --color-surface-hover: rgb(15 31 39 / 0.05);
+  --color-surface-selected: rgb(11 110 146 / 0.12);
+  --color-surface-pressed: rgb(15 31 39 / 0.09);
+  --color-surface-focus: rgb(11 110 146 / 0.10);
+  --color-border-selected: rgb(11 110 146 / 0.40);
+
+  /* Borders */
+  --color-border-subtle: #d3dde3;
+  --color-border-default: #b9c8d1;
+  --color-border-strong: #8ea3af;
+
+  /* Text */
+  --color-primary: #0f1f27;
+  --color-secondary: #3a525e;
+  --color-muted: #566e7a;
+  --color-disabled: #8a9ea8;
+  --color-placeholder: #6a808b;
+
+  /* Accent and status ramps */
+  --color-accent: #0b6e92;
+  --color-accent-soft: #075a78;
+  --color-accent-deep: #0a5675;
+  --color-accent-contrast: #ffffff;
+  --color-success: #1c7350;
+  --color-success-soft: #175f42;
+  --color-success-deep: #1c7350;
+  --color-warning: #8a5a00;
+  --color-warning-soft: #6b4500;
+  --color-warning-deep: #8a5a00;
+  --color-danger: #b03a3a;
+  --color-danger-soft: #8c2b2b;
+  --color-danger-deep: #b03a3a;
+
+  /* Syntax palette: re-tuned for a white background */
+  --color-syntax-key: #1a56b0;
+  --color-syntax-string: #0b7a3b;
+  --color-syntax-number: #0a63a8;
+  --color-syntax-null: #9b2fa3;
+
+  /* Channel triplets behind rgb(var(--x-rgb) / a) alphas */
+  --accent-bg: rgb(11 110 146 / 0.12);
+  --accent-rgb: 11 110 146;
+  --accent-soft-rgb: 7 90 120;
+  --accent-deep-rgb: 10 86 117;
+  --success-bg: rgb(28 115 80 / 0.12);
+  --success-rgb: 28 115 80;
+  --success-deep-rgb: 28 115 80;
+  --warning-bg: rgb(138 90 0 / 0.12);
+  --warning-rgb: 138 90 0;
+  --danger-bg: rgb(176 58 58 / 0.11);
+  --danger-rgb: 176 58 58;
+  --danger-deep-rgb: 176 58 58;
+  --text-secondary-rgb: 58 82 94;
+  --bg-page-rgb: 244 247 249;
+  --bg-panel-rgb: 255 255 255;
+  --color-deep-rgb: 228 235 239;
+
+  /* Elevation: cool blue-grey shadow, no inset highlight to catch */
+  --shadow-rgb: 31 56 71;
+  --shadow-ink-rgb: 31 56 71;
+  --highlight-rgb: 255 255 255;
+  --overlay-rgb: 15 31 39;
+
+  --focus-ring: 0 0 0 3px rgb(11 110 146 / 0.28);
+}
+
 /* Keep page-level whitespace predictable across viewport sizes. Component
    internals can remain compact, while every page root uses this same edge. */
 :root {
@@ -505,6 +623,8 @@
   :root {
     color-scheme: dark;
   }
+
+  /* data-theme=light overrides this in the un-layered block above. */
 
   /* ── User-agent restores (legacy pages) ─────────────────────── */
   h1 { font-size: 2em; margin-block: 0.67em; }

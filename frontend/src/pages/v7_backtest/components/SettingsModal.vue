@@ -204,6 +204,6 @@ function cleanupNow(): void {
 }
 
 .settings-section {
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.035) inset;
+  box-shadow: 0 1px 0 rgb(var(--highlight-rgb) / 0.035) inset;
 }
 </style>

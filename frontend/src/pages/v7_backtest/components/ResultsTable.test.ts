@@ -205,7 +205,7 @@ describe('actions cell (:5565-5572)', () => {
       expect(button.find('svg').exists()).toBe(true);
       expect(button.text()).toBe('');
       expect(button.classes()).toContain('backtest-row-action');
-      expect(button.classes()).toContain('size-7');
+      expect(button.classes()).toContain('size-(--control-height-sm)');
     }
     expect(view.attributes('aria-pressed')).toBe('true');
     expect(config.attributes('aria-pressed')).toBe('false');

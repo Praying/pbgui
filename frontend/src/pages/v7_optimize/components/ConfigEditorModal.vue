@@ -1313,7 +1313,7 @@ function preflight(): void {
                     <Button type="button" variant="default" size="sm" class="h-(--control-height-lg) px-2.5 text-xs font-semibold" data-test="ohlcv-start-all" :disabled="!!ohlcvJob" @click="startOhlcvDateLookup('all_markets')">All</Button>
                   </div>
                   <div v-if="ohlcvJob" class="mt-1.5 grid gap-1" data-test="ohlcv-start-progress" role="status" aria-live="polite">
-                    <div class="h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div class="h-1.5 overflow-hidden rounded-full bg-overlay/10">
                       <div class="h-full w-full origin-left bg-accent transition-transform duration-snap ease-standard" :style="{ transform: `scaleX(${Math.max(0, Math.min(100, Number(ohlcvJob.progress?.percent || 0))) / 100})` }"></div>
                     </div>
                     <div class="flex items-center justify-between gap-2 text-xs text-secondary">
@@ -2085,7 +2085,7 @@ function preflight(): void {
   border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
   background: rgb(var(--bg-panel-rgb) / 0.55);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+  box-shadow: 0 1px 3px rgb(var(--shadow-ink-rgb) / 0.15);
 }
 
 .opt-editor-section__heading {
@@ -2182,7 +2182,7 @@ function preflight(): void {
 }
 
 .opt-editor-tabs button:hover {
-  background: rgb(255 255 255 / 0.05);
+  background: rgb(var(--overlay-rgb) / 0.05);
   color: var(--text-primary);
 }
 
@@ -2191,7 +2191,7 @@ function preflight(): void {
   border-color: rgb(var(--accent-rgb) / 0.35);
   color: var(--accent-soft);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+  box-shadow: 0 1px 3px rgb(var(--shadow-ink-rgb) / 0.2);
 }
 
 .opt-editor-footer :deep(button) { min-width: 104px; }

@@ -10,16 +10,29 @@
  * fallback literals — the exact legacy fallback path.
  */
 import { dashT } from './i18n';
-import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
+import { themeColors } from '@/shared/lib/themeColors';
+
+/**
+ * Status colours for DOM `style` bindings are theme variables, not the TS
+ * palette's literals: a literal hex is the *dark* value, so it would stay
+ * pale green on a white light-theme surface (1.8:1). `var(--success)` etc.
+ * re-resolve under `[data-theme='light']`. Canvas consumers (lightweight
+ * charts) cannot take a var() and use themeColors() below instead.
+ */
+const STATUS_VAR = {
+  success: 'var(--success)',
+  warning: 'var(--warning)',
+  danger: 'var(--danger)',
+} as const;
 
 /** TWE value → color: <100 green, <200 orange, else red. */
 export function tweColor(v: number): string {
-  return v < 100 ? PRECISION_PALETTE.success.base : v < 200 ? PRECISION_PALETTE.warning.base : PRECISION_PALETTE.danger.base;
+  return v < 100 ? STATUS_VAR.success : v < 200 ? STATUS_VAR.warning : STATUS_VAR.danger;
 }
 
 /** uPnL ≥ 0 green, else red. */
 export function upnlColor(v: number): string {
-  return v >= 0 ? PRECISION_PALETTE.success.base : PRECISION_PALETTE.danger.base;
+  return v >= 0 ? STATUS_VAR.success : STATUS_VAR.danger;
 }
 
 /** Entry-price line color: gray without an entry, profit/loss aware with one. */
@@ -28,10 +41,13 @@ export function positionEntryColor(
   entryPrice: number | null | undefined,
   side?: string | null
 ): string {
-  if (!entryPrice) return PRECISION_PALETTE.text.secondary;
+  // Canvas consumer (the entry line on the lightweight chart): a var() is not
+  // a valid canvas colour, so resolve the live theme value instead.
+  const colors = themeColors();
+  if (!entryPrice) return colors.textSecondary;
   const normalizedSide = String(side || 'long').toLowerCase();
   const isProfit = normalizedSide === 'short' ? lastPrice <= entryPrice : lastPrice >= entryPrice;
-  return isProfit ? PRECISION_PALETTE.success.base : PRECISION_PALETTE.danger.base;
+  return isProfit ? colors.success : colors.danger;
 }
 
 /** "now" / "5s ago" / "2m ago" / "1h ago" — legacy ts || now quirk preserved. */
@@ -99,7 +115,7 @@ export function liveBadgeText(lastTs: number, now: number = Date.now()): string 
 
 /** editor _setSourceStatus color rule: green only for live sources. */
 export function liveStatusColor(source?: string | null): string {
-  return String(source || '').toLowerCase() === 'live' ? PRECISION_PALETTE.success.base : '';
+  return String(source || '').toLowerCase() === 'live' ? STATUS_VAR.success : '';
 }
 
 /**

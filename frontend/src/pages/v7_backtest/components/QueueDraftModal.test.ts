@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { toggleSelectOptions } from '@/shared/testing/select';
 import QueueDraftModal from './QueueDraftModal.vue';
 
 /*
@@ -59,11 +60,7 @@ describe('defaults from the first item (:2068-2077)', () => {
     expect(wrapper.find('[data-test="rbt-balance-minus"]').attributes('aria-label')).toBe('Decrease starting balance');
     expect(wrapper.find('[data-test="rbt-balance-plus"] svg').exists()).toBe(true);
     expect(wrapper.find('[data-test="rbt-balance-plus"]').attributes('aria-label')).toBe('Increase starting balance');
-    const selected = wrapper
-      .findAll('[data-test="rbt-exchanges"] option')
-      .filter((o) => (o.element as HTMLOptionElement).selected)
-      .map((o) => (o.element as HTMLOptionElement).value);
-    expect(selected).toEqual(['bybit']);
+    expect(wrapper.get('[data-test="rbt-exchanges"]').text()).toBe('bybit');
   });
 
   it('falls back to bybit / 2020-01-01 / 1000 for empty items', async () => {
@@ -107,12 +104,8 @@ describe('queue submit (:2099-2142)', () => {
   it('expands every selected exchange into its own job (:2115-2131)', async () => {
     const { wrapper, postQueue } = mountModal([item()]);
     await nextTick();
-    const select = wrapper.find('[data-test="rbt-exchanges"]');
-    (select.element as HTMLSelectElement).selectedOptions[0]!.selected = false;
-    for (const option of (select.element as HTMLSelectElement).options) {
-      if (option.value === 'binance' || option.value === 'bybit') option.selected = true;
-    }
-    await select.trigger('change');
+    // seeded with bybit; add binance. The model keeps the options' own order.
+    await toggleSelectOptions(wrapper, '[data-test="rbt-exchanges"]', ['binance']);
     await wrapper.find('[data-test="rbt-ok"]').trigger('click');
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(postQueue).toHaveBeenCalledTimes(2);
@@ -123,9 +116,8 @@ describe('queue submit (:2099-2142)', () => {
   it('requires at least one exchange (:2110)', async () => {
     const { wrapper, postQueue } = mountModal([item()]);
     await nextTick();
-    const select = wrapper.find('[data-test="rbt-exchanges"]');
-    for (const option of (select.element as HTMLSelectElement).options) option.selected = false;
-    await select.trigger('change');
+    // deselect the only seeded exchange
+    await toggleSelectOptions(wrapper, '[data-test="rbt-exchanges"]', ['bybit']);
     await wrapper.find('[data-test="rbt-ok"]').trigger('click');
     await nextTick();
     expect(postQueue).not.toHaveBeenCalled();

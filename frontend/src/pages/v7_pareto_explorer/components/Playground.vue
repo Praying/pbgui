@@ -233,7 +233,7 @@ watch(
             </SelectRoot>
           </div>
           <div id="playground-custom-controls" v-show="visibility.showCustom" class="form-field full col-span-12 flex flex-col gap-1.5">
-            <div class="load-status-card flex flex-col gap-2 rounded-xl border border-border-default bg-white/2 p-3">
+            <div class="load-status-card flex flex-col gap-2 rounded-xl border border-border-default bg-overlay/2 p-3">
               <div class="load-status-head flex items-center justify-between gap-2">
                 <strong>{{ t('v7explore.customMetrics') }}</strong>
               </div>

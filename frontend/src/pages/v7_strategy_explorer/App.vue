@@ -417,7 +417,7 @@ body {
 
 /* The empty placeholder row is not data — no zebra stripe, no hover tint. */
 .orders.compare-grid tbody tr:not([data-slot='empty-row']):nth-child(odd) td {
-  background: rgb(255 255 255 / 0.018);
+  background: rgb(var(--overlay-rgb) / 0.018);
 }
 
 /* Outranks the zebra rule so hover keeps the shared accent tint. */

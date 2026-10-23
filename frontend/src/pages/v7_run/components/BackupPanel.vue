@@ -200,7 +200,7 @@ function onRetentionWheel(event: WheelEvent): void {
               {{ t('v7run.loadInEditor') }}
             </Button>
             <Button
-              class="size-7 shrink-0 rounded-md p-0"
+              class="size-(--control-height-sm) shrink-0 rounded-md p-0"
               variant="danger"
               size="sm"
               type="button"

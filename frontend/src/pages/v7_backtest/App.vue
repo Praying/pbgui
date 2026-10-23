@@ -1257,7 +1257,7 @@ body {
   border-color: rgb(var(--text-secondary-rgb) / 0.15);
   border-radius: 8px;
   background: rgb(var(--bg-page-rgb) / 0.68);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025);
+  box-shadow: inset 0 1px rgb(var(--highlight-rgb) / 0.025);
 }
 #configs-editor .form-group input,
 #configs-editor .form-group select {

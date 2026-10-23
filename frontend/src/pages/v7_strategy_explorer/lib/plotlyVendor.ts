@@ -4,6 +4,7 @@
  * bundled. This module is the single typed touch-point (same pattern as
  * dashboard_editor/lib/plotlyVendor.ts).
  */
+import { withTheme } from '@/shared/lib/themedPlotly';
 
 export type PlotlyTrace = Record<string, unknown>;
 export type PlotlyLayout = Record<string, unknown>;
@@ -35,7 +36,7 @@ export interface PlotlyVendor {
 }
 
 export function getPlotly(): PlotlyVendor | undefined {
-  return (window as unknown as { Plotly?: PlotlyVendor }).Plotly;
+  return withTheme((window as unknown as { Plotly?: PlotlyVendor }).Plotly);
 }
 
 export function plotEl(id: string): PlotlyDomLike | null {

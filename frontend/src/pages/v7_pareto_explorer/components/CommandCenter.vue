@@ -53,7 +53,7 @@ function statusChipClass(levelClass: string): string {
 function championItemClass(active: boolean): string {
   return active
     ? 'champion-item active rounded-xl border border-accent bg-accent/8 px-2.5 py-2.25'
-    : 'champion-item rounded-xl border border-border-default bg-white/2 px-2.5 py-2.25 transition-colors duration-snap hover:border-accent/60 hover:bg-white/4';
+    : 'champion-item rounded-xl border border-border-default bg-overlay/2 px-2.5 py-2.25 transition-colors duration-snap hover:border-accent/60 hover:bg-overlay/4';
 }
 
 function onChampionClick(configIndex: number | null): void {
@@ -101,7 +101,7 @@ function onPlotClick(configIndex: number): void {
         <h3 class="mb-2">{{ t('v7explore.insights') }}</h3>
         <div id="insight-list" class="insight-list flex flex-col gap-2">
           <EmptyState v-if="!insights.length" class="placeholder-panel min-h-[220px]" size="inline" :icon="PhChartLineUp" :title="t('v7explore.noInsights')" />
-          <div v-for="(insight, index) in insights" :key="index" class="insight-item rounded-xl border border-border-default bg-white/2 p-2.5">
+          <div v-for="(insight, index) in insights" :key="index" class="insight-item rounded-xl border border-border-default bg-overlay/2 p-2.5">
             <div class="status-chip" :class="statusChipClass(insight.levelClass)" style="margin-bottom: 8px">{{ insight.levelText }}</div>
             <div>{{ insight.text }}</div>
           </div>

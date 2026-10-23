@@ -4,6 +4,7 @@
  * bundled (recon §2 standing decision). This module is the single typed
  * touch-point (same pattern as v7_strategy_explorer/lib/plotlyVendor.ts).
  */
+import { withTheme } from '@/shared/lib/themedPlotly';
 
 export type PlotlyTrace = Record<string, unknown>;
 export type PlotlyLayout = Record<string, unknown>;
@@ -29,7 +30,7 @@ export interface PlotlyVendor {
 export type { PlotlyDomLike };
 
 export function getPlotly(): PlotlyVendor | undefined {
-  return (window as unknown as { Plotly?: PlotlyVendor }).Plotly;
+  return withTheme((window as unknown as { Plotly?: PlotlyVendor }).Plotly);
 }
 
 /** The fullscreen modebar icon (:2681-2685). */

@@ -13,6 +13,10 @@
 - 对话框焦点管理：新增 `v-focus-trap` 指令（`shared/directives/focusTrap`），为 22 个保留自有样式的手写 `role="dialog"` 弹窗补上 CDS 要求的焦点陷阱——打开时焦点移入、Tab/Shift+Tab 在弹窗内循环、关闭时焦点回到触发元素；不改动任何弹窗的 DOM 与样式。常驻 DOM、靠 `hidden`/`v-show` 切换的弹窗（文件浏览、确认框、数据库确认、新建/删除仪表盘）把陷阱绑定到各自的可见状态，隐藏时不会拦截页面 Tab。另给 4 个原先没有任何对话框语义的叠层（删除早于日期、余额计算、复制用户、API 密钥差异）补上 `role="dialog"`、`aria-modal` 与名称。新增 `dialog-focus` 全仓库扫描测试，之后新增的叠层若既不用 `ui/Modal` 也不带陷阱会直接失败。
 - 控件高度新增 30px / 34px 两个中间档（`--control-height-sm-plus` / `--control-height-md-plus`，紧凑下为 26 / 30px）：优化配置编辑器与评分限额编辑器里原本就是 `h-7.5` / `h-8.5` 的 27 个控件恢复原尺寸，不再被拉伸到 38px。
 - 动效：`archive-pull-bar` 流光由动画 `left`（每帧重排）改为 `transform: translateX`（合成器线程）；其余 3 个装饰性循环动画（空状态图标漂浮、集群刷新脉冲、仪表盘实时脉冲）改用 `--ease-standard`，并统一收进 `prefers-reduced-motion: no-preference`。`src/` 内已无 `ease-in-out` / `ease-linear` / `transition-all`。
+- 浅色主题：新增 `<html data-theme="light">`，侧栏底部新增主题切换按钮（持久化 `pbgui-theme`；首次访问跟随系统 `prefers-color-scheme`，已保存的选择始终优先）。调色板按 WCAG AA 校验：主/次/弱文字与强调/成功/警告/危险文字色在页面、面板、卡片、抬升、输入、侧栏六种表面上共 73 对全部达标。所有工具类与旧别名都经 CSS 变量解析，因此无需逐页改写；阴影、内嵌高光与悬停/进度条的白色叠层改为随主题变化的 `--shadow-rgb` / `--highlight-rgb` / `--overlay-rgb`，字面 `bg-white/N` 改为 `bg-overlay/N`。
+- 图表跟随主题：新增 `themeColors()` 与 Plotly 外观改写（`themedPlotly`），在每页 `getPlotly()` 处一次性接入，覆盖 v7 回测、优化、Pareto、策略探索与仪表盘共 ~15 处出图点，只改背景、文字、网格与零线，不改序列颜色；深色下返回同一对象。仪表盘的盈亏/TWE/实时状态色改为返回 `var(--success|warning|danger)`，入场价线（canvas，无法用 var()）按当前主题取值。
+- 深色渲染保持逐像素一致：用同一 worktree 构建 651976ed 与当前树，在 18 个页面上截图比对，侧栏之外 0 个像素不同（唯一差异是侧栏新增的主题按钮）。纯黑接触阴影单独使用 `--shadow-ink-rgb`（深色为 `0 0 0`），避免被统一成偏蓝的 `--shadow-rgb`。
+- 控件：v7 回测的三处原生交易所多选与 Pareto 候选筛选迁移到新的 `ui/select/MultiSelect`（reka-ui `multiple` 模式，沿用 `ExchangeMultiSelect` 的有序模型与 `data-test` 钩子），删除 `useToggleMultiSelect` 的鼠标按下补丁；套件编辑器两个原生单选迁移到 `ui/Select`；表格行内 `size-7` 图标按钮改用 `--control-height-sm`。`src/` 内不再有原生 `<select>` 控件。
 
 ## 修复系统/内部划转「方向」无法选中（待确认划转锁定）
 

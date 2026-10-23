@@ -228,7 +228,7 @@ const exportCodecLabel = computed(() => {
           <div class="h-2.5 overflow-hidden rounded-full border border-border-default bg-page"><div id="movie-progress-fill" class="h-full w-full origin-left bg-[linear-gradient(90deg,var(--accent),var(--success))] transition-transform duration-base ease-standard" :style="{ transform: `scaleX(${(movie.progress.value.pct || 0) / 100})` }"></div></div>
           <div id="movie-progress-text" class="mt-1.5 text-secondary text-sm">{{ movie.progress.value.message || t('v7explore.waiting') }}</div>
         </div>
-        <div class="mt-3 p-3 border border-border-default rounded-md bg-white/[0.025]">
+        <div class="mt-3 p-3 border border-border-default rounded-md bg-overlay/[0.025]">
           <div class="grid grid-cols-[repeat(4,minmax(0,1fr))] items-end gap-3 max-[1250px]:grid-cols-[1fr]">
             <div class="flex flex-col gap-1">
               <Label id="movie-export-preset-label" for="movie-export-preset" :data-tip="t('v7explore.exportPresetTip')">{{ t('v7explore.exportPreset') }}</Label>

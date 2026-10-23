@@ -425,7 +425,7 @@
     color: var(--accent-soft);
     box-shadow:
       0 0 0 3px rgb(var(--accent-rgb) / 0.05),
-      0 1px 0 rgb(255 255 255 / 0.1) inset;
+      0 1px 0 rgb(var(--highlight-rgb) / 0.1) inset;
   }
 
   .workbench-rail--collapsed .workbench-rail__item--active::before {
@@ -500,7 +500,7 @@
     font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 2px rgb(var(--shadow-ink-rgb) / 0.2);
     transition:
       background-color var(--motion-fast) var(--ease-standard),
       border-color var(--motion-fast) var(--ease-standard),
@@ -524,7 +524,7 @@
     padding: 1px 5px;
     border: 1px solid rgba(var(--accent-rgb) / 0.25);
     border-radius: var(--radius-sm);
-    background: rgba(0, 0, 0, 0.25);
+    background: rgb(var(--shadow-rgb) / 0.25);
     color: var(--accent-soft);
     font-family: var(--font-mono);
     font-size: var(--text-micro);
@@ -562,7 +562,7 @@
 
   .workbench-rail__density-btn .workbench-rail__ai-kbd {
     border-color: var(--border-subtle);
-    background: rgb(0 0 0 / 0.2);
+    background: rgb(var(--shadow-rgb) / 0.2);
     color: var(--text-muted);
   }
 
@@ -584,7 +584,7 @@
     bottom: 6px;
     left: calc(var(--sp-md) + 9px);
     width: 1px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgb(var(--overlay-rgb) / 0.08);
     content: '';
   }
 
@@ -855,7 +855,7 @@
     padding: 0 var(--page-padding);
     border-bottom: 1px solid var(--border-subtle);
     background: var(--surface-workspace);
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.06) inset;
+    box-shadow: 0 1px 0 rgb(var(--highlight-rgb) / 0.06) inset;
   }
 
   .workspace-header__identity {
@@ -1082,8 +1082,8 @@
     background: var(--surface-panel);
     color: var(--accent-soft);
     box-shadow:
-      0 8px 18px rgb(0 0 0 / 0.18),
-      0 1px 0 rgb(255 255 255 / 0.08) inset;
+      0 8px 18px rgb(var(--shadow-rgb) / 0.18),
+      0 1px 0 rgb(var(--highlight-rgb) / 0.08) inset;
   }
 
   button.pbgui-icon-button.pbgui-icon-button.workbench-rail__compact-toggle:hover:not(:disabled) {
@@ -1759,7 +1759,7 @@
 
   button.pbgui-tab.pbgui-tab:hover:not(.active) {
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.03);
+    background: rgb(var(--overlay-rgb) / 0.03);
   }
 
   button.pbgui-tab.pbgui-tab.active {
@@ -2055,7 +2055,7 @@
   }
 
   .modal-close:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgb(var(--overlay-rgb) / 0.1);
     color: var(--text-primary);
   }
 
@@ -2228,7 +2228,7 @@
     right: 0;
     z-index: 1;
     background: var(--bg-panel);
-    box-shadow: -10px 0 16px -16px rgb(0 0 0 / 0.9);
+    box-shadow: -10px 0 16px -16px rgb(var(--shadow-ink-rgb) / 0.9);
   }
 
   .pbgui-list-table th:last-child {
@@ -2281,7 +2281,7 @@
     border: 1px solid rgb(var(--text-secondary-rgb) / 0.13);
     border-radius: var(--radius-lg);
     background: rgb(var(--bg-page-rgb) / 0.28);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.025);
+    box-shadow: inset 0 1px 0 rgb(var(--highlight-rgb) / 0.025);
   }
 
   .pbgui-config-list .pbgui-config-frame .pbgui-config-toolbar {
@@ -2755,7 +2755,7 @@
   .workbench-rail__item--active {
     border-color: rgb(var(--accent-rgb) / 0.28);
     background: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.16), rgb(var(--accent-rgb) / 0.06));
-    box-shadow: 0 8px 18px rgb(3 10 18 / 0.18), 0 1px 0 rgb(255 255 255 / 0.05) inset;
+    box-shadow: 0 8px 18px rgb(var(--shadow-rgb) / 0.18), 0 1px 0 rgb(var(--highlight-rgb) / 0.05) inset;
   }
 
   .workspace-header {
@@ -2793,7 +2793,7 @@
     border-color: rgb(var(--accent-rgb) / 0.18);
     border-radius: var(--radius-md);
     background: rgb(var(--bg-panel-rgb) / 0.82);
-    box-shadow: 0 12px 24px rgb(3 10 18 / 0.16), 0 1px 0 rgb(255 255 255 / 0.05) inset;
+    box-shadow: 0 12px 24px rgb(var(--shadow-rgb) / 0.16), 0 1px 0 rgb(var(--highlight-rgb) / 0.05) inset;
     backdrop-filter: blur(14px);
   }
 
@@ -2803,7 +2803,7 @@
   .chart-frame,
   .metric-block {
     border-color: rgb(var(--accent-rgb) / 0.13);
-    box-shadow: 0 12px 24px rgb(3 10 18 / 0.14), 0 1px 0 rgb(255 255 255 / 0.04) inset;
+    box-shadow: 0 12px 24px rgb(var(--shadow-rgb) / 0.14), 0 1px 0 rgb(var(--highlight-rgb) / 0.04) inset;
   }
 
   .panel-title,
@@ -2817,13 +2817,13 @@
     border-radius: var(--radius-md);
     border-color: rgb(var(--accent-rgb) / 0.22);
     background: rgb(var(--bg-panel-rgb) / 0.7);
-    box-shadow: 0 6px 16px rgb(3 10 18 / 0.16);
+    box-shadow: 0 6px 16px rgb(var(--shadow-rgb) / 0.16);
   }
 
   .pbgui-list-wrap {
     border: 1px solid rgb(var(--accent-rgb) / 0.12);
     border-radius: var(--radius-md);
-    box-shadow: 0 14px 28px rgb(3 10 18 / 0.15);
+    box-shadow: 0 14px 28px rgb(var(--shadow-rgb) / 0.15);
   }
 
   .pbgui-list-table th {

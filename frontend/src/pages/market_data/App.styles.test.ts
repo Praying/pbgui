@@ -42,10 +42,10 @@ describe('Market Data page style contracts', () => {
     expect(marketDataStyleSources).not.toContain('rgb(224 241 255');
 
     expect(integrityPanelSource).toContain(
-      'box-shadow: 0 22px 46px rgb(0 0 0 / 0.3), 0 1px 0 rgb(255 255 255 / 0.1) inset;',
+      'box-shadow: 0 22px 46px rgb(var(--shadow-ink-rgb) / 0.3), 0 1px 0 rgb(var(--highlight-rgb) / 0.1) inset;',
     );
     expect(integrityPanelSource).toContain(
-      'box-shadow: 0 1px 0 rgb(255 255 255 / 0.06) inset;',
+      'box-shadow: 0 1px 0 rgb(var(--highlight-rgb) / 0.06) inset;',
     );
     expect(gapDetailsModalSource).toContain(
       'class="integrity-gap-backdrop fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-backdrop',

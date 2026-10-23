@@ -263,7 +263,7 @@ watch(
   background:
     linear-gradient(90deg, rgb(var(--bg-panel-rgb) / 0.9), rgb(var(--bg-page-rgb) / 0.9)),
     var(--surface-workspace);
-  box-shadow: 0 1px rgba(255, 255, 255, 0.025) inset;
+  box-shadow: 0 1px rgb(var(--highlight-rgb) / 0.025) inset;
 }
 
 .ctrl-title {

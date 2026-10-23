@@ -38,7 +38,7 @@ describe('RetestModal (:8095-8159)', () => {
     expect(wrapper.find('[data-test="arr-date-mode"]').text()).toContain('Same duration, end yesterday');
     expect((wrapper.find('[data-test="arr-last-days"]').element as HTMLInputElement).value).toBe('10');
     expect((wrapper.find('[data-test="arr-balance"]').element as HTMLInputElement).value).toBe('750');
-    expect((wrapper.find('[data-test="arr-exchanges"]').element as HTMLSelectElement).selectedOptions[0]?.value).toBe('bybit');
+    expect(wrapper.get('[data-test="arr-exchanges"]').text()).toBe('bybit');
     expect(wrapper.find('[data-test="arr-skip-liquidated"]').attributes('aria-checked')).toBe('true');
     const marketDataLabel = wrapper.find('label[for="arr-pbgui-data"]');
     expect(marketDataLabel.text()).toBe('Use PBGui Market Data');

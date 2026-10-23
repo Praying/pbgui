@@ -15,7 +15,7 @@ import { computed } from 'vue';
 import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
-import { onToggleMultiSelectMousedown } from '../composables/useToggleMultiSelect';
+import ExchangeMultiSelect from '@/shared/components/ui/select/MultiSelect.vue';
 import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { RebacktestFields } from '../types';
 
@@ -103,12 +103,7 @@ function onConfirm(): void {
           </div>
           <div class="flex min-h-[60px] flex-1 flex-col">
             <div class="text-xs uppercase tracking-label text-secondary">{{ t('v7backtest.exchanges') }}</div>
-            <!-- ui-migration: blocked — the reka listbox is single-value; the
-                 legacy multi-select (ctrl-free toggle via useToggleMultiSelect)
-                 stays native. -->
-            <select v-model="exchanges" class="sb-input h-auto min-h-[var(--input-h)] flex-1" multiple data-test="rbt-exchanges" @mousedown="onToggleMultiSelectMousedown">
-              <option v-for="exchange in ALL_EXCHANGES" :key="exchange" :value="exchange">{{ exchange }}</option>
-            </select>
+            <ExchangeMultiSelect v-model="exchanges" :options="ALL_EXCHANGES" data-test="rbt-exchanges" :aria-label="t('v7backtest.exchanges')" />
           </div>
           <div class="flex items-center gap-2">
             <Checkbox id="rbt-pbgui-data" v-model="usePbguiData" class="m-0" data-test="rbt-pbgui-data" />

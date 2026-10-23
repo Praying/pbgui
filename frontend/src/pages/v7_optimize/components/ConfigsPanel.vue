@@ -65,7 +65,7 @@ function onConfigRowKeydown(event: KeyboardEvent, configName: string): void {
 const editLabel = computed(() => t('v7optimize.editConfig'));
 const duplicateLabel = computed(() => t('v7optimize.duplicate'));
 /* Icon-only row actions (edit / duplicate) reuse the backtest row-action tone: quiet border, accent on hover. */
-const iconActionClass = 'pbgui-config-action size-7 shrink-0 rounded-md border border-border-default bg-elevated text-secondary shadow-none hover:border-accent/45 hover:bg-accent/10 hover:text-accent-soft';
+const iconActionClass = 'pbgui-config-action size-(--control-height-sm) shrink-0 rounded-md border border-border-default bg-elevated text-secondary shadow-none hover:border-accent/45 hover:bg-accent/10 hover:text-accent-soft';
 const wrap = ref<InstanceType<typeof ListWrap> | null>(null);
 const tbody = ref<HTMLElement | null>(null);
 const dragSelect = useRowDragSelect({

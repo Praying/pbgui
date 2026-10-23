@@ -347,7 +347,7 @@ onUnmounted(() => {
   background:
     linear-gradient(90deg, rgb(var(--bg-panel-rgb) / 0.76), rgb(var(--bg-page-rgb) / 0.72)),
     var(--surface-workspace);
-  box-shadow: 0 1px rgba(255, 255, 255, 0.025) inset;
+  box-shadow: 0 1px rgb(var(--highlight-rgb) / 0.025) inset;
 }
 
 /* Level-toggle state: the off-state dimming plus the per-level .on tones
@@ -422,7 +422,7 @@ onUnmounted(() => {
   background:
     linear-gradient(180deg, rgb(var(--bg-page-rgb) / 0.98), rgb(var(--bg-page-rgb) / 0.98)),
     var(--bg-page);
-  box-shadow: 0 16px 34px rgb(0 0 0 / 0.24), 0 1px rgb(255 255 255 / 0.025) inset;
+  box-shadow: 0 16px 34px rgb(var(--shadow-ink-rgb) / 0.24), 0 1px rgb(var(--highlight-rgb) / 0.025) inset;
   color: var(--text-secondary);
   font-size: var(--text-xs);
   line-height: 1.55;

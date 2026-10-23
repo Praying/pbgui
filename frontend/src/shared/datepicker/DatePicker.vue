@@ -287,7 +287,7 @@ const canToday = computed(() => {
   background: var(--accent);
 }
 .dp-day.today {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgb(var(--overlay-rgb) / 0.12);
 }
 .dp-day.today.selected {
   background: var(--accent);

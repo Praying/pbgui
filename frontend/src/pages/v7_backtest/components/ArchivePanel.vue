@@ -381,7 +381,7 @@ defineExpose({
                 <td class="tabular-nums">{{ entry.optimize_configs ?? 0 }}</td>
                 <td class="truncate text-secondary" :title="entry.migration_status?.label ?? ''">{{ entry.migration_status?.label ?? '' }}</td>
                 <TdActions>
-                  <Button type="button" variant="danger" size="sm" class="size-7 shrink-0 rounded-md p-0" data-test="archive-delete" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name"><PbIcon :icon="PhTrash" :size="16" /></Button>
+                  <Button type="button" variant="danger" size="sm" class="size-(--control-height-sm) shrink-0 rounded-md p-0" data-test="archive-delete" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name"><PbIcon :icon="PhTrash" :size="16" /></Button>
                 </TdActions>
               </tr>
             </tbody>

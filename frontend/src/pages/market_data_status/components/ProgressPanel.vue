@@ -92,7 +92,7 @@ const details = computed(() => {
   font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-primary);
-  text-shadow: 0 0 4px rgb(0 0 0 / 0.7);
+  text-shadow: 0 0 4px rgb(var(--shadow-ink-rgb) / 0.7);
   pointer-events: none;
 }
 

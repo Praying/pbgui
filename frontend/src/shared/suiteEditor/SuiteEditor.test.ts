@@ -325,7 +325,7 @@ describe('PB8 scenario generator', () => {
       scenarioContext: { start_date: '2023-01-01', end_date: '2024-01-01', exchanges: ['binance'] },
       previewScenarioTemplate,
     });
-    await wrapper.find('[data-test="suite-generator-template"]').setValue('sweep_cycles');
+    await pickSelectOption(wrapper, '[data-test="suite-generator-template"]', 'Sweep Cycles');
     await wrapper.find('[data-test="suite-generator-preview"]').trigger('click');
     await flushPromises();
     expect(previewScenarioTemplate).toHaveBeenCalledOnce();

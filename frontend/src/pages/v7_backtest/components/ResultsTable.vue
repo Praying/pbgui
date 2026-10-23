@@ -309,8 +309,8 @@ onBeforeUnmount(() => dragSelect.dispose());
 
 <style scoped>
 .result-group-row > td {
-  border-bottom: 1px solid var(--border-secondary, rgb(255 255 255 / 0.08));
-  background: var(--bg-panel, rgb(255 255 255 / 0.03));
+  border-bottom: 1px solid var(--border-secondary, rgb(var(--overlay-rgb) / 0.08));
+  background: var(--bg-panel, rgb(var(--overlay-rgb) / 0.03));
   position: sticky;
   top: 33px;
   z-index: 1;

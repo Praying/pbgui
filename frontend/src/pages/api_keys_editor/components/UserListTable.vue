@@ -480,7 +480,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
 
 .api-meta-bar {
   background: rgb(var(--accent-rgb) / 0.055);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  box-shadow: inset 0 1px 0 rgb(var(--highlight-rgb) / 0.04);
 }
 
 .api-meta-bar__icon {

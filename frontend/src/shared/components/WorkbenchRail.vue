@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
-import { PhGridFour, PhRows, PhSidebarSimple, PhSparkle } from '@phosphor-icons/vue';
+import { PhGridFour, PhMoon, PhRows, PhSidebarSimple, PhSparkle, PhSun } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import type { NavigationGroup, NavigationItem, PageSection } from '@/shared/navigation';
 import { markAiUserInteraction, useAiDrawerAvailable } from '@/shared/ai/drawer';
 import { toggleAiDrawer, useAiDrawer } from '@/shared/ai/useAiDrawer';
 import { useDensity } from '@/shared/composables/useDensity';
+import { useTheme } from '@/shared/composables/useTheme';
 import IconButton from './IconButton.vue';
 import PbIcon from './PbIcon.vue';
 
@@ -35,6 +36,7 @@ const { t } = useI18n();
 const { available: aiAvailable } = useAiDrawerAvailable();
 const { isOpen: aiDrawerOpen } = useAiDrawer();
 const { density, toggleDensity } = useDensity();
+const { theme, toggleTheme } = useTheme();
 
 function onAiButtonClick(): void {
   markAiUserInteraction();
@@ -361,6 +363,23 @@ onBeforeUnmount(() => {
         <span v-if="!visuallyCollapsed" class="workbench-rail__ai-label">{{ t('nav.density') }}</span>
         <span v-if="!visuallyCollapsed" class="workbench-rail__ai-kbd" aria-hidden="true">
           {{ t(density === 'compact' ? 'nav.densityCompactShort' : 'nav.densityComfortableShort') }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        id="pbgui-theme-btn"
+        class="workbench-rail__ai-btn workbench-rail__density-btn"
+        data-testid="theme-toggle"
+        :title="t(theme === 'light' ? 'nav.themeDark' : 'nav.themeLight')"
+        :aria-label="t(theme === 'light' ? 'nav.themeDark' : 'nav.themeLight')"
+        :aria-pressed="theme === 'light' ? 'true' : 'false'"
+        @click="toggleTheme"
+      >
+        <PbIcon :icon="theme === 'light' ? PhSun : PhMoon" :size="18" />
+        <span v-if="!visuallyCollapsed" class="workbench-rail__ai-label">{{ t('nav.theme') }}</span>
+        <span v-if="!visuallyCollapsed" class="workbench-rail__ai-kbd" aria-hidden="true">
+          {{ t(theme === 'light' ? 'nav.themeLightShort' : 'nav.themeDarkShort') }}
         </span>
       </button>
 

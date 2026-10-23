@@ -58,9 +58,9 @@ function statusText(item: ArchiveRetestScheduleItem): string {
           <td class="truncate text-xs tabular-nums text-secondary" :title="item.next_run_at ?? ''">{{ item.next_run_at ?? '' }}</td>
           <td class="max-w-[320px] break-words text-secondary" :title="statusText(item)">{{ statusText(item) }}</td>
           <TdActions v-if="own">
-            <Button type="button" variant="success" size="sm" class="size-7 shrink-0 rounded-md p-0" data-test="archive-sched-run" :title="t('v7backtest.runNow')" :aria-label="t('v7backtest.runNow')" @click="emit('run', item.id)"><PbIcon :icon="PhPlay" :size="16" /></Button>
-            <Button type="button" variant="default" size="sm" class="size-7 shrink-0 rounded-md p-0" data-test="archive-sched-toggle" :title="t('v7backtest.enableDisable')" :aria-label="t('v7backtest.enableDisable')" @click="emit('toggle', item.id)"><PbIcon :icon="item.enabled === false ? PhCheckCircle : PhPause" :size="16" /></Button>
-            <Button type="button" variant="danger" size="sm" class="size-7 shrink-0 rounded-md p-0" data-test="archive-sched-delete" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="emit('remove', item.id)"><PbIcon :icon="PhTrash" :size="16" /></Button>
+            <Button type="button" variant="success" size="sm" class="size-(--control-height-sm) shrink-0 rounded-md p-0" data-test="archive-sched-run" :title="t('v7backtest.runNow')" :aria-label="t('v7backtest.runNow')" @click="emit('run', item.id)"><PbIcon :icon="PhPlay" :size="16" /></Button>
+            <Button type="button" variant="default" size="sm" class="size-(--control-height-sm) shrink-0 rounded-md p-0" data-test="archive-sched-toggle" :title="t('v7backtest.enableDisable')" :aria-label="t('v7backtest.enableDisable')" @click="emit('toggle', item.id)"><PbIcon :icon="item.enabled === false ? PhCheckCircle : PhPause" :size="16" /></Button>
+            <Button type="button" variant="danger" size="sm" class="size-(--control-height-sm) shrink-0 rounded-md p-0" data-test="archive-sched-delete" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="emit('remove', item.id)"><PbIcon :icon="PhTrash" :size="16" /></Button>
           </TdActions>
         </tr>
       </tbody>

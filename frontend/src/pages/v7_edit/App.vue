@@ -376,7 +376,7 @@ body {
 .core-workbench-shell--edit .edit-section-card,
 .core-workbench-shell--edit #exp-advanced {
   border-color: var(--border-strong);
-  box-shadow: 0 12px 28px rgb(0 0 0 / 0.16), inset 0 1px 0 rgb(255 255 255 / 0.035);
+  box-shadow: 0 12px 28px rgb(var(--shadow-ink-rgb) / 0.16), inset 0 1px 0 rgb(var(--highlight-rgb) / 0.035);
 }
 
 .core-workbench-shell--edit .edit-section-card__header,

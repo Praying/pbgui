@@ -62,3 +62,34 @@ export async function pickSelectOption(
   await new DOMWrapper(option).trigger('pointerup');
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
+
+/**
+ * Toggle options of a `multiple` listbox by text. Reka leaves a multiple
+ * listbox open after each choice, so the trigger is opened once and every
+ * option is picked from the same open list.
+ */
+export async function toggleSelectOptions(
+  wrapper: VueWrapper,
+  triggerSelector: string,
+  optionTexts: string[],
+  contentIndex = 0,
+): Promise<void> {
+  await openSelect(wrapper, triggerSelector);
+  for (const optionText of optionTexts) {
+    const option = selectOptionElements(contentIndex).find((el) => el.textContent?.trim() === optionText);
+    if (!option) {
+      throw new Error(
+        `toggleSelectOptions: "${optionText}" not found among ${JSON.stringify(selectOptionTexts(contentIndex))} for ${triggerSelector}`,
+      );
+    }
+    await new DOMWrapper(option).trigger('pointerup');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+}
+
+/** Texts of the options a `multiple` listbox currently reports as checked. */
+export function checkedSelectOptionTexts(contentIndex = 0): string[] {
+  return selectOptionElements(contentIndex)
+    .filter((el) => el.getAttribute('data-state') === 'checked')
+    .map((el) => el.textContent?.trim() ?? '');
+}

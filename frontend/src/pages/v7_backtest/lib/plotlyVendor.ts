@@ -4,6 +4,7 @@
  * bundled. This module is the single typed touch-point (same pattern as
  * the pareto/strategy/dashboard vendored globals, R2/R5).
  */
+import { withTheme } from '@/shared/lib/themedPlotly';
 
 export type PlotlyTrace = Record<string, unknown>;
 export type PlotlyLayout = Record<string, unknown>;
@@ -19,7 +20,7 @@ export interface PlotlyVendor {
 }
 
 export function getPlotly(): PlotlyVendor | undefined {
-  return (window as unknown as { Plotly?: PlotlyVendor }).Plotly;
+  return withTheme((window as unknown as { Plotly?: PlotlyVendor }).Plotly);
 }
 
 /** Fullscreen modebar icon (:6432-6434). */

@@ -1,4 +1,5 @@
 import type { PlotlyLayout } from './plotlyVendor';
+import { currentTheme, themeColors } from '@/shared/lib/themeColors';
 
 /**
  * Pareto chart layouts — ports of darkPlotLayout (:2580-2644) and the preview
@@ -10,51 +11,66 @@ import type { PlotlyLayout } from './plotlyVendor';
  * ported as dead code.
  */
 
-const DARK_BG = '#10141d';
-const TEXT = '#e8ecf4';
-const GRID = 'rgba(255,255,255,0.12)';
-const ZEROLINE = 'rgba(255,255,255,0.18)';
-const POLAR_GRID = 'rgba(255,255,255,0.16)';
-const POLAR_LINE = 'rgba(255,255,255,0.22)';
+/* Dark literals are the legacy values and stay byte-for-byte what they were
+   (plotLayout.test.ts pins them). Under [data-theme='light'] the same names
+   resolve to the light ink instead — white-on-white gridlines would vanish. */
+const DARK = {
+  bg: '#10141d',
+  text: '#e8ecf4',
+  grid: 'rgba(255,255,255,0.12)',
+  zeroline: 'rgba(255,255,255,0.18)',
+  polarGrid: 'rgba(255,255,255,0.16)',
+  polarLine: 'rgba(255,255,255,0.22)',
+} as const;
+
+function palette(): typeof DARK | { bg: string; text: string; grid: string; zeroline: string; polarGrid: string; polarLine: string } {
+  if (currentTheme() !== 'light') return DARK;
+  const c = themeColors();
+  const ink = (a: number) => `rgba(15,31,39,${a})`;
+  return { bg: c.surface, text: c.text, grid: ink(0.12), zeroline: ink(0.2), polarGrid: ink(0.16), polarLine: ink(0.24) };
+}
 
 function sceneAxis(source: unknown): PlotlyLayout {
-  return { backgroundcolor: DARK_BG, gridcolor: GRID, color: TEXT, ...((source as PlotlyLayout) || {}) };
+  const P = palette();
+  return { backgroundcolor: P.bg, gridcolor: P.grid, color: P.text, ...((source as PlotlyLayout) || {}) };
 }
 
 function polarAxis(source: unknown): PlotlyLayout {
+  const P = palette();
   return {
-    color: TEXT,
-    gridcolor: POLAR_GRID,
-    linecolor: POLAR_LINE,
-    tickfont: { color: TEXT },
+    color: P.text,
+    gridcolor: P.polarGrid,
+    linecolor: P.polarLine,
+    tickfont: { color: P.text },
     ...((source as PlotlyLayout) || {}),
   };
 }
 
 export function darkPlotLayout(layout?: PlotlyLayout | null): PlotlyLayout {
+  const P = palette();
   const base: PlotlyLayout = { ...(layout || {}) };
-  base.paper_bgcolor = DARK_BG;
-  base.plot_bgcolor = DARK_BG;
-  base.font = { color: TEXT, ...((base.font as PlotlyLayout) || {}) };
-  base.legend = { font: { color: TEXT }, ...((base.legend as PlotlyLayout) || {}) };
+  base.paper_bgcolor = P.bg;
+  base.plot_bgcolor = P.bg;
+  base.font = { color: P.text, ...((base.font as PlotlyLayout) || {}) };
+  base.legend = { font: { color: P.text }, ...((base.legend as PlotlyLayout) || {}) };
   base.margin = { l: 80, r: 40, t: 60, b: 70, ...((base.margin as PlotlyLayout) || {}) };
   if (Array.isArray(base.annotations)) {
     base.annotations = (base.annotations as PlotlyLayout[]).map((raw) => {
       const annotation = (raw || {}) as PlotlyLayout;
-      return { ...annotation, font: { color: TEXT, ...((annotation.font as PlotlyLayout) || {}) } };
+      return { ...annotation, font: { color: P.text, ...((annotation.font as PlotlyLayout) || {}) } };
     });
   }
   if (base.xaxis) {
-    base.xaxis = { color: TEXT, gridcolor: GRID, zerolinecolor: ZEROLINE, ...((base.xaxis as PlotlyLayout) || {}) };
+    base.xaxis = { color: P.text, gridcolor: P.grid, zerolinecolor: P.zeroline, ...((base.xaxis as PlotlyLayout) || {}) };
   }
   if (base.yaxis) {
-    base.yaxis = { color: TEXT, gridcolor: GRID, zerolinecolor: ZEROLINE, ...((base.yaxis as PlotlyLayout) || {}) };
+    base.yaxis = { color: P.text, gridcolor: P.grid, zerolinecolor: P.zeroline, ...((base.yaxis as PlotlyLayout) || {}) };
   }
   if (base.scene) {
     const scene = base.scene as PlotlyLayout;
     base.scene = {
       ...scene,
-      bgcolor: DARK_BG,
+      bgcolor: P.bg,
       xaxis: sceneAxis(scene.xaxis),
       yaxis: sceneAxis(scene.yaxis),
       zaxis: sceneAxis(scene.zaxis),
@@ -62,7 +78,7 @@ export function darkPlotLayout(layout?: PlotlyLayout | null): PlotlyLayout {
   }
   if (base.polar) {
     const polar = base.polar as PlotlyLayout;
-    base.polar = { ...polar, bgcolor: DARK_BG, radialaxis: polarAxis(polar.radialaxis), angularaxis: polarAxis(polar.angularaxis) };
+    base.polar = { ...polar, bgcolor: P.bg, radialaxis: polarAxis(polar.radialaxis), angularaxis: polarAxis(polar.angularaxis) };
   }
   if (base.coloraxis && (base.coloraxis as PlotlyLayout).colorbar) {
     const coloraxis = base.coloraxis as PlotlyLayout;
@@ -71,10 +87,10 @@ export function darkPlotLayout(layout?: PlotlyLayout | null): PlotlyLayout {
       ...coloraxis,
       colorbar: {
         ...colorbar,
-        tickfont: { color: TEXT, ...((colorbar.tickfont as PlotlyLayout) || {}) },
+        tickfont: { color: P.text, ...((colorbar.tickfont as PlotlyLayout) || {}) },
         title: {
           ...((colorbar.title as PlotlyLayout) || {}),
-          font: { color: TEXT, ...((((colorbar.title as PlotlyLayout) || {}).font as PlotlyLayout) || {}) },
+          font: { color: P.text, ...((((colorbar.title as PlotlyLayout) || {}).font as PlotlyLayout) || {}) },
         },
       },
     };

@@ -64,6 +64,7 @@ import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
+import ExchangeMultiSelect from '@/shared/components/ui/select/MultiSelect.vue';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Slider } from '@/shared/components/ui/slider';
@@ -524,7 +525,7 @@ onBeforeUnmount(() => {
           </div>
           <div v-if="store.progress.fullLoad.stage === 'loading' || store.progress.fullLoad.stage === 'error'" class="metric-inline-status mt-2.5 flex flex-col gap-2" id="metric-full-load-panel">
             <div id="metric-full-load-text" class="load-status-text min-h-[34px] text-sm text-secondary">{{ store.progress.fullLoad.text }}</div>
-            <div class="load-status-progress h-2 overflow-hidden rounded-full bg-white/8"><div id="metric-full-load-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-base ease-standard" :style="fullLoadBarStyle"></div></div>
+            <div class="load-status-progress h-2 overflow-hidden rounded-full bg-overlay/8"><div id="metric-full-load-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-base ease-standard" :style="fullLoadBarStyle"></div></div>
           </div>
         </div>
       </section>
@@ -543,12 +544,8 @@ onBeforeUnmount(() => {
                 <Input id="max-configs-input" v-model.number="store.state.maxConfigs" type="number" min="100" max="10000" step="100" />
               </div>
               <div class="form-field wide col-span-8 flex flex-col gap-1.5 max-[900px]:col-span-12">
-                <Label for="load-strategy-select">{{ t('v7explore.candidateSelection') }}</Label>
-                <!-- ui-migration: blocked — ui/select (reka listbox) is
-                     single-value; it cannot express multiple + size="7". -->
-                <select id="load-strategy-select" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" v-model="store.state.loadStrategy" multiple size="7">
-                  <option v-for="option in LOAD_STRATEGY_OPTIONS" :key="option" :value="option">{{ option }}</option>
-                </select>
+                <Label id="load-strategy-label" for="load-strategy-select">{{ t('v7explore.candidateSelection') }}</Label>
+                <ExchangeMultiSelect id="load-strategy-select" v-model="store.state.loadStrategy" :options="LOAD_STRATEGY_OPTIONS" aria-labelledby="load-strategy-label" />
               </div>
               <div class="form-field col-span-4 flex flex-col justify-end gap-1.5 max-[900px]:col-span-12">
                 <div class="check-row flex min-h-8 items-center gap-2 text-secondary">
@@ -564,7 +561,7 @@ onBeforeUnmount(() => {
                 </div>
               </div>
               <div class="form-field full col-span-12 flex flex-col gap-1.5">
-                <div class="load-status-card flex flex-col gap-2 rounded-xl border border-border-default bg-white/2 p-3" id="full-load-status-card">
+                <div class="load-status-card flex flex-col gap-2 rounded-xl border border-border-default bg-overlay/2 p-3" id="full-load-status-card">
                   <div class="load-status-head flex items-center justify-between gap-2">
                     <strong>{{ t('v7explore.fullLoadStatus') }}</strong>
                     <span id="full-load-status-chip" :class="fullLoadChipClass">{{ fullLoadLabels[store.progress.fullLoad.stage] }}</span>
@@ -572,7 +569,7 @@ onBeforeUnmount(() => {
                   <div id="full-load-status-text" class="load-status-text text-sm text-secondary">
                     {{ store.progress.fullLoad.text || t('v7explore.scanToSelectCandidates') }}
                   </div>
-                  <div class="load-status-progress h-2 overflow-hidden rounded-full bg-white/8"><div id="full-load-status-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-base ease-standard" :style="fullLoadBarStyle"></div></div>
+                  <div class="load-status-progress h-2 overflow-hidden rounded-full bg-overlay/8"><div id="full-load-status-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-base ease-standard" :style="fullLoadBarStyle"></div></div>
                 </div>
               </div>
             </div>

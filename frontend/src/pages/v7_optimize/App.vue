@@ -854,7 +854,7 @@ body { overflow: hidden; }
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   background: var(--surface-panel);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.035);
+  box-shadow: inset 0 1px 0 rgb(var(--highlight-rgb) / 0.035);
 }
 
 .opt-filter-bar {
@@ -917,7 +917,7 @@ body { overflow: hidden; }
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   background: var(--opt-table-surface);
-  box-shadow: var(--shadow-panel), inset 0 1px 0 rgb(255 255 255 / 0.04), inset 0 -1px 0 rgb(0 0 0 / 0.42);
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgb(var(--highlight-rgb) / 0.04), inset 0 -1px 0 rgb(var(--shadow-ink-rgb) / 0.42);
 }
 
 .opt-table-wrap {
@@ -941,7 +941,7 @@ body { overflow: hidden; }
   height: 24px;
   border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
   background: linear-gradient(180deg, rgb(var(--opt-table-surface-rgb) / 0%), rgb(var(--opt-table-surface-rgb) / 0.96) 88%);
-  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.025);
+  box-shadow: inset 0 -1px 0 rgb(var(--highlight-rgb) / 0.025);
   content: '';
   pointer-events: none;
 }
@@ -971,7 +971,7 @@ body { overflow: hidden; }
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   background: var(--bg-elevated);
-  box-shadow: var(--shadow-elevated), inset 0 1px 0 rgb(255 255 255 / 0.05);
+  box-shadow: var(--shadow-elevated), inset 0 1px 0 rgb(var(--highlight-rgb) / 0.05);
   color: var(--text-primary);
   font-size: var(--text-sm);
   line-height: 1.4;

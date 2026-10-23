@@ -119,7 +119,7 @@ describe('renderQueue (:5136-5177)', () => {
         expect(button.attributes('aria-label')).toBe(button.attributes('title'));
         expect(button.find('svg').exists()).toBe(true);
         expect(button.classes()).toContain('backtest-row-action');
-        expect(button.classes()).toContain('size-7');
+        expect(button.classes()).toContain('size-(--control-height-sm)');
       }
     }
     wrapper.unmount();

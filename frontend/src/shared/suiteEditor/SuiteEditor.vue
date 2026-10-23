@@ -119,6 +119,21 @@ const DEFAULT_SCENARIO_GENERATOR_DRAFT: ScenarioGeneratorDraft = {
   auto_windows: false,
 };
 const scenarioGeneratorDraft = ref<ScenarioGeneratorDraft>({ ...DEFAULT_SCENARIO_GENERATOR_DRAFT });
+/* The Select trigger shows the chosen option's label, not its raw value. */
+const generatorTemplateLabel = computed(() => {
+  const keys: Record<string, string> = {
+    rolling_windows: 'editor.suite.generatorRollingWindows',
+    walk_forward: 'editor.suite.generatorWalkForward',
+    sweep_cycles: 'editor.suite.generatorSweepCycles',
+  };
+  const key = keys[scenarioGeneratorDraft.value.template];
+  return key ? t(key) : scenarioGeneratorDraft.value.template;
+});
+const generatorExchangeModeLabel = computed(() =>
+  scenarioGeneratorDraft.value.exchange_mode === 'per_exchange'
+    ? t('editor.suite.generatorPerExchange')
+    : t('editor.suite.generatorInheritBase'),
+);
 const scenarioPreview = ref<ScenarioGeneratorPreview | null>(null);
 const scenarioPreviewContextSignature = ref('');
 let scenarioRequestGeneration = 0;
@@ -706,12 +721,17 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
 
           <div class="form-row cols-4">
             <div class="form-group">
-              <label>{{ t('editor.suite.generatorTemplate') }}</label>
-              <select v-model="scenarioGeneratorDraft.template" data-test="suite-generator-template" class="form-input">
-                <option value="rolling_windows">{{ t('editor.suite.generatorRollingWindows') }}</option>
-                <option value="walk_forward">{{ t('editor.suite.generatorWalkForward') }}</option>
-                <option value="sweep_cycles">{{ t('editor.suite.generatorSweepCycles') }}</option>
-              </select>
+              <label id="suite-generator-template-label">{{ t('editor.suite.generatorTemplate') }}</label>
+              <SelectRoot v-model="scenarioGeneratorDraft.template">
+                <SelectTrigger data-test="suite-generator-template" aria-labelledby="suite-generator-template-label">
+                  <span>{{ generatorTemplateLabel }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rolling_windows">{{ t('editor.suite.generatorRollingWindows') }}</SelectItem>
+                  <SelectItem value="walk_forward">{{ t('editor.suite.generatorWalkForward') }}</SelectItem>
+                  <SelectItem value="sweep_cycles">{{ t('editor.suite.generatorSweepCycles') }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
             <div class="form-group">
               <label>{{ t('editor.suite.generatorWindowDays') }}</label>
@@ -730,11 +750,16 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
               <Input v-model.number="scenarioGeneratorDraft.holdout_windows" type="number" min="0" max="16" data-test="suite-generator-holdout" />
             </div>
             <div class="form-group">
-              <label>{{ t('editor.suite.generatorExchangeMode') }}</label>
-              <select v-model="scenarioGeneratorDraft.exchange_mode" data-test="suite-generator-exchange-mode" class="form-input">
-                <option value="inherit">{{ t('editor.suite.generatorInheritBase') }}</option>
-                <option value="per_exchange">{{ t('editor.suite.generatorPerExchange') }}</option>
-              </select>
+              <label id="suite-generator-exchange-mode-label">{{ t('editor.suite.generatorExchangeMode') }}</label>
+              <SelectRoot v-model="scenarioGeneratorDraft.exchange_mode">
+                <SelectTrigger data-test="suite-generator-exchange-mode" aria-labelledby="suite-generator-exchange-mode-label">
+                  <span>{{ generatorExchangeModeLabel }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="inherit">{{ t('editor.suite.generatorInheritBase') }}</SelectItem>
+                  <SelectItem value="per_exchange">{{ t('editor.suite.generatorPerExchange') }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
             <template v-if="scenarioGeneratorDraft.template === 'sweep_cycles'">
               <div class="form-group"><label>{{ t('editor.suite.generatorBalanceMultiplier') }}</label><Input v-model.number="scenarioGeneratorDraft.balance_multiplier" type="number" min="1.01" max="100" step="0.01" data-test="suite-generator-multiplier" /></div>

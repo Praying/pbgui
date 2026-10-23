@@ -59,7 +59,7 @@ function close(): void {
   >
     <template #title>
       <div class="flex min-w-0 items-center gap-2.5">
-        <span class="grid size-7 shrink-0 place-items-center rounded-md border border-accent/22 bg-accent/10 text-accent-soft">
+        <span class="grid size-(--control-height-sm) shrink-0 place-items-center rounded-md border border-accent/22 bg-accent/10 text-accent-soft">
           <PbIcon :icon="PhChartLineUp" :size="15" />
         </span>
         <span class="min-w-0">

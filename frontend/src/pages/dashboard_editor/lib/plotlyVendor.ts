@@ -4,6 +4,7 @@
  * This module is the single typed touch-point, so tests install a fake
  * window.Plotly and components go through getPlotly().
  */
+import { withTheme } from '@/shared/lib/themedPlotly';
 import type { PlotlyLayout, PlotlyTrace } from './plotlyLayouts';
 
 export interface PlotlyVendor {
@@ -19,5 +20,5 @@ export interface PlotlyVendor {
 }
 
 export function getPlotly(): PlotlyVendor | undefined {
-  return (window as unknown as { Plotly?: PlotlyVendor }).Plotly;
+  return withTheme((window as unknown as { Plotly?: PlotlyVendor }).Plotly);
 }
