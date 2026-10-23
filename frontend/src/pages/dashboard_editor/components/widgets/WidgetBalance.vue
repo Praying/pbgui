@@ -206,9 +206,9 @@ function onDelete(): void {
             <td class="border-b border-b-card px-[0.7rem] py-[0.35rem]" :style="{ color: upnlColor(num(r.upnl)) }">{{ signedFmt(num(r.upnl)) }}</td>
             <td class="border-b border-b-card px-[0.7rem] py-[0.35rem]">
               <div class="db-twe-cell flex items-center gap-[0.4rem]">
-                <div class="db-twe-track h-[7px] min-w-[50px] flex-1 overflow-hidden rounded-[3px] bg-border-default">
+                <div class="db-twe-track h-[7px] min-w-[50px] flex-1 overflow-hidden rounded-sm bg-border-default">
                   <div
-                    class="db-twe-fill h-full w-full origin-left rounded-[3px] [transition:transform_.3s,background_.3s]"
+                    class="db-twe-fill h-full w-full origin-left rounded-sm [transition:transform_.3s,background_.3s]"
                     :style="{ transform: `scaleX(${Number(tweBarPct(num(r.we))) / 100})`, background: tweColor(num(r.we)) }"
                   ></div>
                 </div>

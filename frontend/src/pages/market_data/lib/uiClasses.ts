@@ -33,8 +33,8 @@ export const sbSepClass = 'sb-sep my-0.5 border-t border-border-subtle';
 /** The former .callout / .callout.warning rules. */
 export function calloutClass(warning = false): string {
   return warning
-    ? 'callout warning grid gap-2 rounded-[10px] border border-warning/30 bg-warning/8 p-3'
-    : 'callout grid gap-2 rounded-[10px] border border-accent/22 bg-accent/8 p-3';
+    ? 'callout warning grid gap-2 rounded-xl border border-warning/30 bg-warning/8 p-3'
+    : 'callout grid gap-2 rounded-xl border border-accent/22 bg-accent/8 p-3';
 }
 
 /* ── panels-settings.css ───────────────────────────────────────── */
@@ -111,14 +111,14 @@ export function gapCellClass(cls: string): string {
           : cls === 'missing-day'
             ? 'bg-danger-deep/92'
             : 'bg-success/72';
-  return `integrity-gap-cell ${cls} rounded-[1px] ${bg}`.replace(/\s+/g, ' ').trim();
+  return `integrity-gap-cell ${cls} rounded-xs ${bg}`.replace(/\s+/g, ' ').trim();
 }
 
 /** The former .integrity-context-hour family ("" | partial | missing). */
 export function contextHourClass(cls: string): string {
   const bg =
     cls === 'partial' ? 'bg-warning/88' : cls === 'missing' ? 'bg-danger-deep/75' : 'bg-success/72';
-  return `integrity-context-hour ${cls} h-3 rounded-[2px] ${bg}`.replace(/\s+/g, ' ').trim();
+  return `integrity-context-hour ${cls} h-3 rounded-xs ${bg}`.replace(/\s+/g, ' ').trim();
 }
 
 /** The former .integrity-context-day rules (hover/selected/disabled). */
@@ -126,7 +126,7 @@ export function contextDayClass(selected: boolean): string {
   const state = selected
     ? 'selected border-accent bg-accent/12'
     : 'border-transparent bg-transparent enabled:hover:bg-accent/8';
-  return `integrity-context-day grid w-full cursor-pointer grid-cols-[96px_minmax(320px,1fr)_72px_150px] items-center gap-2 rounded-[5px] border px-[7px] py-1 text-left text-primary disabled:cursor-default disabled:opacity-[0.58] ${state}`;
+  return `integrity-context-day grid w-full cursor-pointer grid-cols-[96px_minmax(320px,1fr)_72px_150px] items-center gap-2 rounded-sm border px-[7px] py-1 text-left text-primary disabled:cursor-default disabled:opacity-[0.58] ${state}`;
 }
 
 /* ── panels-best1m-copy.css ────────────────────────────────────── */

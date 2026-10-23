@@ -144,7 +144,7 @@ onBeforeUnmount(() => {
     <Button
       type="button"
       variant="outline"
-      class="resize-btn resize-btn-min absolute left-1.5 top-px z-[6] h-[14px] select-none rounded-[3px] border-secondary bg-elevated px-[4px] py-0 text-xs leading-[14px] text-secondary opacity-0 [transition:opacity_var(--motion-fast)_var(--ease-standard),color_var(--motion-fast)_var(--ease-standard),background-color_var(--motion-fast)_var(--ease-standard)] hover:border-accent-soft hover:bg-accent/80 hover:text-accent-contrast"
+      class="resize-btn resize-btn-min absolute left-1.5 top-px z-[6] h-[14px] select-none rounded-sm border-secondary bg-elevated px-[4px] py-0 text-xs leading-[14px] text-secondary opacity-0 [transition:opacity_var(--motion-fast)_var(--ease-standard),color_var(--motion-fast)_var(--ease-standard),background-color_var(--motion-fast)_var(--ease-standard)] hover:border-accent-soft hover:bg-accent/80 hover:text-accent-contrast"
       :title="dashT('dash.collapseCompact', 'Collapse to compact (scrollable)')"
       @mousedown.stop
       @click="onMin"
@@ -154,7 +154,7 @@ onBeforeUnmount(() => {
     <Button
       type="button"
       variant="outline"
-      class="resize-btn resize-btn-max absolute right-1.5 top-px z-[6] h-[14px] select-none rounded-[3px] border-secondary bg-elevated px-[4px] py-0 text-xs leading-[14px] text-secondary opacity-0 [transition:opacity_var(--motion-fast)_var(--ease-standard),color_var(--motion-fast)_var(--ease-standard),background-color_var(--motion-fast)_var(--ease-standard)] hover:border-accent-soft hover:bg-accent/80 hover:text-accent-contrast"
+      class="resize-btn resize-btn-max absolute right-1.5 top-px z-[6] h-[14px] select-none rounded-sm border-secondary bg-elevated px-[4px] py-0 text-xs leading-[14px] text-secondary opacity-0 [transition:opacity_var(--motion-fast)_var(--ease-standard),color_var(--motion-fast)_var(--ease-standard),background-color_var(--motion-fast)_var(--ease-standard)] hover:border-accent-soft hover:bg-accent/80 hover:text-accent-contrast"
       :title="dashT('dash.expandAllRows', 'Expand to show all rows')"
       @mousedown.stop
       @click="onMax"

@@ -102,7 +102,7 @@ function onStatusSelect(value: unknown): void {
     <div :class="[noteClass, 'mb-3']" id="tradfi-map-count">
       {{ map.hasRendered.value ? map.countText.value : t('market.waitingForTradfiMap') }}
     </div>
-    <div class="tradfi-table-wrap max-h-[420px] overflow-auto rounded-[10px] border border-secondary/14 bg-page/48" id="tradfi-table-wrap">
+    <div class="tradfi-table-wrap max-h-[420px] overflow-auto rounded-xl border border-secondary/14 bg-page/48" id="tradfi-table-wrap">
       <div v-if="map.loadError.value" class="tradfi-empty p-6 text-center text-secondary">{{ map.loadError.value }}</div>
       <div v-else-if="!map.filteredRows.value.length" class="tradfi-empty p-6 text-center text-secondary">
         {{ t('market.noTradfiMatch') }}

@@ -1313,7 +1313,7 @@ function preflight(): void {
                   </div>
                   <div v-if="ohlcvJob" class="mt-1.5 grid gap-1" data-test="ohlcv-start-progress" role="status" aria-live="polite">
                     <div class="h-1.5 overflow-hidden rounded-full bg-white/10">
-                      <div class="h-full w-full origin-left bg-accent transition-transform duration-[var(--motion-fast)] ease-standard" :style="{ transform: `scaleX(${Math.max(0, Math.min(100, Number(ohlcvJob.progress?.percent || 0))) / 100})` }"></div>
+                      <div class="h-full w-full origin-left bg-accent transition-transform duration-snap ease-standard" :style="{ transform: `scaleX(${Math.max(0, Math.min(100, Number(ohlcvJob.progress?.percent || 0))) / 100})` }"></div>
                     </div>
                     <div class="flex items-center justify-between gap-2 text-xs text-secondary">
                       <span>{{ ohlcvJob.progress?.message || t('v7optimize.ohlcvStartDateWorking') }}</span>
@@ -1457,7 +1457,7 @@ function preflight(): void {
                   <label
                     v-for="exchange in availableExchanges"
                     :key="exchange"
-                    class="flex items-center gap-2 rounded-md px-3 py-1.5 text-compact cursor-pointer select-none transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard border"
+                    class="flex items-center gap-2 rounded-md px-3 py-1.5 text-compact cursor-pointer select-none transition-[color,background-color,border-color] duration-snap ease-standard border"
                     :class="isExchangeSelected(exchange) ? 'bg-accent/15 border-accent/40 text-accent-soft font-semibold' : 'bg-surface-deep/60 border-border-default/60 text-secondary hover:text-primary hover:border-border-default'"
                   >
                     <Checkbox
@@ -1472,7 +1472,7 @@ function preflight(): void {
                   class="h-(--control-height-lg) w-full text-compact font-mono"
                   @blur="applyExchangeText"
                   @change="applyExchangeText"
-                  @keydown.enter="applyExchangeText"
+                  @keydown.enter="$event.isComposing || $event.keyCode === 229 ? undefined : (applyExchangeText())"
                   placeholder="binance, bybit, bitget..."
                 />
               </div>
@@ -1588,7 +1588,7 @@ function preflight(): void {
                   list="bot-params-datalist"
                   class="h-(--control-height-lg) flex-1 text-compact font-mono placeholder:text-placeholder"
                   placeholder="e.g. long.total_wallet_exposure_limit"
-                  @keydown.enter.prevent="addBound"
+                  @keydown.enter.prevent="$event.isComposing || $event.keyCode === 229 ? undefined : (addBound())"
                 />
                 <datalist id="bot-params-datalist">
                   <option v-for="param in (props.botParams || [])" :key="param" :value="param" />

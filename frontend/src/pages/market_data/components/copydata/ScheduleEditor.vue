@@ -26,7 +26,7 @@ const { t } = useI18n();
        flip is invisible until the row list refreshes. -->
   <div
     v-if="store.isEditing.value"
-    class="copy-data-editing-note flex items-center gap-2 rounded-[10px] border border-accent/24 bg-accent/8 px-3 py-2 text-sm text-primary"
+    class="copy-data-editing-note flex items-center gap-2 rounded-xl border border-accent/24 bg-accent/8 px-3 py-2 text-sm text-primary"
   >
     <PbIcon :icon="PhPencilSimple" :size="16" class="shrink-0 text-accent" />
     <span>{{ t('market.editingScheduleNote', { name: store.scheduleName.value }) }}</span>

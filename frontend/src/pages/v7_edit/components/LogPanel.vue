@@ -168,7 +168,7 @@ onBeforeUnmount(() => {
       <span id="log-panel-title" class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-bold">&#x1F4CB; {{ t('v7run.passivbotLog') }}</span>
       <span
         id="log-panel-host"
-        class="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap rounded-[3px] border bg-page px-1.5 py-px text-xs"
+        class="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap rounded-sm border bg-page px-1.5 py-px text-xs"
         :class="logHostClass(hostClass)"
       >{{ hostBadge }}</span>
       <Button variant="ghost" size="icon" class="h-(--control-height-sm) w-7 text-md" :title="t('common.close')" :aria-label="t('common.close')" @click="open = false">&#x00D7;</Button>

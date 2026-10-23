@@ -37,7 +37,7 @@ function messageClass(level: string): string {
 
 <template>
   <section id="messages" class="flex max-h-[30dvh] flex-col gap-2 overflow-y-auto" :hidden="!list().length || list().every((_, i) => dismissed.has(i))">
-    <div v-for="(msg, i) in list()" v-show="!dismissed.has(i)" :key="i" class="flex items-start gap-2 border rounded-[9px] px-3.25 py-2.5" :class="messageClass(String(msg.level || 'info'))">
+    <div v-for="(msg, i) in list()" v-show="!dismissed.has(i)" :key="i" class="flex items-start gap-2 border rounded-lg px-3.25 py-2.5" :class="messageClass(String(msg.level || 'info'))">
       <span class="min-w-0 flex-1">{{ serverMsg(String(msg.text || msg.message || '')) }}</span>
       <Button type="button" variant="ghost" size="sm" class="h-auto shrink-0 border-0 p-0.5" :aria-label="t('common.close')" @click="dismiss(i)"><PbIcon :icon="PhX" :size="12" /></Button>
     </div>

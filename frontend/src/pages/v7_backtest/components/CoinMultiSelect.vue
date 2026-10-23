@@ -100,7 +100,7 @@ function clear(): void {
         <template v-else>{{ display(value) }}</template>
         <Button type="button" variant="ghost" class="ms-x h-auto p-0" :aria-label="`Remove ${value === 'all' ? 'all' : display(value)}`" :title="`Remove ${value === 'all' ? 'all' : display(value)}`" @mousedown.prevent @click.stop="toggle(value)"><PbIcon :icon="PhX" /></Button>
       </span>
-      <Input v-model="filter" :id="id + '-input'" class="ms-input" :placeholder="placeholder || t('v7backtest.typeToSearch')" autocomplete="off" @keydown.enter.prevent="filtered.length ? toggle(filtered[0]!) : undefined" />
+      <Input v-model="filter" :id="id + '-input'" class="ms-input" :placeholder="placeholder || t('v7backtest.typeToSearch')" autocomplete="off" @keydown.enter.prevent="$event.isComposing || $event.keyCode === 229 ? undefined : (filtered.length ? toggle(filtered[0]!) : undefined)" />
       <div :id="id + '-dd'" class="ms-dropdown" :class="{ open }">
         <div v-if="filtered.length === 0" class="py-1 px-2 text-secondary text-xs">{{ t('v7backtest.noMatches') }}</div>
         <!-- mousedown.prevent keeps focus on the search input so focusout

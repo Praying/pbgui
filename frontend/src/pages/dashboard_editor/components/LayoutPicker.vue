@@ -56,7 +56,7 @@ function pick(lt: LayoutPreset): void {
           <div
             v-for="i in lt.cols * lt.rows"
             :key="i"
-            class="lt-cell min-h-0 rounded-[1px]"
+            class="lt-cell min-h-0 rounded-xs"
             :class="isActive(lt) ? 'bg-accent/60' : 'bg-border-default'"
           ></div>
         </div>
@@ -84,7 +84,7 @@ function pick(lt: LayoutPreset): void {
           <div
             v-for="i in lt.cols * lt.rows"
             :key="i"
-            class="lt-cell min-h-0 rounded-[1px]"
+            class="lt-cell min-h-0 rounded-xs"
             :class="isActive(lt) ? 'bg-accent/60' : 'bg-border-default'"
           ></div>
         </div>

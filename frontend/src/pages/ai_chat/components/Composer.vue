@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { isImeComposing } from '@/shared/lib/ime';
 
 interface ComposerProps {
   enabled: boolean;
@@ -25,7 +26,7 @@ function onKeydown(event: KeyboardEvent): void {
   // ignored; the user's next Enter, after composition ends, sends.
   // keyCode 229 covers Safari and older Chromium, where isComposing is
   // still false for the keydown that ends composition.
-  if (event.isComposing || event.keyCode === 229) return;
+  if (isImeComposing(event)) return;
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
     emit('send');

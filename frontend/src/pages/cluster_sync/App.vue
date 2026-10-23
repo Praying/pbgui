@@ -137,7 +137,7 @@ function noticeKindClass(kind: 'ok' | 'err' | 'warn'): string {
 /* ── Class kits ─────────────────────────────────────────────────────────
    Structural classes only — form controls moved to the shared ui/ layer
    (Button/Input/Label/Select/Checkbox), which owns their chrome. */
-const cardClass = 'overflow-hidden rounded-[9px] border border-border-default bg-card';
+const cardClass = 'overflow-hidden rounded-lg border border-border-default bg-card';
 const cardHeadClass = 'flex items-center justify-between gap-2.5 border-b border-border-default px-4 py-3';
 const cardTitleClass = 'text-compact font-semibold tracking-tight';
 const pillClass = 'inline-block rounded-full px-2 py-0.5 text-micro font-medium';

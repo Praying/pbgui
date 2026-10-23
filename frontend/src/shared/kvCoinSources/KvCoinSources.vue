@@ -136,7 +136,7 @@ function onEnter(): void {
             class="ms-input"
             :placeholder="t('v7backtest.typeToSearch')"
             autocomplete="off"
-            @keydown.enter.prevent="onEnter"
+            @keydown.enter.prevent="$event.isComposing || $event.keyCode === 229 ? undefined : (onEnter())"
           />
           <div class="ms-dropdown" :class="{ open }">
             <div v-if="visible.length === 0" style="padding: 4px 8px; color: var(--text-dim); font-size: var(--text-xs)">{{ t('v7backtest.noMatches') }}</div>

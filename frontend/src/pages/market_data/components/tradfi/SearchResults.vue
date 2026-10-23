@@ -12,6 +12,7 @@ import { Input } from '@/shared/components/ui/input';
 import { fieldLabelClass, settingsFieldClass } from '../../lib/uiClasses';
 import type { UseTradfiMap } from '../../composables/useTradfiMap';
 import { formatTradfiPrice, formatTradfiTimestamp } from '../../lib/tradfiFormat';
+import { isImeComposing } from '@/shared/lib/ime';
 
 const props = defineProps<{
   map: UseTradfiMap;
@@ -79,7 +80,7 @@ const STATUS_TONE: Record<string, string> = {
 
 function statusClass(level: string): string {
   const tone = STATUS_TONE[level] ?? 'border-secondary/14 bg-page/48 text-secondary';
-  return `tradfi-search-window-status ${level} rounded-[10px] border px-3 py-2 text-sm leading-[1.45] ${tone}`;
+  return `tradfi-search-window-status ${level} rounded-xl border px-3 py-2 text-sm leading-[1.45] ${tone}`;
 }
 
 /* The legacy input was uncontrolled: it displayed effectiveQuery and run()
@@ -97,6 +98,8 @@ function run(): void {
 
 function onQueryKeydown(event: KeyboardEvent): void {
   if (event.key !== 'Enter') return;
+  // Enter commits an IME candidate in the query box; it must not run the search.
+  if (isImeComposing(event)) return;
   event.preventDefault(); // :9669
   run();
 }
@@ -121,7 +124,7 @@ watch(
 
 <template>
   <div v-if="!row" class="tradfi-search-window-content flex min-h-full flex-col gap-3">
-    <div class="tradfi-search-window-empty rounded-[10px] border border-dashed border-secondary/18 bg-page/34 p-3 text-sm leading-[1.5] text-secondary">{{ t('market.selectTradfiRow') }}</div>
+    <div class="tradfi-search-window-empty rounded-xl border border-dashed border-secondary/18 bg-page/34 p-3 text-sm leading-[1.5] text-secondary">{{ t('market.selectTradfiRow') }}</div>
   </div>
   <div v-else class="tradfi-search-window-content flex min-h-full flex-col gap-3">
     <div class="tradfi-search-window-header-block grid gap-1">
@@ -155,7 +158,7 @@ watch(
       :class="statusClass(messageLevel)"
     >{{ message }}</div>
     <div v-if="results.length" class="tradfi-search-list grid gap-2">
-      <div v-for="(item, index) in results" :key="index" class="tradfi-search-item flex flex-wrap items-start justify-between gap-3 rounded-[10px] border border-secondary/14 bg-page/45 p-3">
+      <div v-for="(item, index) in results" :key="index" class="tradfi-search-item flex flex-wrap items-start justify-between gap-3 rounded-xl border border-secondary/14 bg-page/45 p-3">
         <div class="tradfi-search-item-main grid min-w-0 flex-[1_1_320px] gap-1">
           <div class="tradfi-search-title text-base font-bold text-primary">{{ item.ticker }} · {{ item.name }}</div>
           <div class="tradfi-search-meta text-sm text-secondary">
@@ -172,6 +175,6 @@ watch(
         >{{ t('market.apply') }}</Button>
       </div>
     </div>
-    <div v-else class="tradfi-search-window-empty rounded-[10px] border border-dashed border-secondary/18 bg-page/34 p-3 text-sm leading-[1.5] text-secondary">{{ emptyMessage }}</div>
+    <div v-else class="tradfi-search-window-empty rounded-xl border border-dashed border-secondary/18 bg-page/34 p-3 text-sm leading-[1.5] text-secondary">{{ emptyMessage }}</div>
   </div>
 </template>

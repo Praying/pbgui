@@ -276,7 +276,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
         <Button
           type="button"
           variant="primary"
-          class="px-6 py-2.5 font-medium shadow-md shadow-accent/20 hover:shadow-accent/30 transition-[color,background-color,border-color,box-shadow] duration-[var(--motion-fast)] ease-standard gap-2"
+          class="px-6 py-2.5 font-medium shadow-md shadow-accent/20 hover:shadow-accent/30 transition-[color,background-color,border-color,box-shadow] duration-snap ease-standard gap-2"
           data-testid="empty-add-user"
           @click="emit('create')"
         >
@@ -380,7 +380,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
           :key="u.name"
           tabindex="0"
           :data-user-name="u.name"
-          class="user-table__row cursor-pointer transition-colors duration-[120ms] ease-standard hover:bg-secondary/5 focus-visible:outline-2 focus-visible:outline-accent-soft focus-visible:-outline-offset-2"
+          class="user-table__row cursor-pointer transition-colors duration-snap ease-standard hover:bg-secondary/5 focus-visible:outline-2 focus-visible:outline-accent-soft focus-visible:-outline-offset-2"
           @click="emit('edit', u.name)"
           @keydown="onRowKeydown($event, u.name)"
         >

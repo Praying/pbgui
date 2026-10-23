@@ -163,7 +163,7 @@ function onProfileRowKeydown(event: KeyboardEvent, profileId: string): void {
               v-else
               v-for="(profile, profileIdx) in store.profiles.value"
               :key="profile.id ?? profileIdx"
-              class="cursor-pointer transition-colors duration-[120ms] ease-standard"
+              class="cursor-pointer transition-colors duration-snap ease-standard"
               :class="{ selected: profile.id === store.profileId.value }"
               :data-profile-id="profile.id"
               tabindex="0"

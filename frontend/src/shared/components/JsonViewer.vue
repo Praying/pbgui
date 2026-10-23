@@ -122,7 +122,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     class="json-viewer flex min-h-0 min-w-0 flex-col overflow-hidden"
-    :class="fill ? 'h-full rounded-none border-0 bg-transparent' : 'rounded-[5px] border border-border-default bg-page'"
+    :class="fill ? 'h-full rounded-none border-0 bg-transparent' : 'rounded-sm border border-border-default bg-page'"
   >
     <div v-if="isObjectValue" class="flex shrink-0 items-center justify-end gap-1 border-b border-border-default/60 px-1.5 py-1">
       <button type="button" class="json-viewer-btn" @click="toggleExpanded">

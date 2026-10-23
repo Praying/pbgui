@@ -80,7 +80,7 @@ function clear(): void {
         class="ms-input"
         :placeholder="placeholder"
         autocomplete="off"
-        @keydown.enter.prevent="() => (filtered.length ? toggle(filtered[0]!) : undefined)"
+        @keydown.enter.prevent="$event.isComposing || $event.keyCode === 229 ? undefined : (filtered.length ? toggle(filtered[0]!) : undefined)"
       />
       <div :id="id + '-dd'" class="ms-dropdown" :class="{ open: dropdownOpen }">
         <div

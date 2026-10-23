@@ -244,7 +244,7 @@ function resizeHandleClass(direction: ResizeDirection): string {
             <div class="tradfi-search-meta text-sm text-secondary">{{ fetchedAtText }}</div>
             <div class="tradfi-search-meta text-sm text-secondary">{{ t('market.rowsCount', { count: specRows.length }) }}</div>
           </div>
-          <div class="tradfi-specs-table-wrap min-h-0 max-h-none flex-1 overflow-auto rounded-[10px] border border-secondary/14 bg-page/48">
+          <div class="tradfi-specs-table-wrap min-h-0 max-h-none flex-1 overflow-auto rounded-xl border border-secondary/14 bg-page/48">
             <table class="tradfi-specs-table w-full border-collapse">
               <thead class="sticky top-0 z-[1] bg-page">
                 <tr>

@@ -80,7 +80,7 @@ function onChangeSource(): void {
         <div class="relative">
           <Input id="start-date-input" class="pr-7" v-model="store.controls.startDate" type="text" placeholder="YYYY-MM-DD" :data-tip="t('v7explore.startDateTip')" />
           <!-- ui-migration: blocked — legacy window.__dp datepicker bridge (lib/datePicker.ts); the trigger stays raw -->
-          <button type="button" class="absolute right-0.5 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-0.75 py-0 text-sm leading-none text-secondary transition-colors duration-[var(--motion-fast)] ease-standard hover:text-primary" data-dp="start-date-input" :title="t('v7explore.openCalendar')" :aria-label="t('v7explore.openCalendar')" @click="openDatePicker('start-date-input', $event.currentTarget as HTMLElement)"><PbIcon :icon="PhCalendar" :size="14" /></button>
+          <button type="button" class="absolute right-0.5 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-0.75 py-0 text-sm leading-none text-secondary transition-colors duration-snap ease-standard hover:text-primary" data-dp="start-date-input" :title="t('v7explore.openCalendar')" :aria-label="t('v7explore.openCalendar')" @click="openDatePicker('start-date-input', $event.currentTarget as HTMLElement)"><PbIcon :icon="PhCalendar" :size="14" /></button>
         </div>
       </div>
       <div class="flex flex-col gap-0.75">
@@ -98,7 +98,7 @@ function onChangeSource(): void {
       <div class="flex flex-col gap-0.75">
         <Label for="context-days-input" :data-tip="t('v7explore.chartContextTip')">{{ t('v7explore.chartContext') }}</Label>
         <Slider id="context-days-input" v-model="store.controls.contextDays" :min="0.5" :max="60" :step="0.5" :label="t('v7explore.chartContext')" :data-tip="t('v7explore.chartContextTip')" @value-commit="store.recalculate()" />
-        <span class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-micro font-bold text-accent-soft" id="context-days-value">{{ Number(store.controls.contextDays || 0).toFixed(2) }}</span>
+        <span class="min-w-16 px-1.5 py-0.5 rounded-sm border border-accent/18 bg-accent-deep/8 text-right font-mono text-micro font-bold text-accent-soft" id="context-days-value">{{ Number(store.controls.contextDays || 0).toFixed(2) }}</span>
       </div>
     </div>
   </section>

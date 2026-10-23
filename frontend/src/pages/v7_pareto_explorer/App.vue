@@ -276,8 +276,8 @@ function messageClass(level: string): string {
    accent wash when selected, rather than a bright solid accent fill. */
 function deepTabClass(active: boolean): string {
   return active
-    ? 'deep-tab-btn active h-8 cursor-pointer rounded-lg border border-accent/35 bg-accent/14 px-3 py-0 text-accent-soft transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard hover:border-accent hover:bg-accent/20'
-    : 'deep-tab-btn h-8 cursor-pointer rounded-lg border border-border-default bg-elevated px-3 py-0 text-secondary transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard hover:border-border-strong hover:bg-border-default hover:text-primary';
+    ? 'deep-tab-btn active h-8 cursor-pointer rounded-lg border border-accent/35 bg-accent/14 px-3 py-0 text-accent-soft transition-[color,background-color,border-color] duration-snap ease-standard hover:border-accent hover:bg-accent/20'
+    : 'deep-tab-btn h-8 cursor-pointer rounded-lg border border-border-default bg-elevated px-3 py-0 text-secondary transition-[color,background-color,border-color] duration-snap ease-standard hover:border-border-strong hover:bg-border-default hover:text-primary';
 }
 
 const fullLoadBarStyle = computed(() => ({ width: String(store.progress.fullLoad.display) + '%' }));
@@ -385,7 +385,7 @@ onBeforeUnmount(() => {
 
 <template>
   <MigrationWatermark />
-  <DataTipTooltip class="pointer-events-none fixed z-[var(--z-tooltip)] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[var(--shadow-elevated)]" />
+  <DataTipTooltip class="pointer-events-none fixed z-[var(--z-tooltip)] hidden max-w-[480px] rounded-sm border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[var(--shadow-elevated)]" />
   <AppShell
     class="core-workbench-shell core-workbench-shell--explorer"
     :page-key="paretoPageKey"
@@ -524,7 +524,7 @@ onBeforeUnmount(() => {
           </div>
           <div v-if="store.progress.fullLoad.stage === 'loading' || store.progress.fullLoad.stage === 'error'" class="metric-inline-status mt-2.5 flex flex-col gap-2" id="metric-full-load-panel">
             <div id="metric-full-load-text" class="load-status-text min-h-[34px] text-sm text-secondary">{{ store.progress.fullLoad.text }}</div>
-            <div class="load-status-progress h-2 overflow-hidden rounded-full bg-white/8"><div id="metric-full-load-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-[var(--motion-normal)] ease-standard" :style="fullLoadBarStyle"></div></div>
+            <div class="load-status-progress h-2 overflow-hidden rounded-full bg-white/8"><div id="metric-full-load-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-base ease-standard" :style="fullLoadBarStyle"></div></div>
           </div>
         </div>
       </section>
@@ -572,7 +572,7 @@ onBeforeUnmount(() => {
                   <div id="full-load-status-text" class="load-status-text text-sm text-secondary">
                     {{ store.progress.fullLoad.text || t('v7explore.scanToSelectCandidates') }}
                   </div>
-                  <div class="load-status-progress h-2 overflow-hidden rounded-full bg-white/8"><div id="full-load-status-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-[var(--motion-normal)] ease-standard" :style="fullLoadBarStyle"></div></div>
+                  <div class="load-status-progress h-2 overflow-hidden rounded-full bg-white/8"><div id="full-load-status-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-base ease-standard" :style="fullLoadBarStyle"></div></div>
                 </div>
               </div>
             </div>

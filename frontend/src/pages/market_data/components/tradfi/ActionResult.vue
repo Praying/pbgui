@@ -27,7 +27,7 @@ const FEEDBACK_TONE: Record<string, string> = {
 
 function feedbackClass(level: string): string {
   const tone = FEEDBACK_TONE[level] ?? 'border-accent/20 bg-page/45';
-  return `tradfi-feedback ${level} grid gap-2 rounded-[10px] border p-3 ${tone}`;
+  return `tradfi-feedback ${level} grid gap-2 rounded-xl border p-3 ${tone}`;
 }
 </script>
 
@@ -48,7 +48,7 @@ function feedbackClass(level: string): string {
     </div>
     <template v-for="(group, index) in result.groups" :key="index">
       <div v-if="!group.items.length" class="tradfi-search-meta text-sm text-secondary">{{ group.label }}: {{ group.count }}</div>
-      <details v-else class="tradfi-feedback-group overflow-hidden rounded-[10px] border border-secondary/12 bg-page/32">
+      <details v-else class="tradfi-feedback-group overflow-hidden rounded-xl border border-secondary/12 bg-page/32">
         <summary class="flex cursor-pointer list-none items-center justify-between gap-2 py-2 pl-3 pr-3 [&::-webkit-details-marker]:hidden">
           <span class="tradfi-feedback-group-title text-sm font-semibold text-primary">{{ group.label }}: {{ group.count }}</span>
           <span class="tradfi-feedback-group-hint text-xs whitespace-nowrap text-secondary">{{ t('market.clickToExpand') }}</span>

@@ -131,7 +131,7 @@ function segmentTabClass(isActive: boolean): string {
       <button
         v-for="seg in store.segments.value"
         :key="seg.key"
-        class="pbgui-tab min-w-0 min-h-[31px] cursor-pointer border-0 border-r border-r-secondary/12 bg-transparent px-2 py-1.25 text-xs transition-[color,background-color] duration-[var(--motion-fast)] ease-[ease] first:rounded-l-[7px] last:rounded-r-[7px] last:border-r-0"
+        class="pbgui-tab min-w-0 min-h-[31px] cursor-pointer border-0 border-r border-r-secondary/12 bg-transparent px-2 py-1.25 text-xs transition-[color,background-color] duration-snap ease-standard first:rounded-l-[7px] last:rounded-r-[7px] last:border-r-0"
         type="button"
         :class="segmentTabClass(seg.key === segmentKey)"
         @click="setSegment(seg.key)"
@@ -144,12 +144,12 @@ function segmentTabClass(isActive: boolean): string {
         <span class="min-w-0 truncate text-secondary text-xs" :data-tip="field.tip">{{ field.label }}</span>
         <span class="inline-flex flex-none items-center gap-1.5">
           <span v-if="field.nearBound" class="px-1.5 py-0.5 rounded-full border border-warning/32 bg-warning-deep/13 text-warning-soft text-micro font-bold uppercase tracking-label">{{ field.nearBound === 'lower' ? t('v7explore.nearLowerBound') : t('v7explore.nearUpperBound') }}</span>
-          <span v-if="field.kind === 'select'" class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-micro font-bold text-accent-soft">{{ field.value || '-' }}</span>
-          <span v-else-if="field.kind === 'number'" class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-micro font-bold text-accent-soft">{{ sliderDisplay(field) }}</span>
+          <span v-if="field.kind === 'select'" class="min-w-16 px-1.5 py-0.5 rounded-sm border border-accent/18 bg-accent-deep/8 text-right font-mono text-micro font-bold text-accent-soft">{{ field.value || '-' }}</span>
+          <span v-else-if="field.kind === 'number'" class="min-w-16 px-1.5 py-0.5 rounded-sm border border-accent/18 bg-accent-deep/8 text-right font-mono text-micro font-bold text-accent-soft">{{ sliderDisplay(field) }}</span>
           <span class="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border-default text-accent-soft text-xs" :data-tip="field.tip">?</span>
         </span>
       </div>
-      <label v-if="field.kind === 'bool'" class="mt-1.5 flex min-h-[30px] items-center gap-2 rounded-[7px] border border-secondary/12 bg-secondary/[0.045] px-2 py-1.5 text-secondary text-sm">
+      <label v-if="field.kind === 'bool'" class="mt-1.5 flex min-h-[30px] items-center gap-2 rounded-md border border-secondary/12 bg-secondary/[0.045] px-2 py-1.5 text-secondary text-sm">
         <Checkbox class="param-bool" :model-value="!!field.value" :aria-label="field.label" @update:model-value="store.setParam(sideKey, field.name, $event === true); store.recalculate()" />
         {{ t('common.enabled') }}
       </label>

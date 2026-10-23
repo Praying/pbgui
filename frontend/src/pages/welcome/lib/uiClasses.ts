@@ -52,7 +52,7 @@ export function browserEntryClass(selected: boolean): string {
   const chrome =
     'flex h-[var(--btn-h)] min-h-[var(--btn-h)] w-full cursor-pointer items-center justify-start gap-2 ' +
     'rounded-lg border px-3 py-0 text-left text-base font-bold ' +
-    'transition-[background,border-color,transform,color] duration-[0.14s] ease-[ease] ' +
+    'transition-[background,border-color,transform,color] duration-snap ease-standard ' +
     'enabled:hover:-translate-y-px enabled:hover:border-border-default enabled:hover:bg-elevated ' +
     'disabled:cursor-not-allowed disabled:opacity-55';
   return selected

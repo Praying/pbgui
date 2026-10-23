@@ -735,7 +735,7 @@ defineExpose({
             data-test="log-search"
             type="text"
             @input="onSearchInput"
-            @keydown.enter.prevent="stepMatch($event.shiftKey ? -1 : 1)"
+            @keydown.enter.prevent="$event.isComposing || $event.keyCode === 229 ? undefined : (stepMatch($event.shiftKey ? -1 : 1))"
           />
           <button
             v-if="searchText"

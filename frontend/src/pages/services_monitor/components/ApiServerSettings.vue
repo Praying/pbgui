@@ -262,10 +262,10 @@ defineExpose({ load });
           />
         </div>
       </div>
-      <label class="form-hint clear-telegram">
-        <input type="checkbox" v-model="clearTelegram" />
-        {{ t('sysmon.clearTelegramCredentials') }}
-      </label>
+      <div class="form-hint clear-telegram">
+        <Checkbox id="apiserver-clear-telegram" v-model="clearTelegram" />
+        <label for="apiserver-clear-telegram">{{ t('sysmon.clearTelegramCredentials') }}</label>
+      </div>
       <AlertRouting v-model:routing="routing" />
       <div class="save-row">
         <Button class="save" type="button" variant="primary" @click="save"><PbIcon :icon="PhFloppyDisk" /> {{ t('common.save') }}</Button>

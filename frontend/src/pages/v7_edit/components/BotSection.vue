@@ -49,8 +49,8 @@ function onBotInputs(side: 'long' | 'short'): void {
  *  cascade precedence it had — it wins over a status tint on the same line. */
 function botLineClass(line: { error: boolean; status: string | null }): string {
   if (line.error) return 'v7e-line-error';
-  if (line.status === 'neutralized') return 'rounded-[2px] bg-[color-mix(in_srgb,var(--warning)_16%,transparent)]';
-  if (line.status === 'pb_default') return 'rounded-[2px] bg-[color-mix(in_srgb,var(--danger)_16%,transparent)]';
+  if (line.status === 'neutralized') return 'rounded-xs bg-[color-mix(in_srgb,var(--warning)_16%,transparent)]';
+  if (line.status === 'pb_default') return 'rounded-xs bg-[color-mix(in_srgb,var(--danger)_16%,transparent)]';
   return '';
 }
 

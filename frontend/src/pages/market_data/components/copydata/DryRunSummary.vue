@@ -49,7 +49,7 @@ function statusToneClass(status: string): string {
 </script>
 
 <template>
-  <div v-if="store.dryRunSummary.value" id="copy-data-dry-run-summary" class="copy-data-summary grid gap-2 rounded-[10px] border border-accent/24 bg-page/50 p-3">
+  <div v-if="store.dryRunSummary.value" id="copy-data-dry-run-summary" class="copy-data-summary grid gap-2 rounded-xl border border-accent/24 bg-page/50 p-3">
     <div class="copy-data-summary-head flex flex-wrap items-baseline justify-between gap-3">
       <h3 class="copy-data-summary-title m-0 flex items-center gap-1.5 text-md text-primary">
         <PbIcon :icon="PhFlask" :size="16" class="text-accent" />{{ t('market.dryRunSummary') }}

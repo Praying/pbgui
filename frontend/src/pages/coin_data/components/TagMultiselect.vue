@@ -10,6 +10,7 @@
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { isImeComposing } from '@/shared/lib/ime';
 
 const props = defineProps<{
   options: string[];
@@ -79,7 +80,7 @@ function onInput(): void {
 function onKeydown(event: KeyboardEvent): void {
   // This input filters tags by typing: Enter during IME composition commits
   // a candidate, not a selection. Let the IME own it.
-  if (event.isComposing || event.keyCode === 229) return;
+  if (isImeComposing(event)) return;
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
     event.preventDefault();
     if (!open.value) open.value = true;

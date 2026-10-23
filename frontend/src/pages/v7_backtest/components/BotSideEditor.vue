@@ -92,7 +92,7 @@ watch(model, (raw) => {
 
 <template>
   <section
-    class="bot-side-panel min-w-0 rounded-[9px] border-x border-b border-secondary/14 bg-page/30 p-3"
+    class="bot-side-panel min-w-0 rounded-lg border-x border-b border-secondary/14 bg-page/30 p-3"
     :class="long ? 'long border-t-2 border-t-success' : 'short border-t-2 border-t-danger'"
     :data-test="'bot-side-' + side"
     role="region"

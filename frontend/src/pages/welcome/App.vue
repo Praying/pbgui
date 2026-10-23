@@ -381,7 +381,7 @@ onBeforeUnmount(() => {
             <div class="field flex flex-col gap-1.5">
               <Label for="new-password">{{ t('misc.welcome.newPassword') }}</Label>
               <div class="pw-wrap relative flex items-center">
-                <Input id="new-password" v-model="store.newPassword.value" :type="newPwVisible ? 'text' : 'password'" autocomplete="new-password" class="flex-1 pr-[74px]" @keydown.enter="store.changePassword()" />
+                <Input id="new-password" v-model="store.newPassword.value" :type="newPwVisible ? 'text' : 'password'" autocomplete="new-password" class="flex-1 pr-[74px]" @keydown.enter="$event.isComposing || $event.keyCode === 229 ? undefined : (store.changePassword())" />
                 <Button type="button" variant="ghost" size="sm" class="pw-eye-btn absolute right-1.25 top-1 bottom-1 px-2 text-xs font-bold" :aria-label="t('misc.welcome.showHideNewPassword')" @click="newPwVisible = !newPwVisible">{{ newPwVisible ? t('misc.welcome.hidePassword') : t('misc.welcome.showPassword') }}</Button>
               </div>
             </div>

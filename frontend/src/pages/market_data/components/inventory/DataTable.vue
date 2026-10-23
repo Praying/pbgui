@@ -142,7 +142,7 @@ function cellText(columnKey: string, row: InventoryRow): string {
 </script>
 
 <template>
-  <div ref="root" class="inventory-table-wrap max-h-[33dvh] overflow-auto rounded-[10px] border border-border-default bg-page/42" id="inventory-table-wrap">
+  <div ref="root" class="inventory-table-wrap max-h-[33dvh] overflow-auto rounded-xl border border-border-default bg-page/42" id="inventory-table-wrap">
     <Table v-if="rows.length" class="inventory-table w-full min-w-[1180px]">
       <thead>
         <tr>
@@ -164,7 +164,7 @@ function cellText(columnKey: string, row: InventoryRow): string {
           v-for="row in rows"
           :key="String(row.row_id ?? '')"
           :data-row-id="String(row.row_id ?? '')"
-          class="cursor-pointer transition-[background-color] duration-[120ms]"
+          class="cursor-pointer transition-[background-color] duration-snap"
           :class="{ 'is-selected': selectedIds.includes(String(row.row_id ?? '')) }"
           :aria-selected="selectedIds.includes(String(row.row_id ?? '')) ? 'true' : 'false'"
           tabindex="0"

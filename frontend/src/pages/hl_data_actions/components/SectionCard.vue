@@ -56,7 +56,7 @@ const headerStatus = computed(() => {
       @keydown.space.prevent="emit('toggle')"
     >
       <span
-        class="hlda-arrow inline-block text-base text-secondary transition-transform duration-[var(--motion-fast)]"
+        class="hlda-arrow inline-block text-base text-secondary transition-transform duration-snap"
         :id="'arrow-' + id"
         :class="open ? 'rotate-90' : ''"
       >&#9654;</span>

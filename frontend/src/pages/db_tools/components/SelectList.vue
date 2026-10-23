@@ -120,7 +120,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-[10px] border border-border-subtle bg-page">
+  <div class="overflow-hidden rounded-xl border border-border-subtle bg-page">
     <div class="flex items-center justify-between gap-2 border-b border-border-subtle bg-card px-[0.8rem] py-[0.65rem]">
       <slot name="title"></slot>
       <div class="flex gap-1">

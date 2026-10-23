@@ -213,7 +213,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
           <div
             v-for="(row, index) in scoringRows"
             :key="`score-${index}`"
-            class="opt-objective-row-advanced group relative rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard hover:border-border-strong hover:bg-surface-deep/80"
+            class="opt-objective-row-advanced group relative rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 transition-[color,background-color,border-color] duration-snap ease-standard hover:border-border-strong hover:bg-surface-deep/80"
             :class="rowInvalid('scoring', index) ? 'border-danger/55 bg-danger/10' : ''"
             :aria-invalid="rowInvalid('scoring', index) ? 'true' : undefined"
           >
@@ -359,7 +359,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
           <div
             v-for="(row, index) in limitRows"
             :key="`limit-${index}`"
-            class="opt-objective-row-advanced group relative rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard hover:border-border-strong hover:bg-surface-deep/80"
+            class="opt-objective-row-advanced group relative rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 transition-[color,background-color,border-color] duration-snap ease-standard hover:border-border-strong hover:bg-surface-deep/80"
           >
             <!-- Primary Row: Enable toggle + Metric + Delete -->
             <div class="flex items-center gap-2">

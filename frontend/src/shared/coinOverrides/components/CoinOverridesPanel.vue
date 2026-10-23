@@ -258,7 +258,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
             class="ms-input"
             :placeholder="t('editor.overrides.typeToSearch')"
             autocomplete="off"
-            @keydown.enter.prevent="coinOptions.length ? store.pickCoin(coinOptions[0]!) : undefined"
+            @keydown.enter.prevent="$event.isComposing || $event.keyCode === 229 ? undefined : (coinOptions.length ? store.pickCoin(coinOptions[0]!) : undefined)"
           />
           <div id="cov-coin-dd" class="ms-dropdown" :class="{ open: coinDropdownOpen }">
             <div
@@ -362,7 +362,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
                   class="ms-input"
                   :placeholder="t('editor.overrides.typeToSearch')"
                   autocomplete="off"
-                  @keydown.enter.prevent="addParam(section)"
+                  @keydown.enter.prevent="$event.isComposing || $event.keyCode === 229 ? undefined : (addParam(section))"
                 />
                 <div class="ms-dropdown" :class="{ open: paramDropdown === section.key }">
                   <div
@@ -376,7 +376,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
             </div>
             <div class="form-group">
               <label>{{ t('editor.overrides.value') }}</label>
-              <Input v-model="pick(section).value" type="text" placeholder="0.5" @keydown.enter.prevent="addParam(section)" />
+              <Input v-model="pick(section).value" type="text" placeholder="0.5" @keydown.enter.prevent="$event.isComposing || $event.keyCode === 229 ? undefined : (addParam(section))" />
             </div>
             <div class="form-group">
               <Button type="button" variant="outline" size="sm" class="act-btn" @click="addParam(section)">

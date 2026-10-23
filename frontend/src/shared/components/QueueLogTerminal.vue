@@ -434,7 +434,7 @@ onUnmounted(() => {
         data-test="log-search"
         type="text"
         @input="onSearchInput"
-        @keydown.enter.prevent="searchMatchStep($event.shiftKey ? -1 : 1)"
+        @keydown.enter.prevent="$event.isComposing || $event.keyCode === 229 ? undefined : (searchMatchStep($event.shiftKey ? -1 : 1))"
       />
 
       <label class="flex cursor-pointer items-center gap-1.5 text-micro text-secondary" data-test="log-filter-label">

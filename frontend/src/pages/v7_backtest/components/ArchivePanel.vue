@@ -478,7 +478,7 @@ defineExpose({
           </div>
         </div>
         <div id="archive-results-resize-handle" class="flex h-1.5 cursor-row-resize select-none items-center justify-center rounded-b-sm bg-border-default" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
-          <span class="h-0.5 w-8 rounded-[2px] bg-secondary opacity-50"></span>
+          <span class="h-0.5 w-8 rounded-xs bg-secondary opacity-50"></span>
         </div>
       </div>
       <div id="archive-results-scroll" class="min-h-0 flex-1 overflow-y-auto pb-5">

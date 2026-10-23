@@ -7,6 +7,9 @@
 - 补齐 CDS 的两项交互守卫：AI 对话输入框与标签筛选、新建仪表盘对话框的 Enter 键加入 IME 判断（`isComposing` / `keyCode 229`），中文、日文输入法确认候选词时不再误发送；新增共享 `useStreamingScroll`，AI 消息列表、`LogViewer`、`QueueLogTerminal` 的流式滚动仅在用户仍处于底部且 150ms 内未主动滚动时才自动钉底，并新增「跳到最新」按钮。
 - 将 `rounded-[Npx]` 等任意值圆角、`duration-[var(--motion-*)]` 任意值时长统一收敛到设计令牌；样板页（系统欢迎、内部划转、利润归集）同时移除控件高度覆盖，改由密度令牌决定。新增 `motion-tokens`、`useStreamingScroll`、`useDensity`、`Composer` 四组 Vitest 回归测试；`Button`/`Input`/`Select` 测试改为断言令牌类名而非固定高度。
 - 全站清除控件固定高度：`h-7`/`h-8`/`h-9`/`h-7.5`/`h-8.5`/`size-8`/`size-9` 等 157 处改为 `h-(--control-height-sm|md|lg)`，覆盖 v7 优化配置编辑器（88 处）、评分限额编辑器、回测配置/结果面板、帮助页、配置导入与 OHLCV 预检对话框、套件编辑器等 20 个文件；复选框行、开关行、多选筛选容器等 `min-h-*` 行容器一并改用令牌。密度切换由此对全部已迁移页面生效，不再只影响三个样板页。`ConfigEditorModal` 新增回归测试，防止固定高度重新引入。
+- 清零剩余任意值：81 处 `rounded-[Npx]` 收敛到 `rounded-xs/sm/md/lg/xl`（9px→lg、10px→xl、5px→sm 等，最大视觉偏差 1px），37 处 `duration-[…]`/`ease-[ease]` 收敛到 `duration-snap/base/sheet` 与 `ease-standard`，覆盖 41 个页面文件及 market_data、welcome 的 TS 类名助手。
+- IME 守卫扩展到全部文本输入框：新增共享 `shared/lib/ime`（`isImeComposing`），帮助页搜索、行情搜索、币种多选、优化配置编辑器的交易所/边界输入、套件编辑器、币种覆盖面板、修改密码等 13 处 Enter 处理器在输入法组词期间不再误触发；新增全仓库扫描测试，之后任何文本框上未加守卫的 `@keydown.enter` 会直接失败。
+- 服务监控「清除 Telegram 凭据」原生复选框迁移到 `ui/Checkbox`，测试同步改为断言 `data-state`。
 
 ## 修复系统/内部划转「方向」无法选中（待确认划转锁定）
 

@@ -848,7 +848,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
                 <span v-for="coin in draft.coins" :key="coin" class="ms-tag">{{ coin }} <span class="ms-x" @click="toggleDraftCoin('coins', coin)">×</span></span>
                 <!-- ui-migration: blocked — chrome-free chip-row filter input inside the custom
                      multi-select dropdown (same precedent as coin_data TagMultiselect). -->
-                <input class="ms-input" :placeholder="t('editor.suite.typeToSearch')" @keydown.enter.prevent="draftCoinOptions('coins').length ? toggleDraftCoin('coins', draftCoinOptions('coins').find((c) => !draft!.coins.includes(c))!) : undefined" />
+                <input class="ms-input" :placeholder="t('editor.suite.typeToSearch')" @keydown.enter.prevent="$event.isComposing || $event.keyCode === 229 ? undefined : (draftCoinOptions('coins').length ? toggleDraftCoin('coins', draftCoinOptions('coins').find((c) => !draft!.coins.includes(c))!) : undefined)" />
                 <div class="ms-dropdown open" style="position: static; max-height: 160px">
                   <div v-for="coin in draftCoinOptions('coins')" :key="coin" class="ms-option" :class="{ selected: draft.coins.includes(coin) }" @mousedown.prevent="toggleDraftCoin('coins', coin)">{{ coin }}</div>
                 </div>

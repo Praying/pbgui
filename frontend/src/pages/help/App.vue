@@ -28,6 +28,7 @@ import { Input } from '@/shared/components/ui/input';
 import HelpToc from './components/HelpToc.vue';
 import { useHelpContent, type GlobalSearchResult } from './composables/useHelpContent';
 import { highlightMarks, highlightSnippet } from './lib/search';
+import { isImeComposing } from '@/shared/lib/ime';
 
 const { t } = useI18n();
 const store = useHelpContent();
@@ -168,6 +169,8 @@ watch(
 );
 
 function onSearchKeydown(event: KeyboardEvent): void {
+  // Enter commits an IME candidate here, it must not jump to the next match.
+  if (isImeComposing(event)) return;
   if (event.key === 'Enter' && !globalMode.value) {
     event.preventDefault();
     gotoMark(searchIndex.value + (event.shiftKey ? -1 : 1));
@@ -210,7 +213,7 @@ onBeforeUnmount(() => {
     <template #header-actions>
       <div class="flex items-center gap-2 max-[720px]:flex-wrap">
         <!-- Search bar -->
-        <div id="help-search-wrap" class="flex items-center gap-1 rounded-md border border-border-default bg-card px-2 py-0.5 transition-colors duration-[var(--motion-fast)] ease-standard focus-within:border-accent">
+        <div id="help-search-wrap" class="flex items-center gap-1 rounded-md border border-border-default bg-card px-2 py-0.5 transition-colors duration-snap ease-standard focus-within:border-accent">
           <Input
             id="help-search"
             v-model="searchTermRaw"
@@ -282,7 +285,7 @@ onBeforeUnmount(() => {
                 <div
                   v-for="result in globalResults"
                   :key="result.idx"
-                  class="gs-item w-full cursor-pointer rounded-lg border border-border-default bg-card p-4 transition-[color,background-color,border-color] duration-[var(--motion-fast)] ease-standard hover:border-border-strong hover:bg-elevated"
+                  class="gs-item w-full cursor-pointer rounded-lg border border-border-default bg-card p-4 transition-[color,background-color,border-color] duration-snap ease-standard hover:border-border-strong hover:bg-elevated"
                   :data-idx="result.idx"
                   @click="openGlobalResult(result.idx)"
                 >

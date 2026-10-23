@@ -6,6 +6,7 @@ import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Field } from '@/shared/components/ui/field';
 import { Input } from '@/shared/components/ui/input';
+import { isImeComposing } from '@/shared/lib/ime';
 
 /**
  * Legacy #new-dash-dialog (dashboard_main.html openNewDashDialog + OK/cancel/
@@ -62,7 +63,7 @@ function submit(): void {
 function onKeydown(event: KeyboardEvent): void {
   // The dashboard name is free text, so Enter may be committing an IME
   // candidate. Escape is not an IME key and stays live either way.
-  if (event.isComposing || event.keyCode === 229) return;
+  if (isImeComposing(event)) return;
   if (event.key === 'Enter') submit();
   if (event.key === 'Escape') emit('close');
 }

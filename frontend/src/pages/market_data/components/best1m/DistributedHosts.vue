@@ -41,7 +41,7 @@ function onKeydown(event: KeyboardEvent, hostname: string): void {
 </script>
 
 <template>
-  <div class="best1m-distributed-card grid gap-2 rounded-[10px] border border-accent/16 bg-page/45 p-3" id="best1m-distributed-card" :hidden="!cardVisible">
+  <div class="best1m-distributed-card grid gap-2 rounded-xl border border-accent/16 bg-page/45 p-3" id="best1m-distributed-card" :hidden="!cardVisible">
     <label :class="[settingsToggleClass, 'cursor-pointer']">
       <Checkbox
         id="best1m-distributed-enabled"

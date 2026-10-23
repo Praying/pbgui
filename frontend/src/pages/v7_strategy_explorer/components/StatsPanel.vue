@@ -94,7 +94,7 @@ const DEBUG_BLOCKS = [
           <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ title }}</h4>
           <JsonViewer :data="deepGet(side(), path as unknown as string[], {}) || {}" />
         </template>
-        <div v-if="deepGet<string>(side(), ['debug', 'next_entry_error'], '')" class="border rounded-[9px] px-3.25 py-2.5 border-danger/38 bg-danger-deep/24 text-danger-soft">{{ deepGet(side(), ['debug', 'next_entry_error'], '') }}</div>
+        <div v-if="deepGet<string>(side(), ['debug', 'next_entry_error'], '')" class="border rounded-lg px-3.25 py-2.5 border-danger/38 bg-danger-deep/24 text-danger-soft">{{ deepGet(side(), ['debug', 'next_entry_error'], '') }}</div>
       </div>
     </section>
   </section>

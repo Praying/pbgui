@@ -61,7 +61,7 @@ function statusBadgeClass(status: string): string {
     <div class="hlda-jh flex flex-wrap items-center justify-between gap-1.5">
       <div class="hlda-ji flex flex-wrap items-center gap-2">
         <span class="jid break-all text-xs font-semibold text-primary">{{ job.id }}</span>
-        <span class="hlda-sbadge rounded-[3px] px-2 py-0.5 text-xs font-medium" :class="statusBadgeClass(job.status)">{{ job.status }}</span>
+        <span class="hlda-sbadge rounded-sm px-2 py-0.5 text-xs font-medium" :class="statusBadgeClass(job.status)">{{ job.status }}</span>
         <span class="jtype text-xs text-muted">{{ job.type }}</span>
       </div>
       <div class="hlda-ja flex gap-1.5">

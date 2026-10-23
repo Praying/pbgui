@@ -67,7 +67,7 @@ const thClass =
     aria-modal="true"
     aria-labelledby="integrity-gap-title"
   >
-    <div class="integrity-gap-dialog w-[min(1080px,100%)] max-h-[calc(100dvh-40px)] overflow-auto rounded-[10px] border border-border-default bg-panel p-5 shadow-[var(--shadow-modal)] max-[760px]:max-h-[calc(100dvh-16px)] max-[760px]:p-3">
+    <div class="integrity-gap-dialog w-[min(1080px,100%)] max-h-[calc(100dvh-40px)] overflow-auto rounded-xl border border-border-default bg-panel p-5 shadow-[var(--shadow-modal)] max-[760px]:max-h-[calc(100dvh-16px)] max-[760px]:p-3">
       <div :class="panelHeadClass">
         <div>
           <div class="eyebrow">{{ t('market.minuteCoverage') }}</div>

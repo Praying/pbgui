@@ -13,7 +13,7 @@ defineProps<{
 }>();
 
 const summaryCardClass =
-  'summary-card grid gap-1 rounded-[10px] border border-accent/18 bg-page/48 p-3';
+  'summary-card grid gap-1 rounded-xl border border-accent/18 bg-page/48 p-3';
 </script>
 
 <template>

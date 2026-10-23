@@ -276,15 +276,16 @@ describe('ApiServerSettings Alerts/Telegram section (legacy markup + togglePw)',
   it('clears the stored credentials only through the explicit checkbox', async () => {
     const wrapper = await mountedSettings();
 
-    const clear = wrapper.find('.clear-telegram input');
-    expect((clear.element as HTMLInputElement).checked).toBe(false);
+    const clear = wrapper.find('#apiserver-clear-telegram');
+    expect(clear.attributes('data-state')).toBe('unchecked');
 
     const untouched = await saveAndGetBody(wrapper);
     expect(untouched.telegram_token).toBeNull();
     expect(untouched.telegram_chat_id).toBeNull();
     expect(untouched.clear_telegram_credentials).toBe(false);
 
-    await clear.setValue(true);
+    await clear.trigger('click');
+    expect(clear.attributes('data-state')).toBe('checked');
     const cleared = await saveAndGetBody(wrapper);
     expect(cleared.clear_telegram_credentials).toBe(true);
   });

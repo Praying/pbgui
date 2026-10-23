@@ -177,7 +177,7 @@ function userOptionClass(active: boolean): string {
               @blur="closeSoon()"
               @keydown.down.prevent="optionsOpen = true; move(1)"
               @keydown.up.prevent="move(-1)"
-              @keydown.enter.prevent="matches[activeIndex] ? pick(matches[activeIndex]!.name) : undefined"
+              @keydown.enter.prevent="$event.isComposing || $event.keyCode === 229 ? undefined : (matches[activeIndex] ? pick(matches[activeIndex]!.name) : undefined)"
               @keydown.esc.prevent="optionsOpen = false"
             />
             <Button

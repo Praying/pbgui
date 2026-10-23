@@ -335,7 +335,7 @@ defineExpose({ fitToContent, resetLayout });
         <div class="kv-label text-xs text-muted uppercase tracking-label">{{ field.label }}</div>
         <div class="text-base text-primary" :class="field.wrap ? 'kv-value wrap whitespace-normal overflow-visible text-clip break-words leading-[1.55]' : 'kv-value whitespace-nowrap overflow-hidden text-ellipsis'" :title="field.value">{{ field.value }}</div>
       </div>
-      <div v-if="notice" class="notice-box col-span-full border border-warning/28 bg-warning/8 rounded-[10px] px-3.5 py-3 text-warning-soft text-sm leading-[1.55] whitespace-pre-wrap"><strong>{{ t('market.notice') }}</strong><br>{{ notice }}</div>
+      <div v-if="notice" class="notice-box col-span-full border border-warning/28 bg-warning/8 rounded-xl px-3.5 py-3 text-warning-soft text-sm leading-[1.55] whitespace-pre-wrap"><strong>{{ t('market.notice') }}</strong><br>{{ notice }}</div>
     </div>
   </section>
 </template>

@@ -375,7 +375,7 @@ onBeforeUnmount(() => store.teardown());
         </div>
         <div class="grid gap-5 p-5">
           <!-- static dictionary markup (legacy data-i18n-html) — controlled template, not server data -->
-          <div class="rounded-[10px] border border-warning-deep/45 bg-warning/14 p-3 text-sm leading-[1.45] text-warning-soft" v-html="t('misc.dbtools.copyDbNotice')"></div>
+          <div class="rounded-xl border border-warning-deep/45 bg-warning/14 p-3 text-sm leading-[1.45] text-warning-soft" v-html="t('misc.dbtools.copyDbNotice')"></div>
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             <div class="grid gap-1.5">
               <span id="db-source-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
@@ -421,8 +421,8 @@ onBeforeUnmount(() => store.teardown());
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.syncJobsDesc') }}</div>
         </div>
         <div class="grid gap-5 p-5">
-          <div class="rounded-[10px] border border-warning-deep/45 bg-warning/14 p-3 text-sm leading-[1.45] text-warning-soft">{{ t('misc.dbtools.syncJobsNotice') }}</div>
-          <div class="overflow-hidden rounded-[10px] border border-border-subtle bg-page">
+          <div class="rounded-xl border border-warning-deep/45 bg-warning/14 p-3 text-sm leading-[1.45] text-warning-soft">{{ t('misc.dbtools.syncJobsNotice') }}</div>
+          <div class="overflow-hidden rounded-xl border border-border-subtle bg-page">
             <div class="flex items-center justify-between gap-2 border-b border-border-subtle bg-card px-[0.8rem] py-[0.65rem]">
               <div class="text-sm font-bold text-primary">{{ t('misc.dbtools.configuredSyncJobs') }}</div>
               <div class="flex gap-1">
@@ -468,7 +468,7 @@ onBeforeUnmount(() => store.teardown());
           </div>
 
           <div class="hidden gap-5" id="sync-editor" :class="store.syncEditorVisible.value ? 'visible grid gap-5' : 'hidden'">
-            <div class="flex items-center justify-between gap-3 rounded-[10px] border border-border-subtle bg-card px-[0.8rem] py-[0.65rem]">
+            <div class="flex items-center justify-between gap-3 rounded-xl border border-border-subtle bg-card px-[0.8rem] py-[0.65rem]">
               <div class="font-bold text-primary" id="sync-editor-title">{{ store.syncEditorTitle.value || t('misc.dbtools.newSyncJob') }}</div>
               <Button type="button" variant="secondary" size="sm" id="sync-close" @click="store.closeSyncEditor()">{{ t('misc.dbtools.closeEditor') }}</Button>
             </div>
@@ -535,7 +535,7 @@ onBeforeUnmount(() => store.teardown());
             :safety="store.syncSafety.value"
             :users="store.syncUsers.value"
           />
-          <div v-else-if="store.statuses.value.sync" class="min-h-11 whitespace-pre-wrap rounded-[10px] border border-border-subtle bg-page p-3 font-mono text-sm leading-[1.45] text-secondary" :class="statusKindClass(store.statuses.value.sync.kind)">{{ store.statuses.value.sync.text }}</div>
+          <div v-else-if="store.statuses.value.sync" class="min-h-11 whitespace-pre-wrap rounded-xl border border-border-subtle bg-page p-3 font-mono text-sm leading-[1.45] text-secondary" :class="statusKindClass(store.statuses.value.sync.kind)">{{ store.statuses.value.sync.text }}</div>
           <PanelBits
             :status="undefined"
             :progress="store.progress.value.sync"
@@ -552,7 +552,7 @@ onBeforeUnmount(() => store.teardown());
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.backupManagerDesc') }}</div>
         </div>
         <div class="grid gap-5 p-5">
-          <div class="rounded-[10px] border border-warning-deep/45 bg-warning/14 p-3 text-sm leading-[1.45] text-warning-soft">{{ t('misc.dbtools.restoreNotice') }}</div>
+          <div class="rounded-xl border border-warning-deep/45 bg-warning/14 p-3 text-sm leading-[1.45] text-warning-soft">{{ t('misc.dbtools.restoreNotice') }}</div>
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             <div class="grid gap-1.5">
               <span id="backup-target-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.dbtools.backupMaster') }}</span>
@@ -566,7 +566,7 @@ onBeforeUnmount(() => store.teardown());
               </SelectRoot>
             </div>
           </div>
-          <div class="flex min-h-0 flex-col overflow-hidden rounded-[10px] border border-border-subtle bg-page">
+          <div class="flex min-h-0 flex-col overflow-hidden rounded-xl border border-border-subtle bg-page">
             <div class="flex items-center justify-between gap-2 border-b border-border-subtle bg-card px-[0.8rem] py-[0.65rem]">
               <div class="text-sm font-bold text-primary">{{ t('misc.dbtools.databaseBackups') }}</div>
               <div class="flex gap-1">

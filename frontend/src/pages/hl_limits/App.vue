@@ -319,7 +319,7 @@ onUnmounted(() => {
                 <td class="align-top">
                   <div class="flex items-center justify-end gap-2">
                     <span class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-secondary/16" aria-hidden="true">
-                      <span class="block h-full w-full origin-left rounded-full transition-transform duration-[var(--motion-normal)] ease-standard" :class="usageBarTone(account)" :style="{ transform: usageBarScale(account) }" />
+                      <span class="block h-full w-full origin-left rounded-full transition-transform duration-base ease-standard" :class="usageBarTone(account)" :style="{ transform: usageBarScale(account) }" />
                     </span>
                     <span class="w-12 text-right tabular-nums">{{ usageText(account) }}</span>
                   </div>

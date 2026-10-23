@@ -28,7 +28,7 @@ const { t } = useI18n();
 <template>
   <details
     v-if="visible"
-    class="inventory-ohlcv-details overflow-hidden rounded-[10px] border border-accent/12 bg-page/36"
+    class="inventory-ohlcv-details overflow-hidden rounded-xl border border-accent/12 bg-page/36"
     id="inventory-ohlcv-details"
     :open="open"
     @toggle="emit('toggle', ($event.target as HTMLDetailsElement).open)"

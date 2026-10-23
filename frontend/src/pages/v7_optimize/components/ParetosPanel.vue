@@ -155,7 +155,7 @@ onBeforeUnmount(() => dragSelect.dispose());
         <summary class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" :title="t('v7optimize.columns')">{{ t('v7optimize.columnsCount', { count: columns.length }) }}</summary>
         <div class="absolute top-[calc(100%+6px)] right-0 z-[var(--z-dropdown)] max-h-[360px] w-[min(360px,calc(100vw-32px))] overflow-auto rounded-lg border border-border-default bg-panel p-2.5 shadow-[var(--shadow-elevated)]">
           <div class="grid gap-1 mb-2">
-            <label v-for="metric in availableMetrics" :key="metric" class="flex min-w-0 items-center gap-2 rounded-[5px] px-[7px] py-[5px] text-xs text-primary hover:bg-accent/10">
+            <label v-for="metric in availableMetrics" :key="metric" class="flex min-w-0 items-center gap-2 rounded-sm px-[7px] py-[5px] text-xs text-primary hover:bg-accent/10">
               <Checkbox :data-pareto-metric="metric" :model-value="columns.includes(metric)" @update:model-value="emit('toggleColumn', metric, ($event === true))" />
               <span>{{ pillLabel(metric) }}</span>
             </label>

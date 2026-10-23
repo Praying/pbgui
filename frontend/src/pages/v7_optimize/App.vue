@@ -654,7 +654,7 @@ onBeforeUnmount(() => {
       </div>
       <ErrorState
         v-if="page.error.value"
-        class="text-danger-soft mb-3 rounded-[5px] border border-danger/40 bg-danger/10 px-3 py-2.5"
+        class="text-danger-soft mb-3 rounded-sm border border-danger/40 bg-danger/10 px-3 py-2.5"
         :title="t('common.error')"
         :message="page.error.value"
         :retry-label="t('common.refresh')"
