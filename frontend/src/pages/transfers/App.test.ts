@@ -140,4 +140,86 @@ describe('Transfers Vue page direction select', () => {
     expect(wrapper.get(TRIGGER).attributes('disabled')).toBeDefined();
     wrapper.unmount();
   });
+
+  it('keeps a deliberately chosen direction even while a retained pending transfer pins another route', async () => {
+    window.sessionStorage.setItem(PENDING_KEY, JSON.stringify({
+      user: 'alice',
+      route: 'spot_to_perp',
+      amount: '5',
+      operation_id: '123e4567-e89b-42d3-a456-426614174000',
+      created_at: Date.now(),
+    }));
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(wrapper.get(TRIGGER).text()).toContain('Spot -> Perps');
+    expect(wrapper.text()).toContain("A previous transfer's response was lost");
+
+    await pickSelectOption(wrapper, TRIGGER, 'Perps -> Spot');
+    expect(wrapper.get(TRIGGER).text()).toContain('Perps -> Spot');
+
+    triggerAutoRefresh();
+    await flushPromises();
+
+    expect(wrapper.get(TRIGGER).text()).toContain('Perps -> Spot');
+    // The retained operation stays available for an idempotent same-route retry.
+    expect(window.sessionStorage.getItem(PENDING_KEY)).not.toBeNull();
+    wrapper.unmount();
+  });
+
+  it('releases the retained pending transfer once its operation is confirmed in history', async () => {
+    window.sessionStorage.setItem(PENDING_KEY, JSON.stringify({
+      user: 'alice',
+      route: 'perp_to_spot',
+      amount: '7',
+      operation_id: '123e4567-e89b-42d3-a456-426614174000',
+      created_at: Date.now(),
+    }));
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url.endsWith('/transfers/users')) return Promise.resolve(users);
+      if (url.includes('/transfers/preview/')) return Promise.resolve(makePreview());
+      if (url.includes('/transfers/operations/')) return Promise.resolve({
+        operations: [{ operation_id: '123e4567-e89b-42d3-a456-426614174000', route: 'perp_to_spot', status: 'confirmed' }],
+      });
+      throw new Error(`Unexpected request ${url}`);
+    });
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(window.sessionStorage.getItem(PENDING_KEY)).toBeNull();
+    expect(wrapper.text()).not.toContain("A previous transfer's response was lost");
+    // The direction is no longer pinned to the retained route; the first route applies.
+    expect(wrapper.get(TRIGGER).text()).toContain('Spot -> Perps');
+    wrapper.unmount();
+  });
+
+  it('keeps the retention while the retained operation is still unknown', async () => {
+    window.sessionStorage.setItem(PENDING_KEY, JSON.stringify({
+      user: 'alice',
+      route: 'perp_to_spot',
+      amount: '7',
+      operation_id: '123e4567-e89b-42d3-a456-426614174000',
+      created_at: Date.now(),
+    }));
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url.endsWith('/transfers/users')) return Promise.resolve(users);
+      if (url.includes('/transfers/preview/')) return Promise.resolve(makePreview());
+      if (url.includes('/transfers/operations/')) return Promise.resolve({
+        operations: [{ operation_id: '123e4567-e89b-42d3-a456-426614174000', route: 'perp_to_spot', status: 'unknown', can_reconcile: true }],
+      });
+      throw new Error(`Unexpected request ${url}`);
+    });
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(wrapper.get(TRIGGER).text()).toContain('Perps -> Spot');
+    expect(window.sessionStorage.getItem(PENDING_KEY)).not.toBeNull();
+
+    triggerAutoRefresh();
+    await flushPromises();
+
+    expect(wrapper.get(TRIGGER).text()).toContain('Perps -> Spot');
+    expect(window.sessionStorage.getItem(PENDING_KEY)).not.toBeNull();
+    wrapper.unmount();
+  });
 });
