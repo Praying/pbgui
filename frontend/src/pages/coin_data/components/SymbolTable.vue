@@ -45,6 +45,23 @@ function tableClass(): string {
   return `coin-${props.table}-table w-full border-collapse table-fixed`;
 }
 
+/**
+ * Column widths stay the declared percentages, so wide screens render exactly as
+ * before. Each column also has a measured header floor (`minWidth`). A `<col>`
+ * ignores max() under `table-fixed`, so the floors are enforced one level up:
+ * the table's min-width is the smallest width at which *every* column's
+ * percentage share is still >= its own floor, i.e. max(minWidth / pct). Below it
+ * the wrapper (already overflow:auto) scrolls instead of clipping the header.
+ * Derived from the data, so adding or retuning a column cannot leave it stale.
+ */
+function colWidth(column: ColumnDef): string {
+  return column.width;
+}
+
+const tableMinWidth = columns.every((c) => c.minWidth)
+  ? `${Math.ceil(Math.max(...columns.map((c) => ((c.minWidth ?? 0) * 100) / Number.parseFloat(c.width))))}px`
+  : undefined;
+
 /** .table-wrap base vs the #hip3-panel variant — the hip3 branch carries
  *  the legacy overflow/scrollbar-gutter/padding overrides in full, the
  *  equivalent of #hip3-panel.active-panel .table-wrap winning over the
@@ -118,8 +135,8 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
 
 <template>
   <div class="table-wrap" :class="tableWrapClass()">
-    <Table :class="tableClass()">
-      <colgroup><col v-for="column in columns" :key="column.key" :style="{ width: column.width }" /></colgroup>
+    <Table :class="tableClass()" :style="tableMinWidth ? { minWidth: tableMinWidth } : undefined">
+      <colgroup><col v-for="column in columns" :key="column.key" :style="{ width: colWidth(column) }" /></colgroup>
       <thead>
         <tr>
           <th

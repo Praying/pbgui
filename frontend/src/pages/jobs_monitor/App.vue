@@ -540,7 +540,7 @@ onUnmounted(() => {
 
   <div
     class="jobs-monitor-content pbgui-ambient min-h-0 bg-page text-primary"
-    :class="{ 'jobs-monitor-content--embedded': embedMode, 'p-3': embedMode }"
+    :class="embedMode ? ['jobs-monitor-content--embedded', 'p-3'] : 'p-[var(--page-padding)]'"
   >
     <div class="mx-auto max-w-[1400px]">
       <nav class="pbgui-tab-bar mb-4 gap-1.5" aria-label="Job tabs">

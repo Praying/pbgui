@@ -166,9 +166,16 @@
      the ink without redefining every shadow: dark surfaces cast near-black
      shadows and catch a white top highlight; light surfaces cast a cool
      blue-grey shadow and have no highlight to catch. */
-  --shadow-panel: 0 18px 34px rgb(var(--shadow-rgb) / 0.28), 0 1px 0 rgb(var(--highlight-rgb) / 0.07) inset;
-  --shadow-elevated: 0 24px 52px rgb(var(--shadow-rgb) / 0.42), 0 1px 0 rgb(var(--highlight-rgb) / 0.09) inset;
-  --shadow-modal: 0 24px 70px rgb(var(--shadow-rgb) / 0.72);
+  /* Alpha is a variable too (--shadow-a-*): the same 0.28 that is a barely visible
+     1% luminance shift on a near-black surface is a 16% grey smudge under every
+     card on a near-white one (measured on the services overview), so light
+     lowers the alphas rather than just swapping the ink. Dark keeps its values. */
+  --shadow-a-panel: 0.28;
+  --shadow-a-elevated: 0.42;
+  --shadow-a-modal: 0.72;
+  --shadow-panel: 0 18px 34px rgb(var(--shadow-rgb) / var(--shadow-a-panel)), 0 1px 0 rgb(var(--highlight-rgb) / 0.07) inset;
+  --shadow-elevated: 0 24px 52px rgb(var(--shadow-rgb) / var(--shadow-a-elevated)), 0 1px 0 rgb(var(--highlight-rgb) / 0.09) inset;
+  --shadow-modal: 0 24px 70px rgb(var(--shadow-rgb) / var(--shadow-a-modal));
 
   /* ── Motion ─────────────────────────────────────────────────────
      Five durations, three curves. Every transition in the app picks a
@@ -584,6 +591,11 @@
 
   /* Elevation: cool blue-grey shadow, no inset highlight to catch */
   --shadow-rgb: 31 56 71;
+  /* Lighter, tighter elevation: cards separate by border + a soft lift, not a
+     dark halo. Modals keep more weight because they must read above a scrim. */
+  --shadow-a-panel: 0.08;
+  --shadow-a-elevated: 0.14;
+  --shadow-a-modal: 0.30;
   --shadow-ink-rgb: 31 56 71;
   --highlight-rgb: 255 255 255;
   --overlay-rgb: 15 31 39;
