@@ -251,7 +251,7 @@ function onProfileRowKeydown(event: KeyboardEvent, profileId: string): void {
           <Label for="tradfiLabel">{{ t('misc.apikeys.label') }}</Label>
           <Input type="text" id="tradfiLabel" v-model="store.label.value" maxlength="120" :placeholder="t('misc.apikeys.profileLabel')" />
         </div>
-        <div class="tradfi-toggle-group flex min-h-8 items-center gap-5 rounded-md border border-border-subtle bg-card px-3 py-2 max-[900px]:col-span-2 max-[768px]:col-span-1">
+        <div class="tradfi-toggle-group flex min-h-(--control-height-md) items-center gap-5 rounded-md border border-border-subtle bg-card px-3 py-2 max-[900px]:col-span-2 max-[768px]:col-span-1">
           <label class="flex cursor-pointer items-center gap-2 text-sm text-secondary hover:text-primary">
             <Checkbox id="tradfiShared" v-model="store.shared.value" />
             <span>{{ t('misc.apikeys.shared') }}</span>

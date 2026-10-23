@@ -201,12 +201,12 @@ onBeforeUnmount(() => {
             </div>
           </div>
           <div class="summary-grid grid grid-cols-4 gap-3 max-[1400px]:grid-cols-2 max-[640px]:grid-cols-1">
-            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[var(--motion-normal)] ease-standard" :class="`summary-card--${store.summaryView.value.authTone}`" :data-tone="store.summaryView.value.authTone">
+            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-base ease-standard" :class="`summary-card--${store.summaryView.value.authTone}`" :data-tone="store.summaryView.value.authTone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-label">{{ t('misc.welcome.session') }}</span>
               <strong id="summary-auth" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.auth }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-auth-copy">{{ store.summaryView.value.authCopy }}</p>
             </div>
-            <div class="summary-card summary-card--actionable relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[var(--motion-normal)] ease-standard flex flex-col items-start" :class="`summary-card--${store.summaryView.value.pb7Tone}`" :data-tone="store.summaryView.value.pb7Tone">
+            <div class="summary-card summary-card--actionable relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-base ease-standard flex flex-col items-start" :class="`summary-card--${store.summaryView.value.pb7Tone}`" :data-tone="store.summaryView.value.pb7Tone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-label">PB7</span>
               <strong id="summary-pb7" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.pb7 }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-pb7-copy">{{ store.summaryView.value.pb7Copy }}</p>
@@ -219,12 +219,12 @@ onBeforeUnmount(() => {
                 @click="store.focusSection('setup')"
               >{{ t('misc.welcome.configurePb7') }}</Button>
             </div>
-            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[var(--motion-normal)] ease-standard" :class="`summary-card--${store.summaryView.value.pb8Tone}`" :data-tone="store.summaryView.value.pb8Tone">
+            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-base ease-standard" :class="`summary-card--${store.summaryView.value.pb8Tone}`" :data-tone="store.summaryView.value.pb8Tone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-label">PB8</span>
               <strong id="summary-pb8" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.pb8 }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-pb8-copy">{{ store.summaryView.value.pb8Copy }}</p>
             </div>
-            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[var(--motion-normal)] ease-standard" :class="`summary-card--${store.summaryView.value.identityTone}`" :data-tone="store.summaryView.value.identityTone">
+            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-base ease-standard" :class="`summary-card--${store.summaryView.value.identityTone}`" :data-tone="store.summaryView.value.identityTone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-label">{{ t('misc.welcome.identity') }}</span>
               <strong id="summary-identity" :title="store.summaryView.value.identity" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.identity }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-role">{{ store.summaryView.value.roleText }}</p>
@@ -241,7 +241,7 @@ onBeforeUnmount(() => {
             <section v-for="group in statusGroups" :key="group.key" class="status-group grid gap-2" :data-group="group.key">
               <h3 class="status-group-title m-0 text-muted text-xs font-bold uppercase tracking-label">{{ group.label }}</h3>
               <div class="status-group-rows grid gap-2">
-                <div v-for="row in group.rows" :key="row.label" class="status-row grid grid-cols-[130px_110px_minmax(0,1fr)] gap-2.5 items-center rounded-[10px] border border-secondary/12 bg-page/35 px-3.75 py-3.25 transition-[background,border-color] duration-[var(--motion-normal)] ease-standard hover:border-accent/20 hover:bg-panel/48 max-[980px]:grid-cols-[minmax(120px,0.45fr)_minmax(0,1fr)] max-[640px]:grid-cols-1">
+                <div v-for="row in group.rows" :key="row.label" class="status-row grid grid-cols-[130px_110px_minmax(0,1fr)] gap-2.5 items-center rounded-xl border border-secondary/12 bg-page/35 px-3.75 py-3.25 transition-[background,border-color] duration-base ease-standard hover:border-accent/20 hover:bg-panel/48 max-[980px]:grid-cols-[minmax(120px,0.45fr)_minmax(0,1fr)] max-[640px]:grid-cols-1">
                   <div class="status-label text-primary font-bold">{{ row.label }}</div>
                   <div class="status-value status-badge w-fit min-w-[72px] px-2 py-1 rounded-full text-center text-sm font-bold uppercase tracking-label" :class="[`status-badge--${row.tone}`, statusBadgeToneClass(row.tone)]" :data-tone="row.tone">{{ row.state }}</div>
                   <div class="status-detail text-secondary min-w-0 [overflow-wrap:anywhere] max-[980px]:col-span-full max-[640px]:col-auto">{{ row.detail }}</div>
@@ -419,7 +419,7 @@ onBeforeUnmount(() => {
         <Input id="file-browser-path" class="browser-path flex-1 min-w-[280px]" type="text" readonly :model-value="store.fileBrowser.value.currentPath" />
       </div>
       <div id="file-browser-list" class="browser-list grid gap-1 min-h-60 max-h-[420px] overflow-y-auto p-1 rounded-lg border border-border-subtle bg-page">
-        <div v-if="!store.fileBrowser.value.entries.length" class="browser-empty py-3 px-3.5 rounded-[10px] border border-dashed border-secondary/22 text-secondary text-center">{{ t('misc.welcome.noMatchingEntries') }}</div>
+        <div v-if="!store.fileBrowser.value.entries.length" class="browser-empty py-3 px-3.5 rounded-xl border border-dashed border-secondary/22 text-secondary text-center">{{ t('misc.welcome.noMatchingEntries') }}</div>
         <button
           v-for="entry in store.fileBrowser.value.entries"
           :key="entry.path"

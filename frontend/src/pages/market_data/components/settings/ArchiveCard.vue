@@ -28,7 +28,7 @@ const IDS = SETTINGS_FIELD_IDS;
     <div :class="[settingsGridWideClass, 'mt-3']">
       <label :class="settingsFieldClass">
         <span :class="fieldLabelClass">{{ t('market.archiveEnabled') }}</span>
-        <span class="settings-toggle flex min-h-8 cursor-pointer items-center gap-2 text-base text-primary">
+        <span class="settings-toggle flex min-h-(--control-height-md) cursor-pointer items-center gap-2 text-base text-primary">
           <Checkbox :id="IDS.archiveEnabled" v-model="fields.archiveEnabled" />
           <span>{{ t('market.moveBuiltSourceFiles') }}</span>
         </span>

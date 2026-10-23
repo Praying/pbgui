@@ -322,7 +322,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
                     v-if="inputMode(section, param) === 'forced-mode'"
                     v-model="store.inlineValues[section.key + '.' + param]"
                   >
-                    <SelectTrigger class="h-7 w-[140px] px-2 text-xs">
+                    <SelectTrigger class="h-(--control-height-sm) w-[140px] px-2 text-xs">
                       <span>{{ store.inlineValues[section.key + '.' + param] }}</span>
                     </SelectTrigger>
                     <SelectContent>
@@ -333,7 +333,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
                     v-else-if="inputMode(section, param) === 'boolean'"
                     v-model="store.inlineValues[section.key + '.' + param]"
                   >
-                    <SelectTrigger class="h-7 w-[140px] px-2 text-xs">
+                    <SelectTrigger class="h-(--control-height-sm) w-[140px] px-2 text-xs">
                       <span>{{ store.inlineValues[section.key + '.' + param] }}</span>
                     </SelectTrigger>
                     <SelectContent>

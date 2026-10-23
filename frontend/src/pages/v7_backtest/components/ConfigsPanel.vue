@@ -252,7 +252,7 @@ defineExpose({
         <Input
           v-model="filter"
           type="text"
-          class="pbgui-config-search h-8 w-auto min-w-[160px] max-w-[240px]"
+          class="pbgui-config-search h-(--control-height-md) w-auto min-w-[160px] max-w-[240px]"
           :placeholder="t('v7backtest.searchName')"
           data-test="configs-filter"
           @input="emit('filter', filter)"
@@ -261,7 +261,7 @@ defineExpose({
              reka equivalent — the listboxes offer no reset row; the cleared
              model ('') renders as the trigger label instead. -->
         <SelectRoot v-model="exchangeFilter">
-          <SelectTrigger class="h-8 w-auto min-w-[120px] max-w-[180px]" data-test="configs-exchange-filter" :title="t('v7backtest.filterExchange')" :aria-label="t('v7backtest.filterExchange')">
+          <SelectTrigger class="h-(--control-height-md) w-auto min-w-[120px] max-w-[180px]" data-test="configs-exchange-filter" :title="t('v7backtest.filterExchange')" :aria-label="t('v7backtest.filterExchange')">
             <span :class="exchangeFilter ? '' : 'text-placeholder'">{{ exchangeFilter || t('v7backtest.filterExchange') }}</span>
           </SelectTrigger>
           <SelectContent>
@@ -269,7 +269,7 @@ defineExpose({
           </SelectContent>
         </SelectRoot>
         <SelectRoot v-if="isV8" v-model="strategyFilter">
-          <SelectTrigger class="h-8 w-auto min-w-[120px] max-w-[180px]" data-test="configs-strategy-filter" :title="t('v7backtest.filterStrategy')" :aria-label="t('v7backtest.filterStrategy')">
+          <SelectTrigger class="h-(--control-height-md) w-auto min-w-[120px] max-w-[180px]" data-test="configs-strategy-filter" :title="t('v7backtest.filterStrategy')" :aria-label="t('v7backtest.filterStrategy')">
             <span :class="strategyFilter ? '' : 'text-placeholder'">{{ strategyFilter || t('v7backtest.filterStrategy') }}</span>
           </SelectTrigger>
           <SelectContent>
@@ -278,8 +278,8 @@ defineExpose({
         </SelectRoot>
         <span class="flex-1"></span>
         <div class="flex items-center gap-2">
-          <Button type="button" variant="secondary" size="sm" class="h-8 px-3" data-test="configs-select-all" :title="t('v7backtest.selectAllVisible')" :disabled="visible.length === 0" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
-          <Button type="button" variant="ghost" size="sm" class="h-8 px-3 text-secondary" data-test="configs-deselect" :title="t('v7backtest.deselectAll')" :disabled="selected.length === 0" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
+          <Button type="button" variant="secondary" size="sm" class="h-(--control-height-md) px-3" data-test="configs-select-all" :title="t('v7backtest.selectAllVisible')" :disabled="visible.length === 0" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
+          <Button type="button" variant="ghost" size="sm" class="h-(--control-height-md) px-3 text-secondary" data-test="configs-deselect" :title="t('v7backtest.deselectAll')" :disabled="selected.length === 0" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
         </div>
       </div>
 

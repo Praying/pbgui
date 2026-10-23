@@ -745,6 +745,27 @@ describe('ConfigEditorModal', () => {
     expect(filterAll.classes()).toContain('text-accent-soft');
   });
 
+  it('sizes every control from the density token, not a fixed px step', async () => {
+    const draft = buildEditorDraft(
+      { backtest: { exchanges: ['bybit'] }, bot: {}, optimize: {} },
+      'v7',
+      'demo',
+    );
+    const wrapper = mount(ConfigEditorModal, {
+      props: { open: true, draft, version: 'v7', error: '' },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    // The editor is the densest form in the app; a fixed h-7/8/9 here would
+    // silently opt every field out of the Compact density switch.
+    const classes = wrapper
+      .findAll('input, textarea, button')
+      .map((node) => node.classes().join(' '));
+    expect(classes.length).toBeGreaterThan(20);
+    expect(classes.some((cls) => /\bh-(7|8|9|9\.5)\b/.test(cls))).toBe(false);
+    expect(classes.some((cls) => /--control-height-/.test(cls))).toBe(true);
+  });
+
   it('keeps every v7optimize.tip.* key referenced by the editor sources in both dictionaries', () => {
     const roots = [
       join(__dirname, '..'),

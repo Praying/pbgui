@@ -238,8 +238,8 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
 
     <div class="queue-table-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
       <div id="queue-toolbar" class="pbgui-list-toolbar flex items-center justify-end gap-2 border-b border-border-subtle px-3 py-2">
-        <Button type="button" variant="secondary" size="sm" class="h-8 px-3" data-test="queue-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
-        <Button type="button" variant="ghost" size="sm" class="h-8 px-3 text-secondary" data-test="queue-deselect-all" :disabled="selectedCount === 0" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
+        <Button type="button" variant="secondary" size="sm" class="h-(--control-height-md) px-3" data-test="queue-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
+        <Button type="button" variant="ghost" size="sm" class="h-(--control-height-md) px-3 text-secondary" data-test="queue-deselect-all" :disabled="selectedCount === 0" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
       </div>
       <div id="queue-list" class="queue-list pbgui-list-wrap min-h-0 flex-1 overflow-auto bg-panel" @mousemove="onListMouseMove">
         <Table class="queue-table min-w-[820px] select-none bg-transparent">

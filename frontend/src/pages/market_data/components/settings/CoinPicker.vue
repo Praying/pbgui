@@ -62,7 +62,7 @@ function onKeydown(event: KeyboardEvent): void {
 <template>
   <article :class="[panelCardClass, 'coin-picker-card']" id="settings-enabled-coins-card" data-settings-subsection="normal">
     <div class="eyebrow">{{ t('market.enabledCoins') }}</div>
-    <label class="settings-toggle coin-picker-auto-toggle mt-1 flex min-h-8 cursor-pointer items-center gap-2 text-base text-primary">
+    <label class="settings-toggle coin-picker-auto-toggle mt-1 flex min-h-(--control-height-md) cursor-pointer items-center gap-2 text-base text-primary">
       <Checkbox
         id="settings-auto-enable-new-coins"
         :model-value="store.autoEnableNewCoins.value"

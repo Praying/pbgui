@@ -215,7 +215,7 @@ onBeforeUnmount(() => {
             id="help-search"
             v-model="searchTermRaw"
             type="text"
-            class="h-7 w-44 max-[720px]:w-32 text-xs border-0 bg-transparent px-1 shadow-none focus-visible:shadow-none focus-visible:outline-none"
+            class="h-(--control-height-sm) w-44 max-[720px]:w-32 text-xs border-0 bg-transparent px-1 shadow-none focus-visible:shadow-none focus-visible:outline-none"
             :placeholder="searchPlaceholder"
             autocomplete="off"
             @keydown="onSearchKeydown"
@@ -250,9 +250,9 @@ onBeforeUnmount(() => {
 
         <!-- Language Switcher Pill -->
         <div class="lang-pill flex border border-border-default rounded-md overflow-hidden shrink-0 bg-card">
-          <Button id="help-lang-en" type="button" variant="ghost" size="sm" class="h-7 px-2.5 text-xs rounded-none" :class="store.lang.value === 'EN' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('EN')">EN</Button>
-          <Button id="help-lang-de" type="button" variant="ghost" size="sm" class="h-7 px-2.5 text-xs rounded-none border-l border-border-subtle" :class="store.lang.value === 'DE' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('DE')">DE</Button>
-          <Button id="help-lang-zh" type="button" variant="ghost" size="sm" class="h-7 px-2.5 text-xs rounded-none border-l border-border-subtle" :title="t('misc.help.chineseDocs')" :class="store.lang.value === 'ZH' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('ZH')">中文</Button>
+          <Button id="help-lang-en" type="button" variant="ghost" size="sm" class="h-(--control-height-sm) px-2.5 text-xs rounded-none" :class="store.lang.value === 'EN' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('EN')">EN</Button>
+          <Button id="help-lang-de" type="button" variant="ghost" size="sm" class="h-(--control-height-sm) px-2.5 text-xs rounded-none border-l border-border-subtle" :class="store.lang.value === 'DE' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('DE')">DE</Button>
+          <Button id="help-lang-zh" type="button" variant="ghost" size="sm" class="h-(--control-height-sm) px-2.5 text-xs rounded-none border-l border-border-subtle" :title="t('misc.help.chineseDocs')" :class="store.lang.value === 'ZH' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('ZH')">中文</Button>
         </div>
       </div>
     </template>

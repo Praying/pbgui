@@ -171,7 +171,7 @@ const iconActionClass = 'size-7 shrink-0 rounded-md border border-border-default
             </template>
             <Button type="button" variant="default" size="icon" :class="iconActionClass" :data-edit="row.name" :title="t('v7run.edit')" :aria-label="t('v7run.edit')" @click="emit('edit', row.name)"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
             <Button type="button" variant="default" size="icon" :class="iconActionClass" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')" :aria-label="t('v7run.openBalanceCalculator')" @click="emit('balance', row.name)"><PbIcon :icon="PhCurrencyDollar" :size="16" /></Button>
-            <Button v-if="supportsConversion" class="h-7 shrink-0 rounded-md px-1.5 text-xs font-semibold" variant="info" size="sm" type="button" :data-convert-v8="row.name" :title="t('v7run.convertToV8')" :aria-label="t('v7run.convertToV8')" @click="emit('convert', row.name)">V8</Button>
+            <Button v-if="supportsConversion" class="h-(--control-height-sm) shrink-0 rounded-md px-1.5 text-xs font-semibold" variant="info" size="sm" type="button" :data-convert-v8="row.name" :title="t('v7run.convertToV8')" :aria-label="t('v7run.convertToV8')" @click="emit('convert', row.name)">V8</Button>
             <Button class="size-7 shrink-0 rounded-md p-0" variant="danger" size="sm" type="button" :data-delete="row.name" :title="t('common.delete')" :aria-label="t('common.delete')" @click="emit('remove', row.name)"><PbIcon :icon="PhX" :size="16" /></Button>
           </TdActions>
         </tr>

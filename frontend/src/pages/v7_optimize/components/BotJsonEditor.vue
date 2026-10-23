@@ -120,7 +120,7 @@ function syncScroll(event: Event): void {
           type="button"
           variant="outline"
           size="sm"
-          class="h-7.5 px-3 text-xs gap-1.5"
+          class="h-(--control-height-sm) px-3 text-xs gap-1.5"
           :title="t('v7optimize.prettifyJson')"
           @click="prettifyJson"
         >
@@ -132,7 +132,7 @@ function syncScroll(event: Event): void {
           type="button"
           variant="outline"
           size="sm"
-          class="h-7.5 px-3 text-xs gap-1.5"
+          class="h-(--control-height-sm) px-3 text-xs gap-1.5"
           :title="copied ? t('v7optimize.copied') : t('v7optimize.copyJson')"
           @click="copyToClipboard"
         >

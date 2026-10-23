@@ -168,7 +168,7 @@ defineExpose({ deleteSelectedFlow });
             id="results-pin-btn"
             type="button"
             variant="ghost"
-            class="size-8 p-0 text-secondary hover:text-primary"
+            class="size-(--control-height-md) p-0 text-secondary hover:text-primary"
             :class="pinned ? 'border border-accent/20 bg-accent/8 text-accent-soft' : 'unpinned border border-border-subtle opacity-55'"
             :title="t('v7backtest.pinTable')"
             :aria-label="t('v7backtest.pinTable')"
@@ -184,7 +184,7 @@ defineExpose({ deleteSelectedFlow });
         <label class="grid min-w-[112px] gap-1.5">
           <span id="results-version-filter-label" class="text-micro font-bold uppercase tracking-label text-muted">{{ t('v7backtest.version') }}</span>
           <SelectRoot :model-value="store.versionFilter.value" @update:model-value="store.setVersionFilter(String($event ?? '') as 'v7' | 'v8' | 'both')">
-            <SelectTrigger id="results-version-filter" class="h-8 w-full" aria-labelledby="results-version-filter-label">
+            <SelectTrigger id="results-version-filter" class="h-(--control-height-md) w-full" aria-labelledby="results-version-filter-label">
               <span>{{ store.versionFilter.value === 'v7' ? 'PBv7' : store.versionFilter.value === 'v8' ? 'PBv8' : t('v7backtest.both') }}</span>
             </SelectTrigger>
             <SelectContent>
@@ -201,7 +201,7 @@ defineExpose({ deleteSelectedFlow });
                reka equivalent — the cleared model ('' = all configs) renders as
                the trigger label instead. -->
           <SelectRoot v-model="store.configFilter.value">
-            <SelectTrigger id="results-config-filter" class="h-8 w-full" aria-labelledby="results-config-filter-label">
+            <SelectTrigger id="results-config-filter" class="h-(--control-height-md) w-full" aria-labelledby="results-config-filter-label">
               <span>{{ store.configFilter.value || t('v7backtest.allConfigs') }}</span>
             </SelectTrigger>
             <SelectContent>
@@ -214,13 +214,13 @@ defineExpose({ deleteSelectedFlow });
           <span class="text-micro font-bold uppercase tracking-label text-muted">{{ t('common.search') }}</span>
           <span class="relative block">
             <PbIcon :icon="PhMagnifyingGlass" :size="15" class="pointer-events-none absolute left-2.5 top-1/2 z-1 -translate-y-1/2 text-muted" />
-            <Input id="results-filter" v-model="store.textFilter.value" type="search" class="h-8 w-full pl-8" :placeholder="t('v7backtest.searchName')" />
+            <Input id="results-filter" v-model="store.textFilter.value" type="search" class="h-(--control-height-md) w-full pl-8" :placeholder="t('v7backtest.searchName')" />
           </span>
         </label>
 
         <div class="ml-auto flex items-center gap-2 pb-px">
-          <Button type="button" variant="secondary" size="sm" class="h-8 px-3" data-test="results-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">{{ t('v7backtest.selectAll') }}</Button>
-          <Button type="button" variant="ghost" size="sm" class="h-8 px-3 text-secondary" data-test="results-deselect" :title="t('v7backtest.deselectAll')" :disabled="selectedCount === 0" @click="store.deselectAll()">{{ t('v7backtest.deselect') }}</Button>
+          <Button type="button" variant="secondary" size="sm" class="h-(--control-height-md) px-3" data-test="results-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">{{ t('v7backtest.selectAll') }}</Button>
+          <Button type="button" variant="ghost" size="sm" class="h-(--control-height-md) px-3 text-secondary" data-test="results-deselect" :title="t('v7backtest.deselectAll')" :disabled="selectedCount === 0" @click="store.deselectAll()">{{ t('v7backtest.deselect') }}</Button>
         </div>
       </div>
 

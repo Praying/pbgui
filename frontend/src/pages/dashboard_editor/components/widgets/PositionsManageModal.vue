@@ -522,7 +522,7 @@ watch(() => props.rows, () => {
                       :model-value="state(r).action"
                       @update:model-value="onActionChange(r, String($event))"
                     >
-                      <SelectTrigger class="dp-manage-action h-7 min-w-[176px] text-xs" @click.stop>
+                      <SelectTrigger class="dp-manage-action h-(--control-height-sm) min-w-[176px] text-xs" @click.stop>
                         <span>{{ actionLabel(r) }}</span>
                       </SelectTrigger>
                       <SelectContent>

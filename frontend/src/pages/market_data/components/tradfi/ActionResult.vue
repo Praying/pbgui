@@ -36,7 +36,7 @@ function feedbackClass(level: string): string {
     <div class="tradfi-feedback-header flex flex-wrap items-start justify-between gap-2">
       <div class="tradfi-search-title text-base font-bold text-primary">{{ result.title }}</div>
       <Button
-        class="tradfi-feedback-close flex-none h-8 w-8 p-0 text-md"
+        class="tradfi-feedback-close flex-none h-(--control-height-md) w-8 p-0 text-md"
         variant="outline"
         type="button"
         :aria-label="t('market.closeActionResult')"

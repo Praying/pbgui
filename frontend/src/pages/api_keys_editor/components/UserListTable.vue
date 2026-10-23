@@ -189,7 +189,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
           <Input
             type="text"
             id="userFilter"
-            class="h-9 w-full pl-9 pr-9"
+            class="h-(--control-height-lg) w-full pl-9 pr-9"
             :model-value="store.filterText.value"
             :placeholder="t('misc.apikeys.filterByNameOrExchange')"
             @update:model-value="store.setFilter(String($event ?? ''))"
@@ -247,7 +247,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
         <Button
           type="button"
           :variant="store.users.value.length === 0 ? 'outline' : 'primary'"
-          class="h-9 gap-1.5 px-3.5 shadow-xs"
+          class="h-(--control-height-lg) gap-1.5 px-3.5 shadow-xs"
           data-testid="add-user"
           @click="emit('create')"
         >

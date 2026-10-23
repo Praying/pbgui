@@ -91,7 +91,7 @@ function submit(): void {
           type="button"
           variant="ghost"
           size="sm"
-          class="size-8 shrink-0 p-0 text-secondary transition-colors hover:text-primary"
+          class="size-(--control-height-md) shrink-0 p-0 text-secondary transition-colors hover:text-primary"
           :title="t('common.close')"
           :aria-label="t('common.close')"
           @click="emit('close')"
@@ -109,7 +109,7 @@ function submit(): void {
       <div class="grid min-h-0 flex-1 content-start gap-4 overflow-auto p-5 max-[600px]:p-4">
         <label class="grid gap-1.5">
           <span class="text-compact font-medium text-primary">{{ t('v7optimize.configName') }}</span>
-          <Input v-model="name" class="h-9 text-compact" />
+          <Input v-model="name" class="h-(--control-height-lg) text-compact" />
         </label>
 
         <template v-if="source === 'local'">
@@ -157,8 +157,8 @@ function submit(): void {
       </div>
 
       <footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-5 py-3.5 max-[600px]:px-4">
-        <Button type="button" variant="default" class="h-9 min-w-[104px] text-compact font-medium" @click="emit('close')">{{ t('common.cancel') }}</Button>
-        <Button type="button" variant="info" class="h-9 min-w-[104px] text-compact font-medium" :disabled="busy" @click="submit">{{ t('v7optimize.importToEditor') }}</Button>
+        <Button type="button" variant="default" class="h-(--control-height-lg) min-w-[104px] text-compact font-medium" @click="emit('close')">{{ t('common.cancel') }}</Button>
+        <Button type="button" variant="info" class="h-(--control-height-lg) min-w-[104px] text-compact font-medium" :disabled="busy" @click="submit">{{ t('v7optimize.importToEditor') }}</Button>
       </footer>
     </section>
   </div>

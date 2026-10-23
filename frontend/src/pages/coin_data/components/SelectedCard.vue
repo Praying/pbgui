@@ -319,7 +319,7 @@ defineExpose({ fitToContent, resetLayout });
       <div class="details-actions flex items-center gap-2 relative z-[1]">
         <a
           v-if="cmcLink"
-          class="details-link inline-flex items-center justify-center min-h-8 px-3 rounded-md border border-accent/28 bg-accent/8 text-accent-soft text-base font-semibold no-underline [transition:background-color_var(--motion-fast)_var(--ease-standard),border-color_var(--motion-fast)_var(--ease-standard),color_var(--motion-fast)_var(--ease-standard)] hover:bg-accent/16 hover:border-accent/45 hover:text-accent-soft"
+          class="details-link inline-flex items-center justify-center min-h-(--control-height-md) px-3 rounded-md border border-accent/28 bg-accent/8 text-accent-soft text-base font-semibold no-underline [transition:background-color_var(--motion-fast)_var(--ease-standard),border-color_var(--motion-fast)_var(--ease-standard),color_var(--motion-fast)_var(--ease-standard)] hover:bg-accent/16 hover:border-accent/45 hover:text-accent-soft"
           id="selected-cmc-link"
           :href="cmcLink"
           target="_blank"

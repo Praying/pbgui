@@ -89,7 +89,7 @@ watch(isOpen, (open) => {
     type="button"
     variant="ghost"
     size="sm"
-    class="h-8.5 shrink-0 gap-1.5 text-compact font-medium"
+    class="h-(--control-height-lg) shrink-0 gap-1.5 text-compact font-medium"
     data-test="pb8-parameter-help-open"
     @click="openReference"
   >

@@ -197,7 +197,7 @@ function entryTitle(entry: Record<string, unknown>): string {
           type="button"
           variant="ghost"
           size="sm"
-          class="size-8 shrink-0 p-0 text-secondary transition-colors hover:text-primary cursor-pointer"
+          class="size-(--control-height-md) shrink-0 p-0 text-secondary transition-colors hover:text-primary cursor-pointer"
           :title="t('common.close')"
           :aria-label="t('common.close')"
           @click="emit('close')"
@@ -320,15 +320,15 @@ function entryTitle(entry: Record<string, unknown>): string {
       </div>
 
       <footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default bg-surface-deep/40 px-5 py-3.5 max-[600px]:px-4">
-        <Button data-action="refresh" type="button" variant="default" :disabled="loading" class="h-9 gap-1.5 text-compact" @click="emit('refresh')">
+        <Button data-action="refresh" type="button" variant="default" :disabled="loading" class="h-(--control-height-lg) gap-1.5 text-compact" @click="emit('refresh')">
           <PbIcon :icon="PhArrowClockwise" :size="15" :class="{ 'animate-spin': loading }" />
           {{ t('editor.preflight.refreshBtn') }}
         </Button>
-        <Button v-if="jobRunning" variant="danger" data-action="stop" type="button" class="h-9 gap-1.5 text-compact" @click="emit('stop')">
+        <Button v-if="jobRunning" variant="danger" data-action="stop" type="button" class="h-(--control-height-lg) gap-1.5 text-compact" @click="emit('stop')">
           <PbIcon :icon="PhStop" :size="15" />
           {{ t('editor.preflight.stopBtn') }}
         </Button>
-        <Button v-else variant="primary" data-action="preload" type="button" :disabled="!preloadSupported || loading" class="h-9 gap-1.5 text-compact" @click="emit('preload')">
+        <Button v-else variant="primary" data-action="preload" type="button" :disabled="!preloadSupported || loading" class="h-(--control-height-lg) gap-1.5 text-compact" @click="emit('preload')">
           <PbIcon :icon="PhDownloadSimple" :size="15" />
           {{ translateServerMsg(String(summary.preload_label || t('editor.preflight.preloadDefault'))) }}
         </Button>

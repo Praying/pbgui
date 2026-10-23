@@ -235,7 +235,7 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
         <p v-if="errorMessage" class="mt-3 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">{{ errorMessage }}</p>
         <p v-if="statusMessage" class="mt-3 rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-success">{{ statusMessage }}</p>
         <nav class="profit-tabs mt-5 flex gap-1 overflow-x-auto rounded-xl border border-border-default bg-panel p-1" role="tablist">
-          <button v-for="tab in (['overview', 'policy', 'schedule', 'vault', 'journal'] as const)" :key="tab" type="button" role="tab" :aria-selected="activeTab === tab" class="whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-secondary transition-colors duration-[var(--motion-fast)] ease-standard hover:bg-card hover:text-primary" :class="activeTab === tab ? 'bg-accent/15 text-accent-soft' : ''" @click="activeTab = tab">{{ t(`profitSweep.tabs.${tab}`) }}</button>
+          <button v-for="tab in (['overview', 'policy', 'schedule', 'vault', 'journal'] as const)" :key="tab" type="button" role="tab" :aria-selected="activeTab === tab" class="whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-secondary transition-colors duration-snap ease-standard hover:bg-card hover:text-primary" :class="activeTab === tab ? 'bg-accent/15 text-accent-soft' : ''" @click="activeTab = tab">{{ t(`profitSweep.tabs.${tab}`) }}</button>
         </nav>
         <OverviewPanel
           :accounts="overviewAccounts"
@@ -281,7 +281,7 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
                 :model-value="String(fieldValue(field) ?? '')"
                 @update:model-value="setField(field, $event)"
               >
-                <SelectTrigger :id="`profit-sweep-${field}`" class="h-9 rounded-md bg-card text-primary">
+                <SelectTrigger :id="`profit-sweep-${field}`" class="rounded-md bg-card text-primary">
                   <span :class="fieldValue(field) ? undefined : 'text-placeholder'">
                     {{ fieldLabel(String(fieldValue(field) ?? '')) }}
                   </span>
@@ -299,7 +299,7 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
               <Label
                 v-else-if="typeof fieldValue(field) === 'boolean'"
                 :for="`profit-sweep-${field}`"
-                class="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-border-default bg-card px-2.5 text-sm font-normal normal-case tracking-normal text-primary hover:border-border-strong"
+                class="flex h-(--control-height-md) cursor-pointer items-center gap-2 rounded-md border border-border-default bg-card px-2.5 text-sm font-normal normal-case tracking-normal text-primary hover:border-border-strong"
               >
                 <Checkbox
                   :id="`profit-sweep-${field}`"
@@ -311,7 +311,7 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
               <Input
                 v-else
                 :id="`profit-sweep-${field}`"
-                class="h-9 rounded-md bg-card"
+                class="h-(--control-height-lg) rounded-md bg-card"
                 :type="typeof fieldValue(field) === 'number' ? 'number' : 'text'"
                 :value="String(fieldValue(field) ?? '')"
                 @input="setInputField(field, $event)"

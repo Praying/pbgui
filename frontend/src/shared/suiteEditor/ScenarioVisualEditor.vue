@@ -77,20 +77,20 @@ function removeWindow(id: string): void {
       <div v-for="window in orderedWindows" :key="window.id" class="grid grid-cols-[minmax(120px,1fr)_minmax(130px,1fr)_minmax(130px,1fr)_110px_auto] items-end gap-2 rounded-md border border-border-default/60 bg-page/35 p-2 max-[800px]:grid-cols-1" role="listitem">
         <label class="grid gap-1 text-xs text-secondary">
           <span>{{ t('editor.suite.label') }}</span>
-          <Input :model-value="window.label" class="h-8 text-compact" @update:model-value="updateWindow(window.id, 'label', String($event ?? ''))" />
+          <Input :model-value="window.label" class="h-(--control-height-md) text-compact" @update:model-value="updateWindow(window.id, 'label', String($event ?? ''))" />
         </label>
         <label class="grid gap-1 text-xs text-secondary">
           <span>{{ t('editor.suite.startDate') }}</span>
-          <Input type="date" :model-value="window.start_date" class="h-8 text-compact" @update:model-value="updateWindow(window.id, 'start_date', String($event ?? ''))" />
+          <Input type="date" :model-value="window.start_date" class="h-(--control-height-md) text-compact" @update:model-value="updateWindow(window.id, 'start_date', String($event ?? ''))" />
         </label>
         <label class="grid gap-1 text-xs text-secondary">
           <span>{{ t('editor.suite.endDate') }}</span>
-          <Input type="date" :model-value="window.end_date" class="h-8 text-compact" @update:model-value="updateWindow(window.id, 'end_date', String($event ?? ''))" />
+          <Input type="date" :model-value="window.end_date" class="h-(--control-height-md) text-compact" @update:model-value="updateWindow(window.id, 'end_date', String($event ?? ''))" />
         </label>
         <label class="grid gap-1 text-xs text-secondary">
           <span>{{ t('editor.suite.visualRole') }}</span>
           <SelectRoot :model-value="window.role" @update:model-value="updateWindow(window.id, 'role', String($event))">
-            <SelectTrigger class="h-8 text-compact"><span>{{ window.role === 'training' ? t('editor.suite.generatorTrain') : t('editor.suite.generatorHoldout') }}</span></SelectTrigger>
+            <SelectTrigger class="h-(--control-height-md) text-compact"><span>{{ window.role === 'training' ? t('editor.suite.generatorTrain') : t('editor.suite.generatorHoldout') }}</span></SelectTrigger>
             <SelectContent>
               <SelectItem value="training">{{ t('editor.suite.generatorTrain') }}</SelectItem>
               <SelectItem value="holdout">{{ t('editor.suite.generatorHoldout') }}</SelectItem>

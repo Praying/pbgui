@@ -660,7 +660,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
             type="button"
             variant="info"
             size="sm"
-            class="h-8 gap-1.5 px-3.5 text-xs font-medium"
+            class="h-(--control-height-md) gap-1.5 px-3.5 text-xs font-medium"
             @click="toggleEnabled(true)"
           >
             <PbIcon :icon="PhStack" class="h-3.5 w-3.5" />
