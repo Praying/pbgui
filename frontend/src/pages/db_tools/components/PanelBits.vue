@@ -12,6 +12,7 @@ import { Button } from '@/shared/components/ui/button';
 import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { statusKindClass } from '../lib/statusKind';
 import type { PanelStatus, ProgressState } from '../composables/useDbTools';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const props = defineProps<{
   statusId?: string;
@@ -66,7 +67,7 @@ const progressSteps = computed(() => (props.progress?.steps || []).slice(-20));
   </div>
 
   <div id="confirm-ovl" class="modal-backdrop backdrop-blur-[2px]" :class="confirm.active ? 'visible flex' : 'hidden'" :aria-hidden="confirm.active ? 'false' : 'true'">
-    <div id="confirm-box" class="w-[min(480px,92vw)] overflow-hidden rounded-lg border border-border-default bg-panel shadow-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-head">
+    <div id="confirm-box" class="w-[min(480px,92vw)] overflow-hidden rounded-lg border border-border-default bg-panel shadow-modal" role="dialog" v-focus-trap="confirm.active" aria-modal="true" aria-labelledby="confirm-head">
       <div id="confirm-head" class="border-b border-border-subtle bg-card px-4 py-[0.9rem] font-bold">{{ confirm.title || t('common.confirm') }}</div>
       <div id="confirm-body" class="grid gap-3 p-5">
         <div id="confirm-msg" class="leading-[1.45] text-primary">{{ confirm.message }}</div>

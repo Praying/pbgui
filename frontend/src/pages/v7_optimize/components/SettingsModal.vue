@@ -5,6 +5,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import type { OptimizeSettings } from '../types';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 const props = defineProps<{ open: boolean; settings: OptimizeSettings }>();
 const emit = defineEmits<{ close: []; save: [value: Partial<OptimizeSettings>] }>();
 const { t } = useI18n();
@@ -14,7 +15,7 @@ watch(() => props.open, (open) => { if (open) Object.assign(draft, props.setting
 
 <template>
   <div v-if="open" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop">
-    <section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true">
+    <section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" v-focus-trap aria-modal="true">
       <header class="flex shrink-0 items-center gap-2.5 border-b border-border-default px-3.5 py-2.5"><h2 class="m-0 text-xl font-semibold leading-tight">{{ t('v7optimize.queueSettings') }}</h2></header>
       <div class="grid min-h-0 gap-3 overflow-auto p-3.5 text-primary">
         <label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.autostartCpu') }}<Input v-model.number="draft.cpu" type="number" min="1" :max="settings.cpu_max" /></label>

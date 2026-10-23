@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { Button } from '@/shared/components/ui/button';
 import type { PlotState } from '../composables/useOptimizeActions';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const props = defineProps<{ plot: PlotState }>();
 const emit = defineEmits<{ close: [] }>();
@@ -90,7 +91,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div v-if="plot.open" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop">
-    <section ref="modal" class="opt-modal opt-plot-modal" :class="{ 'is-maximized': maximized }" role="dialog" aria-modal="true">
+    <section ref="modal" class="opt-modal opt-plot-modal" :class="{ 'is-maximized': maximized }" role="dialog" v-focus-trap aria-modal="true">
       <div v-for="direction in ['n', 's', 'w', 'e', 'nw', 'ne', 'sw', 'se']" :key="direction" class="pnr" :class="`pnr-${direction}`" :data-dir="direction" @mousedown="beginResize(direction, $event)"></div>
       <header data-test="plot-header" class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3" @mousedown="beginDrag"><h2>{{ plot.title }}</h2><div class="whitespace-nowrap! overflow-visible!"><Button variant="default" size="sm" type="button" @click="maximized = !maximized">{{ maximized ? t('common.restore') : t('common.maximize') }}</Button><Button variant="default" type="button" @click="emit('close')">{{ t('common.close') }}</Button></div></header>
       <div class="opt-plot-body min-h-0 flex-1 overflow-hidden p-0">

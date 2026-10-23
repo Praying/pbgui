@@ -221,7 +221,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
             <div class="flex items-center gap-2">
               <div class="min-w-0 flex-1">
                 <SelectRoot :model-value="rowValue(row, 'metric')" @update:model-value="updateScoring(index, 'metric', String($event))">
-                  <SelectTrigger data-field="scoring-metric" aria-label="metric" class="h-(--control-height-lg) w-full truncate text-compact">
+                  <SelectTrigger data-field="scoring-metric" aria-label="metric" class="h-(--control-height-md-plus) w-full truncate text-compact">
                     <span :class="rowValue(row, 'metric') ? 'font-mono text-compact font-medium text-primary truncate' : 'text-placeholder'">
                       {{ rowValue(row, 'metric') || t('v7optimize.selectMetricForScoring') }}
                     </span>
@@ -236,7 +236,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
 
               <div class="w-24 shrink-0">
                 <SelectRoot :model-value="canonicalGoal(row.goal)" @update:model-value="updateScoring(index, 'goal', String($event))">
-                  <SelectTrigger data-field="scoring-goal" aria-label="goal" class="h-(--control-height-lg) w-full text-compact">
+                  <SelectTrigger data-field="scoring-goal" aria-label="goal" class="h-(--control-height-md-plus) w-full text-compact">
                     <span class="font-mono text-compact font-semibold" :class="canonicalGoal(row.goal) === 'max' ? 'text-success' : 'text-warning-soft'">
                       {{ canonicalGoal(row.goal) }}
                     </span>
@@ -270,7 +270,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
               <div v-if="version === 'v8'" class="flex min-w-[140px] flex-1 items-center gap-1.5">
                 <span class="text-xs text-secondary shrink-0">{{ t('v7optimize.scenario') }}:</span>
                 <SelectRoot :model-value="scenarioSelection(row)" @update:model-value="selectScoringScenarioMode(index, String($event))">
-                  <SelectTrigger data-field="scoring-scenario" aria-label="scenario" class="h-(--control-height-sm) w-full text-xs">
+                  <SelectTrigger data-field="scoring-scenario" aria-label="scenario" class="h-(--control-height-sm-plus) w-full text-xs">
                     <span class="truncate">{{ scenarioSelection(row) === 'inherit' ? t('v7optimize.inheritObjectiveScenario') : scenarioSelection(row) === 'aggregate' ? t('v7optimize.aggregatedScenario') : t('v7optimize.namedScenario') }}</span>
                   </SelectTrigger>
                   <SelectContent class="max-h-60">
@@ -280,12 +280,12 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
                   </SelectContent>
                 </SelectRoot>
               </div>
-              <Input v-if="version === 'v8' && scenarioSelection(row) === 'named'" data-field="scoring-scenario-name" class="h-(--control-height-sm) min-w-[130px] flex-1 text-xs" :list="scenarioLabels.length ? 'scoring-scenario-labels' : undefined" :model-value="rowValue(row, 'scenario')" :placeholder="t('v7optimize.scenarioLabel')" @update:model-value="setScoringScenarioName(index, String($event ?? ''))" />
+              <Input v-if="version === 'v8' && scenarioSelection(row) === 'named'" data-field="scoring-scenario-name" class="h-(--control-height-sm-plus) min-w-[130px] flex-1 text-xs" :list="scenarioLabels.length ? 'scoring-scenario-labels' : undefined" :model-value="rowValue(row, 'scenario')" :placeholder="t('v7optimize.scenarioLabel')" @update:model-value="setScoringScenarioName(index, String($event ?? ''))" />
 
               <div v-if="meta.scoring_basis_field" class="flex min-w-[120px] flex-1 items-center gap-1.5">
                 <span class="text-xs text-secondary shrink-0">{{ t('v7optimize.statistic') }}:</span>
                 <SelectRoot :model-value="rowValue(row, meta.scoring_basis_field)" @update:model-value="updateScoringAggregate(index, String($event))">
-                  <SelectTrigger data-field="scoring-aggregate" aria-label="statistic" class="h-(--control-height-sm) w-full text-xs">
+                  <SelectTrigger data-field="scoring-aggregate" aria-label="statistic" class="h-(--control-height-sm-plus) w-full text-xs">
                     <span class="truncate">{{ rowValue(row, meta.scoring_basis_field) || t('v7optimize.defaultStat') }}</span>
                   </SelectTrigger>
                   <SelectContent class="max-h-60">
@@ -303,10 +303,10 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
             :key="`score-${index}`"
             class="rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 flex items-center gap-2"
           >
-            <Input class="h-(--control-height-lg) flex-1 font-mono text-compact" :model-value="rowValue(row, 'metric')" placeholder="metric" @update:model-value="updateScoring(index, 'metric', String($event ?? ''))" />
+            <Input class="h-(--control-height-md-plus) flex-1 font-mono text-compact" :model-value="rowValue(row, 'metric')" placeholder="metric" @update:model-value="updateScoring(index, 'metric', String($event ?? ''))" />
             <div class="w-28 shrink-0">
               <SelectRoot :model-value="canonicalGoal(row.goal) === 'max' ? 'maximize' : 'minimize'" @update:model-value="updateScoring(index, 'goal', String($event))">
-                <SelectTrigger aria-label="goal" class="h-(--control-height-lg) w-full text-compact">
+                <SelectTrigger aria-label="goal" class="h-(--control-height-md-plus) w-full text-compact">
                   <span>{{ canonicalGoal(row.goal) === 'max' ? 'maximize' : 'minimize' }}</span>
                 </SelectTrigger>
                 <SelectContent>
@@ -317,7 +317,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
             </div>
             <div v-if="scenarioLabels.length" class="w-32 shrink-0">
               <SelectRoot :model-value="rowValue(row, 'scenario') || 'Aggregated'" @update:model-value="updateScoring(index, 'scenario', String($event))">
-                <SelectTrigger aria-label="scenario" class="h-(--control-height-lg) w-full text-compact">
+                <SelectTrigger aria-label="scenario" class="h-(--control-height-md-plus) w-full text-compact">
                   <span class="truncate">{{ rowValue(row, 'scenario') || 'Aggregated' }}</span>
                 </SelectTrigger>
                 <SelectContent>
@@ -370,7 +370,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
 
               <div class="min-w-0 flex-1">
                 <SelectRoot :model-value="rowValue(row, 'metric')" @update:model-value="updateLimit(index, 'metric', String($event))">
-                  <SelectTrigger data-field="limit-metric" aria-label="metric" class="h-(--control-height-lg) w-full truncate text-compact">
+                  <SelectTrigger data-field="limit-metric" aria-label="metric" class="h-(--control-height-md-plus) w-full truncate text-compact">
                     <span :class="rowValue(row, 'metric') ? 'font-mono text-compact font-medium text-primary truncate' : 'text-placeholder'">
                       {{ rowValue(row, 'metric') || t('v7optimize.selectMetricForLimit') }}
                     </span>
@@ -401,7 +401,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
               <!-- Operator (penalize_if) -->
               <div class="w-36 shrink-0">
                 <SelectRoot :model-value="rowValue(row, 'penalize_if') || 'greater_than'" @update:model-value="updateLimit(index, 'penalize_if', String($event))">
-                  <SelectTrigger data-field="limit-penalize-if" aria-label="penalize_if" class="h-(--control-height-sm) w-full text-xs">
+                  <SelectTrigger data-field="limit-penalize-if" aria-label="penalize_if" class="h-(--control-height-sm-plus) w-full text-xs">
                     <span class="truncate">{{ rowValue(row, 'penalize_if') || 'greater_than' }}</span>
                   </SelectTrigger>
                   <SelectContent>
@@ -413,19 +413,19 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
               <!-- Threshold value or range -->
               <div class="flex-1 min-w-[130px] flex items-center gap-1.5">
                 <template v-if="isRange(row)">
-                  <Input data-field="limit-range-low" type="number" step="any" class="h-(--control-height-sm) text-xs font-mono w-full" placeholder="min" :model-value="rangeValue(row, 0)" @update:model-value="updateRange(index, index, 0, String($event ?? ''))" />
+                  <Input data-field="limit-range-low" type="number" step="any" class="h-(--control-height-sm-plus) text-xs font-mono w-full" placeholder="min" :model-value="rangeValue(row, 0)" @update:model-value="updateRange(index, index, 0, String($event ?? ''))" />
                   <span class="text-secondary text-xs">→</span>
-                  <Input data-field="limit-range-high" type="number" step="any" class="h-(--control-height-sm) text-xs font-mono w-full" placeholder="max" :model-value="rangeValue(row, 1)" @update:model-value="updateRange(index, index, 1, String($event ?? ''))" />
+                  <Input data-field="limit-range-high" type="number" step="any" class="h-(--control-height-sm-plus) text-xs font-mono w-full" placeholder="max" :model-value="rangeValue(row, 1)" @update:model-value="updateRange(index, index, 1, String($event ?? ''))" />
                 </template>
                 <template v-else>
-                  <Input data-field="limit-value" type="number" step="any" class="h-(--control-height-sm) text-xs font-mono w-full" placeholder="threshold" :model-value="rowValue(row, 'value')" @update:model-value="updateLimitNumber(index, 'value', String($event ?? ''))" />
+                  <Input data-field="limit-value" type="number" step="any" class="h-(--control-height-sm-plus) text-xs font-mono w-full" placeholder="threshold" :model-value="rowValue(row, 'value')" @update:model-value="updateLimitNumber(index, 'value', String($event ?? ''))" />
                 </template>
               </div>
 
               <!-- Stat Basis -->
               <div v-if="meta.limit_basis_field" class="w-28 shrink-0">
                 <SelectRoot :model-value="rowValue(row, meta.limit_basis_field)" @update:model-value="updateLimit(index, meta.limit_basis_field, String($event))">
-                  <SelectTrigger data-field="limit-stat" aria-label="statistic" class="h-(--control-height-sm) w-full text-xs">
+                  <SelectTrigger data-field="limit-stat" aria-label="statistic" class="h-(--control-height-sm-plus) w-full text-xs">
                     <span class="truncate">{{ rowValue(row, meta.limit_basis_field) || t('v7optimize.defaultStat') }}</span>
                   </SelectTrigger>
                   <SelectContent class="max-h-60">
@@ -437,7 +437,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
               <!-- Scenario (if v8) -->
               <div v-if="version === 'v8'" class="w-36 shrink-0">
                 <SelectRoot :model-value="scenarioSelection(row)" @update:model-value="selectLimitScenarioMode(index, String($event))">
-                  <SelectTrigger data-field="limit-scenario" aria-label="scenario" class="h-(--control-height-sm) w-full text-xs">
+                  <SelectTrigger data-field="limit-scenario" aria-label="scenario" class="h-(--control-height-sm-plus) w-full text-xs">
                     <span class="truncate">{{ scenarioSelection(row) === 'inherit' ? t('v7optimize.inheritObjectiveScenario') : scenarioSelection(row) === 'aggregate' ? t('v7optimize.aggregatedScenario') : t('v7optimize.namedScenario') }}</span>
                   </SelectTrigger>
                   <SelectContent class="max-h-60">
@@ -447,7 +447,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
                   </SelectContent>
                 </SelectRoot>
               </div>
-              <Input v-if="version === 'v8' && scenarioSelection(row) === 'named'" data-field="limit-scenario-name" class="h-(--control-height-sm) min-w-[130px] flex-1 text-xs" :list="scenarioLabels.length ? 'limit-scenario-labels' : undefined" :model-value="rowValue(row, 'scenario')" :placeholder="t('v7optimize.scenarioLabel')" @update:model-value="setLimitScenarioName(index, String($event ?? ''))" />
+              <Input v-if="version === 'v8' && scenarioSelection(row) === 'named'" data-field="limit-scenario-name" class="h-(--control-height-sm-plus) min-w-[130px] flex-1 text-xs" :list="scenarioLabels.length ? 'limit-scenario-labels' : undefined" :model-value="rowValue(row, 'scenario')" :placeholder="t('v7optimize.scenarioLabel')" @update:model-value="setLimitScenarioName(index, String($event ?? ''))" />
             </div>
           </div>
         </template>
@@ -458,9 +458,9 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
             :key="`limit-${index}`"
             class="rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 flex items-center gap-2"
           >
-            <Input class="h-(--control-height-lg) flex-1 font-mono text-compact" :model-value="rowValue(row, 'metric')" placeholder="metric" @update:model-value="updateLimit(index, 'metric', String($event ?? ''))" />
-            <Input class="h-(--control-height-lg) w-24 font-mono text-compact" :model-value="rowValue(row, 'min')" placeholder="min" @update:model-value="updateLimit(index, 'min', String($event ?? ''))" />
-            <Input class="h-(--control-height-lg) w-24 font-mono text-compact" :model-value="rowValue(row, 'max')" placeholder="max" @update:model-value="updateLimit(index, 'max', String($event ?? ''))" />
+            <Input class="h-(--control-height-md-plus) flex-1 font-mono text-compact" :model-value="rowValue(row, 'metric')" placeholder="metric" @update:model-value="updateLimit(index, 'metric', String($event ?? ''))" />
+            <Input class="h-(--control-height-md-plus) w-24 font-mono text-compact" :model-value="rowValue(row, 'min')" placeholder="min" @update:model-value="updateLimit(index, 'min', String($event ?? ''))" />
+            <Input class="h-(--control-height-md-plus) w-24 font-mono text-compact" :model-value="rowValue(row, 'max')" placeholder="max" @update:model-value="updateLimit(index, 'max', String($event ?? ''))" />
             <Button type="button" variant="ghost" size="sm" class="size-8.5 shrink-0 p-0 text-secondary hover:bg-danger/15 hover:text-danger-soft" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeLimit(index)">
               <PbIcon :icon="PhX" :size="16" />
             </Button>

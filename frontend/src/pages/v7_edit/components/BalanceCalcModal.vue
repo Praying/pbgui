@@ -12,6 +12,7 @@ import { Button } from '@/shared/components/ui/button';
 import { useEditPageContext } from '../composables/useEditPage';
 import { requestBalanceCalculation } from '../composables/useDraftHandoffs';
 import { serverMsg } from '@/shared/i18n';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 interface BalanceRow {
   readonly coin: string;
@@ -85,7 +86,7 @@ defineExpose({ show });
 <template>
   <Teleport to="body">
     <div v-if="open" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-backdrop" id="bc-modal" @mousedown.self="open = false">
-      <div class="flex w-[90%] max-h-[80dvh] max-w-[560px] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5">
+      <div role="dialog" aria-modal="true" :aria-label="t('v7run.calculateBalance')" v-focus-trap class="flex w-[90%] max-h-[80dvh] max-w-[560px] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5">
         <h3 class="text-lg">{{ t('v7run.calculateBalance') }}</h3>
         <div v-if="loading" class="text-secondary text-sm mb-3">
           {{ t('v7run.calculating') }}

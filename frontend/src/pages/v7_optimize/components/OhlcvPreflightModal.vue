@@ -12,6 +12,7 @@ import PbIcon from '@/shared/components/PbIcon.vue';
 import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import { Button } from '@/shared/components/ui/button';
 import { serverMsg } from '@/shared/i18n';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const props = withDefaults(defineProps<{
   open: boolean;
@@ -179,7 +180,7 @@ function entryTitle(entry: Record<string, unknown>): string {
   <div v-if="open" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop p-3.5 sm:p-5">
     <section
       class="flex w-[min(780px,100%)] max-h-[min(88vh,800px)] max-h-[min(88dvh,800px)] flex-col overflow-hidden rounded-xl border border-border-default bg-panel shadow-[var(--shadow-modal)]"
-      role="dialog"
+      role="dialog" v-focus-trap
       aria-modal="true"
       aria-labelledby="opt-ohlcv-title"
     >

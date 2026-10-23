@@ -29,6 +29,7 @@ import {
 } from '../../lib/uiClasses';
 import type { IntegrityController } from '../../composables/useIntegrity';
 import SummaryCards from './SummaryCards.vue';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const props = defineProps<{
   store: IntegrityController;
@@ -63,7 +64,7 @@ const thClass =
     v-if="store.gapOpen.value"
     class="integrity-gap-backdrop fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-backdrop p-5 backdrop-blur-[3px] max-[760px]:p-2"
     id="integrity-gap-modal"
-    role="dialog"
+    role="dialog" v-focus-trap
     aria-modal="true"
     aria-labelledby="integrity-gap-title"
   >

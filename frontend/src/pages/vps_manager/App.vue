@@ -48,6 +48,7 @@ useAiPageContext({
 });
 const hostname = ref('');
 import { TOAST_VISIBLE_MS } from '@/shared/lib/toast';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const state = ref<JsonRecord>({ config: {}, overview: { rows: [] }, deploys: { history: [], progress_rows: [] } });
 /** False until the first WS `state` message lands — drives the overview skeleton
@@ -856,7 +857,7 @@ onUnmounted(() => {
       </section>
     </div>
 
-    <div v-if="modal" class="modal-backdrop p-5" :data-modal="modal" role="dialog" aria-modal="true">
+    <div v-if="modal" class="modal-backdrop p-5" :data-modal="modal" role="dialog" v-focus-trap aria-modal="true">
       <div class="w-[min(780px,calc(100vw-40px))] max-h-[calc(100dvh-40px)] overflow-auto rounded-lg border border-border-default bg-panel p-4.5 shadow-modal">
         <div class="mb-3.5 flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5"><h2 class="m-0 text-md">{{ modalTitle }}</h2><Button type="button" variant="default" :data-close="modal || 'modal'" @click="closeModal"><PbIcon :icon="PhX" /> {{ t('vpsmgr.close') }}</Button></div>
         <template v-if="modal === 'confirm'"><!-- manager-btn danger: inert anchor kept for the parity-test selector --><p>{{ display(modalData.message) }}</p><div class="mt-3.75 flex justify-end gap-1.75"><Button type="button" variant="default" @click="closeModal">{{ t('vpsmgr.cancel') }}</Button><Button type="button" variant="danger" class="manager-btn danger" @click="acceptConfirm">{{ t('vpsmgr.confirm') }}</Button></div></template>

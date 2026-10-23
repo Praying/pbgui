@@ -1561,12 +1561,18 @@ body {
 
 /* ── Keyframes ───────────────────────────────────────────────── */
 @keyframes bt-fade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes archive-pull-bar { 0% { left: -35%; } 100% { left: 100%; } }
+/* translateX is relative to the element's own width (35% of the track), so
+   -100% parks it just off the left edge and ~285% (100% / 35%) clears the right.
+   transform runs on the compositor; animating `left` re-lays-out every frame. */
+@keyframes archive-pull-bar { 0% { transform: translateX(-100%); } 100% { transform: translateX(286%); } }
 
 /* ── Archive pull progress bar (pseudo-element sweep) ─────────── */
-.archive-pull-bar::before { content: ''; position: absolute; top: 0; bottom: 0; left: -35%; width: 35%;
+.archive-pull-bar::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 35%;
                              background: linear-gradient(90deg, transparent, var(--accent), transparent);
-                             animation: archive-pull-bar 1.4s ease-in-out infinite; }
+                             transform: translateX(-100%); will-change: transform; }
+@media (prefers-reduced-motion: no-preference) {
+  .archive-pull-bar::before { animation: archive-pull-bar 1.4s var(--ease-standard) infinite; }
+}
 
 /* ── Document-delegated tooltip layer (DataTipTooltip.vue) ──────
    Shared component (also used by market_data) — its root carries no

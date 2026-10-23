@@ -43,6 +43,7 @@ import {
 import type { OhlcvStartDateJob } from '../types';
 import type { VastValidationResult } from '../lib/vastApi';
 import type { ScenarioGeneratorContext, ScenarioGeneratorPreview, ScenarioGeneratorRequest } from '@/shared/suiteEditor/suiteModel';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const props = withDefaults(defineProps<{
   open: boolean;
@@ -1265,7 +1266,7 @@ function preflight(): void {
 
 <template>
   <div v-if="open && local" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop p-4 max-[600px]:p-0">
-    <section class="opt-editor-modal flex w-[min(1240px,96vw)] h-[min(88vh,860px)] h-[min(88dvh,860px)] flex-col overflow-hidden rounded-xl border border-border-default bg-panel shadow-[var(--shadow-modal)] max-[600px]:h-full max-[600px]:max-h-full max-[600px]:rounded-none" role="dialog" aria-modal="true" aria-labelledby="opt-editor-title">
+    <section class="opt-editor-modal flex w-[min(1240px,96vw)] h-[min(88vh,860px)] h-[min(88dvh,860px)] flex-col overflow-hidden rounded-xl border border-border-default bg-panel shadow-[var(--shadow-modal)] max-[600px]:h-full max-[600px]:max-h-full max-[600px]:rounded-none" role="dialog" v-focus-trap aria-modal="true" aria-labelledby="opt-editor-title">
       <header class="opt-editor-header flex shrink-0 items-center justify-between gap-4 border-b border-border-default bg-surface-deep/40 px-5 py-2.5 max-[600px]:px-3.5">
         <div class="flex min-w-0 items-center gap-3">
           <div class="opt-editor-header__icon" aria-hidden="true"><PbIcon :icon="PhGear" :size="17" /></div>
@@ -1277,7 +1278,7 @@ function preflight(): void {
         </div>
         <div class="flex items-center gap-2 shrink-0">
           <Pb8ParameterHelp v-if="version === 'v8'" editor="optimize" />
-          <Button type="button" variant="default" size="sm" class="h-(--control-height-lg) gap-1.5 text-compact font-medium shrink-0" data-action="preflight" @click="preflight">{{ t('v7optimize.ohlcvReadiness') }}</Button>
+          <Button type="button" variant="default" size="sm" class="h-(--control-height-md-plus) gap-1.5 text-compact font-medium shrink-0" data-action="preflight" @click="preflight">{{ t('v7optimize.ohlcvReadiness') }}</Button>
           <Button type="button" variant="ghost" size="sm" class="size-(--control-height-md) p-0 text-secondary hover:text-primary transition-colors" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')"><PbIcon :icon="PhX" :size="17" /></Button>
         </div>
       </header>
@@ -1568,7 +1569,7 @@ function preflight(): void {
                 <PbIcon :icon="PhMagnifyingGlass" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary pointer-events-none" :size="15" />
                 <Input
                   v-model="boundSearchText"
-                  class="h-(--control-height-lg) pl-8.5 text-compact placeholder:text-placeholder"
+                  class="h-(--control-height-md-plus) pl-8.5 text-compact placeholder:text-placeholder"
                   :placeholder="t('v7optimize.searchBoundsPlaceholder')"
                 />
                 <button
@@ -1586,7 +1587,7 @@ function preflight(): void {
                 <Input
                   v-model="newBoundKey"
                   list="bot-params-datalist"
-                  class="h-(--control-height-lg) flex-1 text-compact font-mono placeholder:text-placeholder"
+                  class="h-(--control-height-md-plus) flex-1 text-compact font-mono placeholder:text-placeholder"
                   placeholder="e.g. long.total_wallet_exposure_limit"
                   @keydown.enter.prevent="$event.isComposing || $event.keyCode === 229 ? undefined : (addBound())"
                 />
@@ -1597,7 +1598,7 @@ function preflight(): void {
                   type="button"
                   variant="info"
                   size="sm"
-                  class="h-(--control-height-lg) gap-1 shrink-0 text-compact font-medium"
+                  class="h-(--control-height-md-plus) gap-1 shrink-0 text-compact font-medium"
                   data-test="add-bound"
                   @click="addBound"
                 >
@@ -1991,7 +1992,7 @@ function preflight(): void {
                   type="button"
                   variant="outline"
                   size="sm"
-                  class="h-(--control-height-lg) gap-1.5 px-3 text-compact"
+                  class="h-(--control-height-md-plus) gap-1.5 px-3 text-compact"
                   @click="copyRawJson"
                 >
                   <PbIcon :icon="copiedRaw ? PhCheck : PhCopy" class="h-3.5 w-3.5" :class="{ 'text-success': copiedRaw }" />
@@ -2001,7 +2002,7 @@ function preflight(): void {
                   type="button"
                   variant="default"
                   size="sm"
-                  class="h-(--control-height-lg) gap-1.5 px-3 text-compact"
+                  class="h-(--control-height-md-plus) gap-1.5 px-3 text-compact"
                   @click="applyRaw"
                 >
                   <PbIcon :icon="PhSparkle" class="h-3.5 w-3.5 text-accent" />

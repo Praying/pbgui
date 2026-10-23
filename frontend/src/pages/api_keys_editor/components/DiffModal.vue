@@ -10,6 +10,7 @@ import { Button } from '@/shared/components/ui/button';
 import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { diffAllEqual, sideDiffRows, unifiedDiffRows, type DiffRow } from '../lib/diffRows';
 import type { DiffResponse } from '../types';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const props = defineProps<{ data: DiffResponse | null }>();
 
@@ -63,7 +64,7 @@ function rowClass(kind: DiffRow['kind']): string {
 </script>
 
 <template>
-  <div id="diffModal" class="diff-modal fixed inset-0 z-[var(--z-modal)] flex flex-col overflow-hidden bg-page" v-show="data">
+  <div id="diffModal" role="dialog" aria-modal="true" :aria-label="t('misc.apikeys.compareSelected')" v-focus-trap="!!data" class="diff-modal fixed inset-0 z-[var(--z-modal)] flex flex-col overflow-hidden bg-page" v-show="data">
     <div class="diff-modal-header flex shrink-0 items-center justify-between border-b border-border-subtle bg-panel px-4 py-2.5">
       <div class="flex items-center gap-3">
         <Button type="button" variant="secondary" size="sm" @click="emit('close')">&#8592; {{ t('misc.apikeys.back') }}</Button>

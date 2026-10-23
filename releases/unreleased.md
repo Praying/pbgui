@@ -10,6 +10,9 @@
 - 清零剩余任意值：81 处 `rounded-[Npx]` 收敛到 `rounded-xs/sm/md/lg/xl`（9px→lg、10px→xl、5px→sm 等，最大视觉偏差 1px），37 处 `duration-[…]`/`ease-[ease]` 收敛到 `duration-snap/base/sheet` 与 `ease-standard`，覆盖 41 个页面文件及 market_data、welcome 的 TS 类名助手。
 - IME 守卫扩展到全部文本输入框：新增共享 `shared/lib/ime`（`isImeComposing`），帮助页搜索、行情搜索、币种多选、优化配置编辑器的交易所/边界输入、套件编辑器、币种覆盖面板、修改密码等 13 处 Enter 处理器在输入法组词期间不再误触发；新增全仓库扫描测试，之后任何文本框上未加守卫的 `@keydown.enter` 会直接失败。
 - 服务监控「清除 Telegram 凭据」原生复选框迁移到 `ui/Checkbox`，测试同步改为断言 `data-state`。
+- 对话框焦点管理：新增 `v-focus-trap` 指令（`shared/directives/focusTrap`），为 22 个保留自有样式的手写 `role="dialog"` 弹窗补上 CDS 要求的焦点陷阱——打开时焦点移入、Tab/Shift+Tab 在弹窗内循环、关闭时焦点回到触发元素；不改动任何弹窗的 DOM 与样式。常驻 DOM、靠 `hidden`/`v-show` 切换的弹窗（文件浏览、确认框、数据库确认、新建/删除仪表盘）把陷阱绑定到各自的可见状态，隐藏时不会拦截页面 Tab。另给 4 个原先没有任何对话框语义的叠层（删除早于日期、余额计算、复制用户、API 密钥差异）补上 `role="dialog"`、`aria-modal` 与名称。新增 `dialog-focus` 全仓库扫描测试，之后新增的叠层若既不用 `ui/Modal` 也不带陷阱会直接失败。
+- 控件高度新增 30px / 34px 两个中间档（`--control-height-sm-plus` / `--control-height-md-plus`，紧凑下为 26 / 30px）：优化配置编辑器与评分限额编辑器里原本就是 `h-7.5` / `h-8.5` 的 27 个控件恢复原尺寸，不再被拉伸到 38px。
+- 动效：`archive-pull-bar` 流光由动画 `left`（每帧重排）改为 `transform: translateX`（合成器线程）；其余 3 个装饰性循环动画（空状态图标漂浮、集群刷新脉冲、仪表盘实时脉冲）改用 `--ease-standard`，并统一收进 `prefers-reduced-motion: no-preference`。`src/` 内已无 `ease-in-out` / `ease-linear` / `transition-all`。
 
 ## 修复系统/内部划转「方向」无法选中（待确认划转锁定）
 

@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { useEscapeClose } from '@/shared/composables/useEscapeClose';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 /**
  * Legacy #del-dash-dialog (dashboard_main.html openDeleteDialog): a quoted
@@ -39,7 +40,7 @@ const deleteLabel = computed(() => `${t('common.delete')} `);
 </script>
 
 <template>
-  <div id="del-dash-dialog" v-show="visible" role="dialog" aria-labelledby="delete-dash-title">
+  <div id="del-dash-dialog" v-show="visible" role="dialog" v-focus-trap="visible" aria-labelledby="delete-dash-title">
     <div class="dlg-box">
       <div class="dlg-heading">
         <span class="dlg-icon dlg-icon--danger" aria-hidden="true"><PbIcon :icon="PhTrash" /></span>

@@ -24,6 +24,7 @@ import { useAiPageContext } from '@/shared/ai/context';
 import { SYSTEM_PRESETS } from '@/shared/log/logViewerPresets';
 import { loggingApiBase, loggingWsBase } from './config';
 import type { LogFilesPayload, ManagedRotationRule, RotationPayload, RotationRule } from './types';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 type PageView = 'logs' | 'settings';
 
@@ -247,7 +248,7 @@ onBeforeUnmount(() => {
   </div>
 
   <div v-if="purgeOpen" class="log-modal-backdrop modal-backdrop">
-    <section class="w-[min(480px,calc(100vw-32px))] rounded-xl border border-border-strong bg-panel p-5 shadow-modal" role="dialog" aria-modal="true" aria-labelledby="purge-title">
+    <section class="w-[min(480px,calc(100vw-32px))] rounded-xl border border-border-strong bg-panel p-5 shadow-modal" role="dialog" v-focus-trap aria-modal="true" aria-labelledby="purge-title">
       <h2 id="purge-title" class="m-0 mb-3">{{ t('sysmon.purgeLogFile') }}</h2>
       <p class="my-2">{{ t('sysmon.purgeConfirmMsg', { file: currentFile }) }}</p>
       <p class="text-sm text-secondary">{{ t('sysmon.purgeConfirmDetail') }}</p>

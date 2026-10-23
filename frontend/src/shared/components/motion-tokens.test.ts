@@ -64,6 +64,14 @@ describe('density scale', () => {
     expect(compact).toContain('--control-height-lg: 32px;');
   });
 
+  it('keeps the 30px / 34px between-step sizes the dense editors rely on', () => {
+    expect(declaration('--control-height-sm-plus')).toBe('30px');
+    expect(declaration('--control-height-md-plus')).toBe('34px');
+    const compact = densityBlock.match(/\{([\s\S]*?)\}/)?.[1] ?? '';
+    expect(compact).toContain('--control-height-sm-plus: 26px;');
+    expect(compact).toContain('--control-height-md-plus: 30px;');
+  });
+
   it('keeps the comfortable hit area on coarse pointers', () => {
     const coarse = stylesheet.slice(stylesheet.indexOf('@media (pointer: coarse)'));
     expect(coarse).toContain("--control-height-md: 32px;");

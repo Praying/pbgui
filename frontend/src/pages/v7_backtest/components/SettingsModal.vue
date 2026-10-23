@@ -25,6 +25,7 @@ import { Label } from '@/shared/components/ui/label';
 import { effectiveCpuMax } from '../composables/useSettings';
 import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { BacktestSettings, SettingsPatch } from '../types';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const props = defineProps<{
   settings: BacktestSettings;
@@ -123,7 +124,7 @@ function cleanupNow(): void {
 
 <template>
   <div v-if="open" id="modal-root" class="open p-4" :class="modalBackdropClass">
-    <div :class="[modalBoxClass, 'settings-modal w-[min(760px,calc(100vw-2rem))] max-w-none p-0 shadow-modal']" role="dialog" aria-modal="true" aria-labelledby="backtest-settings-title">
+    <div :class="[modalBoxClass, 'settings-modal w-[min(760px,calc(100vw-2rem))] max-w-none p-0 shadow-modal']" role="dialog" v-focus-trap aria-modal="true" aria-labelledby="backtest-settings-title">
       <div class="flex shrink-0 items-start justify-between gap-4 border-b border-border-subtle bg-card px-5 py-4">
         <div class="flex min-w-0 items-start gap-3">
           <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-accent/30 bg-accent/10 text-accent-soft" aria-hidden="true"><PbIcon :icon="PhCpu" :size="18" /></span>

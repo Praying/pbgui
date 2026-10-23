@@ -18,6 +18,7 @@ import {
 import { useEditPageContext } from '../composables/useEditPage';
 import { serverMsg } from '@/shared/i18n';
 import { dialogsAlert } from '../lib/dialogs';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const { t } = useI18n();
 const page = useEditPageContext();
@@ -119,7 +120,7 @@ defineExpose({ show });
 <template>
   <Teleport to="body">
     <div v-if="open" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-backdrop" id="copy-user-modal" @mousedown.self="close">
-      <div class="flex w-[90%] max-h-[80dvh] max-w-[520px] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5">
+      <div role="dialog" aria-modal="true" :aria-label="t('v7run.copyConfigToUser')" v-focus-trap class="flex w-[90%] max-h-[80dvh] max-w-[520px] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5">
         <h3 class="text-lg">{{ t('v7run.copyConfigToUser') }}</h3>
         <div class="text-sm leading-[1.45] text-secondary">
           {{ t('v7run.copyConfigToUserDesc') }}

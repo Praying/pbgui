@@ -14,6 +14,7 @@ import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 defineOptions({ name: 'CmcAuthorityModal' });
 
@@ -95,7 +96,7 @@ function selectedText(options: CmcAuthorityOption[], nodeId: string): string {
 
 <template>
   <div v-if="open" class="cmc-modal-backdrop">
-    <div class="cmc-modal-card" role="dialog" aria-modal="true" aria-labelledby="cmc-authority-modal-title">
+    <div class="cmc-modal-card" role="dialog" v-focus-trap aria-modal="true" aria-labelledby="cmc-authority-modal-title">
       <div class="cmc-modal-head">
         <div class="cmc-modal-title" id="cmc-authority-modal-title">{{ t('sysmon.transferCmcAuthority') }}</div>
         <Button class="cmc-modal-close" variant="ghost" size="icon" type="button" :aria-label="t('common.close')" @click="requestClose"><PbIcon :icon="PhX" /></Button>

@@ -19,6 +19,7 @@ import OptimizeLogDashboard from './OptimizeLogDashboard.vue';
 import QueueLogTerminal from './QueueLogTerminal.vue';
 import type { OptimizeAdapter } from '../config';
 import type { OptimizeLogStatus } from '../lib/optimizeLogStatus';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const props = defineProps<{ open: boolean; filename: string; title: string; adapter: OptimizeAdapter }>();
 const emit = defineEmits<{ close: []; openResults: []; openExplorer: [] }>();
@@ -131,7 +132,7 @@ const heading = () => t('v7optimize.optimizeLogWithName', { name: props.title ||
   <div v-if="open" class="optimize-log-overlay">
     <section
       class="optimize-log-dialog"
-      role="dialog"
+      role="dialog" v-focus-trap
       aria-modal="true"
       aria-labelledby="optimize-log-title"
     >

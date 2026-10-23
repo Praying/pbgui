@@ -289,7 +289,7 @@ onUnmounted(() => {
   border-radius: 50%;
   background: var(--success);
   box-shadow: 0 0 0 3px rgb(var(--success-rgb) / 0.13);
-  animation: overview-live-pulse 2.4s ease-in-out infinite;
+  animation: overview-live-pulse 2.4s var(--ease-standard) infinite;
 }
 
 /* The live indicator breathes between a tight and a soft success ring. */

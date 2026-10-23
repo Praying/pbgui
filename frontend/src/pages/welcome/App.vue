@@ -59,6 +59,7 @@ import {
   issueToneClass,
   statusBadgeToneClass,
 } from './lib/uiClasses';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const { t } = useI18n();
 
@@ -406,7 +407,7 @@ onBeforeUnmount(() => {
 
   <!-- File browser modal (:907-920) -->
   <div id="file-browser-modal" class="browser-modal fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-5 bg-page/78 backdrop-blur-[6px]" :hidden="!store.fileBrowser.value.open">
-    <div class="panel browser-dialog flex flex-col gap-3 w-[min(860px,calc(100vw_-_40px))] max-h-[calc(100dvh_-_48px)] rounded-xl border border-secondary/13 bg-card shadow-panel p-5 max-[640px]:p-4" role="dialog" aria-modal="true" aria-labelledby="file-browser-title">
+    <div class="panel browser-dialog flex flex-col gap-3 w-[min(860px,calc(100vw_-_40px))] max-h-[calc(100dvh_-_48px)] rounded-xl border border-secondary/13 bg-card shadow-panel p-5 max-[640px]:p-4" role="dialog" v-focus-trap="store.fileBrowser.value.open" aria-modal="true" aria-labelledby="file-browser-title">
       <div class="browser-head flex items-center justify-between gap-3">
         <h2 id="file-browser-title" class="panel-title m-0 mb-2 text-lg text-primary">{{ browserTitle }}</h2>
         <Button id="file-browser-close" variant="secondary" type="button" @click="store.closeFileBrowser()">{{ t('common.close') }}</Button>

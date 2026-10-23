@@ -33,6 +33,7 @@ import {
 } from '@/shared/components/ui/select';
 import type { PageSection } from '@/shared/navigation';
 import { clusterApiBase } from './config';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const { t } = useI18n();
 const apiBase = clusterApiBase();
@@ -644,7 +645,7 @@ onUnmounted(() => {
       </div>
 
       <!-- ── Remove-node modal ───────────────────────────────────── -->
-      <div v-if="removeNode" data-modal="remove" class="modal-backdrop p-5" role="dialog" aria-modal="true" @click.stop>
+      <div v-if="removeNode" data-modal="remove" class="modal-backdrop p-5" role="dialog" v-focus-trap aria-modal="true" @click.stop>
         <div class="max-h-[calc(100dvh-40px)] w-[min(640px,calc(100vw-40px))] overflow-auto rounded-lg bg-card p-4.5 shadow-modal">
           <div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5">
             <h2 class="m-0 text-md font-semibold">{{ t('sysmon.removeNode') }}</h2>
@@ -659,7 +660,7 @@ onUnmounted(() => {
       </div>
 
       <!-- ── Node settings modal ─────────────────────────────────── -->
-      <div v-if="settingsNode" class="modal-backdrop p-5" role="dialog" aria-modal="true" @click.stop>
+      <div v-if="settingsNode" class="modal-backdrop p-5" role="dialog" v-focus-trap aria-modal="true" @click.stop>
         <div class="max-h-[calc(100dvh-40px)] w-[min(640px,calc(100vw-40px))] overflow-auto rounded-lg bg-card p-4.5 shadow-modal">
           <div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5">
             <h2 class="m-0 text-md font-semibold">{{ t('sysmon.editClusterNode') }}</h2>
@@ -755,7 +756,7 @@ onUnmounted(() => {
 
 @media (prefers-reduced-motion: no-preference) {
   .cluster-refresh-indicator.is-refreshing .cluster-refresh-indicator__dot {
-    animation: cluster-refresh-pulse 1.2s ease-in-out infinite;
+    animation: cluster-refresh-pulse 1.2s var(--ease-standard) infinite;
   }
 }
 

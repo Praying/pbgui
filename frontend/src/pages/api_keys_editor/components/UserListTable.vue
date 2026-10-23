@@ -530,8 +530,10 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
   white-space: normal;
 }
 
-.empty-state-icon {
-  animation: float-subtle 4s ease-in-out infinite;
+@media (prefers-reduced-motion: no-preference) {
+  .empty-state-icon {
+    animation: float-subtle 4s var(--ease-standard) infinite;
+  }
 }
 
 @keyframes float-subtle {

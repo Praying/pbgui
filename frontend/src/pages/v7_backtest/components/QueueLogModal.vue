@@ -11,6 +11,7 @@ import PbIcon from '@/shared/components/PbIcon.vue';
 import QueueLogTerminal from '@/shared/components/QueueLogTerminal.vue';
 import { Button } from '@/shared/components/ui/button';
 import { useEscapeClose } from '@/shared/composables/useEscapeClose';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const props = defineProps<{
   open: boolean;
@@ -34,7 +35,7 @@ const heading = () => t('v7backtest.logPrefix', { name: props.title || props.fil
   <div v-if="open" class="backtest-log-overlay" data-test="backtest-log-overlay">
     <section
       class="backtest-log-dialog"
-      role="dialog"
+      role="dialog" v-focus-trap
       aria-modal="true"
       aria-labelledby="backtest-log-title"
     >

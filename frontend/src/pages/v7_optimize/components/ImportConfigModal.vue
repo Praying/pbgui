@@ -8,6 +8,7 @@ import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { Textarea } from '@/shared/components/ui/textarea';
 import type { ArchiveConfig, ArchiveSummary } from '../composables/useOptimizeActions';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 const props = defineProps<{ open: boolean; archives: ArchiveSummary[]; configs: ArchiveConfig[]; archiveName: string; busy: boolean }>();
 const emit = defineEmits<{
@@ -73,7 +74,7 @@ function submit(): void {
   <div v-if="open" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop p-3">
     <section
       class="flex max-h-full w-[min(720px,100%)] flex-col overflow-hidden rounded-xl border border-border-default bg-panel shadow-[var(--shadow-modal)]"
-      role="dialog"
+      role="dialog" v-focus-trap
       aria-modal="true"
       aria-labelledby="opt-import-title"
     >

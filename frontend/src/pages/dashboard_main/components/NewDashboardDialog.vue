@@ -7,6 +7,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Field } from '@/shared/components/ui/field';
 import { Input } from '@/shared/components/ui/input';
 import { isImeComposing } from '@/shared/lib/ime';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 /**
  * Legacy #new-dash-dialog (dashboard_main.html openNewDashDialog + OK/cancel/
@@ -74,7 +75,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div id="new-dash-dialog" v-show="visible" role="dialog" aria-labelledby="new-dash-title">
+  <div id="new-dash-dialog" v-show="visible" role="dialog" v-focus-trap="visible" aria-labelledby="new-dash-title">
     <div class="dlg-box">
       <div class="dlg-heading">
         <span class="dlg-icon" aria-hidden="true"><PbIcon :icon="PhPlus" /></span>

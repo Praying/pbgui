@@ -15,6 +15,7 @@ import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import type { CmcKey } from '../types';
+import { vFocusTrap } from '@/shared/directives/focusTrap';
 
 defineOptions({ name: 'CmcKeyModal' });
 
@@ -141,7 +142,7 @@ defineExpose({ clearSecretIfUnchanged });
 
 <template>
   <div v-if="open" class="cmc-modal-backdrop">
-    <div class="cmc-modal-card" role="dialog" aria-modal="true" aria-labelledby="cmc-key-modal-title">
+    <div class="cmc-modal-card" role="dialog" v-focus-trap aria-modal="true" aria-labelledby="cmc-key-modal-title">
       <div class="cmc-modal-head">
         <div class="cmc-modal-title" id="cmc-key-modal-title">{{ title }}</div>
         <Button class="cmc-modal-close" variant="ghost" size="icon" type="button" :aria-label="t('common.close')" @click="requestClose"><PbIcon :icon="PhX" /></Button>

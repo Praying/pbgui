@@ -310,6 +310,11 @@
   --control-height-sm: 28px;
   --control-height-md: 32px;
   --control-height-lg: 38px;
+  /* Between-step sizes the dense editors already used (30px / 34px). They
+     keep their historical height rather than being stretched onto the
+     nearest of sm/md/lg, and tighten with the same density switch. */
+  --control-height-sm-plus: 30px;
+  --control-height-md-plus: 34px;
   --input-h: var(--control-height-md);
   --btn-h: var(--control-height-md);
   --nav-height: 52px;
@@ -443,6 +448,8 @@
   --control-height-sm: 24px;
   --control-height-md: 28px;
   --control-height-lg: 32px;
+  --control-height-sm-plus: 26px;
+  --control-height-md-plus: 30px;
   /* Table rows tighten with the controls they hold. */
   --row-height: 28px;
   --row-height-dense: 24px;
@@ -455,6 +462,8 @@
     --control-height-sm: 28px;
     --control-height-md: 32px;
     --control-height-lg: 38px;
+    --control-height-sm-plus: 30px;
+    --control-height-md-plus: 34px;
   }
 }
 
