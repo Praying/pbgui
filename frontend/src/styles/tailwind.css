@@ -26,19 +26,6 @@
    crawls up to the repo root and reads the Python tree too. */
 @source "../";
 
-/* ── Self-hosted typeface ────────────────────────────────────────
-   Space Grotesk variable (wght 300–700), latin subset, served from
-   frontend/vendor/fonts/ at /app/vendor/... by FastAPI. SIL OFL 1.1 —
-   see frontend/vendor/fonts/LICENSE.txt. CJK and missing glyphs fall
-   through to the system faces in --font-sans. */
-@font-face {
-  font-family: 'Space Grotesk';
-  font-style: normal;
-  font-weight: 300 700;
-  font-display: swap;
-  src: url('/app/vendor/fonts/space-grotesk-var.woff2') format('woff2');
-}
-
 /* ═══════════════════════════════════════════════════════════════
    Theme — the PBGui design tokens as Tailwind v4 theme variables.
    Namespaced tokens generate utilities (bg-page, text-secondary,
@@ -50,13 +37,14 @@
 
 @theme {
   /* ── Typography ─────────────────────────────────────────────── */
-  /* Self-hosted stack (no external font CDN — FastAPI serves offline):
-     'Space Grotesk' (SIL OFL 1.1, variable wght 300–700) is bundled in
-     frontend/vendor/fonts/ for a characterful terminal grotesque; CJK
-     glyphs fall through to the system faces listed below. */
-  --font-sans: 'Space Grotesk', 'Avenir Next', 'Segoe UI Variable Text',
-    'Segoe UI', -apple-system, system-ui, 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+  /* Native system stack, CJK-first, like 网易 UU 远程 (uuyc.163.com): PingFang SC
+     on macOS/iOS, Microsoft YaHei on Windows, Noto Sans CJK SC on Linux. Latin
+     and Chinese then come from one designed-together family per platform, so
+     mixed text keeps one baseline and one weight, and nothing is downloaded. */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei',
+    'Noto Sans CJK SC', 'Source Han Sans SC', 'Segoe UI', 'Helvetica Neue',
+    Tahoma, system-ui, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', 'JetBrains Mono',
     'Fira Code', 'Consolas', 'Noto Sans Mono CJK SC', monospace;
 

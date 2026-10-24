@@ -54,7 +54,7 @@ describe('chartLayout (:7212-7224)', () => {
       title: { text: 'T', x: 0.5 },
       yaxis: { gridcolor: PRECISION_PALETTE.border.default, title: 'Balance' },
     });
-    expect(layout.font).toMatchObject({ color: PRECISION_PALETTE.text.primary, family: "'Space Grotesk', 'Segoe UI', system-ui, sans-serif" });
+    expect(layout.font).toMatchObject({ color: PRECISION_PALETTE.text.primary, family: expect.stringContaining("'PingFang SC'") });
     expect((layout.margin as Record<string, number>).l).toBe(60);
   });
 });

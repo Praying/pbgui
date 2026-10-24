@@ -124,7 +124,7 @@ describe('PBGui type ladder', () => {
   });
 
   it('keeps the offline typeface guarantee', () => {
-    expect(styles).toContain("src: url('/app/vendor/fonts/space-grotesk-var.woff2') format('woff2');");
+    expect(styles).not.toContain('@font-face');
     expect(styles).not.toMatch(/https?:\/\//);
   });
 });

@@ -34,7 +34,7 @@ export function chartTitle(result: BacktestResultItem, t: (iso: string) => strin
 export const CHART_BG = PRECISION_PALETTE.surface.deep;
 export const CHART_TEXT = PRECISION_PALETTE.text.primary;
 export const CHART_GRID = PRECISION_PALETTE.border.default;
-const CHART_FONT_FAMILY = "'Space Grotesk', 'Segoe UI', system-ui, sans-serif";
+const CHART_FONT_FAMILY = "-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Segoe UI', sans-serif";
 const SERIES_COLORS = [
   PRECISION_PALETTE.accent.base,
   PRECISION_PALETTE.success.base,

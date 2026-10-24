@@ -169,9 +169,9 @@ describe('precision engineering visual tokens', () => {
     );
   });
 
-  it('keeps the offline Space Grotesk font setup', () => {
-    expect(stylesheet).toContain("font-family: 'Space Grotesk';");
-    expect(stylesheet).toContain("url('/app/vendor/fonts/space-grotesk-var.woff2')");
+  it('uses the native CJK-first system stack with no downloaded font', () => {
+    expect(stylesheet).toContain("--font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC'");
+    expect(stylesheet).not.toContain('@font-face');
     expect(stylesheet).not.toMatch(/https?:\/\//);
   });
 });
