@@ -100,6 +100,57 @@ def test_shadow_checkpoint_is_deterministic_and_matches_full_replay(tmp_path: Pa
     assert first["membership_trust"]["signing_keys"][NODE_ID]
 
 
+def test_compact_basis_keeps_secret_recipient_refresh_operation(tmp_path: Path) -> None:
+    """A re-sealed secret keeps the recipient refresh operation that produced its state."""
+
+    root = _cluster(tmp_path)
+    secret_id = "cmc_" + "7" * 32
+    node = rebuild_materialized_state(root, write=False)["cluster_nodes"]["nodes"][NODE_ID]
+    recipient_keys = {NODE_ID: node["encryption_key_id"]}
+    append_operation(
+        root,
+        "UPSERT_SECRET",
+        {
+            "secret_id": secret_id,
+            "secret_kind": "cmc_api_key",
+            "audience": "cluster",
+            "generation": 1,
+            "parent_generation": 0,
+            "recipient_generation": 1,
+            "parent_recipient_generation": 0,
+            "membership_generation": 1,
+            "recipient_ids": [NODE_ID],
+            "recipient_key_ids": recipient_keys,
+            "sealed_blob_hash": HASH_A,
+        },
+        created_at=NOW - 50,
+    )
+    append_operation(
+        root,
+        "UPDATE_SECRET_RECIPIENTS",
+        {
+            "secret_id": secret_id,
+            "provider_generation": 1,
+            "recipient_generation": 2,
+            "parent_recipient_generation": 1,
+            "membership_generation": 2,
+            "recipient_ids": [NODE_ID],
+            "recipient_key_ids": recipient_keys,
+            "sealed_blob_hash": HASH_B,
+        },
+        created_at=NOW - 40,
+    )
+
+    checkpoint = build_shadow_checkpoint(root, created_at=NOW)
+    reducer_operations = checkpoint["reducer_state"]["v2_basis_operations"]
+    secret = checkpoint_materialized_state(checkpoint)["desired_state"]["secrets"][secret_id]
+
+    assert [item["op"] for item in reducer_operations].count("UPDATE_SECRET_RECIPIENTS") == 1
+    assert secret["recipient_generation"] == 2
+    assert secret["recipient_op_id"] == f"{NODE_ID}:00000003"
+    assert secret["sealed_blob_hash"] == HASH_B
+
+
 def test_shadow_checkpoint_persists_owner_only_and_rejects_tampering(tmp_path: Path) -> None:
     """Persisted checkpoints are owner-only and every state change invalidates their hash."""
 

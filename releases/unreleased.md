@@ -1,5 +1,12 @@
 # Unreleased
 
+## 修复「系统 / 集群同步 / 概览」保留报告 500
+
+- 修复检查点压缩基收集操作 ID 时只认 `op_id` 字段的缺陷：节点密钥轮换后重新封装密钥的 `UPDATE_SECRET_RECIPIENTS` 操作记录在 `recipient_op_id` 下，被排除在压缩基之外，导致压缩基重放与全量重放不一致（`compact v2 reducer basis does not match full replay`）。`_collect_op_ids` 现在同时收集 `op_id` 与 `*_op_id` 关系引用字段。
+- 该缺陷在 `UPDATE_NODE_KEY` 触发密钥重封装后使 `/api/cluster/retention/report` 持续返回 500（`Failed to build local retention report`），并同时阻断集群检查点的构建与集群范围提交；修复后本地 23 条操作可正常构建检查点，`secrets` 子树的 `recipient_generation`、`sealed_blob_hash` 与全量重放一致。
+- 新增回归测试 `test_compact_basis_keeps_secret_recipient_refresh_operation`，覆盖密钥重封装后压缩基仍包含对应操作。
+- API serial 从 `3343` 递增至 `3344`。
+
 ## 引入 CDS 设计纪律：五档动效、双密度与交互守卫
 
 - 按 `cds-frontend` 技能重整前端设计令牌，保留现有石墨 + 冰蓝配色，仅引入其架构与方法：新增五档动效标尺（`--transition-duration-fast/snap/base/sheet/slow` = 60/120/200/300/450ms）与三条缓动曲线（`--ease-out`、`--ease-snap`、`--ease-overshoot`），可用 `duration-fast`…`duration-slow` 工具类；旧的 `--motion-fast/normal/slow` 改为指向新标尺的别名，约 155 处既有调用点无需改动。`prefers-reduced-motion` 改为只压缩时长、不再删除状态变化，并清零动画延迟。

@@ -2474,8 +2474,10 @@ def _collect_op_ids(value: Any) -> set[str]:
     result: set[str] = set()
     if isinstance(value, Mapping):
         for key, item in value.items():
-            if str(key) == "op_id" and isinstance(item, str) and item:
-                result.add(item)
+            key_name = str(key)
+            if key_name == "op_id" or key_name.endswith("_op_id"):
+                if isinstance(item, str) and item:
+                    result.add(item)
             else:
                 result.update(_collect_op_ids(item))
     elif isinstance(value, list):
