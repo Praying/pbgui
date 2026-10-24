@@ -134,10 +134,12 @@ describe('panel switching + persistence (:9032-9107, :9736-9746)', () => {
   it('renders the M-data-8 activity log body with every panel landed', () => {
     const app = mountApp();
     // M-data-8 replaced the last placeholder — the activity panel hosts the
-    // shared LogViewerPanel script bridge, no .panel-placeholder remains
+    // shared Vue log viewer (the legacy global-script bridge is gone), no
+    // .panel-placeholder remains
     expect(app.findAll('.panel-placeholder')).toHaveLength(0);
     expect(app.find('#activity-panel .activity-log-shell').exists()).toBe(true);
-    expect(app.find('#activity-log-target').exists()).toBe(true);
+    expect(app.find('#activity-panel .log-viewer').exists()).toBe(true);
+    expect(app.find('#activity-log-target').exists()).toBe(false);
     expect(app.find('#best1m-panel .panel-placeholder').exists()).toBe(false);
     expect(app.find('#copy-data-panel .panel-placeholder').exists()).toBe(false);
     expect(app.find('#settings-hyperliquid-tiingo').exists()).toBe(true);

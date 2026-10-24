@@ -1,24 +1,20 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { afterEach, describe, expect, it } from 'vitest';
+import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import LogViewer from '@/shared/components/LogViewer.vue';
 import ActivityPanel from './ActivityPanel.vue';
 
 /* Activity log panel (M-data-8 — legacy market_data_main.html:3579-3592,
-   ensureActivityLogViewer :8851-8866 + syncActivityLogViewer :8869-8873):
-   lazily bridges the global LogViewerPanel script, opens on activation and
-   closes on leave, and surfaces a missing script as an inline error state
-   (legacy failed silently). */
+   ensureActivityLogViewer :8851-8866 + syncActivityLogViewer :8869-8873).
 
-class ViewerMock {
-  static instances: ViewerMock[] = [];
-  options: Record<string, unknown>;
-  open = vi.fn();
-  close = vi.fn();
-  constructor(options: Record<string, unknown>) {
-    this.options = options;
-    ViewerMock.instances.push(this);
-  }
-}
+   Regression: the panel used to instantiate the legacy global
+   `frontend/js/log_viewer_panel.js` through `window.LogViewerPanel`. That file
+   declares `class LogViewerPanel` at the top level of a classic script, so the
+   binding is lexical and never becomes a `window` property — the panel always
+   rendered its "log viewer unavailable" error. It now mounts the shared Vue
+   viewer like the Logging Monitor / API Keys / VPS Monitor pages. */
+
+enableAutoUnmount(afterEach);
 
 function mountPanel(active = false) {
   return mount(ActivityPanel, {
@@ -27,70 +23,41 @@ function mountPanel(active = false) {
   });
 }
 
-beforeEach(() => {
-  ViewerMock.instances = [];
-  (window as unknown as { LogViewerPanel: typeof ViewerMock }).LogViewerPanel = ViewerMock;
-});
-
-afterEach(() => {
-  delete (window as unknown as { LogViewerPanel?: typeof ViewerMock }).LogViewerPanel;
-  document.body.innerHTML = '';
-});
-
 describe('activity log panel (M-data-8)', () => {
-  it('renders the shared-viewer header and the mount target', () => {
+  it('renders the shared-viewer header and mounts the shared viewer', () => {
     const panel = mountPanel();
     expect(panel.find('.activity-log-shell').exists()).toBe(true);
-    expect(panel.find('#activity-log-target').exists()).toBe(true);
     expect(panel.text()).toContain('Activity Log');
     expect(panel.text()).toContain('Shared log viewer');
-    expect(panel.text()).toContain('MarketData.log');
-  });
 
-  it('creates the viewer lazily on first activation only (:8851-8866)', async () => {
-    const panel = mountPanel(false);
-    expect(ViewerMock.instances).toHaveLength(0);
-    await panel.setProps({ active: true });
-    expect(ViewerMock.instances).toHaveLength(1);
-    const viewer = ViewerMock.instances[0]!;
-    expect(viewer.open).toHaveBeenCalledTimes(1);
-    expect(viewer.options).toMatchObject({
-      containerId: 'activity-log-target',
-      defaultHost: 'local',
+    const viewer = panel.findComponent(LogViewer);
+    expect(viewer.exists()).toBe(true);
+    expect(viewer.props()).toMatchObject({
+      active: false,
       defaultFile: 'MarketData.log',
-      presets: 'system',
-      showRestart: false,
-      height: '100%',
+      showSidebar: true,
     });
-    expect(String(viewer.options.wsBase)).toMatch(/^wss?:/);
-
-    // leave → close, re-enter → same viewer, no second instance
-    await panel.setProps({ active: false });
-    expect(viewer.close).toHaveBeenCalledTimes(1);
-    await panel.setProps({ active: true });
-    expect(ViewerMock.instances).toHaveLength(1);
-    expect(viewer.open).toHaveBeenCalledTimes(2);
+    expect(String(viewer.props('wsBase'))).toMatch(/^wss?:/);
+    expect((viewer.props('presets') as unknown[]).length).toBeGreaterThan(0);
   });
 
-  it('opens on mount when booted straight into the panel (restorePanel :9736)', () => {
-    const panel = mountPanel(true);
-    expect(ViewerMock.instances).toHaveLength(1);
-    expect(ViewerMock.instances[0]!.open).toHaveBeenCalledTimes(1);
-  });
-
-  it('closes the viewer on unmount so a remount holds no socket', async () => {
-    const panel = mountPanel(true);
-    const viewer = ViewerMock.instances[0]!;
-    panel.unmount();
-    expect(viewer.close).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows an inline error state when the script asset is missing', async () => {
-    delete (window as unknown as { LogViewerPanel?: typeof ViewerMock }).LogViewerPanel;
+  it('follows the panel visibility through the viewer active gate (:8869-8873)', async () => {
     const panel = mountPanel(false);
+    expect(panel.findComponent(LogViewer).props('active')).toBe(false);
+
     await panel.setProps({ active: true });
-    expect(panel.find('[data-state="error"]').exists()).toBe(true);
-    expect(panel.text()).toContain('Log viewer unavailable: LogViewerPanel');
-    expect(panel.find('#activity-log-target').exists()).toBe(false);
+    expect(panel.findComponent(LogViewer).props('active')).toBe(true);
+
+    await panel.setProps({ active: false });
+    expect(panel.findComponent(LogViewer).props('active')).toBe(false);
+  });
+
+  it('does not depend on the legacy window.LogViewerPanel bridge', () => {
+    // The legacy global never exists on `window` (class declaration), so any
+    // code reading it lands in an error state. The panel must not consult it.
+    expect((window as unknown as { LogViewerPanel?: unknown }).LogViewerPanel).toBeUndefined();
+    const panel = mountPanel(true);
+    expect(panel.text()).not.toContain('Log viewer unavailable');
+    expect(panel.find('[data-state="error"]').exists()).toBe(false);
   });
 });

@@ -58,8 +58,8 @@
  * │                      │        │ :9032-9107, :9736-9773                      │
  * │ Topnav / help chrome │ —      │ pbgui_nav.js + shared_help_overlay.js stay  │
  * │                      │        │ as global scripts loaded by index.html      │
- * │ Panel bodies         │ 3..8   │ all landed — the activity panel bridges the  │
- * │                      │        │ global LogViewerPanel script (M-data-8)     │
+ * │ Panel bodies         │ 3..8   │ all landed — the activity panel mounts the   │
+ * │                      │        │ shared Vue LogViewer (M-data-8)              │
  * └──────────────────────┴────────┴─────────────────────────────────────────────┘
  *
  * NOT PORTED (with justification):

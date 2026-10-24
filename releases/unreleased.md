@@ -1,5 +1,29 @@
 # Unreleased
 
+## 修复「行情数据 / 活动日志」面板始终显示查看器不可用
+
+- 根因：该面板通过 `window.LogViewerPanel` 构造遗留的 `frontend/js/log_viewer_panel.js`，而该文件在经典脚本顶层用 `class LogViewerPanel` 声明——类声明创建的是全局**词法**绑定，不会成为 `window` 属性，于是 `typeof Ctor !== 'function'` 恒为真，面板每次都落到「查看器不可用」错误态，日志从未真正挂载。
+- 改为直接挂载共享 Vue 组件 `@/shared/components/LogViewer.vue`（与日志页、API 密钥、VPS 监控同一实现），用 `active` prop 跟随面板可见性：面板打开才建立 WebSocket，切走即断开，后台面板不持有连接；`market_data/index.html` 不再加载 `log_viewer_panel.js`。
+- `ActivityPanel.test.ts` 改为断言挂载的是共享 `LogViewer`、传入 `MarketData.log` / SYSTEM 预设 / 侧边栏，以及 `active` 随面板切换；原先对 `window.LogViewerPanel` 桩对象的断言全部移除（该桩让旧实现「通过」，却掩盖了真实页面必然失败的事实）。
+- 仅前端改动，不递增 `api/serial.txt`；需重新 `cd frontend && pnpm run build` 后由 `frontend/dist` 生效。
+
+## 重新设计「行情数据 / 状态监控」面板的布局与配色
+
+- 旧实现里监控面板只有内容高度：iframe 带着 `height: 230px` 的内联高度、内容根 `.mds-root` 的 `height: 100%` 又因 `#mds-app` 无高度而退化为内容高度，于是被父级 flex 拉到整屏后留下约 1000px 空白；底色上又是页面灰 + 更深的 `--bg-elevated` 表格容器两层色块。现在 `#mds-app`、`.mds-root` 贯通 100% 高度，表格（`flex: 1`）占满面板，空状态在表格区内垂直居中，死区消失。
+- 面板改为真正的卡片：`--surface-panel` 底、1px `--border-default` 边框、`--radius-lg` 圆角与 `--shadow-panel`；表格容器改为透明 + 1px `--border-subtle` 细框（不再自带阴影与更深底色），表头统一为 `--surface-card` + 11px/700 `--text-muted` 微标签 + 2px 分隔线。
+- 连接状态从表格上方的横幅移进工具栏右侧（绿点「已连接」/ 黄点「连接中…」），断线时不再把表格整体下移；工具栏与表格的间距改由内容区统一的 `--sp-md` gap 提供，点击「立即刷新」后高度也不再跳动。
+- 移除该 iframe 的内容高度同步（`useFrameAutoResize` 的 monitor 变体）：面板已由 flex 定高，同步只会反复写入与面板高度相冲突的内联 `height`。
+- 仅前端改动，不递增 `api/serial.txt`；需重新 `cd frontend && pnpm run build` 后由 `frontend/dist` 生效。
+
+## 统一列表表头样式：从最深层面色改为面板上一档
+
+- `.pbgui-list-table th` 曾由两处规则叠加：后一处把表头底色设成 `--color-deep`（浅色主题下是整页最深的面材），标题行因此成了页面上最重的一块；固定在右侧的操作列表头又单独用 `--bg-page / 0.95`，于是表头在「状态」列处还会断开一道色差。现合并为一条规则：表头统一用 `--surface-card`（面板上一档）、保留 2 px 底部边界，去掉半透明与 `backdrop-filter`，操作列共用同一底色。
+- HL 限额页实测（8 列表头）：修复前各列 `rgb(230, 233, 238)`、最后一列 `rgb(247, 248, 250)`；修复后 8 列统一为 `rgb(244, 245, 248)`，深色主题为 `rgb(36, 39, 45)`（面板 `rgb(28, 30, 35)`），两套主题下都是一条完整色带。
+- `docs/design_guide.md` 中「sticky dark header」的描述同步改为实际的 `--surface-card` 实现；`visual-tokens` 新增守卫，表头底色或固定列色带再次分叉会直接失败。
+- 「系统 / 日志 / 设置」的「托管日志」「单日志轮转」两张表原先是手写 `<table>` + 11 处重复的 `bg-elevated` 表头单元格（比卡片更重的一块色带，且首列没有内边距、与表头不对齐），现改用共享 `Table`/`Th`：表头与全站一致（`--surface-card`、大写微标签、2px 分隔线），首列也随之对齐；`logging_monitor/App.styles.test.ts` 增加守卫，页面里再出现手写 `<th>` 会失败。
+- 「信息 / 币种数据」的匹配表表头同样收敛：移除页面本地的 `--coin-header` 底色、12px/600 标签与 1px 分隔线（改由共享规则提供 11px/700 微标签与 2px 分隔线），并去掉每列占位的 `↕` 字形——未排序列不再显示图标，已排序列保留方向箭头；表头高度由 44px 回到共享的 38px，排序按钮仍保留 `aria-label` 与键盘焦点。`coin_data/App.styles.test.ts` 的断言同步改为「页面不得再声明表头底色、不得出现 `↕`」。
+- 仅前端改动，不递增 `api/serial.txt`；需重新 `cd frontend && pnpm run build` 后由 `frontend/dist` 生效。
+
 ## 修复「系统 / 日志 / 日志查看器」面板下边界随所选日志变化
 
 - 根因：该页把文档锁定为固定高度（`html, body, #app { height: 100%; overflow: hidden }`），却只覆盖了 `.app-shell__workspace` 一层；`.app-shell__primary` 仍是块级盒子，`#page-body` 的 `flex-1` 因此失效、高度等于当前日志的内容高度，面板下边界随文件长度移动（8 行的 OptimizeV8.log 明显比 22 行的 BacktestV8.log 短）。改为使用共享的 `.core-workbench-shell` 高度链（`components.css` 是唯一来源），并删除页面本地那份只覆盖一半的 override。

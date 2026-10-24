@@ -47,13 +47,15 @@ describe('Coin Data visual role contract', () => {
     expect(symbolTableSource).toContain('background: var(--surface-card);');
   });
 
-  it('maps table header and cell borders to the page border role', () => {
-    expect(symbolTableSource).toContain(
-      '.coin-table-header {\n  border-color: var(--coin-border);\n  background: var(--coin-header);\n}'
-    );
+  it('keeps cell borders on the page role and the header on the shared rule', () => {
+    // The header fill, label size/weight and 2px separator belong to
+    // `.pbgui-list-table th` in components.css; a page-local tone here made
+    // this table's header a different weight from every other list table.
     expect(symbolTableSource).toContain(
       '.coin-table-cell {\n  border-color: var(--coin-border);\n}'
     );
+    expect(symbolTableSource).not.toContain('background: var(--coin-header);');
+    expect(symbolTableSource).not.toContain('↕');
   });
 
   it('keeps the CMC unmatched panel on the shared panel and data surfaces', () => {

@@ -179,7 +179,7 @@ For static pages under `/app/`, preserve mounted deployments with relative asset
 - Keep the top navigation outside the scrolling main view. Account for visible status banners rather than adding independent viewport heights that exceed the window.
 - Let the shared mobile rules control sidebar stacking and the hidden resize handle. Keep both sidebar content and the main view reachable.
 - Long sidebar lists scroll in `#sidebar-inner`. Long sticky action groups must also remain reachable at short viewport heights.
-- Put wide tables in their own overflow container. Use sticky dark headers with a 2 px bottom border. Horizontal scrolling is legitimate for wide data tables, not for an EN/DE button row.
+- Put wide tables in their own overflow container. Use sticky headers on the card step (`--surface-card`) with a 2 px bottom border. Horizontal scrolling is legitimate for wide data tables, not for an EN/DE button row.
 - Size multi-column content for the **remaining main-view width**, not only window width. Prefer container queries or an equivalent responsive layout. Dragging the sidebar wider can require editors/results to stack.
 - Do not solve clipping by hiding overflow while leaving controls outside the visible area.
 - Keep existing fields, columns, status meanings, selected rows and contextual actions when changing presentation.
@@ -192,7 +192,7 @@ Use the established editor/table hierarchy, as in Optimize (`v7_optimize.html`, 
 - Use an `.editor-shell` for vertically arranged editor sections; use `.section-title` for section headings with the existing font size, spacing and bottom divider. Do not mix unstyled h3/h4 headings with editor sections.
 - Fields use the existing `.form-row` grid, column/span variants and `.form-group` controls. Arrange configuration/input, objectives, execution limits and actions in that order. Adapt grids to the remaining content width, including a wide sidebar.
 - Use `.panel-toolbar` for contextual actions, selections and compact status. Use regular `.btn` controls for primary workflow actions. `.act-btn`/`.tiny-btn` are compact table actions, not the default for a whole workflow or window tabs.
-- Main data tables use the existing `.tbl` presentation: sticky dark header, uppercase muted column labels, 2 px header separator, standard row spacing and selection highlight. Keep tables in bordered overflow containers. Report prose/diffs belong in a detail window reached from a row or action.
+- Main data tables use the shared `.pbgui-list-table` presentation: sticky header on the card step (`--surface-card`, opaque so scrolling rows cannot bleed through), uppercase muted column labels, 2 px header separator, standard row spacing and selection highlight. Keep tables in bordered overflow containers. Report prose/diffs belong in a detail window reached from a row or action.
 - Show summary values using the editor's grid/field hierarchy or the page's existing status controls. Do not invent a second dashboard-card style inside an editor.
 - Preserve the shell, all fields/actions, automatic updates and navigation/edit state when reorganizing the main content.
 - Config compatibility changes use the shared `editor_shared.js` markers: amber outlines on the exact mapped structured fields, and amber highlights at exact paths in Raw JSON. JSON syntax errors retain red priority. Preserve focus, selection and scroll; annotations never enter saved config data. The Long/Short JSON editors keep their individual HSL review markers instead of coloring unrelated blocks.

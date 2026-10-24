@@ -15,7 +15,7 @@ import { PhArrowClockwise, PhStop } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 
-defineProps<{ queued: boolean; running: boolean; received: boolean; actionPending: boolean }>();
+defineProps<{ connected: boolean; queued: boolean; running: boolean; received: boolean; actionPending: boolean }>();
 defineEmits<{ refresh: []; cancel: []; stop: [] }>();
 
 const { t } = useI18n();
@@ -32,17 +32,32 @@ const { t } = useI18n();
     <Button class="mds-btn" variant="danger" type="button" v-show="running" :disabled="actionPending || !running" @click="$emit('stop')">
       <PbIcon :icon="PhStop" /> <span>{{ t('misc.mds.stopCurrentRun') }}</span>
     </Button>
+    <!-- Live socket state. It lives in the toolbar row instead of a banner
+         above it so a dropped connection does not shift the table down. -->
+    <span
+      class="mds-connection ml-auto inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-micro font-medium"
+      :class="connected
+        ? 'border-success/28 bg-success/12 text-success-soft'
+        : 'border-warning/28 bg-warning/12 text-warning-soft'"
+      data-test="mds-connection"
+      role="status"
+      aria-live="polite"
+    >
+      <span class="inline-block h-1.5 w-1.5 rounded-full" :class="connected ? 'bg-success' : 'bg-warning'" />
+      <span>{{ connected ? t('market.connected') : t('market.connectingEllipsis') }}</span>
+    </span>
   </div>
 </template>
 
 <style scoped>
 /* Ported from .mds-root .mds-controls (market_data_status.html:62-66). The
    .mds-btn chrome (html:67-111) is owned by the ui/Button variants now;
-   .mds-btn stays on the buttons as the inert hook the page suite selects. */
+   .mds-btn stays on the buttons as the inert hook the page suite selects.
+   Spacing below the row is the content wrapper's gap, not a margin here. */
 .mds-controls {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  gap: var(--sp-sm);
+  align-items: center;
   flex-wrap: wrap;
 }
 </style>

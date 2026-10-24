@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import postcss, { type Rule } from 'postcss';
 import { describe, expect, it } from 'vitest';
 import { PRECISION_PALETTE } from '../lib/precisionPalette';
 
@@ -173,5 +174,48 @@ describe('precision engineering visual tokens', () => {
     expect(stylesheet).toContain("--font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC'");
     expect(stylesheet).not.toContain('@font-face');
     expect(stylesheet).not.toMatch(/https?:\/\//);
+  });
+});
+
+/**
+ * The list-table header is one shared rule. It used to be declared twice (a
+ * later pass overrode the tone with the deepest surface), which made the
+ * header the heaviest block on a light page and left the sticky action column
+ * on its own colour-mix override.
+ */
+describe('shared list-table header', () => {
+  const header_rules: Rule[] = [];
+  postcss.parse(componentStylesheet).walkRules((rule) => {
+    if (rule.selector.startsWith('.pbgui-list-table th')) header_rules.push(rule);
+  });
+
+  function declarations_of(rule: Rule): Map<string, string> {
+    const declarations = new Map<string, string>();
+    rule.walkDecls((declaration) => {
+      declarations.set(declaration.prop, declaration.value);
+    });
+    return declarations;
+  }
+
+  it('has one base rule on the card step', () => {
+    const base_rule = header_rules.find((rule) => rule.selector.trim() === '.pbgui-list-table th');
+    expect(base_rule, 'missing .pbgui-list-table th base rule').toBeDefined();
+
+    const declarations = declarations_of(base_rule!);
+    expect(declarations.get('background')).toBe('var(--surface-card)');
+    expect(declarations.get('border-bottom')).toBe('2px solid var(--border-default)');
+    // Opaque fill: rows scroll under the sticky header, so no translucency
+    // (and therefore no backdrop blur) is allowed.
+    expect(declarations.has('backdrop-filter')).toBe(false);
+  });
+
+  it('paints the pinned action-column header with the same tone', () => {
+    // The last declared th:last-child rule wins the cascade for that cell; a
+    // different tone there splits the header band in two.
+    const pinned_rules = header_rules.filter((rule) => rule.selector.includes('th:last-child'));
+    expect(pinned_rules.length).toBeGreaterThan(0);
+
+    const declarations = declarations_of(pinned_rules[pinned_rules.length - 1]!);
+    expect(declarations.get('background')).toBe('var(--surface-card)');
   });
 });

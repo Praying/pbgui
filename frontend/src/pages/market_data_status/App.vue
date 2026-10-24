@@ -41,8 +41,7 @@
  */
 import { computed, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { PhArrowClockwise, PhWarning } from '@phosphor-icons/vue';
-import PbIcon from '@/shared/components/PbIcon.vue';
+import { PhWarning } from '@phosphor-icons/vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import { apiFetch } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
@@ -193,8 +192,7 @@ async function onStopRun(): Promise<void> {
     />
     <div v-else class="mds-container">
       <div class="mds-content-wrapper">
-        <div v-if="configOk && !connected" class="mb-2 inline-flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2.5 py-1 text-xs text-warning-soft" role="status" aria-live="polite"><PbIcon :icon="PhArrowClockwise" :size="12" class="animate-spin" />{{ t('misc.mds.reconnecting') }}</div>
-        <ControlsBar :queued="queued" :running="running" :received="received" :action-pending="actionPending" @refresh="onRefreshNow" @cancel="onCancelRefresh" @stop="onStopRun" />
+        <ControlsBar :connected="connected" :queued="queued" :running="running" :received="received" :action-pending="actionPending" @refresh="onRefreshNow" @cancel="onCancelRefresh" @stop="onStopRun" />
         <ProgressPanel :status="status" />
         <CoinTable :rows="coinRows" :received="received" />
       </div>
@@ -220,10 +218,30 @@ async function onStopRun(): Promise<void> {
   </div>
 </template>
 
+<!-- The fragment fills its mount node: market_data's status panel sizes the
+     iframe with flex, so the monitor must not stay content-height (that left a
+     ~1000px dead area below the table). #mds-app has no component root to scope
+     to, hence the unscoped block. -->
+<style>
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#mds-app {
+  height: 100%;
+  min-height: 0;
+}
+</style>
+
 <!-- Ported from .mds-root … (market_data_status.html:5-266). Scoped: the page
      renders standalone or as a fragment inside #mds-app — either way the
      .mds-* selector chain keeps everything page-local. -->
 <style scoped>
+/* The fragment owns its panel chrome: the host (market_data's status panel)
+   renders a bare flex frame, so the monitor is the card — panel surface,
+   hairline border, small radius and the shared panel shadow. */
 .mds-root {
   font-family: var(--font-sans);
   color: var(--text-primary);
@@ -235,6 +253,11 @@ async function onStopRun(): Promise<void> {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
 }
 
 .mds-root :deep(*) {
@@ -254,6 +277,8 @@ async function onStopRun(): Promise<void> {
 .mds-content-wrapper {
   width: 100%;
   margin-top: 0;
+  padding: var(--sp-md);
+  gap: var(--sp-md);
   flex: 1 1 auto;
   min-height: 0;
   display: flex;

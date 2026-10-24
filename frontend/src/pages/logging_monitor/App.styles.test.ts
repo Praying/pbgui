@@ -38,4 +38,14 @@ describe('logging monitor height chain', () => {
     expect(declarations).not.toContain('.app-shell__main');
     expect(declarations).not.toContain('.app-shell__primary');
   });
+
+  it('renders the settings tables through the shared Table/Th contract', () => {
+    // The header tone, uppercase micro labels and 2px separator live in
+    // components.css. Hand-written <th> cells drifted to bg-elevated here,
+    // which read as a heavier band than every other table in the app.
+    const declarations = mask_comments(page_source);
+    expect(declarations.match(/<Table[\s>]/g)?.length).toBe(2);
+    expect(declarations).not.toMatch(/<th[\s>]/);
+    expect(declarations).not.toContain('bg-elevated px-2.5');
+  });
 });

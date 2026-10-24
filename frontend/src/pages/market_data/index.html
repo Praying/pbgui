@@ -20,9 +20,10 @@
 </head>
 <body>
   <div id="app"></div>
-  <!-- Shared help and activity-panel bridges remain local/offline assets. -->
+  <!-- Shared help overlay stays a local/offline asset. The legacy
+       js/log_viewer_panel.js bridge is gone: the activity panel and every log
+       surface on this page use the shared Vue LogViewer. -->
   <script src="/app/js/shared_help_overlay.js?v=9"></script>
-  <script src="/app/js/log_viewer_panel.js?v=48"></script>
   <script type="module" src="./main.ts"></script>
 </body>
 </html>

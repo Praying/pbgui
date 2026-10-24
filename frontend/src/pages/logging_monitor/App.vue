@@ -14,6 +14,7 @@ import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { Table, Th } from '@/shared/components/ui/table';
 import {
   SelectContent,
   SelectItem,
@@ -224,24 +225,52 @@ onBeforeUnmount(() => {
         <article class="mb-5 rounded-lg border border-border-default bg-panel px-5 py-4 max-[700px]:p-3">
           <h2 class="mb-3 border-b border-border-default pb-2 text-md font-semibold text-primary">{{ t('sysmon.managedLogs') }}</h2>
           <p class="text-sm text-secondary">{{ t('sysmon.managedLogsHint') }}</p>
-          <div class="overflow-x-auto"><table class="w-full border-collapse"><thead><tr><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.scope') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.path') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.maxMb') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.copies') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.action') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary"></th></tr></thead><tbody>
-            <tr v-for="[scopeId, rule] in managedRows" :key="scopeId">
-              <td class="font-mono text-primary">{{ (rule as ManagedRotationRule).label || scopeId }}</td><td class="px-2.5 py-2 border-b border-border-subtle">{{ (rule as ManagedRotationRule).description }}</td>
-              <td class="px-2.5 py-2 border-b border-border-subtle"><Input class="w-[90px]" v-model.number="rule.max_mb" type="number" min="1" max="10240"  /></td><td class="px-2.5 py-2 border-b border-border-subtle"><Input class="w-[90px]" v-model.number="rule.backup_count" type="number" min="0" max="20"  /></td>
-              <td class="px-2.5 py-2 border-b border-border-subtle"><Button type="button" variant="default" :data-save-scope="`managed:${scopeId}`" @click="saveRule(`managed:${scopeId}`, rule)">{{ t('common.save') }}</Button></td><td class="text-xs text-success-soft">{{ messages[`managed:${scopeId}`] || '' }}</td>
-            </tr>
-          </tbody></table></div>
+          <div class="overflow-x-auto">
+            <Table>
+              <thead>
+                <tr>
+                  <Th>{{ t('sysmon.scope') }}</Th>
+                  <Th>{{ t('sysmon.path') }}</Th>
+                  <Th>{{ t('sysmon.maxMb') }}</Th>
+                  <Th>{{ t('sysmon.copies') }}</Th>
+                  <Th>{{ t('sysmon.action') }}</Th>
+                  <Th />
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="[scopeId, rule] in managedRows" :key="scopeId">
+                  <td class="font-mono text-primary">{{ (rule as ManagedRotationRule).label || scopeId }}</td><td class="px-2.5 py-2 border-b border-border-subtle">{{ (rule as ManagedRotationRule).description }}</td>
+                  <td class="px-2.5 py-2 border-b border-border-subtle"><Input class="w-[90px]" v-model.number="rule.max_mb" type="number" min="1" max="10240"  /></td><td class="px-2.5 py-2 border-b border-border-subtle"><Input class="w-[90px]" v-model.number="rule.backup_count" type="number" min="0" max="20"  /></td>
+                  <td class="px-2.5 py-2 border-b border-border-subtle"><Button type="button" variant="default" :data-save-scope="`managed:${scopeId}`" @click="saveRule(`managed:${scopeId}`, rule)">{{ t('common.save') }}</Button></td><td class="text-xs text-success-soft">{{ messages[`managed:${scopeId}`] || '' }}</td>
+                </tr>
+              </tbody>
+            </Table>
+          </div>
         </article>
 
         <article class="mb-5 rounded-lg border border-border-default bg-panel px-5 py-4 max-[700px]:p-3">
           <h2 class="mb-3 border-b border-border-default pb-2 text-md font-semibold text-primary">{{ t('sysmon.perLogRotation') }}</h2>
           <p class="text-sm text-secondary">{{ t('sysmon.perLogRotationHint') }}</p>
-          <div class="overflow-x-auto"><table v-if="serviceRows.length" class="w-full border-collapse"><thead><tr><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.logFile') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.maxMb') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.copies') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.action') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary"></th></tr></thead><tbody>
-            <tr v-for="[service, rule] in serviceRows" :key="service">
-              <td class="font-mono text-primary">{{ service }}</td><td class="px-2.5 py-2 border-b border-border-subtle"><Input class="w-[90px]" v-model.number="rule.max_mb" type="number" min="1" max="10240"  /></td><td class="px-2.5 py-2 border-b border-border-subtle"><Input class="w-[90px]" v-model.number="rule.backup_count" type="number" min="0" max="20"  /></td>
-              <td class="px-2.5 py-2 border-b border-border-subtle"><Button type="button" variant="default" :data-save-scope="service" @click="saveRule(service, rule)">{{ t('common.save') }}</Button></td><td class="text-xs text-success-soft">{{ messages[service] || '' }}</td>
-            </tr>
-          </tbody></table><EmptyState v-else-if="!loading" :title="t('sysmon.noLogFilesFound')" /></div>
+          <div class="overflow-x-auto">
+            <Table v-if="serviceRows.length">
+              <thead>
+                <tr>
+                  <Th>{{ t('sysmon.logFile') }}</Th>
+                  <Th>{{ t('sysmon.maxMb') }}</Th>
+                  <Th>{{ t('sysmon.copies') }}</Th>
+                  <Th>{{ t('sysmon.action') }}</Th>
+                  <Th />
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="[service, rule] in serviceRows" :key="service">
+                  <td class="font-mono text-primary">{{ service }}</td><td class="px-2.5 py-2 border-b border-border-subtle"><Input class="w-[90px]" v-model.number="rule.max_mb" type="number" min="1" max="10240"  /></td><td class="px-2.5 py-2 border-b border-border-subtle"><Input class="w-[90px]" v-model.number="rule.backup_count" type="number" min="0" max="20"  /></td>
+                  <td class="px-2.5 py-2 border-b border-border-subtle"><Button type="button" variant="default" :data-save-scope="service" @click="saveRule(service, rule)">{{ t('common.save') }}</Button></td><td class="text-xs text-success-soft">{{ messages[service] || '' }}</td>
+                </tr>
+              </tbody>
+            </Table>
+            <EmptyState v-else-if="!loading" :title="t('sysmon.noLogFilesFound')" />
+          </div>
         </article>
       </section>
     </div>

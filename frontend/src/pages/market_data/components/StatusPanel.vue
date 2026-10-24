@@ -12,14 +12,17 @@
  * HTML strings inside the host; here they render as Vue templates — escaped
  * by default, so a server error message can never become markup (no v-html
  * for server data). Deviation (documented since M-data-2): they are
- * siblings of the frame rather than its children; the frame keeps the
- * legacy flex sizing and auto-sizes to its content via useFrameAutoResize
- * (monitor variant: ResizeObserver + 120 ms settle, :7507-7575).
+ * siblings of the frame rather than its children.
+ *
+ * Height: the frame fills the panel through flex (`flex-1 min-h-0`), and the
+ * embedded page fills its own document (`#mds-app { height: 100% }`), so the
+ * legacy content-height sync (the monitor variant of useFrameAutoResize) is
+ * gone — it only produced an inline height that the panel stretched anyway,
+ * leaving the monitor's content in a short strip with a dead area below it.
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { calloutClass } from '../lib/uiClasses';
-import { useFrameAutoResize } from '../composables/useFrameAutoResize';
 import type { StatusMonitorController } from '../composables/useStatusMonitor';
 
 const props = defineProps<{
@@ -30,15 +33,8 @@ const { t } = useI18n();
 
 const frameEl = ref<HTMLIFrameElement | null>(null);
 
-const autoResize = useFrameAutoResize({
-  frame: () => frameEl.value,
-  useResizeObserver: true, // monitor variant (:7564-7570)
-  settleMs: 120, // :7552
-});
-
 function onFrameLoad(): void {
-  autoResize.handleLoad(); // legacy frame load listener (:7490, :7550)
-  props.monitor.handleFrameLoad();
+  props.monitor.handleFrameLoad(); // legacy frame load listener (:7490, :7550)
 }
 
 onMounted(() => {
@@ -48,7 +44,6 @@ onMounted(() => {
 // Reset the mount state before the frame leaves the DOM (R2); the frame
 // document (its timers/WS) is discarded with the element.
 onBeforeUnmount(() => {
-  autoResize.teardown(); // R7 — no observer survives a remount
   props.monitor.destroyStatusMonitor();
   props.monitor.attachFrame(null);
 });

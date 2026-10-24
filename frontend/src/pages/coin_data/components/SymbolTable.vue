@@ -142,7 +142,7 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
           <th
             v-for="column in columns"
             :key="column.key"
-            class="coin-table-header sortable sticky top-0 z-[2] px-3 py-2 text-left text-xs font-semibold uppercase tracking-label text-secondary leading-[1.05] border-b whitespace-nowrap"
+            class="coin-table-header sortable sticky top-0 z-[2] whitespace-nowrap"
             :class="column.centered ? 'text-center' : column.numeric ? 'text-right' : ''"
             :data-table="table"
             :data-key="column.key"
@@ -150,15 +150,14 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
             @click="emit('sort', table, column.key)"
           >
           <button
-            class="coin-table-sort-button inline-flex items-center gap-1.5 min-h-7 max-w-full text-left text-inherit"
+            class="coin-table-sort-button inline-flex max-w-full items-center gap-1.5 text-left text-inherit"
             :class="column.centered ? 'justify-center' : column.numeric ? 'justify-end' : ''"
             type="button"
             :aria-label="sortLabel(column)"
             @click.stop="emit('sort', table, column.key)"
           >
             <span class="overflow-hidden text-ellipsis">{{ headerLabel(column) }}</span>
-            <PbIcon v-if="isSortedColumn(column)" class="coin-table-sort-icon shrink-0 text-accent-soft" :icon="(sortState ?? DEFAULT_SORT_STATE).dir === 'asc' ? PhCaretUp : PhCaretDown" :size="13" aria-hidden="true" />
-            <span v-else class="coin-table-sort-icon coin-table-sort-icon--idle shrink-0" aria-hidden="true">↕</span>
+            <PbIcon v-if="isSortedColumn(column)" class="coin-table-sort-icon shrink-0 text-accent-soft" :icon="(sortState ?? DEFAULT_SORT_STATE).dir === 'asc' ? PhCaretUp : PhCaretDown" :size="12" aria-hidden="true" />
           </button>
           </th>
         </tr>
@@ -234,16 +233,10 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
   background: var(--coin-data);
 }
 
-.coin-table-header {
-  border-color: var(--coin-border);
-  background: var(--coin-header);
-}
-
-.coin-table-header:hover {
-  background: var(--surface-elevated);
-  color: var(--text-primary);
-}
-
+/* No page-local header tone or typography: `.pbgui-list-table th` in
+   components.css owns the fill, label size/weight and the 2px separator, so
+   this page's header matches every other table. Only the sort affordance
+   stays page-local. */
 .coin-table-sort-button {
   width: 100%;
   border: 0;
@@ -259,9 +252,8 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
   box-shadow: var(--focus-ring);
 }
 
-.coin-table-sort-icon--idle {
-  color: var(--text-disabled);
-  opacity: 0.72;
+.coin-table-sort-button:hover {
+  color: var(--text-primary);
 }
 
 .coin-table-cell {

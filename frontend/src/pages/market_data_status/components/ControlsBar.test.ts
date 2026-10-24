@@ -6,10 +6,13 @@ import ControlsBar from './ControlsBar.vue';
 enableAutoUnmount(afterEach);
 
 function mountBar(
-  props: { queued: boolean; running: boolean; received: boolean; actionPending?: boolean },
+  props: { queued: boolean; running: boolean; received: boolean; actionPending?: boolean; connected?: boolean },
   lang: 'en' | 'zh' = 'en',
 ) {
-  return mount(ControlsBar, { props: { actionPending: false, ...props }, global: { plugins: [createI18n(lang)] } });
+  return mount(ControlsBar, {
+    props: { actionPending: false, connected: true, ...props },
+    global: { plugins: [createI18n(lang)] },
+  });
 }
 
 /** The three buttons in legacy order: Refresh Now, Cancel Queued, Stop. */
@@ -105,5 +108,17 @@ describe('ControlsBar (legacy mds-controls button matrix)', () => {
     const bar = mountBar({ queued: true, running: false, received: true }, 'zh');
 
     expect(bar.findAll('button')[1]!.text()).toContain('取消排队的刷新');
+  });
+
+  it('shows the socket state in the toolbar instead of a separate banner', async () => {
+    const bar = mountBar({ queued: false, running: false, received: true, connected: true });
+    const chip = bar.get('[data-test="mds-connection"]');
+
+    expect(chip.text()).toBe('Connected');
+    expect(chip.classes()).toContain('text-success-soft');
+
+    await bar.setProps({ connected: false });
+    expect(bar.get('[data-test="mds-connection"]').text()).toBe('Connecting…');
+    expect(bar.get('[data-test="mds-connection"]').classes()).toContain('text-warning-soft');
   });
 });

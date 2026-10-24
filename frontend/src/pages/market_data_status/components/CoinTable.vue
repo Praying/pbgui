@@ -64,13 +64,16 @@ function dashIfFalsy(value: string | number): string {
 </template>
 
 <style scoped>
-/* Ported from .mds-root .mds-coin-table-container … (market_data_status.html:159-243). */
+/* Ported from .mds-root .mds-coin-table-container … (market_data_status.html:159-243).
+   The container is no longer its own raised box: the monitor fragment now
+   renders the panel card (App.vue), so the table is a flat list on that
+   surface with one hairline frame, and the header uses the shared card step
+   and micro label scale from `.pbgui-list-table th`. */
 .mds-coin-table-container {
   width: 100%;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-default);
-  box-shadow: var(--shadow-panel);
+  background: transparent;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
   overflow: hidden;
   flex: 1 1 auto;
   min-height: 0;
@@ -86,25 +89,33 @@ function dashIfFalsy(value: string | number): string {
   overflow-y: auto;
 }
 
+/* The empty placeholder stands in for the whole body, so the table takes the
+   scroll frame's height and its single row grows with it; the placeholder is
+   then centred instead of sitting in a short strip at the top. */
 table {
   width: 100%;
+  height: 100%;
   border-collapse: collapse;
+}
+
+tbody {
+  height: 100%;
 }
 
 thead {
   position: sticky;
   top: 0;
-  background: var(--bg-card);
+  background: var(--surface-card);
   z-index: 2;
 }
 
 th {
   padding: var(--sp-sm) var(--sp-md);
   text-align: left;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: var(--text-muted);
   border-bottom: 2px solid var(--border-default);
-  font-size: var(--text-sm);
+  font-size: var(--text-micro);
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
   white-space: nowrap;
@@ -119,6 +130,14 @@ td {
 
 tbody tr:hover {
   background: var(--surface-hover);
+}
+
+.mds-coin-table-container :deep(.pbgui-empty-state) {
+  height: 100%;
+  align-content: center;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .mds-result-success {
