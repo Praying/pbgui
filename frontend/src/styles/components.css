@@ -191,12 +191,11 @@
      override it; a bg-page utility on the same element keeps its colour
      (utilities win on background-color), so the trailing --surface-page
      stop only matters for containers that set no background class. */
+  /* Kept as a class so the many pages that carry it need no edit, but it is now
+     just the page surface: the accent/success glows and diagonal hatch it used to
+     paint are gone along with the same recipe on the app shell. */
   .pbgui-ambient {
-    background:
-      radial-gradient(circle at 94% 0%, rgb(var(--accent-rgb) / 0.09), transparent 28rem),
-      radial-gradient(circle at 0% 84%, rgb(var(--success-rgb) / 0.05), transparent 24rem),
-      repeating-linear-gradient(135deg, rgb(var(--text-secondary-rgb) / 0.016) 0 1px, transparent 1px 42px),
-      var(--surface-page);
+    background: var(--surface-page);
   }
 
   /* Page entry: every pbgui page is its own document, so the workspace
@@ -2746,29 +2745,25 @@
      remain intact; these rules tune the visual hierarchy inherited by all
      page shells and primitives. */
 
+  /* Surfaces are flat and separated by tone and a hairline. The previous finish
+     stacked an accent glow, a top gradient, a diagonal hatch and a tinted rail
+     gradient on every page; on a neutral palette those read as grime and made
+     the accent colour mean "decoration" instead of "interactive". */
   .app-shell {
-    background:
-      radial-gradient(circle at 92% -8%, rgb(var(--accent-rgb) / 0.09), transparent 28rem),
-      var(--surface-deep);
+    background: var(--surface-deep);
   }
 
   .app-shell__workspace {
-    background:
-      linear-gradient(180deg, rgb(var(--accent-rgb) / 0.025), transparent 14rem),
-      var(--surface-workspace);
+    background: var(--surface-workspace);
   }
 
   .app-shell__main {
-    background:
-      repeating-linear-gradient(135deg, rgb(var(--text-secondary-rgb) / 0.012) 0 1px, transparent 1px 44px),
-      transparent;
+    background: transparent;
   }
 
   .workbench-rail {
-    border-right-color: rgb(var(--accent-rgb) / 0.13);
-    background:
-      linear-gradient(180deg, rgb(var(--accent-rgb) / 0.05), transparent 18rem),
-      var(--surface-sidebar);
+    border-right-color: var(--border-subtle);
+    background: var(--surface-sidebar);
   }
 
   .workbench-rail__brand {
@@ -2793,24 +2788,33 @@
   }
 
   .workbench-rail__item--active {
-    border-color: rgb(var(--accent-rgb) / 0.28);
-    background: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.16), rgb(var(--accent-rgb) / 0.06));
-    box-shadow: 0 8px 18px rgb(var(--shadow-rgb) / 0.18), 0 1px 0 rgb(var(--highlight-rgb) / 0.05) inset;
+    border-color: rgb(var(--accent-rgb) / 0.30);
+    background: rgb(var(--accent-rgb) / 0.12);
+    box-shadow: none;
   }
 
   .workspace-header {
     min-height: 76px;
     height: auto;
-    border-bottom-color: rgb(var(--accent-rgb) / 0.14);
-    background:
-      linear-gradient(90deg, rgb(var(--accent-rgb) / 0.045), transparent 42%),
-      var(--surface-workspace);
+    border-bottom-color: var(--border-subtle);
+    background: var(--surface-workspace);
   }
 
+  /* Ancestors read as a quiet small-caps trail; the current page is the page
+     title, so it is set in normal case at title size. Uppercasing the whole
+     list capitalised the title too, which flattened the hierarchy and made a
+     23px bold all-caps heading the loudest thing on every page. */
   .workspace-header__breadcrumb-list {
     font-size: var(--text-micro);
     letter-spacing: 0.04em;
+  }
+
+  .workspace-header__breadcrumb-item:not([aria-current='page']) {
     text-transform: uppercase;
+  }
+
+  .workspace-header__breadcrumb-item[aria-current='page'] {
+    text-transform: none;
   }
 
   .workspace-header__breadcrumb-item[aria-current='page'],
@@ -2889,7 +2893,7 @@
 
   .metric-block {
     border-radius: var(--radius-md);
-    background: linear-gradient(145deg, rgb(var(--accent-rgb) / 0.07), var(--surface-card));
+    background: var(--surface-card);
   }
 
   .metric-block dt {

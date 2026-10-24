@@ -1000,9 +1000,7 @@ body {
 
 /* New-config command surface: the page-level accent glow. */
 body {
-  background:
-    radial-gradient(circle at 7% 0%, rgb(var(--accent-deep-rgb) / 0.09), transparent 25rem),
-    var(--bg);
+  background: var(--bg);
 }
 
 .page-toolbar {

@@ -1,3 +1,4 @@
+import { PRECISION_PALETTE } from './precisionPalette';
 import { currentTheme, themeColors } from './themeColors';
 
 /**
@@ -21,10 +22,23 @@ type Layout = Record<string, unknown>;
 
 const isObject = (v: unknown): v is Layout => typeof v === 'object' && v !== null && !Array.isArray(v);
 
-/** Dark literals the builders emit as chrome; only these are rewritten. */
-const DARK_SURFACES = new Set(['#091117', '#0d171e', '#12222c', '#10141d', '#05080e', 'rgba(5, 8, 14,0)']);
-const DARK_TEXTS = new Set(['#edf7fa', '#b7cbd2', '#89a3ad', '#e8ecf4']);
-const DARK_GRIDS = new Set(['#385261', '#263d49', '#587080']);
+/**
+ * Dark chrome literals the builders emit; only these are rewritten.
+ *
+ * Derived from PRECISION_PALETTE rather than spelled out, because this set is
+ * a second copy of the palette: when the palette was redesigned, a hand-written
+ * list would silently stop matching and light-theme charts would keep dark
+ * backgrounds with no error. The extra entries are the legacy Plotly literals
+ * the Pareto layout still emits.
+ */
+const P = PRECISION_PALETTE;
+const lower = (values: readonly string[]): Set<string> => new Set(values.map((v) => v.toLowerCase()));
+const DARK_SURFACES = lower([
+  P.surface.deep, P.surface.page, P.surface.input, P.surface.panel, P.surface.sidebar, P.surface.elevated,
+  '#10141d', '#05080e', 'rgba(5, 8, 14,0)',
+]);
+const DARK_TEXTS = lower([P.text.primary, P.text.secondary, P.text.muted, '#e8ecf4']);
+const DARK_GRIDS = lower([P.border.default, P.border.subtle, P.border.strong]);
 
 function isWhiteInk(v: unknown): boolean {
   return typeof v === 'string' && /^rgba?\(\s*255\s*,\s*255\s*,\s*255/.test(v.replace(/\s+/g, ' '));

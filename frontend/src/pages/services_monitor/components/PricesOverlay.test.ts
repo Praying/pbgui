@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import PricesOverlay from './PricesOverlay.vue';
 import type { PriceRow } from '../types';
 
@@ -135,6 +136,14 @@ describe('PricesOverlay open/close (legacy openPricesOverlay/closePricesOverlay)
   });
 });
 
+
+/** jsdom serialises inline hex colours as rgb(); derive the expectation from the
+ *  palette so a palette change cannot desynchronise this test again. */
+function rgbOf(hex: string): string {
+  const n = (i: number) => Number.parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+  return `rgb(${n(0)}, ${n(1)}, ${n(2)})`;
+}
+
 describe('PricesOverlay table rendering (legacy renderTable/fmtPrice/fmtAge/ageCol)', () => {
   it('renders numbered rows with symbol, exchange, formatted price and age', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ rows: ROWS }));
@@ -150,19 +159,19 @@ describe('PricesOverlay table rendering (legacy renderTable/fmtPrice/fmtAge/ageC
     expect(cells[3]).toBe('120,000');
     expect(cells[4]).toBe('30s');
     // jsdom normalizes the shared palette's hex colors to rgb().
-    expect(rows[0]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(123, 200, 165)');
+    expect(rows[0]!.findAll('td')[4]!.attributes('style')).toContain(`color: ${rgbOf(PRECISION_PALETTE.success.base)}`);
 
     expect(rows[1]!.findAll('td')[3]!.text()).toBe('0.012340');
     expect(rows[1]!.findAll('td')[4]!.text()).toBe('4m');
-    expect(rows[1]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(216, 174, 111)');
+    expect(rows[1]!.findAll('td')[4]!.attributes('style')).toContain(`color: ${rgbOf(PRECISION_PALETTE.warning.base)}`);
 
     expect(rows[2]!.findAll('td')[3]!.text()).toBe('0.0005678');
     expect(rows[2]!.findAll('td')[4]!.text()).toBe('1h');
-    expect(rows[2]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(217, 128, 128)');
+    expect(rows[2]!.findAll('td')[4]!.attributes('style')).toContain(`color: ${rgbOf(PRECISION_PALETTE.danger.base)}`);
 
     expect(rows[3]!.findAll('td')[3]!.text()).toBe('—');
     expect(rows[3]!.findAll('td')[4]!.text()).toBe('—');
-    expect(rows[3]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(137, 163, 173)');
+    expect(rows[3]!.findAll('td')[4]!.attributes('style')).toContain(`color: ${rgbOf(PRECISION_PALETTE.text.muted)}`);
   });
 
   it('renders the header labels from the legacy keys', async () => {

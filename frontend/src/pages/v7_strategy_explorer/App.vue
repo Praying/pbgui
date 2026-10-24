@@ -372,9 +372,7 @@ body {
 }
 
 body {
-  background:
-    radial-gradient(circle at 8% 0%, rgb(var(--accent-deep-rgb) / 0.1), transparent 26rem),
-    var(--bg);
+  background: var(--bg);
 }
 
 /* ── Order/stat tables (.orders) ───────────────────────────────

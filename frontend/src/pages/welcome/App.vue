@@ -466,9 +466,7 @@ onBeforeUnmount(() => {
    the overflow lock and the page's accent glow. */
 body {
   overflow: hidden;
-  background:
-    radial-gradient(circle at 8% 4%, rgb(var(--accent-rgb) / 0.08), transparent 26rem),
-    var(--bg-page);
+  background: var(--bg-page);
 }
 
 /* ── Summary cards ────────────────────────────────────────────── */

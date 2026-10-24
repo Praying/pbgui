@@ -3,11 +3,11 @@ import { themedPlotLayout } from './plotTheme';
 import { withTheme } from './themedPlotly';
 
 const DARK_LAYOUT = {
-  paper_bgcolor: '#091117',
-  plot_bgcolor: '#091117',
-  font: { color: '#edf7fa' },
-  legend: { bgcolor: 'rgba(5, 8, 14,0)', font: { color: '#edf7fa' } },
-  xaxis: { gridcolor: '#385261', zerolinecolor: '#587080', color: '#edf7fa' },
+  paper_bgcolor: '#0b0c0e',
+  plot_bgcolor: '#0b0c0e',
+  font: { color: '#eceef1' },
+  legend: { bgcolor: 'rgba(5, 8, 14,0)', font: { color: '#eceef1' } },
+  xaxis: { gridcolor: '#3a3e46', zerolinecolor: '#565b66', color: '#eceef1' },
   yaxis: { gridcolor: 'rgba(255,255,255,0.12)', zerolinecolor: 'rgba(255,255,255,0.18)' },
   scene: { bgcolor: '#10141d', xaxis: { backgroundcolor: '#10141d', gridcolor: 'rgba(255,255,255,0.12)', color: '#e8ecf4' } },
   margin: { l: 80 },

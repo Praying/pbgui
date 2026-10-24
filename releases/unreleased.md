@@ -1172,3 +1172,7 @@
 
 - Refined all Vue 3 pages with a shared graphite and cyan visual system, stronger workspace hierarchy, denser data tables, clearer active navigation, and consistent panel, metric, form, loading, empty, error, hover, pressed, and focus states.
 - Preserved existing page behavior, automatic updates, navigation state, and local offline asset delivery.
+- 主观视觉重设计（深浅两套主题）：调色板整体改为中性石墨 + 天蓝强调——深色表面层级拉开（deep/page/panel/elevated），浅色改为冷灰白底配纯白卡片；文字、强调/成功/警告/危险色在各表面上重新按 WCAG AA 校验（0 项不达标），控件边界维持 ≥3:1。
+- 外壳去装饰：应用壳、工作区、侧栏、页头、指标卡统一为平面表面令牌，侧栏选中态改为 12% 强调底 + 30% 描边、无发光；页面标题与面包屑分层（上级面包屑大写，当前页保持原大小写）。
+- 清除 10 个页面里的径向光晕与斜纹背景（api_keys_editor、profit_sweep、root_login、services_monitor、transfers、v7_backtest、v7_strategy_explorer、welcome、完整性面板、固定仪表盘）；进度条等功能性渐变保留。
+- TS 侧调色板镜像（`PRECISION_PALETTE`、`plotTheme` 的深色字面量集合、Pareto 浅色墨色、策略探索图的透明度通道）改为从同一来源派生或读取主题通道，避免调色板变化后图表静默失配；相关测试改为从调色板推导期望值。

@@ -331,9 +331,7 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
 
 <style scoped>
 .profit-sweep-layout {
-  background:
-    radial-gradient(circle at 84% 0%, rgb(var(--accent-rgb) / 0.06), transparent 28rem),
-    var(--surface-workspace);
+  background: var(--surface-workspace);
 }
 
 .profit-account-rail,

@@ -933,9 +933,7 @@ onUnmounted(() => {
    Keep service controls and panel behavior unchanged while improving the
    hierarchy of health states, navigation and operational surfaces. */
 body {
-  background:
-    radial-gradient(circle at 7% 0%, rgb(var(--accent-rgb) / 0.09), transparent 25rem),
-    var(--bg-page);
+  background: var(--bg-page);
 }
 
 #page-body {
@@ -1005,11 +1003,7 @@ body {
 }
 
 #main-content {
-  background:
-    radial-gradient(circle at 94% 0%, rgb(var(--accent-rgb) / 0.1), transparent 28rem),
-    radial-gradient(circle at 0% 84%, rgb(var(--accent-rgb) / 0.06), transparent 24rem),
-    repeating-linear-gradient(135deg, rgb(var(--text-secondary-rgb) / 0.018) 0 1px, transparent 1px 42px),
-    var(--bg-page);
+  background: var(--bg-page);
 }
 
 #panel-overview {
@@ -1032,9 +1026,7 @@ body {
   overflow: hidden;
   border-color: rgb(var(--text-secondary-rgb) / 0.14);
   border-radius: var(--radius-xl);
-  background:
-    radial-gradient(circle at 100% 0%, rgb(var(--accent-rgb) / 0.07), transparent 68%),
-    rgb(var(--bg-panel-rgb) / 0.82);
+  background: rgb(var(--bg-panel-rgb) / 0.82);
   box-shadow: var(--shadow-panel);
   cursor: pointer;
   transition: transform var(--motion-normal) var(--ease-standard), border-color var(--motion-normal) var(--ease-standard), background var(--motion-normal) var(--ease-standard), box-shadow var(--motion-normal) var(--ease-standard);
@@ -1051,9 +1043,7 @@ body {
 #overview-grid .svc-card:hover {
   transform: translateY(-3px);
   border-color: rgb(var(--accent-rgb) / 0.32);
-  background:
-    radial-gradient(circle at 100% 0%, rgb(var(--accent-rgb) / 0.12), transparent 68%),
-    rgb(var(--bg-panel-rgb) / 0.9);
+  background: rgb(var(--bg-panel-rgb) / 0.9);
   box-shadow: var(--shadow-elevated);
 }
 

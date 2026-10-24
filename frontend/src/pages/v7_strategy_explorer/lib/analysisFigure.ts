@@ -38,14 +38,14 @@ const ANALYSIS_DANGER_BACKGROUND = PRECISION_PALETTE.alpha.dangerBackground;
 const TRANSPARENT_MARKER_COLOR = 'transparent';
 
 const TRANSPARENT_CHART_COLOR = 'rgba(0, 0, 0, 0)';
-const DANGER_AREA_COLOR = 'rgb(217 128 128 / 0.16)';
-const DANGER_LEGEND_COLOR = 'rgb(217 128 128 / 0.18)';
-const SUCCESS_AREA_COLOR = 'rgb(123 200 165 / 0.14)';
-const SUCCESS_LEGEND_COLOR = 'rgb(123 200 165 / 0.18)';
-const WARNING_ZONE_COLOR = 'rgb(216 174 111 / 0.22)';
-const WARNING_ZONE_LEGEND_COLOR = 'rgb(216 174 111 / 0.28)';
-const ACCENT_ZONE_COLOR = 'rgb(143 207 242 / 0.18)';
-const ACCENT_ZONE_LEGEND_COLOR = 'rgb(143 207 242 / 0.22)';
+const DANGER_AREA_COLOR = 'rgb(238 123 123 / 0.16)';
+const DANGER_LEGEND_COLOR = 'rgb(238 123 123 / 0.18)';
+const SUCCESS_AREA_COLOR = 'rgb(98 196 154 / 0.14)';
+const SUCCESS_LEGEND_COLOR = 'rgb(98 196 154 / 0.18)';
+const WARNING_ZONE_COLOR = 'rgb(224 180 90 / 0.22)';
+const WARNING_ZONE_LEGEND_COLOR = 'rgb(224 180 90 / 0.28)';
+const ACCENT_ZONE_COLOR = 'rgb(106 174 255 / 0.18)';
+const ACCENT_ZONE_LEGEND_COLOR = 'rgb(106 174 255 / 0.22)';
 
 export function buildAnalysisFigure(
   sideKey: 'long' | 'short',
@@ -338,8 +338,8 @@ export function buildAnalysisFigure(
     const entryRef = entryPrices.length ? entryPrices[0]! : ref;
     const eth = sideKey === 'long' ? entryRef * (1 - num(visualParams.entry_trailing_threshold_pct, 0)) : entryRef * (1 + num(visualParams.entry_trailing_threshold_pct, 0));
     if (num(visualParams.entry_trailing_threshold_pct, 0) > 0) {
-      addShapeLine(eth, 'rgb(216 174 111 / 0.6)', 'dash', 1);
-      legendLine('Trailing Start (Threshold)', 'rgb(216 174 111 / 0.6)', 'dash', 1, 'entry_trailing');
+      addShapeLine(eth, 'rgb(224 180 90 / 0.6)', 'dash', 1);
+      legendLine('Trailing Start (Threshold)', 'rgb(224 180 90 / 0.6)', 'dash', 1, 'entry_trailing');
       addHoverLine([eth], 'Trailing Start (Threshold)', 'entry_trailing');
     }
     if (num(visualParams.entry_trailing_retracement_pct, 0) > 0) {
@@ -351,12 +351,12 @@ export function buildAnalysisFigure(
           : sideKey === 'long'
             ? num(trailingBundle.min_since_open, entryRef) * (1 + num(visualParams.entry_trailing_retracement_pct, 0))
             : num(trailingBundle.max_since_open, entryRef) * (1 - num(visualParams.entry_trailing_retracement_pct, 0));
-      addShapeLine(retr, 'rgb(216 174 111 / 0.35)', 'dot', 1);
-      legendLine('Trailing Trigger (Retracement, conditional)', 'rgb(216 174 111 / 0.35)', 'dot', 1, 'entry_trailing');
+      addShapeLine(retr, 'rgb(224 180 90 / 0.35)', 'dot', 1);
+      legendLine('Trailing Trigger (Retracement, conditional)', 'rgb(224 180 90 / 0.35)', 'dot', 1, 'entry_trailing');
       addHoverLine([retr], 'Trailing Trigger (Retracement, conditional)', 'entry_trailing');
       if (num(visualParams.entry_trailing_threshold_pct, 0) > 0) {
-        addBand(eth, retr, 'rgb(216 174 111 / 0.08)');
-        legendBand('Entry Trailing (Conditional Trigger Zone)', 'rgb(216 174 111 / 0.12)', 'entry_trailing');
+        addBand(eth, retr, 'rgb(224 180 90 / 0.08)');
+        legendBand('Entry Trailing (Conditional Trigger Zone)', 'rgb(224 180 90 / 0.12)', 'entry_trailing');
       }
     }
   }
@@ -365,8 +365,8 @@ export function buildAnalysisFigure(
     const closeRef = num(deepGet<number>(side, ['debug', 'position_close', 'price'], 0), 0) || ref;
     if (num(visualParams.close_trailing_threshold_pct, 0) > 0) {
       const closeThr = sideKey === 'long' ? closeRef * (1 + num(visualParams.close_trailing_threshold_pct, 0)) : closeRef * (1 - num(visualParams.close_trailing_threshold_pct, 0));
-      addShapeLine(closeThr, 'rgb(143 207 242 / 0.6)', 'dash', 1);
-      legendLine('Close Trailing Start (Threshold, conditional)', 'rgb(143 207 242 / 0.6)', 'dash', 1, 'close_trailing');
+      addShapeLine(closeThr, 'rgb(106 174 255 / 0.6)', 'dash', 1);
+      legendLine('Close Trailing Start (Threshold, conditional)', 'rgb(106 174 255 / 0.6)', 'dash', 1, 'close_trailing');
       addHoverLine([closeThr], 'Close Trailing Start (Threshold, conditional)', 'close_trailing');
     }
     if (num(visualParams.close_trailing_retracement_pct, 0) > 0) {
@@ -374,8 +374,8 @@ export function buildAnalysisFigure(
         sideKey === 'long'
           ? num(trailingBundle.max_since_open, closeRef) * (1 - num(visualParams.close_trailing_retracement_pct, 0))
           : num(trailingBundle.min_since_open, closeRef) * (1 + num(visualParams.close_trailing_retracement_pct, 0));
-      addShapeLine(closeRetr, 'rgb(143 207 242 / 0.35)', 'dot', 1);
-      legendLine('Close Trailing Trigger (Retracement, conditional)', 'rgb(143 207 242 / 0.35)', 'dot', 1, 'close_trailing');
+      addShapeLine(closeRetr, 'rgb(106 174 255 / 0.35)', 'dot', 1);
+      legendLine('Close Trailing Trigger (Retracement, conditional)', 'rgb(106 174 255 / 0.35)', 'dot', 1, 'close_trailing');
       addHoverLine([closeRetr], 'Close Trailing Trigger (Retracement, conditional)', 'close_trailing');
     }
   }

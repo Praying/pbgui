@@ -213,15 +213,15 @@
   --ease-overshoot: cubic-bezier(0.34, 1.3, 0.64, 1);
 
   /* ── Surfaces (neutral graphite terminal palette) ───────────── */
-  --color-deep: #091117;
-  --color-page: #0d171e;
-  --color-workspace: #101c24;
-  --color-sidebar: #0b151c;
-  --color-input: #12222c;
-  --color-panel: #172832;
-  --color-card: #1d303b;
-  --color-elevated: #223945;
-  --color-backdrop: rgb(3 10 15 / 0.78);
+  --color-deep: #0b0c0e;
+  --color-page: #111215;
+  --color-workspace: #15161a;
+  --color-sidebar: #0e0f12;
+  --color-input: #181a1e;
+  --color-panel: #1c1e23;
+  --color-card: #24272d;
+  --color-elevated: #2d3037;
+  --color-backdrop: rgb(0 0 0 / 0.66);
   /* Neutral overlay ink for hairlines, hover wash and progress tracks. White on
      dark, near-black on light. Use `bg-overlay/4` instead of `bg-white/4`: a
      literal white wash is invisible on a light surface. */
@@ -230,31 +230,31 @@
   /* ── Interaction states ──────────────────────────────────────
      These semantic surfaces keep hover and selection treatments aligned
      across canonical Vue components without changing legacy aliases. */
-  --color-surface-hover: rgb(174 218 238 / 0.07);
-  --color-surface-selected: rgb(109 194 225 / 0.15);
-  --color-surface-pressed: rgb(174 218 238 / 0.11);
-  --color-surface-focus: rgb(109 194 225 / 0.11);
+  --color-surface-hover: rgb(255 255 255 / 0.05);
+  --color-surface-selected: rgb(106 174 255 / 0.16);
+  --color-surface-pressed: rgb(255 255 255 / 0.09);
+  --color-surface-focus: rgb(106 174 255 / 0.12);
   --color-surface-overlay: var(--color-elevated);
   --color-border-focus: var(--color-accent);
-  --color-border-selected: rgb(117 199 229 / 0.35);
+  --color-border-selected: rgb(106 174 255 / 0.40);
   --color-text-interactive: var(--color-accent-soft);
 
   /* ── Borders ────────────────────────────────────────────────── */
-  --color-border-subtle: #263d49;
-  --color-border-default: #385261;
-  --color-border-strong: #587080;
+  --color-border-subtle: #2a2d33;
+  --color-border-default: #3a3e46;
+  --color-border-strong: #565b66;
   /* The boundary of an interactive control (input, select, checkbox, switch).
      WCAG 1.4.11 asks for 3:1 against the surface the control sits on, which the
      decorative card hairline (border-default, ~1.8:1) deliberately does not meet.
      Kept separate so cards stay light while controls stay findable. */
-  --color-border-control: #587080;
+  --color-border-control: #6c7280;
 
   /* ── Text ───────────────────────────────────────────────────── */
-  --color-primary: #edf7fa;
-  --color-secondary: #b7cbd2;
-  --color-muted: #89a3ad;
-  --color-disabled: #627a84;
-  --color-placeholder: #718b95;
+  --color-primary: #eceef1;
+  --color-secondary: #b4b9c2;
+  --color-muted: #9298a4;
+  --color-disabled: #5f6570;
+  --color-placeholder: #7b828e;
 
   /* ── Semantic colors ────────────────────────────────────────── */
   /* Ice-blue accent plus calm semantic status ramps. Each is a three-stop ramp:
@@ -263,22 +263,22 @@
        -soft  light text/icons on dark surfaces
      Alpha variants use the utility syntax (bg-accent/14); the legacy
      -rgb channel-triplet variables stay in the alias block below. */
-  --color-accent: #75c7e5;
-  --color-accent-soft: #a9e0f0;
-  --color-accent-deep: #368eae;
-  --color-accent-contrast: #061217;
+  --color-accent: #6aaeff;
+  --color-accent-soft: #a5cfff;
+  --color-accent-deep: #3b7fd1;
+  --color-accent-contrast: #07111f;
 
-  --color-success: #7bc8a5;
-  --color-success-soft: #a4dbc3;
-  --color-success-deep: #397d5e;
+  --color-success: #62c49a;
+  --color-success-soft: #9be0c0;
+  --color-success-deep: #2f7a5a;
 
-  --color-warning: #d8ae6f;
-  --color-warning-soft: #e5c99b;
-  --color-warning-deep: #8a632c;
+  --color-warning: #e0b45a;
+  --color-warning-soft: #efd08e;
+  --color-warning-deep: #8a6a22;
 
-  --color-danger: #d98080;
-  --color-danger-soft: #e6aaaa;
-  --color-danger-deep: #914343;
+  --color-danger: #ee7b7b;
+  --color-danger-soft: #f6a9a9;
+  --color-danger-deep: #a14545;
 
   /* ── JSON viewer syntax palette ───────────────────────────────
      The vue-json-pretty token colours (JsonViewer :deep overrides).
@@ -386,36 +386,36 @@
   --accent-soft: var(--color-accent-soft);
   --accent-deep: var(--color-accent-deep);
   --accent-contrast: var(--color-accent-contrast);
-  --accent-bg: rgb(117 199 229 / 0.14); /* accent background tint */
-  --accent-rgb: 117 199 229;
-  --accent-soft-rgb: 169 224 240;
-  --accent-deep-rgb: 54 142 174;
+  --accent-bg: rgb(106 174 255 / 0.14); /* accent background tint */
+  --accent-rgb: 106 174 255;
+  --accent-soft-rgb: 165 207 255;
+  --accent-deep-rgb: 59 127 209;
 
   --success: var(--color-success);
   --success-soft: var(--color-success-soft);
   --success-deep: var(--color-success-deep);
-  --success-bg: rgb(123 200 165 / 0.13);
-  --success-rgb: 123 200 165;
-  --success-deep-rgb: 57 125 94;
+  --success-bg: rgb(98 196 154 / 0.13);
+  --success-rgb: 98 196 154;
+  --success-deep-rgb: 47 122 90;
 
   --warning: var(--color-warning);
   --warning-soft: var(--color-warning-soft);
   --warning-deep: var(--color-warning-deep);
-  --warning-bg: rgb(216 174 111 / 0.14);
-  --warning-rgb: 216 174 111;
+  --warning-bg: rgb(224 180 90 / 0.14);
+  --warning-rgb: 224 180 90;
 
   --danger: var(--color-danger);
   --danger-soft: var(--color-danger-soft);
   --danger-deep: var(--color-danger-deep);
-  --danger-bg: rgb(217 128 128 / 0.13);
-  --danger-rgb: 217 128 128;
-  --danger-deep-rgb: 145 67 67;
+  --danger-bg: rgb(238 123 123 / 0.13);
+  --danger-rgb: 238 123 123;
+  --danger-deep-rgb: 161 69 69;
 
   --info: var(--accent);     /* informational — same family as accent */
 
   /* Channel triplets for alpha variants of neutral text and surfaces —
      use rgb(var(--text-secondary-rgb) / α) instead of raw rgba literals. */
-  --shadow-rgb: 3 10 18;
+  --shadow-rgb: 0 0 0;
   /* Pure-black contact shadow (tight 1-4px drop under small controls). Kept
      separate from --shadow-rgb so dark stays byte-identical to the literal
      rgb(0 0 0 / a) these rules always used. */
@@ -424,10 +424,10 @@
   /* Neutral overlay ink: the hover/divider tint that is white on dark and
      near-black on light (replaces literal bg-white/N and rgb(255 255 255 / a)). */
   --overlay-rgb: 255 255 255;
-  --text-secondary-rgb: 183 203 210;
-  --bg-page-rgb: 13 23 30;
-  --bg-panel-rgb: 23 40 50;
-  --color-deep-rgb: 9 17 23;
+  --text-secondary-rgb: 180 185 194;
+  --bg-page-rgb: 17 18 21;
+  --bg-panel-rgb: 28 30 35;
+  --color-deep-rgb: 11 12 14;
   /* RGB triplet companion of --surface-list, for alpha and gradient stops. */
   --surface-list-rgb: var(--bg-panel-rgb);
 
@@ -439,7 +439,7 @@
   --motion-fast: var(--transition-duration-snap);
   --motion-normal: var(--transition-duration-base);
   --motion-slow: var(--transition-duration-sheet);
-  --focus-ring: 0 0 0 3px rgb(117 199 229 / 0.3);
+  --focus-ring: 0 0 0 3px rgb(106 174 255 / 0.32);
   --focus-ring-offset: 2px;
   --z-navigation: 200;
   --z-modal: 1000;
@@ -520,50 +520,50 @@
   color-scheme: light;
 
   /* Surfaces */
-  --color-deep: #e4ebef;
-  --color-page: #f4f7f9;
-  --color-workspace: #eef3f6;
-  --color-sidebar: #e9eff3;
+  --color-deep: #e6e9ee;
+  --color-page: #f6f7f9;
+  --color-workspace: #f1f3f6;
+  --color-sidebar: #eef0f4;
   --color-input: #ffffff;
   --color-panel: #ffffff;
-  --color-card: #f1f5f8;
-  --color-elevated: #e6edf2;
-  --color-backdrop: rgb(15 31 39 / 0.45);
+  --color-card: #f4f5f8;
+  --color-elevated: #eaedf1;
+  --color-backdrop: rgb(20 24 31 / 0.45);
 
   /* Interaction states: tint with ink instead of with light */
-  --color-surface-hover: rgb(15 31 39 / 0.05);
-  --color-surface-selected: rgb(11 110 146 / 0.12);
-  --color-surface-pressed: rgb(15 31 39 / 0.09);
-  --color-surface-focus: rgb(11 110 146 / 0.10);
-  --color-border-selected: rgb(11 110 146 / 0.40);
+  --color-surface-hover: rgb(20 22 26 / 0.05);
+  --color-surface-selected: rgb(31 95 196 / 0.10);
+  --color-surface-pressed: rgb(20 22 26 / 0.09);
+  --color-surface-focus: rgb(31 95 196 / 0.09);
+  --color-border-selected: rgb(31 95 196 / 0.40);
 
   /* Borders */
-  --color-border-subtle: #c2cbd1;
-  --color-border-default: #b9c8d1;
-  --color-border-strong: #697982;
-  --color-border-control: #838e94;
+  --color-border-subtle: #dcdfe5;
+  --color-border-default: #c3c8d1;
+  --color-border-strong: #8f96a3;
+  --color-border-control: #858c99;
 
   /* Text */
-  --color-primary: #0f1f27;
-  --color-secondary: #3a525e;
-  --color-muted: #556d79;
-  --color-disabled: #8a9ea8;
-  --color-placeholder: #6a808b;
+  --color-primary: #14161a;
+  --color-secondary: #444a55;
+  --color-muted: #5b6270;
+  --color-disabled: #9aa1ad;
+  --color-placeholder: #6e7583;
 
   /* Accent and status ramps */
-  --color-accent: #0b6e92;
-  --color-accent-soft: #075a78;
-  --color-accent-deep: #0a5675;
+  --color-accent: #1f5fc4;
+  --color-accent-soft: #174a9a;
+  --color-accent-deep: #1f5fc4;
   --color-accent-contrast: #ffffff;
-  --color-success: #1c7350;
-  --color-success-soft: #175f42;
-  --color-success-deep: #1c7350;
-  --color-warning: #8a5a00;
-  --color-warning-soft: #6b4500;
-  --color-warning-deep: #8a5a00;
-  --color-danger: #b03a3a;
-  --color-danger-soft: #8c2b2b;
-  --color-danger-deep: #b03a3a;
+  --color-success: #17724c;
+  --color-success-soft: #115a3b;
+  --color-success-deep: #17724c;
+  --color-warning: #8a5600;
+  --color-warning-soft: #6b4300;
+  --color-warning-deep: #8a5600;
+  --color-danger: #b3342f;
+  --color-danger-soft: #8c2723;
+  --color-danger-deep: #b3342f;
 
   /* Syntax palette: re-tuned for a white background */
   --color-syntax-key: #1a56b0;
@@ -572,35 +572,35 @@
   --color-syntax-null: #9b2fa3;
 
   /* Channel triplets behind rgb(var(--x-rgb) / a) alphas */
-  --accent-bg: rgb(11 110 146 / 0.12);
-  --accent-rgb: 11 110 146;
-  --accent-soft-rgb: 7 90 120;
-  --accent-deep-rgb: 10 86 117;
-  --success-bg: rgb(28 115 80 / 0.12);
-  --success-rgb: 28 115 80;
-  --success-deep-rgb: 28 115 80;
-  --warning-bg: rgb(138 90 0 / 0.12);
-  --warning-rgb: 138 90 0;
-  --danger-bg: rgb(176 58 58 / 0.11);
-  --danger-rgb: 176 58 58;
-  --danger-deep-rgb: 176 58 58;
-  --text-secondary-rgb: 58 82 94;
-  --bg-page-rgb: 244 247 249;
+  --accent-bg: rgb(31 95 196 / 0.10);
+  --accent-rgb: 31 95 196;
+  --accent-soft-rgb: 23 74 154;
+  --accent-deep-rgb: 31 95 196;
+  --success-bg: rgb(23 114 76 / 0.11);
+  --success-rgb: 23 114 76;
+  --success-deep-rgb: 23 114 76;
+  --warning-bg: rgb(138 86 0 / 0.11);
+  --warning-rgb: 138 86 0;
+  --danger-bg: rgb(179 52 47 / 0.10);
+  --danger-rgb: 179 52 47;
+  --danger-deep-rgb: 179 52 47;
+  --text-secondary-rgb: 68 74 85;
+  --bg-page-rgb: 246 247 249;
   --bg-panel-rgb: 255 255 255;
-  --color-deep-rgb: 228 235 239;
+  --color-deep-rgb: 230 233 238;
 
   /* Elevation: cool blue-grey shadow, no inset highlight to catch */
-  --shadow-rgb: 31 56 71;
+  --shadow-rgb: 20 24 31;
   /* Lighter, tighter elevation: cards separate by border + a soft lift, not a
      dark halo. Modals keep more weight because they must read above a scrim. */
   --shadow-a-panel: 0.08;
   --shadow-a-elevated: 0.14;
   --shadow-a-modal: 0.30;
-  --shadow-ink-rgb: 31 56 71;
+  --shadow-ink-rgb: 20 24 31;
   --highlight-rgb: 255 255 255;
-  --overlay-rgb: 15 31 39;
+  --overlay-rgb: 20 22 26;
 
-  --focus-ring: 0 0 0 3px rgb(11 110 146 / 0.28);
+  --focus-ring: 0 0 0 3px rgb(31 95 196 / 0.28);
 }
 
 /* Keep page-level whitespace predictable across viewport sizes. Component

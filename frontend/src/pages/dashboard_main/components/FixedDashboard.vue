@@ -189,9 +189,7 @@ onUnmounted(() => {
   flex-direction: column;
   overflow: auto;
   padding: var(--page-padding);
-  background:
-    radial-gradient(circle at 82% 0%, rgb(var(--accent-rgb) / 0.08), transparent 30rem),
-    var(--bg-page);
+  background: var(--bg-page);
 }
 
 .overview-intro {

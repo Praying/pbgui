@@ -29,7 +29,11 @@ type Palette = { bg: string; text: string; grid: string; sceneGrid: string; zero
 function palette(): Palette {
   if (currentTheme() !== 'light') return DARK;
   const c = themeColors();
-  const ink = (a: number) => `rgba(15,31,39,${a})`;
+  // Read the live overlay channels instead of a literal: this used to hard-code the
+  // old light ink (15,31,39), which would have silently drifted from the theme.
+  const channels = (getComputedStyle(document.documentElement).getPropertyValue('--overlay-rgb') || '20 22 26')
+    .trim().split(/[\s,]+/).slice(0, 3).join(',');
+  const ink = (a: number) => `rgba(${channels},${a})`;
   /* 2D grids stay faint (0.12): they sit behind data on a clean plane. The 3D
      scene box and polar rings are the chart's only frame, and on a near-white
      surface a 12% ink wash disappears entirely (verified by rendering the real

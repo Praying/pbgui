@@ -50,8 +50,8 @@ describe('buildAnalysisFigure (:1391-1701)', () => {
     const fig = buildAnalysisFigure('long', snapshot(), null, t);
     const rects = fig.shapes.filter((s) => (s as { type?: string }).type === 'rect');
     expect(rects.length).toBeGreaterThanOrEqual(2);
-    expect((rects[0] as { fillcolor?: string }).fillcolor).toBe('rgb(217 128 128 / 0.16)');
-    expect((rects[1] as { fillcolor?: string }).fillcolor).toBe('rgb(123 200 165 / 0.14)');
+    expect((rects[0] as { fillcolor?: string }).fillcolor).toBe('rgb(238 123 123 / 0.16)');
+    expect((rects[1] as { fillcolor?: string }).fillcolor).toBe('rgb(98 196 154 / 0.14)');
     expect(fig.traces.some((tr) => tr.name === 'Entry Grid (Range)')).toBe(true);
     expect(fig.traces.some((tr) => tr.name === 'Close Grid (Area)')).toBe(true);
   });
@@ -141,12 +141,12 @@ describe('buildAnalysisFigure (:1391-1701)', () => {
       .filter((shape) => (shape as { type?: string }).type === 'rect')
       .map((shape) => (shape as { fillcolor?: string }).fillcolor);
 
-    expect(lineColors).toContain('rgb(216 174 111 / 0.6)');
-    expect(lineColors).toContain('rgb(216 174 111 / 0.35)');
-    expect(lineColors).toContain('rgb(143 207 242 / 0.6)');
-    expect(lineColors).toContain('rgb(143 207 242 / 0.35)');
-    expect(bandColors).toContain('rgb(216 174 111 / 0.22)');
-    expect(bandColors).toContain('rgb(143 207 242 / 0.18)');
+    expect(lineColors).toContain('rgb(224 180 90 / 0.6)');
+    expect(lineColors).toContain('rgb(224 180 90 / 0.35)');
+    expect(lineColors).toContain('rgb(106 174 255 / 0.6)');
+    expect(lineColors).toContain('rgb(106 174 255 / 0.35)');
+    expect(bandColors).toContain('rgb(224 180 90 / 0.22)');
+    expect(bandColors).toContain('rgb(106 174 255 / 0.18)');
   });
 });
 

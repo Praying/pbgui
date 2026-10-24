@@ -129,11 +129,7 @@ async function submitLogin(): Promise<void> {
   align-items: center;
   justify-content: center;
   padding: var(--page-padding);
-  background:
-    radial-gradient(ellipse 60% 45% at 50% -8%, rgb(var(--accent-rgb) / 0.14), transparent 70%),
-    radial-gradient(ellipse 45% 40% at 88% 108%, rgb(var(--success-rgb) / 0.06), transparent 70%),
-    repeating-linear-gradient(135deg, rgb(var(--text-secondary-rgb) / 0.014) 0 1px, transparent 1px 44px),
-    var(--surface-deep);
+  background: var(--surface-deep);
 }
 
 .card {
