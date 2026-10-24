@@ -144,7 +144,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
          ui/ Input owns the bordered/h-8 chrome and cannot express this. -->
     <input
       ref="input"
-      class="ms-input min-w-20 h-6 w-auto flex-1 border-0 bg-transparent p-0 text-base text-primary outline-none placeholder:text-muted [font-family:inherit]"
+      class="ms-input min-w-20 h-6 w-auto flex-1 border-0 bg-transparent p-0 text-base text-primary outline-none placeholder:text-muted font-[inherit]"
       id="tag-filter-input"
       type="text"
       autocomplete="off"

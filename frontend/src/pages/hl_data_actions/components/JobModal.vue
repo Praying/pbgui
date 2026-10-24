@@ -100,7 +100,7 @@ const scopeRows = computed<DetailRow[]>(() =>
 function bodyClass(kind: string): string {
   return kind === 'details'
     ? 'is-details grid gap-3 bg-page font-sans text-base whitespace-normal text-primary'
-    : "font-[Fira_Code,Consolas,monospace] text-xs whitespace-pre-wrap text-secondary";
+    : "font-mono text-xs whitespace-pre-wrap text-secondary";
 }
 </script>
 

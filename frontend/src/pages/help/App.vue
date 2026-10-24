@@ -455,7 +455,7 @@ onBeforeUnmount(() => {
   padding: 0.15em 0.4em;
   border-radius: 4px;
   font-size: 0.88em;
-  font-family: 'Fira Code', 'Consolas', monospace;
+  font-family: var(--font-mono);
   border: 1px solid var(--border-subtle);
 }
 

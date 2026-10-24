@@ -300,7 +300,7 @@ onUnmounted(() => {
 }
 .lvp-terminal {
   overflow-y: auto;
-  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   line-height: 1.45;
   background: var(--bg-page);

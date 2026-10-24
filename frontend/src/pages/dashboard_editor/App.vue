@@ -281,13 +281,8 @@ onBeforeUnmount(() => {
    kept below), and the empty .editor-grid.cols-1/cols-2 rules.
    ═══════════════════════════════════════════════════════════════ */
 
-/* The legacy editor page used the plain system stack, not the shared
-   Space Grotesk face — keep that difference (un-layered CSS beats the
-   base layer's font-family). */
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
-    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
-}
+/* No body font override: the editor renders inside the dashboard iframe and
+   must use the same --font-sans as the page around it. */
 
 /* ── Standalone mode (App toggles body.standalone-mode) ────────── */
 body.standalone-mode .editor-wrapper {

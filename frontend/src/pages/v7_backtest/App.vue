@@ -1102,7 +1102,7 @@ body {
 .form-group input, .form-group select, .form-group textarea { min-height: var(--input-h); padding: var(--sp-sm); background: var(--bg-input);
     color: var(--text); border: 1px solid var(--border); border-radius: 4px; font-size: var(--text-sm); outline: none; width: 100%; }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
-.form-group textarea { height: auto; min-height: 140px; font-family: var(--mono, ui-monospace, monospace); resize: vertical; }
+.form-group textarea { height: auto; min-height: 140px; font-family: var(--font-mono); resize: vertical; }
 
 /* Action buttons — shared with CoinOverridesPanel */
 .act-btn { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim);

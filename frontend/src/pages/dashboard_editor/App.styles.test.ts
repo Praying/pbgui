@@ -185,9 +185,8 @@ describe('editor styles migration — engine class anchors', () => {
     ]) {
       expect(appStyles).toContain(anchor);
     }
-    /* the legacy font stack — the page must not silently adopt the shared
-       Space Grotesk face */
-    expect(appStyles).toContain('-apple-system, BlinkMacSystemFont');
+    /* the editor shares the app type system: no body font override */
+    expect(appStyles).not.toMatch(/body\s*\{[^}]*font-family/);
   });
 
   it('keeps the cell→widget flex chain and header drag cursor as engine CSS', () => {
