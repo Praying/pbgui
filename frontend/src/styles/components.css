@@ -33,7 +33,7 @@
   .app-shell__workspace {
     grid-column: 2;
     min-width: 0;
-    background: var(--surface-workspace);
+    background: var(--surface-page);
   }
 
   @media (min-width: 721px) {
@@ -2754,7 +2754,7 @@
   }
 
   .app-shell__workspace {
-    background: var(--surface-workspace);
+    background: var(--surface-page);
   }
 
   .app-shell__main {
@@ -2875,6 +2875,12 @@
     background: rgb(var(--color-deep-rgb) / 0.9);
     color: var(--text-muted);
     font-size: var(--text-micro);
+  }
+
+  /* The sticky actions header must read as part of the header row: it needs an
+     opaque fill (rows scroll under it) but the same tone as its neighbours. */
+  .pbgui-list-table th:last-child {
+    background: color-mix(in srgb, var(--color-deep) 90%, var(--color-panel));
   }
 
   .pbgui-list-table td {
