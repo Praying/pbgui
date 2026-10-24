@@ -106,6 +106,21 @@ function botSummary(account: HyperliquidAccount): string {
     .join('; ');
 }
 
+/**
+ * One row per bot. The cell used to be a single `; `-joined string, so a wallet
+ * with five bots became one paragraph in a squeezed column (a 5-bot row measured
+ * 457px tall next to 72px for a 1-bot row). Name and host are separate spans so
+ * the host, which is long and secondary, can truncate while the name stays whole.
+ */
+function botEntries(account: HyperliquidAccount): Array<{ key: string; version: string; name: string; host: string }> {
+  return (account.bots || []).map((bot, index) => ({
+    key: `${bot.name || ''}|${bot.host || ''}|${index}`,
+    version: bot.pb_version === '8' ? 'PB8' : 'PB7',
+    name: bot.name || '',
+    host: bot.host || '',
+  }));
+}
+
 function remainingRequestCount(account: HyperliquidAccount): string {
   if (account.used === undefined || account.cap === undefined) return '—';
   return formatRequestCount(Math.max(0, account.cap - account.used));
@@ -297,17 +312,21 @@ onUnmounted(() => {
                 @keydown.enter="selectAccount(String((account.users || [])[0] || ''))"
                 @keydown.space.prevent="selectAccount(String((account.users || [])[0] || ''))"
               >
-                <td class="align-top">
-                  <strong class="text-primary">{{ accountUsers(account) }}</strong>
+                <td class="min-w-[11rem] max-w-[22rem] align-top [overflow-wrap:anywhere]">
+                  <strong class="text-primary" :title="accountUsers(account)">{{ accountUsers(account) }}</strong>
                   <div class="mt-1 text-xs text-secondary">
                     {{ (account.bots || []).length ? t('misc.hlLimits.sharedWallet') : t('misc.hlLimits.noRunningBot') }}
                   </div>
                 </td>
-                <td class="align-top text-secondary">
-                  <span v-if="botSummary(account)" class="inline-flex flex-wrap items-center gap-1.5">
-                    <PbIcon :icon="PhRobot" :size="14" class="shrink-0 text-muted" />
-                    <span>{{ botSummary(account) }}</span>
-                  </span>
+                <td class="min-w-[14rem] align-top text-secondary">
+                  <ul v-if="botEntries(account).length" class="m-0 grid list-none gap-1 p-0" :aria-label="botSummary(account)">
+                    <li v-for="bot in botEntries(account)" :key="bot.key" class="flex min-w-0 items-baseline gap-1.5" :title="`${bot.version} ${bot.name} · ${bot.host}`">
+                      <PbIcon :icon="PhRobot" :size="14" class="shrink-0 translate-y-0.5 text-muted" />
+                      <span class="shrink-0 text-micro font-semibold text-muted">{{ bot.version }}</span>
+                      <span class="max-w-[65%] shrink-0 truncate text-primary">{{ bot.name }}</span>
+                      <span v-if="bot.host" class="min-w-0 truncate text-xs text-muted">· {{ bot.host }}</span>
+                    </li>
+                  </ul>
                   <span v-else>—</span>
                 </td>
                 <td class="align-top text-right tabular-nums">{{ formatRequestCount(account.used) }}</td>

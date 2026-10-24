@@ -133,6 +133,18 @@ describe('API Keys page shell', () => {
     expect(wrapper.find('tr[data-user-name="bob"] [data-user-action="delete"]').exists()).toBe(true);
   });
 
+  /* The wrapper declares w-72/sm:w-80 but sits in a flex row, so it was squeezed
+     to ~244px and the English placeholder ("Filter by name or exchange…", ~193px
+     of text) lost its last letters behind the left/right icon padding. shrink-0
+     keeps the declared width; on a phone it may shrink again. */
+  it('keeps the filter control at its declared width so the placeholder is not clipped', async () => {
+    const wrapper = await mountApp();
+    const control = wrapper.get('.user-filter-control');
+    expect(control.classes()).toContain('shrink-0');
+    expect(control.classes()).toContain('w-72');
+    expect(control.classes()).toContain('max-[420px]:shrink');
+  });
+
   it('filters by name/exchange and persists ?filter= in the URL (:1317-1322, :1131-1137)', async () => {
     const wrapper = await mountApp();
 

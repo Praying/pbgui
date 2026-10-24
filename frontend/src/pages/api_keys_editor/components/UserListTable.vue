@@ -184,7 +184,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
     <div class="user-list-toolbar mb-3.5 flex flex-wrap items-center justify-between gap-3">
       <!-- Left: Search filter + User counts -->
       <div class="flex items-center gap-2.5">
-        <div class="user-filter-control w-72 sm:w-80">
+        <div class="user-filter-control w-72 shrink-0 sm:w-80 max-[420px]:w-full max-[420px]:shrink">
           <PbIcon class="user-filter-icon" :icon="PhMagnifyingGlass" :size="15" />
           <Input
             type="text"

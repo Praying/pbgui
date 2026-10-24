@@ -223,3 +223,29 @@ describe('Transfers Vue page direction select', () => {
     wrapper.unmount();
   });
 });
+
+describe('Transfers account list with long names', () => {
+  /* The row's <span class="truncate"> sat in a <button> with no width limit, so
+     the button grew past the list and the container's overflow cut the name off
+     mid-letter with no ellipsis and no tooltip. */
+  it('constrains each row to the list width and exposes the full name', async () => {
+    const longName = 'wallet_main_hyperliquid_vault_rebalancer_account_with_a_really_long_name_2026';
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url.endsWith('/transfers/users')) {
+        return Promise.resolve({ users: [{ name: longName, exchange: 'binance', account_type: 'standard' }] });
+      }
+      if (url.includes('/transfers/preview/')) return Promise.resolve(makePreview());
+      if (url.includes('/transfers/operations/')) return Promise.resolve(operations);
+      throw new Error(`Unexpected request ${url}`);
+    });
+    const wrapper = mountApp();
+    await flushPromises();
+
+    const row = wrapper.get('.transfer-account-row');
+    expect(row.classes()).toEqual(expect.arrayContaining(['w-full', 'min-w-0', 'max-w-full']));
+    const name = row.get('span.truncate');
+    expect(name.attributes('title')).toBe(longName);
+    expect(wrapper.get('h1.truncate').attributes('title')).toBe(longName);
+    wrapper.unmount();
+  });
+});
