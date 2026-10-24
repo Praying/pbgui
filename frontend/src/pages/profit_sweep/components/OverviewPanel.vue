@@ -87,7 +87,7 @@ function rowTone(account: OverviewAccount): string {
             @click="emit('select', account.name)"
             @keydown.enter="emit('select', account.name)"
           >
-            <td class="p-2 font-semibold">{{ displayName(account) }}</td>
+            <td class="max-w-[18rem] truncate p-2 font-semibold" :title="displayName(account)">{{ displayName(account) }}</td>
             <td class="p-2">{{ account.asset || '-' }}</td>
             <td class="p-2">{{ account.status || account.mode || '-' }}</td>
             <td class="p-2">{{ formatAmount(account.source_balance) }}</td>

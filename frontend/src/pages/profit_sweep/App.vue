@@ -216,9 +216,9 @@ onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(ov
           <span class="rounded-full border border-border-default bg-card px-2 py-1 text-xs tabular-nums text-secondary">{{ filteredUsers.length }}/{{ users.length }}</span>
         </div>
         <Input v-model="search" class="mb-2.5" :placeholder="t('profitSweep.searchAccounts')" />
-        <div class="grid gap-1.5">
-          <button v-for="user in filteredUsers" :key="user.name" type="button" class="profit-account-row rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:bg-card" :class="user.name === selectedUser ? 'is-selected border-accent/30 bg-accent/10' : ''" @click="loadAccount(user.name)">
-            <span class="block truncate font-semibold text-primary">{{ user.name }}</span>
+        <div class="grid grid-cols-[minmax(0,1fr)] gap-1.5">
+          <button v-for="user in filteredUsers" :key="user.name" type="button" class="profit-account-row min-w-0 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:bg-card" :class="user.name === selectedUser ? 'is-selected border-accent/30 bg-accent/10' : ''" @click="loadAccount(user.name)">
+            <span class="block truncate font-semibold text-primary" :title="user.name">{{ user.name }}</span>
             <span class="mt-1 block text-xs text-secondary">{{ user.exchange || t('profitSweep.unknownExchange') }}<span v-if="user.is_vault">{{ t('profitSweep.vaultSuffix') }}</span><span class="mx-1 text-muted">/</span>{{ modeLabel(user.operating_mode) }}</span>
           </button>
           <LoadingSkeleton v-if="loading" class="p-3" :lines="2" :label="t('common.loading')" />
