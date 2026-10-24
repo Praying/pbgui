@@ -1206,3 +1206,4 @@
 - 统一字体：全站只保留两套字体栈（`--font-sans` Space Grotesk + 中日文系统回退、`--font-mono`）。清除 6 处硬编码——帮助页与日志终端的 `Fira Code`/`Cascadia Code`、v7 回测的 `var(--mono, …)`、HL 数据任务弹窗的 `font-[Fira_Code…]` 以及 Dashboard 编辑器单独的系统字体栈（它嵌在仪表盘 iframe 里，之前与外层页面字体不一致）。新增 `font-tokens` 全仓库扫描测试，任何 `tailwind.css` 之外的字面 font-family 会直接失败（已用临时违规文件验证会报错）。字号阶梯此前已统一为 10 档，无散落的 `text-[Npx]`。
 - 字体改为参考网易 UU 远程（uuyc.163.com）的做法：原生系统字体栈、中文优先（PingFang SC / Microsoft YaHei UI / Noto Sans CJK SC，再回退 Segoe UI 等），不再下载 Space Grotesk。中英文混排同属一个平台自带的设计家族，基线与字重一致，更板正；同时去掉 ~40KB 的字体文件、`@font-face` 与 `frontend/vendor/fonts`，首屏不再有字体闪烁（FOUT）。v7 回测图表的 Plotly 字体同步。等宽字体不变。改后 120 个页面×视口组合横向溢出仍为 0，浅色对比度扫描 24 页全部 0 项低对比度。
 - Linux 字体：字体栈在微软雅黑之后加入 `HarmonyOS Sans SC`（有该字体的 Linux 用户得到完整字重的黑体，而不是退到 Noto）。
+- Linux 字体：字体栈该位置由 `HarmonyOS Sans SC` 改为 `MiSans`（小米设备/部分中文环境自带的黑体；未安装时仍按顺序回退到 Noto Sans CJK SC 等，栈内其余优先级不变，等宽字体不变）。
