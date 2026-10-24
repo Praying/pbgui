@@ -129,7 +129,7 @@ onBeforeUnmount(() => {
   position: relative;
   overflow: hidden;
   padding: 24px;
-  background: linear-gradient(135deg, rgb(var(--bg-panel-rgb) / 1), rgb(var(--bg-page-rgb) / 0.96));
+  background: var(--bg-panel);
   box-shadow: 0 22px 46px rgb(var(--shadow-ink-rgb) / 0.3), 0 1px 0 rgb(var(--highlight-rgb) / 0.1) inset;
 }
 
@@ -281,7 +281,7 @@ onBeforeUnmount(() => {
 
 .integrity-panel :deep(> article:not(.integrity-overview-card)) {
   border-color: rgb(var(--border-default-rgb, 51 63 92) / 0.9);
-  background: linear-gradient(180deg, rgb(var(--bg-panel-rgb) / 0.98), rgb(var(--bg-page-rgb) / 0.98));
+  background: var(--bg-panel);
 }
 
 .integrity-panel :deep(.integrity-table-wrap) {

@@ -721,7 +721,7 @@ async function testConnection(): Promise<void> {
 <template>
   <div
     id="editPanel"
-    class="edit-panel mx-auto mb-5 w-[min(100%,1180px)] overflow-hidden rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-rgb)/0.07),transparent_26rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-panel"
+    class="edit-panel mx-auto mb-5 w-[min(100%,1180px)] overflow-hidden rounded-xl border border-secondary/14 bg-panel shadow-panel"
     @input="formDirty = true"
     @change="formDirty = true"
   >

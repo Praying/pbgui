@@ -142,7 +142,7 @@ defineExpose({ foldSuiteDraft });
     </div>
 
     <section
-      class="config-editor-section relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.045),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] px-4 pb-4 pt-3.5"
+      class="config-editor-section relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-panel px-4 pb-4 pt-3.5"
       data-test="editor-section-basics"
     >
       <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
@@ -173,7 +173,7 @@ defineExpose({ foldSuiteDraft });
     </section>
 
     <section
-      class="config-editor-section relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.045),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] px-4 pb-4 pt-3.5"
+      class="config-editor-section relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-panel px-4 pb-4 pt-3.5"
       data-test="editor-section-trading"
     >
       <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
@@ -274,7 +274,7 @@ defineExpose({ foldSuiteDraft });
     </section>
 
     <section
-      class="config-editor-section relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.045),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] px-4 pb-4 pt-3.5"
+      class="config-editor-section relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-panel px-4 pb-4 pt-3.5"
       data-test="editor-section-market-data"
     >
       <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
@@ -313,7 +313,7 @@ defineExpose({ foldSuiteDraft });
     </section>
 
     <section
-      class="config-editor-section relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.045),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] px-4 pb-4 pt-3.5"
+      class="config-editor-section relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-panel px-4 pb-4 pt-3.5"
       data-test="editor-section-filters"
     >
       <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
@@ -352,7 +352,7 @@ defineExpose({ foldSuiteDraft });
     </section>
 
     <section
-      class="config-editor-section config-editor-section-bot relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.045),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] px-4 pb-4 pt-3.5"
+      class="config-editor-section config-editor-section-bot relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-panel px-4 pb-4 pt-3.5"
       data-test="editor-section-bot"
     >
       <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">

@@ -181,7 +181,7 @@ onBeforeUnmount(() => {
       />
     </template>
 
-    <div id="page-body" class="relative flex min-h-0 overflow-hidden select-none bg-[linear-gradient(135deg,rgb(var(--bg-page-rgb)/0.98),rgb(var(--bg-panel-rgb)/0.96))]">
+    <div id="page-body" class="relative flex min-h-0 overflow-hidden select-none bg-page">
     <div class="workbench-page-content pbgui-ambient min-w-0 min-h-0 flex-1 overflow-y-auto select-text bg-page p-[var(--page-padding)]">
       <div id="banner" class="banner mb-3 rounded-lg py-3 px-3.5 text-base leading-[1.5]" :class="bannerClass(store.banner.value.message, store.banner.value.kind)">
         {{ store.banner.value.message }}
@@ -189,7 +189,7 @@ onBeforeUnmount(() => {
 
       <!-- Overview -->
       <section id="section-overview" class="page-section grid w-[min(100%,1440px)] gap-4.5 mx-auto mb-5 scroll-mt-4" data-section="overview" :hidden="store.activeSection.value !== 'overview'">
-        <div class="panel pbgui-panel overview-panel relative grid gap-4.5 overflow-hidden rounded-xl border border-border-subtle bg-[radial-gradient(circle_at_right_top,rgb(var(--accent-rgb)/0.1),transparent_34%),linear-gradient(180deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-panel p-5 max-[640px]:p-4">
+        <div class="panel pbgui-panel overview-panel relative grid gap-4.5 overflow-hidden rounded-xl border border-border-subtle bg-panel shadow-panel p-5 max-[640px]:p-4">
           <div class="overview-header flex items-start justify-between gap-5 pb-5 border-b border-b-secondary/14 max-[980px]:flex-col">
             <div class="overview-heading min-w-0">
               <h1 class="overview-title m-0 max-w-none text-3xl leading-[1.15] tracking-display">{{ t('misc.welcome.systemOverview') }}</h1>
@@ -273,7 +273,7 @@ onBeforeUnmount(() => {
           <span class="section-kicker pt-2 text-md font-bold tracking-tight text-primary">{{ t('misc.welcome.runtimeSettings') }}</span>
           <p class="section-copy mt-1 max-w-[66ch] text-secondary">{{ t('misc.welcome.runtimeSettingsCopy') }}</p>
         </div>
-        <div class="panel settings-panel relative overflow-hidden rounded-xl border border-accent/16 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.08),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-panel-rgb)/0.98))] shadow-panel p-[clamp(18px,2.5vw,28px)] max-[640px]:p-4 w-[min(100%,1600px)] max-[1400px]:w-full mx-auto">
+        <div class="panel settings-panel relative overflow-hidden rounded-xl border border-accent/16 bg-panel shadow-panel p-[clamp(18px,2.5vw,28px)] max-[640px]:p-4 w-[min(100%,1600px)] max-[1400px]:w-full mx-auto">
           <div class="panel-heading settings-panel-heading pb-5 border-b border-b-secondary/14">
             <h2 class="panel-title m-0 mb-1.5 text-lg tracking-tight text-primary">{{ t('misc.welcome.passivbotSetup') }}</h2>
             <p class="panel-copy m-0 max-w-[78ch] text-secondary text-base leading-[1.55]">{{ t('misc.welcome.passivbotSetupCopy') }}</p>

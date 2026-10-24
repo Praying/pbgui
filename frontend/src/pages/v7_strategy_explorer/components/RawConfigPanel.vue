@@ -416,9 +416,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .raw-config-header {
-  background:
-    linear-gradient(110deg, rgb(var(--accent-rgb) / 0.06), transparent 40%),
-    var(--bg-panel);
+  background: var(--bg-panel);
 }
 
 .raw-config-tool,

@@ -957,7 +957,7 @@ body {
   inset: 0 0 auto;
   height: 150px;
   pointer-events: none;
-  background: radial-gradient(circle at 22% 0%, rgb(var(--accent-rgb) / 0.14), transparent 68%);
+  background: rgb(var(--accent-rgb) / 0.08);
 }
 
 #sidebar-inner {

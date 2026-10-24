@@ -405,7 +405,7 @@ onUnmounted(() => {
 }
 
 .transfer-card-header {
-  background: linear-gradient(180deg, rgb(var(--accent-rgb) / 0.045), transparent);
+  background: rgb(var(--accent-rgb) / 0.04);
 }
 
 .transfer-summary-grid article {

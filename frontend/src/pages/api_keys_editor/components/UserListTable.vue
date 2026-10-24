@@ -520,7 +520,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
 
 .empty-state-container {
   width: 100%;
-  background: radial-gradient(circle at 50% 25%, rgb(var(--accent-rgb) / 0.08), transparent 70%);
+  background: var(--surface-panel);
 }
 
 .empty-state-desc {

@@ -140,7 +140,7 @@ async function submitLogin(): Promise<void> {
   padding: var(--sp-4xl) var(--sp-3xl) var(--sp-3xl);
   border: 1px solid rgb(var(--accent-rgb) / 0.2);
   border-radius: var(--radius-lg);
-  background: linear-gradient(145deg, rgb(var(--accent-rgb) / 0.07), var(--surface-panel) 38%);
+  background: var(--surface-panel);
   box-shadow: 0 24px 58px rgb(var(--shadow-rgb) / 0.42), 0 1px 0 rgb(var(--highlight-rgb) / 0.06) inset;
   position: relative;
   overflow: hidden;
