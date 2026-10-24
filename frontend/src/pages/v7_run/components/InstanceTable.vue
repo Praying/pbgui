@@ -149,10 +149,10 @@ const iconActionClass = 'size-7 shrink-0 rounded-md border border-border-default
           :class="row.status === 'disabled' ? 'opacity-60' : ''"
           @dblclick="onRowDblClick(row, $event)"
         >
-          <td class="whitespace-nowrap font-medium"><span class="block max-w-64 truncate" :title="row.name">{{ row.name }}</span></td>
-          <td class="whitespace-nowrap"><span class="block max-w-56 truncate" :title="orDash(row.user)">{{ orDash(row.user) }}</span></td>
-          <td v-if="isV8" class="whitespace-nowrap"><span class="block max-w-48 truncate" :title="orDash(row.strategy)">{{ orDash(row.strategy) }}</span></td>
-          <td class="whitespace-nowrap"><span class="block max-w-52 truncate" :title="orDash(row.enabled_on)">{{ orDash(row.enabled_on) }}</span></td>
+          <td class="whitespace-nowrap font-medium"><span class="block max-w-44 truncate" :title="row.name">{{ row.name }}</span></td>
+          <td class="whitespace-nowrap"><span class="block max-w-40 truncate" :title="orDash(row.user)">{{ orDash(row.user) }}</span></td>
+          <td v-if="isV8" class="whitespace-nowrap"><span class="block max-w-36 truncate" :title="orDash(row.strategy)">{{ orDash(row.strategy) }}</span></td>
+          <td class="whitespace-nowrap"><span class="block max-w-40 truncate" :title="orDash(row.enabled_on)">{{ orDash(row.enabled_on) }}</span></td>
           <td>
             <span class="pbgui-badge inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-xs font-semibold" :class="statusClass(row.status)" :title="row.blocked_reason || undefined">
               <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
@@ -165,9 +165,9 @@ const iconActionClass = 'size-7 shrink-0 rounded-md border border-border-default
           <td class="whitespace-nowrap tabular-nums">{{ row.version != null ? String(row.version) : '-' }}</td>
           <td class="whitespace-nowrap tabular-nums">{{ row.running_version != null ? String(row.running_version) : '-' }}</td>
           <td class="whitespace-nowrap tabular-nums">{{ orDash(row.twe) }}</td>
-          <td class="whitespace-nowrap"><span class="block max-w-72 truncate" :title="runningOn(row)">{{ runningOn(row) }}</span></td>
+          <td class="whitespace-nowrap"><span class="block max-w-44 truncate" :title="runningOn(row)">{{ runningOn(row) }}</span></td>
           <td class="whitespace-nowrap">{{ orDash(row.desired_state) }}</td>
-          <td class="whitespace-nowrap"><span class="block max-w-80 truncate" :title="row.note || undefined">{{ row.note || '' }}</span></td>
+          <td class="whitespace-nowrap"><span class="block max-w-40 truncate" :title="row.note || undefined">{{ row.note || '' }}</span></td>
           <TdActions>
             <template v-if="supportsForcedModes">
               <Button class="size-(--control-height-sm) shrink-0 rounded-md p-0 text-xs font-bold" variant="danger" size="sm" type="button" data-forced-mode="panic" :data-forced-name="row.name" :title="t('v7run.panicAllPositions')" :aria-label="t('v7run.panicAllPositions')" @click="emit('forcedMode', row.name, 'panic')">P</Button>

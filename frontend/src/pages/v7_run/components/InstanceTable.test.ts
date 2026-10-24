@@ -90,8 +90,9 @@ describe('InstanceTable free-text columns', () => {
 
   it('renders a dash and no empty tooltip for a missing note', () => {
     const wrapper = mountTable([row({ note: '' })]);
-    const noteSpans = wrapper.findAll('tbody tr').at(0)!.findAll('td span.max-w-80');
-    expect(noteSpans).toHaveLength(1);
-    expect(noteSpans[0]!.attributes('title')).toBeUndefined();
+    const cells = wrapper.findAll('tbody tr').at(0)!.findAll('td');
+    const note = cells[cells.length - 2]!.find('span.truncate');
+    expect(note.exists()).toBe(true);
+    expect(note.attributes('title')).toBeUndefined();
   });
 });
