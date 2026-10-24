@@ -91,7 +91,10 @@ const details = computed(() => {
   justify-content: center;
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--text-primary);
+  /* The bar behind this label is the saturated accent→success gradient in
+     both themes, so the label stays light instead of following
+     --text-primary (dark ink on that gradient fails contrast in light). */
+  color: #fff;
   text-shadow: 0 0 4px rgb(var(--shadow-ink-rgb) / 0.7);
   pointer-events: none;
 }

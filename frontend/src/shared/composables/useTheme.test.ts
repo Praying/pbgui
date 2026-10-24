@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { applyTheme, readThemePreference, useTheme } from './useTheme';
+import { applyTheme, initTheme, readThemePreference, useTheme } from './useTheme';
 
 const KEY = 'pbgui-theme';
 
@@ -60,6 +60,21 @@ describe('theme preference', () => {
     toggleTheme();
     expect(theme.value).toBe('dark');
     expect(localStorage.getItem(KEY)).toBe('dark');
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+  });
+
+  it('follows a theme toggle made by the document that embeds it', () => {
+    stubSystem(false);
+    initTheme();
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+
+    window.dispatchEvent(new StorageEvent('storage', { key: KEY, newValue: 'light' }));
+    expect(document.documentElement.dataset.theme).toBe('light');
+
+    window.dispatchEvent(new StorageEvent('storage', { key: KEY, newValue: 'dark' }));
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+
+    window.dispatchEvent(new StorageEvent('storage', { key: 'pbgui-density', newValue: 'compact' }));
     expect(document.documentElement.dataset.theme).toBeUndefined();
   });
 });

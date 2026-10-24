@@ -52,6 +52,21 @@ export function applyTheme(theme: Theme): void {
 /** One document per page, so a module-scoped ref is the whole store. */
 const theme = ref<Theme>('dark');
 
+/* Attached once per document: an embedded page (iframe) or another tab must
+   follow a toggle made in the document that owns the stored preference. */
+let storageListenerAttached = false;
+
+function followStoredThemeChanges(): void {
+  if (storageListenerAttached) return;
+  storageListenerAttached = true;
+  window.addEventListener('storage', (event) => {
+    if (event.key !== STORAGE_KEY) return;
+    const next: Theme = event.newValue === 'light' ? 'light' : 'dark';
+    theme.value = next;
+    applyTheme(next);
+  });
+}
+
 export function useTheme() {
   function setTheme(next: Theme): void {
     theme.value = next;
@@ -78,4 +93,5 @@ export function useTheme() {
 export function initTheme(): void {
   theme.value = readThemePreference();
   applyTheme(theme.value);
+  followStoredThemeChanges();
 }

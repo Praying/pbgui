@@ -78,7 +78,11 @@ function statusBadgeClass(status: string): string {
     </div>
     <div class="hlda-pb relative mt-1.5 h-5 overflow-hidden rounded-sm bg-elevated">
       <div class="hlda-pf h-full min-w-0 rounded-sm bg-accent transition-[width] duration-300" :style="{ width: percent + '%' }"></div>
-      <div class="hlda-pt absolute inset-x-0 top-0 text-center text-xs font-medium leading-5 text-white">{{ percent }}%</div>
+      <div class="hlda-pt absolute inset-x-0 top-0 text-center text-xs font-medium leading-5 text-primary">{{ percent }}%</div>
+      <!-- Duplicate label clipped to the filled width. The one label cannot
+           stay readable over both the track and the accent fill, and their
+           contrast poles invert with the theme. -->
+      <div class="hlda-pt-fill absolute inset-x-0 top-0 text-center text-xs font-medium leading-5 text-accent-contrast" :style="{ clipPath: `inset(0 ${100 - percent}% 0 0)` }" aria-hidden="true">{{ percent }}%</div>
     </div>
     <div class="hlda-pd mt-1 flex flex-wrap gap-2 text-xs text-muted" v-if="steps.total > 0">
       <span>{{ t('market.stepLabel', { step: steps.step, total: steps.total }) }}</span>

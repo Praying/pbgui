@@ -1,5 +1,13 @@
 # Unreleased
 
+## 修复「行情数据 / 状态监控」「行情数据 / 构建最佳 1m」在浅色主题下整块变黑
+
+- 根因：`initTheme()` 只由 AppShell 调用，而 `market_data_status`、`hl_data_actions`、`root_login` 是不渲染 AppShell 的独立文档（前两者作为 iframe 内嵌在行情数据页里），从未应用已保存的主题，因此在浅色页面里渲染成整块深色——状态监控的表头、表格与整页底色，构建最佳 1m 的提示条与整块背景。三个入口补上 `initTheme()`，内嵌面板现在与所属页面同色。
+- 新增扫描守卫 `themeCoverage.test.ts`：任何不渲染 AppShell 的页面入口若未调用 `initTheme()` 直接失败，避免后续新增页面重复此问题（`dashboard_editor` / `dashboard_templates` 此前已踩过同一个坑）。
+- 内嵌页面现在跟随主题切换：`initTheme()` 注册一次 `storage` 监听，父文档点主题按钮写入 `pbgui-theme` 后，已挂载的 iframe 与其它标签页当场换色，不必切换面板或刷新。
+- 浅色可读性两处：状态监控的运行进度标签固定为浅色文字（进度条是 accent→success 饱和渐变，跟随 `--text-primary` 变成深墨后在浅色主题下对比不足）；构建最佳 1m 的作业进度百分比改为「轨道层用 `text-primary` + 填充层用 `accent-contrast` 并按填充宽度裁剪」两层，两套主题下都保持可读。
+- 仅前端改动，不递增 `api/serial.txt`；需重新 `cd frontend && pnpm run build` 后由 `frontend/dist` 生效。
+
 ## 修复「系统 / 集群同步 / 概览」保留报告 500
 
 - 修复检查点压缩基收集操作 ID 时只认 `op_id` 字段的缺陷：节点密钥轮换后重新封装密钥的 `UPDATE_SECRET_RECIPIENTS` 操作记录在 `recipient_op_id` 下，被排除在压缩基之外，导致压缩基重放与全量重放不一致（`compact v2 reducer basis does not match full replay`）。`_collect_op_ids` 现在同时收集 `op_id` 与 `*_op_id` 关系引用字段。

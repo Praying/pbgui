@@ -1,7 +1,12 @@
 import { createApp } from 'vue';
 import { createI18n, detectLang } from '@/shared/i18n';
+import { initTheme } from '@/shared/composables/useTheme';
 import App from './App.vue';
 import '@/styles/tailwind.css';
+
+/* Embedded document (no AppShell): apply the saved theme here, or the frame
+   stays dark inside a light market-data page. */
+initTheme();
 
 /*
  * The still-legacy market_data_main.html injects this page as a fragment and
