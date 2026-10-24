@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import '@/styles/tailwind.css';
+import { initTheme } from '@/shared/composables/useTheme';
 import { createI18n, detectLang } from '@/shared/i18n';
 import App from './App.vue';
 /* D-editor-4: swap the EmptyCell stubs for the real Plotly widgets */
@@ -18,6 +19,10 @@ const i18n = createI18n(detectLang());
 setDashTranslator((key, params) =>
   params ? i18n.global.t(key, params) : i18n.global.t(key)
 );
+
+/* Standalone document (no AppShell): apply the saved theme here, or the iframe
+   stays dark inside a light dashboard. */
+initTheme();
 
 const app = createApp(App);
 app.use(i18n);

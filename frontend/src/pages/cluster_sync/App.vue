@@ -124,9 +124,9 @@ function nodeLabel(node: Record<string, any>): string { return String(node.pbnam
    including the neutral default so static and dynamic classes never fight. */
 function statusClass(value: unknown): string {
   const state = String(value || '').toLowerCase();
-  if (['ready', 'ok', 'healthy', 'reachable', 'current', 'synced'].includes(state)) return 'bg-success-deep text-success-soft';
-  if (['conflict', 'error', 'failed', 'disabled'].includes(state)) return 'bg-danger-deep text-danger-soft';
-  return 'bg-warning-deep text-warning-soft';
+  if (['ready', 'ok', 'healthy', 'reachable', 'current', 'synced'].includes(state)) return 'bg-success/14 text-success-soft';
+  if (['conflict', 'error', 'failed', 'disabled'].includes(state)) return 'bg-danger/14 text-danger-soft';
+  return 'bg-warning/14 text-warning-soft';
 }
 
 function noticeKindClass(kind: 'ok' | 'err' | 'warn'): string {
@@ -287,7 +287,7 @@ onUnmounted(() => {
               <article :class="cardClass">
                 <header :class="cardHeadClass">
                   <span :class="cardTitleClass">{{ t('sysmon.localIdentity') }}</span>
-                  <span :class="pillClass" class="bg-success-deep text-success-soft">{{ display(identity.role) }}</span>
+                  <span :class="pillClass" class="bg-success/14 text-success-soft">{{ display(identity.role) }}</span>
                 </header>
                 <div class="p-4">
                   <div class="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-2.5">

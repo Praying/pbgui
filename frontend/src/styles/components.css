@@ -890,7 +890,8 @@
   .workspace-header__breadcrumb-list {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    /* nowrap: a wrapped last item starts its line with its own '/' separator. */
+    flex-wrap: nowrap;
     gap: var(--sp-xs);
     margin: 0;
     padding: 0;
@@ -903,7 +904,19 @@
   .workspace-header__breadcrumb-item {
     display: inline-flex;
     align-items: center;
+    flex: 0 0 auto;
     min-width: 0;
+    white-space: nowrap;
+  }
+
+  /* Only the current page gives way when the header is tight. */
+  .workspace-header__breadcrumb-item[aria-current='page'] {
+    flex: 0 1 auto;
+  }
+
+  .workspace-header__breadcrumb-item[aria-current='page'] .workspace-header__title {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .workspace-header__breadcrumb-separator {

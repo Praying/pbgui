@@ -255,9 +255,9 @@ function messageOf(value: unknown): string { if (value && typeof value === 'obje
    static utilities on the element never fight a dynamic one. */
 function statusClass(value: unknown): string {
   const v = clean(value).toLowerCase();
-  if (['online', 'running', 'successful', 'connected', 'known', 'ok', 'ready'].includes(v)) return 'bg-success-deep text-success-soft';
-  if (['failed', 'offline', 'error', 'unreachable', 'mismatch'].includes(v)) return 'bg-danger-deep text-danger-soft';
-  return 'bg-warning-deep text-warning-soft';
+  if (['online', 'running', 'successful', 'connected', 'known', 'ok', 'ready'].includes(v)) return 'bg-success/14 text-success-soft';
+  if (['failed', 'offline', 'error', 'unreachable', 'mismatch'].includes(v)) return 'bg-danger/14 text-danger-soft';
+  return 'bg-warning/14 text-warning-soft';
 }
 
 function noticeKindClass(kind: string): string {

@@ -135,9 +135,9 @@ function cpuDisplay(metrics: Metrics | undefined): { value: string; sub: string 
    default, so the static class never fights a dynamic one. */
 function badgeStatusClass(status: unknown): string {
   const value = String(status || '').toLowerCase();
-  if (value === 'running' || value === 'connected' || value === 'ok') return 'bg-success-deep text-success-soft';
-  if (value === 'connecting' || value === 'restarting' || value === 'stale') return 'bg-warning-deep text-warning-soft';
-  if (value === 'stopped' || value === 'error' || value === 'missing') return 'bg-danger-deep text-danger-soft';
+  if (value === 'running' || value === 'connected' || value === 'ok') return 'bg-success/14 text-success-soft';
+  if (value === 'connecting' || value === 'restarting' || value === 'stale') return 'bg-warning/14 text-warning-soft';
+  if (value === 'stopped' || value === 'error' || value === 'missing') return 'bg-danger/14 text-danger-soft';
   return 'bg-border-strong';
 }
 
@@ -149,9 +149,9 @@ function serviceStatusClass(status: unknown): string {
 }
 
 function agentFileClass(state: string): string {
-  if (state === 'ok') return 'bg-success-deep text-success-soft';
-  if (state === 'stale') return 'bg-warning-deep text-warning-soft';
-  if (state === 'error' || state === 'missing') return 'bg-danger-deep text-danger-soft';
+  if (state === 'ok') return 'bg-success/14 text-success-soft';
+  if (state === 'stale') return 'bg-warning/14 text-warning-soft';
+  if (state === 'error' || state === 'missing') return 'bg-danger/14 text-danger-soft';
   return 'bg-border-strong';
 }
 
