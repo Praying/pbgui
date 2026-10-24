@@ -42,7 +42,7 @@
      and Chinese then come from one designed-together family per platform, so
      mixed text keeps one baseline and one weight, and nothing is downloaded. */
   --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC',
-    'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei',
+    'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei', 'HarmonyOS Sans SC',
     'Noto Sans CJK SC', 'Source Han Sans SC', 'Segoe UI', 'Helvetica Neue',
     Tahoma, system-ui, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', 'JetBrains Mono',
