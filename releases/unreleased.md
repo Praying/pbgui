@@ -1,5 +1,10 @@
 # Unreleased
 
+## 移除「信息 / 币种数据」就绪提示末尾的句号
+
+- 页面顶部状态条在 CMC 池就绪时显示 `market.ready`，中文值为「就绪。」、英文为「Ready.」，与同一行的「已连接」「连接中…」等无标点状态标签不一致；两处翻译值改为「就绪」/「Ready」。该键只被 `useCoinDataState` 使用（`/state` 就绪与空消息兜底），因此只影响本页状态条，不改动服务器消息、日志文本或其它页面。
+- 仅前端改动，不递增 `api/serial.txt`；需重新 `cd frontend && pnpm run build` 后由 `frontend/dist` 生效。
+
 ## 修复「行情数据 / 活动日志」面板始终显示查看器不可用
 
 - 根因：该面板通过 `window.LogViewerPanel` 构造遗留的 `frontend/js/log_viewer_panel.js`，而该文件在经典脚本顶层用 `class LogViewerPanel` 声明——类声明创建的是全局**词法**绑定，不会成为 `window` 属性，于是 `typeof Ctor !== 'function'` 恒为真，面板每次都落到「查看器不可用」错误态，日志从未真正挂载。
