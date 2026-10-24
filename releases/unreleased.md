@@ -1,5 +1,12 @@
 # Unreleased
 
+## 修复「系统 / 日志 / 日志查看器」面板下边界随所选日志变化
+
+- 根因：该页把文档锁定为固定高度（`html, body, #app { height: 100%; overflow: hidden }`），却只覆盖了 `.app-shell__workspace` 一层；`.app-shell__primary` 仍是块级盒子，`#page-body` 的 `flex-1` 因此失效、高度等于当前日志的内容高度，面板下边界随文件长度移动（8 行的 OptimizeV8.log 明显比 22 行的 BacktestV8.log 短）。改为使用共享的 `.core-workbench-shell` 高度链（`components.css` 是唯一来源），并删除页面本地那份只覆盖一半的 override。
+- 实测（视口 1513px）：修复前 `#page-body` 为 645px、面板底边 707px，且随文件变化；修复后在 BacktestV8.log 与 OptimizeV8.log 之间切换，`#page-body` 恒为 1437px、面板底边恒为 1499px（= 视口 − 14px 内边距），日志内容改为在终端内部滚动。
+- 新增 `logging_monitor/App.styles.test.ts` 守卫：该页必须以 `core-workbench-shell` 渲染，且不得再自行声明 shell 高度链（修复前的文件在这两条断言下都会失败）。
+- 仅前端改动，不递增 `api/serial.txt`；需重新 `cd frontend && pnpm run build` 后由 `frontend/dist` 生效。
+
 ## 修复「行情数据 / 状态监控」「行情数据 / 构建最佳 1m」在浅色主题下整块变黑
 
 - 根因：`initTheme()` 只由 AppShell 调用，而 `market_data_status`、`hl_data_actions`、`root_login` 是不渲染 AppShell 的独立文档（前两者作为 iframe 内嵌在行情数据页里），从未应用已保存的主题，因此在浅色页面里渲染成整块深色——状态监控的表头、表格与整页底色，构建最佳 1m 的提示条与整块背景。三个入口补上 `initTheme()`，内嵌面板现在与所属页面同色。

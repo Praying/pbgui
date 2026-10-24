@@ -151,7 +151,7 @@ onBeforeUnmount(() => {
 
 <template>
   <AppShell
-    class="operations-shell operations-shell--logging"
+    class="core-workbench-shell operations-shell operations-shell--logging"
     page-key="system_logging"
     :page-title="t('sysmon.loggingTitle')"
     :sections="sections"
@@ -273,21 +273,11 @@ html, body, #app {
 </style>
 
 <style scoped>
-/* Page-level AppShell overrides for the fixed-height workbench layout —
-   ported from styles/logging-monitor.css at the Tailwind migration. */
-.operations-shell--logging {
-  height: 100%;
-  min-height: 0;
-}
-
-.operations-shell--logging :deep(.app-shell__workspace) {
-  display: flex;
-  height: 100%;
-  min-height: 0;
-  flex-direction: column;
-  overflow: hidden;
-}
-
+/* The fixed-height chain is the shared `.core-workbench-shell` contract in
+   components.css (shell → workspace → main → primary → #page-body). This page
+   used to override only `.app-shell__workspace`, which left
+   `.app-shell__primary` a block box, so #page-body collapsed to the log's
+   content height and the viewer's bottom edge moved with every file. */
 
 /* Keep settings cards at the same elevation as the shared workbench panels. */
 .operations-shell--logging article {
