@@ -127,11 +127,16 @@ function segmentTabClass(isActive: boolean): string {
     <div class="flex flex-col gap-1"><Label>{{ t('v7explore.segment') }}</Label></div>
     <!-- ui-migration: out of scope — the segment tabs are a tab bar (the live
          .pbgui-tab/.pbgui-tab-bar rules of styles/components.css), not form controls -->
-    <div class="pbgui-tab-bar grid grid-cols-[repeat(auto-fit,minmax(92px,1fr))] gap-0 mt-1.25 mb-3.5 overflow-hidden rounded-lg border border-secondary/15 bg-page/60">
+    <!-- Seven segments at 1fr each with a 92px floor did not fit a half-width
+         column: `auto-fit` wrapped the last one to a second row and
+         `overflow-hidden` clipped "Forager/Unstuck" at the edge. One row that
+         shares the space equally when it fits and scrolls sideways when it does
+         not keeps every label whole. -->
+    <div class="pbgui-tab-bar grid grid-flow-col auto-cols-[minmax(max-content,1fr)] gap-0 mt-1.25 mb-3.5 overflow-x-auto overflow-y-hidden rounded-lg border border-secondary/15 bg-page/60 [scrollbar-width:thin]">
       <button
         v-for="seg in store.segments.value"
         :key="seg.key"
-        class="pbgui-tab min-w-0 min-h-[31px] cursor-pointer border-0 border-r border-r-secondary/12 bg-transparent px-2 py-1.25 text-xs transition-[color,background-color] duration-snap ease-standard first:rounded-l-[7px] last:rounded-r-[7px] last:border-r-0"
+        class="pbgui-tab min-w-0 min-h-[31px] whitespace-nowrap cursor-pointer border-0 border-r border-r-secondary/12 bg-transparent px-2 py-1.25 text-xs transition-[color,background-color] duration-snap ease-standard first:rounded-l-[7px] last:rounded-r-[7px] last:border-r-0"
         type="button"
         :class="segmentTabClass(seg.key === segmentKey)"
         @click="setSegment(seg.key)"

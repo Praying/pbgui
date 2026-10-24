@@ -373,14 +373,6 @@ describe('WidgetIncome cell pre-height freeze (editor:1474-1490)', () => {
 describe('WidgetIncome reload (editor:1497 onReload)', () => {
   it('refetches through the IncomeTable onReload prop', async () => {
     const { wrapper, env } = mountIncome({ payload: TABLE_PAYLOAD });
-    /* The first fetch is only "done" once the table has rendered from it.
-       settle() waits for fetch activity to go quiet, but a mount-time fetch
-       that resolves a tick later still shows up in the count below as a second
-       call (seen ~1 run in 7 under full-suite load). Anchor on the rendered
-       result, not on elapsed turns, so the count starts from a true baseline. */
-    await vi.waitFor(() => {
-      expect(wrapper.findComponent(IncomeTable).exists()).toBe(true);
-    });
     await settle();
     env.fetch.mockClear();
     const reload = wrapper.getComponent(IncomeTable).props('onReload') as () => void;

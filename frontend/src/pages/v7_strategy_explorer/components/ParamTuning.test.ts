@@ -121,3 +121,36 @@ describe('ParamTuning near-bound hint (:1819-1821)', () => {
     expect(wrapper.text()).not.toContain('Near upper bound');
   });
 });
+
+describe('ParamTuning segment strip layout', () => {
+  /* Seven segments in `repeat(auto-fit, minmax(92px, 1fr))` + overflow-hidden:
+     in a half-width column auto-fit wrapped the last tab to a second row and
+     overflow-hidden clipped "Forager/Unstuck" (measured at 1440px). The strip
+     is now one row that scrolls sideways when it cannot fit. jsdom has no
+     layout, so the contract is pinned on the classes that produce it. */
+  it('lays the segments out as one scrollable row, not a wrapping clipped grid', () => {
+    const { store } = makeStore({ entry_initial_qty_pct: 0.1 });
+    const wrapper = mount(ParamTuning, {
+      props: { store, sideKey: 'long' },
+      global: { plugins: [createI18n('en')] },
+    });
+    const bar = wrapper.get('.pbgui-tab-bar');
+    const classes = bar.classes().join(' ');
+    expect(classes).toContain('grid-flow-col');
+    expect(classes).toContain('overflow-x-auto');
+    // the old recipe: wraps (auto-fit) and clips (overflow-hidden)
+    expect(classes).not.toContain('auto-fit');
+    expect(classes).not.toMatch(/(^|\s)overflow-hidden(\s|$)/);
+  });
+
+  it('keeps every tab on a single line of text', () => {
+    const { store } = makeStore({ entry_initial_qty_pct: 0.1 });
+    const wrapper = mount(ParamTuning, {
+      props: { store, sideKey: 'long' },
+      global: { plugins: [createI18n('en')] },
+    });
+    const tabs = wrapper.findAll('.pbgui-tab-bar .pbgui-tab');
+    expect(tabs.length).toBeGreaterThanOrEqual(7);
+    for (const tab of tabs) expect(tab.classes(), tab.text()).toContain('whitespace-nowrap');
+  });
+});

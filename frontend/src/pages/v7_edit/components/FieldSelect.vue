@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FieldLabel from './FieldLabel.vue';
 import { computed } from 'vue';
 import {
   SelectContent,
@@ -33,7 +34,7 @@ const currentLabel = computed(() => {
 
 <template>
   <div class="form-group">
-    <label :id="id + '-label'"><span v-if="tip" :data-tip="tip">{{ label }}</span><template v-else>{{ label }}</template></label>
+    <label :id="id + '-label'"><FieldLabel :label="label" :tip="tip" /></label>
     <SelectRoot v-model="model" @update:model-value="emit('change')">
       <SelectTrigger :id="id" :aria-labelledby="id + '-label'">
         <span :class="currentLabel ? undefined : 'text-placeholder'">{{ currentLabel }}</span>

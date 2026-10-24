@@ -512,7 +512,11 @@ onBeforeUnmount(() => {
           <div class="label mb-1.5 text-xs text-secondary uppercase tracking-label">{{ t('v7explore.paretoFront') }}</div>
           <div class="value text-lg font-bold leading-[1.25] [overflow-wrap:anywhere] break-words" id="metric-paretos">{{ metricParetos }}</div>
         </div>
-        <div class="metric-card min-w-0 rounded-xl border border-border-default bg-panel p-3">
+        <!-- With three cards the grid drops to two columns at <=1500px, which
+             left this one alone on a second row with 400-670px of dead space to
+             its right (measured at 1440 down to 900px). In the two-column
+             layout it spans the row; in one column the span is a no-op. -->
+        <div class="metric-card min-w-0 rounded-xl border border-border-default bg-panel p-3 max-[1500px]:col-span-full">
           <div class="label mb-1.5 text-xs text-secondary uppercase tracking-label">{{ t('v7explore.candidateSet') }}</div>
           <div class="value text-lg font-bold leading-[1.25] [overflow-wrap:anywhere] break-words">
             <span id="metric-all-results">{{ metricAllResults }}</span>

@@ -71,6 +71,12 @@ export type SyncStatus = '' | 'saving' | 'saved' | 'error' | 'offline';
 /* ── store interface ── */
 
 export interface DashboardStore {
+  /**
+   * Cancel the pending debounced sync, if any. A scheduled sync is a real
+   * `setTimeout` that later POSTs through the injected fetch; dropping the store
+   * reference does not cancel it.
+   */
+  dispose(): void;
   /** The flat persisted state (reactive). Keys are the on-disk contract. */
   readonly state: Record<string, unknown>;
   /** Per-cell widget remount epochs (non-persisted) — legacy buildGrid parity. */
@@ -316,6 +322,11 @@ function createDashboardStore(config: DashboardStoreConfig): DashboardStore {
     }, SYNC_DEBOUNCE_MS);
   }
 
+  function dispose(): void {
+    if (syncTimer !== null) clearTimeout(syncTimer);
+    syncTimer = null;
+  }
+
   async function doSync(): Promise<void> {
     syncStatusRef.value = 'saving';
     const payload = serialize();
@@ -388,6 +399,7 @@ function createDashboardStore(config: DashboardStoreConfig): DashboardStore {
     resetCellHeight,
     rebuildCell,
     scheduleSync,
+    dispose,
     doSync,
     markViewDirty,
     saveViewLayout,
@@ -410,7 +422,18 @@ export function useDashboardStore(config?: Partial<DashboardStoreConfig>): Dashb
   return instance;
 }
 
-/** Tests only: detach the singleton (pending sync timers die with it). */
+/**
+ * Tests only: detach the singleton and cancel its pending sync timer.
+ *
+ * The previous version only dropped the reference while its comment claimed the
+ * timers "die with it". They do not: a scheduled sync is a live setTimeout whose
+ * closure keeps the store (and its fetch) alive, so 400 ms later it POSTed
+ * `pending_full` through whatever global fetch stub the *next* test had
+ * installed. That surfaced as a second, unrelated call in
+ * WidgetIncome's reload test, only when the full suite ran slowly enough for
+ * the timer to land inside another test.
+ */
 export function resetDashboardStore(): void {
+  instance?.dispose();
   instance = null;
 }

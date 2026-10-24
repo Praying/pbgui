@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FieldLabel from './FieldLabel.vue';
 import { Input } from '@/shared/components/ui/input';
 
 /** Numeric form-group primitive — the legacy <div class="form-group"> + input number (:583), on the shared Input chrome. */
@@ -21,7 +22,7 @@ withDefaults(
 
 <template>
   <div class="form-group">
-    <label :for="id"><span v-if="tip" :data-tip="tip">{{ label }}</span><template v-else>{{ label }}</template></label>
+    <label :for="id"><FieldLabel :label="label" :tip="tip" /></label>
     <Input :id="id" v-model="model" type="number" :min="min" :max="max" :step="step" :placeholder="placeholder" :readonly="readonly || undefined" />
   </div>
 </template>

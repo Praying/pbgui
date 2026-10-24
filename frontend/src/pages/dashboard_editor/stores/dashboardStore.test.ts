@@ -587,3 +587,45 @@ describe('assignCellType — ORDERS cross-cell refresh (D-editor-6, editor:2215-
     expect(store.epochOf(1, 1)).toBe(before + 1);
   });
 });
+
+describe('resetDashboardStore cancels the pending sync', () => {
+  /* A scheduled sync is a live setTimeout. resetDashboardStore used to drop the
+     reference only, so the timer still fired 400 ms later and POSTed
+     pending_full through whatever fetch the NEXT test had stubbed - one
+     unrelated extra call in WidgetIncome's reload test, but only when the full
+     suite was slow enough for the timer to land inside another test. */
+  it('does not fire the debounced POST after the store is reset', () => {
+    const { fetchFn } = setup();
+    const store = useDashboardStore();
+    store.assignCellType(1, 1, 'PNL'); // schedules the 400 ms sync
+    resetDashboardStore();
+    vi.advanceTimersByTime(1000);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('still lets a fresh store schedule and send its own sync afterwards', () => {
+    setup();
+    const first = useDashboardStore();
+    first.assignCellType(1, 1, 'PNL');
+    resetDashboardStore();
+
+    const { fetchFn } = setup();
+    const second = useDashboardStore();
+    second.assignCellType(1, 2, 'TOP');
+    vi.advanceTimersByTime(400);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('dispose() cancels a pending sync without touching later ones', () => {
+    const { fetchFn } = setup();
+    const store = useDashboardStore();
+    store.assignCellType(1, 1, 'PNL');
+    store.dispose();
+    vi.advanceTimersByTime(400);
+    expect(fetchFn).not.toHaveBeenCalled();
+
+    store.assignCellType(1, 2, 'TOP');
+    vi.advanceTimersByTime(400);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+});

@@ -29,7 +29,13 @@
 - Coin Data 主表头被截断：`table-fixed` 的百分比列在视口变窄时同比收缩，实测 1440px 下 12 个表头有 7 个被省略号截断（`Rank`→`R..`，`Coin`→`Co…`），1024px 下 11 个。给每列加上按实测表头宽度（中英文取较大值）计算的 `minWidth`，并由数据推导表的 `min-width`（使每列百分比份额都不低于自己的下限，约 1357px）；其下由已有的 `overflow:auto` 横向滚动而不是截断。中英文在 1920/1440/1280/1024 四个宽度下被截断的表头均为 0，数据单元格 0 截断。新增 `columns.test.ts` 把百分比、下限与表下限绑在一起，防止日后调列时悄悄退回。其余 8 个含表格的页面在 1440/1280 下表头截断均为 0，不改。
 - Jobs Monitor 内容贴着导航栏边缘（左右间距 0px，而同类的 vps_monitor / cluster_sync / vps_manager 都用页面内边距 24px）：补上 `--page-padding`，嵌入模式保持原样。24 个页面现在标题与内容左缘对齐。
 - 浅色卡片阴影过重：阴影透明度改为主题变量（`--shadow-a-panel/elevated/modal`）。实测同一张卡片下方的亮度偏移在浅色里是 16.4%（一圈灰色污迹），在深色里只有 1.1%；浅色降到 0.08/0.14/0.30 后为 4.8%，深色数值不变（与上次提交逐像素比对 0 差异）。
-- `WidgetIncome` 的「reload」用例在完整套件里偶发失败（`fetch` 被调用 2 次而非 1 次）：它在第一次请求落地前就开始计数。改为先等表格真正渲染出来再清零计数。注意失败率很低——原版在 24 次完整运行里 0 次失败，但在另两轮扫描里各复现过 1 次（约 1/7、1/14），修复后 30 次 0 次失败。这只能说明没有再复现，不能证明已根治。
+- 找到 `WidgetIncome`「reload」用例偶发失败的根因：`resetDashboardStore()` 只丢弃了 store 引用，注释却写着「待定的 sync 定时器会随之消失」——并不会，`scheduleSync` 的 400ms `setTimeout` 仍然存活，其闭包持有该 store 和它的 fetch，于是在下一个测试已经 stub 了全局 `fetch` 的时候，向 `/dashboard/pending_full` 发出 POST，被计成多出来的第 2 次调用。只有整套测试跑得足够慢、定时器恰好落进另一个用例时才会出现，所以单文件永远通过。用临时诊断在第 25 轮完整运行里抓到了两次调用的 URL（`income_data` + `pending_full`）才确认，而不是猜测。`DashboardStore` 新增 `dispose()`，`resetDashboardStore()` 现在会真正取消定时器；新增 3 个测试，其中「重置后不再发出 POST」在旧实现下会失败。修复后连续 60 次完整运行 0 次失败（此前约 1/7～1/25）。此前我为该用例加的 `vi.waitFor` 是基于错误猜测，已移除。
+- 补看此前未逐张检查的页面（welcome、profit_sweep、v7_backtest、v7_edit、pareto、strategy_explorer、vps_manager、logging_monitor），并把「每个页面」落实为可测量的检查：24 页 × 5 视口溢出、表头截断、标签断行、卡片网格孤儿行、左右间距对齐。
+- v7 运行/编辑页的参数名被劈在单词中间：`overflow-wrap: anywhere` 允许在任意字符处断行，窄列里 `minimum_coin_age_days` 渲染成 `minimum_coin_age_d` / `ays`。实测 1920px 与 1440px 下 51 个 snake_case 标签有 6 个被劈开（`margin_mode_prefe/rence`）。新增 `FieldLabel`，在每个下划线后放 `<wbr>`，浏览器优先在这些位置换行，`overflow-wrap` 只作最后兜底；`<wbr>` 不产生文本，标签文字与 `for=` 关联不变。四个字段原语（Number/Text/Select/Check）都改用它。修复后 1920/1440/1280/1024 四个宽度下为 0，并在回退前的构建上用同一检测复现了问题，确认检测有效。
+- 策略探索器的分段标签条：7 个标签用 `repeat(auto-fit, minmax(92px, 1fr))` + `overflow-hidden`，在半宽列里 `HSL` 被挤到第二行、`Forager/Unstuck` 贴边被裁。改为单行、等分、放不下时横向滚动；1440px 起 7 个标签同行完整显示，1280/1024px 可滚动且最后一个标签滚动后完整可见。
+- Pareto 页三张摘要卡在 ≤1500px 变成 2+1，第三张孤立在第二行，右侧空出 400–670px（1440 到 900px 均如此）。第三张在两列布局下通栏，右侧空白降为 0，与下方两列卡片对齐。
+- 扫描全部页面的卡片网格，除上述外只剩服务监控的 9 个服务磁贴（5 列、末行 4 个）：固定尺寸磁贴的左对齐排布，有意不改。
+- 深色回归：与上一次提交逐像素比对 18 页，变化只出现在本轮改动的 v7_edit、pareto、strategy_explorer 三页，其余 15 页为 0。
 
 ## 修复系统/内部划转「方向」无法选中（待确认划转锁定）
 
