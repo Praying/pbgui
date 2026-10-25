@@ -50,9 +50,49 @@ export interface ReasoningVariant {
   description?: string;
 }
 
+export interface CustomModel {
+  id: string;
+  name: string;
+  base_url: string;
+  protocol: 'chat' | 'responses';
+  context: number;
+  output_limit: number;
+  image_input: boolean;
+  tools: boolean;
+  reasoning_variants: ReasoningVariant[];
+  has_key: boolean;
+}
+
+/** Write-only form payload for one bring-your-own-key model endpoint. */
+export interface CustomModelForm {
+  model: string;
+  name: string;
+  base_url: string;
+  protocol: 'chat' | 'responses';
+  context: number;
+  output_limit: number;
+  image_input: boolean;
+  tools: boolean;
+  reasoning_efforts: string[];
+  api_key: string;
+}
+
+export interface CustomTestResult {
+  ok: boolean;
+  reply: string;
+  error: string;
+  url: string;
+  protocol: string;
+  elapsed_seconds: number;
+}
+
 export interface ModelInfo {
   id: string;
   name: string;
+  image_input?: boolean;
+  context?: number;
+  output_limit?: number;
+  protocol?: string;
   free?: boolean;
   tools?: boolean;
   training?: boolean;
@@ -170,6 +210,7 @@ export function useAiChat(t: Translate) {
   const includeContext = ref(true);
   const chatgptUsage = ref<ProviderUsage>({ email: '', limits: [] });
   const openrouterKey = ref('');
+  const customModels = ref<CustomModel[]>([]);
   const openrouterUsage = ref<ProviderUsageSummary | null>(null);
   const goUsage = ref<ProviderUsageSummary | null>(null);
 
@@ -191,6 +232,7 @@ export function useAiChat(t: Translate) {
     ['opencode-zen', 'OpenCode Zen'],
     ['opencode-go', 'OpenCode Go'],
     ['openrouter', 'OpenRouter'],
+    ['custom', t('ai.chat.customProvider')],
   ];
 
   const chatgpt = computed(() => providers.value.chatgpt || {});
@@ -925,6 +967,54 @@ async function sendMessage(retryText?: string): Promise<void> {
       .catch((error: Error) => setNotice(error.message, true));
   }
 
+  async function loadCustomModels(): Promise<void> {
+    try {
+      customModels.value = (await api<{ models?: CustomModel[] }>('/providers/custom/models')).models || [];
+    } catch (error) {
+      setNotice((error as Error).message, true);
+    }
+  }
+
+  async function saveCustomModel(form: CustomModelForm, original: string): Promise<boolean> {
+    transitioning.value = true;
+    try {
+      await api('/providers/custom/models', { method: 'PUT', body: JSON.stringify({ ...form, original }) });
+      setNotice(t('ai.chat.customSaved'));
+      await Promise.all([refreshStatus(), loadCustomModels()]);
+      if (providerId.value === 'custom') await loadModels();
+      return true;
+    } catch (error) {
+      setNotice((error as Error).message, true);
+      return false;
+    } finally {
+      transitioning.value = false;
+    }
+  }
+
+  async function deleteCustomModel(model: string): Promise<void> {
+    transitioning.value = true;
+    try {
+      if (providerId.value === 'custom') await newChat(true);
+      await api('/providers/custom/models?model=' + encodeURIComponent(model), { method: 'DELETE' });
+      await Promise.all([refreshStatus(), loadCustomModels()]);
+    } catch (error) {
+      setNotice((error as Error).message, true);
+    } finally {
+      transitioning.value = false;
+    }
+  }
+
+  async function testCustomModel(form: CustomModelForm, original: string, effort: string): Promise<CustomTestResult> {
+    try {
+      return await api<CustomTestResult>('/providers/custom/test', {
+        method: 'POST',
+        body: JSON.stringify({ ...form, original, effort }),
+      });
+    } catch (error) {
+      return { ok: false, reply: '', error: (error as Error).message, url: '', protocol: form.protocol, elapsed_seconds: 0 };
+    }
+  }
+
   async function connectOpenrouter(): Promise<void> {
     const key = openrouterKey.value.trim();
     if (!key) {
@@ -967,7 +1057,7 @@ async function sendMessage(retryText?: string): Promise<void> {
 
   async function initialize(): Promise<void> {
     await refreshStatus();
-    await loadConversations();
+    await Promise.all([loadConversations(), loadCustomModels()]);
   }
 
   return {
@@ -980,6 +1070,10 @@ async function sendMessage(retryText?: string): Promise<void> {
     goUsage,
     openrouter,
     openrouterKey,
+    customModels,
+    saveCustomModel,
+    deleteCustomModel,
+    testCustomModel,
     openrouterUsage,
     models,
     modelsById,

@@ -27,6 +27,7 @@ from ai_capabilities import (
     get_ai_capability_service,
     shutdown as capability_shutdown,
 )
+from ai_byok import CustomModelError, CustomModelStore, PROVIDER as CUSTOM_PROVIDER
 from ai_chat_images import ChatImageStore
 from file_lock import advisory_file_lock
 from logging_helpers import human_log as _log
@@ -1334,6 +1335,7 @@ class AIChatService:
         self.root = Path(root or Path(PBGDIR) / "data" / "ai")
         ensure_private_directory(self.root)
         self.credentials = AICredentialStore(self.root / "credentials")
+        self.custom_models = CustomModelStore(self.credentials.root, self.credentials.lock_target)
         self.http: aiohttp.ClientSession | None = None
         self.codex: dict[str, CodexRuntime] = {}
         self.conversations: dict[str, Conversation] = {}
@@ -1497,6 +1499,7 @@ class AIChatService:
                 "opencode-zen": {"available": True, "connected": self.credentials.configured(owner)},
                 "opencode-go": {"available": True, "connected": self.credentials.configured(owner)},
                 "openrouter": {"available": True, "connected": self.credentials.openrouter_configured(owner)},
+                CUSTOM_PROVIDER: {"available": True, "connected": self.custom_models.configured(owner)},
             },
             "capabilities": {"chat_only": False, "pbgui_tools": True},
         }
@@ -1594,6 +1597,35 @@ class AIChatService:
                 raise AIChatError("Could not verify OpenCode Go connection") from exc
             self.credentials.save_go_key(owner, key)
             self.health_wakeup.set()
+
+    async def save_custom_model(self, owner: str, config: object, api_key: object, original: str = "") -> dict[str, Any]:
+        """Validate and store one bring-your-own-key model endpoint."""
+        async with self._provider_lock(owner, CUSTOM_PROVIDER):
+            try:
+                return self.custom_models.save(owner, config, api_key, original)
+            except CustomModelError as exc:
+                raise AIChatError(str(exc)) from exc
+
+    async def delete_custom_model(self, owner: str, model: str) -> None:
+        """Cancel running turns of one custom model and remove its endpoint and key."""
+        async with self._provider_lock(owner, CUSTOM_PROVIDER):
+            state_key = self._provider_state_key(owner, CUSTOM_PROVIDER)
+            self.provider_disconnecting.add(state_key)
+            try:
+                await self._cancel_provider(owner, CUSTOM_PROVIDER)
+                if not self.custom_models.delete(owner, model):
+                    raise AIChatError("Custom model not found")
+            finally:
+                self.provider_disconnecting.discard(state_key)
+
+    async def test_custom_model(self, owner: str, config: object, api_key: object,
+                                original: str = "", effort: str = "") -> dict[str, Any]:
+        """Check that an endpoint answers in its configured protocol, without PBGui data."""
+        from ai_byok import check_connection
+        try:
+            return await check_connection(self, self.custom_models, owner, config, api_key, original, effort)
+        except CustomModelError as exc:
+            raise AIChatError(str(exc)) from exc
 
     async def connect_openrouter(self, owner: str, api_key: str) -> None:
         """Verify one OpenRouter key before storing it separately."""
@@ -1709,6 +1741,11 @@ class AIChatService:
                 raise AIChatError("OpenRouter is not connected")
             return [{"id": JEV_MODEL, "name": "Jev 1.13 · Structured decisions", "default": True,
                      "tools": False, "decision": True, "retention": "See OpenRouter and TypeSafe terms"}]
+        if provider == CUSTOM_PROVIDER:
+            models = self.custom_models.models(owner)
+            if not models:
+                raise AIChatError("No custom model is configured")
+            return models
         if provider == "chatgpt":
             self._ensure_reaper()
             await self._close_idle_codex_runtimes()
@@ -1827,6 +1864,8 @@ class AIChatService:
                 raise AIChatError("OpenCode is not connected")
             if provider == "openrouter" and not self.credentials.openrouter_configured(owner):
                 raise AIChatError("OpenRouter is not connected")
+            if provider == CUSTOM_PROVIDER and not self.custom_models.configured(owner):
+                raise AIChatError("No custom model is configured")
             if not _pre_reserved:
                 await self._reserve_conversation(conversation)
             self.active_tasks[conversation.id] = task
@@ -1948,7 +1987,7 @@ class AIChatService:
                                     proposal=new_proposal,
                                     ui_action=new_ui_action,
                                 )
-                elif provider in (*_OPENCODE_PROVIDERS, "openrouter"):
+                elif provider in (*_OPENCODE_PROVIDERS, "openrouter", CUSTOM_PROVIDER):
                     current_user = pending_user
                     if pending_user is None:
                         current_user = {
@@ -1999,7 +2038,7 @@ class AIChatService:
                     [
                         *(
                             []
-                            if provider in _OPENCODE_PROVIDERS or provider == "openrouter" or pending_user is not None
+                            if provider in _OPENCODE_PROVIDERS or provider in ("openrouter", CUSTOM_PROVIDER) or pending_user is not None
                             else [
                                 {
                                     "role": "user",
@@ -2332,7 +2371,7 @@ class AIChatService:
             if not isinstance(value, str) or len(value) > limit or any(ord(char) < 32 for char in value):
                 raise AIChatError("Invalid AI model selection")
             result[key] = value
-        if result["provider"] not in {"chatgpt", "opencode-go", "opencode-zen", "openrouter"} or not result["model"]:
+        if result["provider"] not in {"chatgpt", "opencode-go", "opencode-zen", "openrouter", CUSTOM_PROVIDER} or not result["model"]:
             raise AIChatError("Invalid AI model selection")
         return result
 
@@ -3520,17 +3559,25 @@ class AIChatService:
         effort: str = "",
     ) -> str:
         """Run one bounded OpenCode Go request through its documented protocol."""
-        provider_config = _OPENCODE_PROVIDERS.get(provider)
-        if provider_config is None:
-            raise AIChatError("Unsupported OpenCode provider")
-        available = {item["id"]: item for item in await self._go_models(provider)}
-        if model not in available:
-            raise AIChatError("Selected OpenCode Go model is unavailable")
+        if provider == CUSTOM_PROVIDER:
+            entry = self.custom_models.get(owner, model)
+            if entry is None:
+                raise AIChatError("Selected custom model is unavailable")
+            provider_config = {"base_url": entry["base_url"]}
+            available = {model: next(item for item in self.custom_models.models(owner) if item["id"] == model)}
+            key = entry["api_key"] or "no-key"
+        else:
+            provider_config = _OPENCODE_PROVIDERS.get(provider)
+            if provider_config is None:
+                raise AIChatError("Unsupported OpenCode provider")
+            available = {item["id"]: item for item in await self._go_models(provider)}
+            if model not in available:
+                raise AIChatError("Selected OpenCode Go model is unavailable")
+            key = self.credentials.load_go_key(owner)
         variant = self._selected_reasoning_variant(available[model], effort)
         history = messages[-_MAX_HISTORY_MESSAGES:]
         if sum(len(item["content"]) for item in history) > _MAX_HISTORY_CHARS:
             raise AIChatError("Conversation context exceeds the supported provider payload")
-        key = self.credentials.load_go_key(owner)
         selected_protocol = str(available[model]["protocol"])
         if any(item.get("images") for item in history):
             if available[model].get("image_input") is False:

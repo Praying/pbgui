@@ -54,6 +54,21 @@ PBGui 能力工具在 OpenCode Chat Completions、OpenAI Responses 和 Anthropic
 
 标记 **Chat only** 的模型不能检查已安装的 Passivbot 文档、源码或当前 PBGui 数据。它们不接收能力规则或工具名称，直接根据通用知识回答。答案需要本地或已安装运行时证据时，选择标记 **PBGui tools** 的模型。Responses 和 Messages 模型现在可以通过其原生函数结果格式携带已安装版本、文档和源码结果，而不暴露不受限制的文件系统访问。
 
+## 自定义模型（BYOK）
+
+**自定义（BYOK）** 可接入任何兼容 OpenAI 的服务——云端 API、网关，或 Ollama、vLLM、llama.cpp 等本地服务。
+
+1. 在左侧面板打开 **自定义（BYOK）**，点击 **添加自定义模型**。
+2. 填写服务的 **基础 URL**（例如 `https://api.example.com/v1`，不要附加 `/chat/completions` 或 `/responses`）和 **API 密钥**。本地服务可不填密钥；密钥只保存在 PBGui 服务器上，不会返回浏览器。
+3. 选择 **协议**：*OpenAI Chat Completions*（`/chat/completions`）或 *OpenAI Responses*（`/responses`）。
+4. 按服务要求原样填写 **模型名称**，可另设显示名称。
+5. 设置 **上下文大小** 和 **最大输出**（单位 tokens），以及模型是否 **支持图片输入**、是否 **支持工具调用**。不能调用函数的模型请关闭工具调用，它们将作为纯聊天模型回答。
+6. 用逗号列出模型支持的 **思考等级**（例如 `low, medium, high`）。Chat Completions 以 `reasoning_effort` 发送，Responses 以 `reasoning.effort` 发送。没有思考设置的模型请留空。
+7. 点击 **测试连通性**。PBGui 只发送一条固定提示（不含对话、页面数据或 PBGui 工具），并报告服务是否以所选协议响应及耗时。可直接测试未保存的内容；编辑时密钥留空即可沿用已保存的密钥。
+8. 点击 **保存**。该模型会出现在聊天工具栏的 **自定义（BYOK）** 提供方下。
+
+聊天消息以及助手回答时读取的 PBGui 数据都会发送到你配置的服务。不会跟随重定向。移除模型会删除其已保存的密钥，并取消使用它的进行中对话。
+
 ## 操作批准
 
 PBGui 将可逆浏览器操作与持久操作分开。选择 Pareto 候选的显式请求可以通过类型化、所有者绑定的浏览器操作直接标记打开的 Optimize 页面中确切运行绑定的行。页面还可以为其实体宣告可复用操作。例如，`show_log` 将所选或运行中的 Optimize 和 Backtest 任务或活动机器人配置映射到每个页面现有的日志查看器函数，而不是要求功能特定的模型工具或 Python 分析。操作可以针对另一个已注册的 PBGui 页面：PBGui 导航到那里，自动恢复当前对话，在目标数据加载时保持操作待处理，并且只在目标页面验证确切实体并调用其注册回调后确认它。共享桥不能执行模型生成的 JavaScript、任意 URL、路径或 DOM 选择器。

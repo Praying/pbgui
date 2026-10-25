@@ -705,7 +705,7 @@
       option.value = 'chatgpt:' + profile.id;
       select.appendChild(option);
     });
-    [ ['opencode-zen', 'OpenCode Zen'], ['opencode-go', 'OpenCode Go'], ['openrouter', 'OpenRouter'] ].forEach(function (provider) {
+    [ ['opencode-zen', 'OpenCode Zen'], ['opencode-go', 'OpenCode Go'], ['openrouter', 'OpenRouter'], ['custom', 'Custom (BYOK)'] ].forEach(function (provider) {
       if (!(state.providers[provider[0]] || {}).connected) return;
       var option = el('option', '', provider[1]);
       option.value = provider[0];

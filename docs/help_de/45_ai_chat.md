@@ -237,6 +237,21 @@ Bei geöffnetem Optimize-Resultat und aktiviertem **Include page context** kanns
 
 Jede Frage bewertet einen ausgewählten Optimize-Lauf und markiert bis zu zehn Pareto-Zeilen. Die Antwort ordnet Backtest-Prioritäten anhand der Trainingskennzahlen; separate Holdout-Backtests zeigen, wie die Kandidaten in ungesehenen Zeiträumen abschneiden.
 
+## Eigene Modelle (BYOK)
+
+**Custom (BYOK)** verbindet jeden OpenAI-kompatiblen Dienst, den du selbst betreibst oder bezahlst: eine gehostete API, ein Gateway oder einen lokalen Server wie Ollama, vLLM oder llama.cpp.
+
+1. Öffne im linken Bereich **Custom (BYOK)** und wähle **Add custom model**.
+2. Trage die **Base URL** des Dienstes (zum Beispiel `https://api.example.com/v1`, ohne `/chat/completions` oder `/responses`) und den **API-Schlüssel** ein. Der Schlüssel ist für lokale Server optional, liegt nur auf dem PBGui-Server und wird nie an den Browser zurückgegeben.
+3. Wähle das **Protokoll**: *OpenAI Chat Completions* (`/chat/completions`) oder *OpenAI Responses* (`/responses`).
+4. Gib den **Modellnamen** exakt so an, wie ihn der Dienst erwartet, optional mit Anzeigenamen.
+5. Lege **Kontextgröße** und **maximale Ausgabe** in Tokens fest sowie ob das Modell **Bilder akzeptiert** und **Tool-Aufrufe unterstützt**. Schalte Tool-Aufrufe für Modelle aus, die keine Funktionen aufrufen können; sie antworten dann als reine Chat-Modelle.
+6. Nenne die unterstützten **Denkstufen** kommagetrennt (zum Beispiel `low, medium, high`). Sie werden als `reasoning_effort` (Chat Completions) oder `reasoning.effort` (Responses) gesendet. Ohne Denkeinstellung bleibt das Feld leer.
+7. Drücke **Test connection**. PBGui sendet einen festen Prompt (ohne Unterhaltung, Seitendaten oder PBGui-Werkzeuge) und meldet, ob der Dienst im gewählten Protokoll antwortet, samt Antwortzeit. Ungespeicherte Werte lassen sich testen; beim Bearbeiten bleibt das Schlüsselfeld leer, um den gespeicherten Schlüssel zu nutzen.
+8. **Save**. Das Modell erscheint in der Chat-Leiste beim Anbieter **Custom (BYOK)**.
+
+Chat-Nachrichten und PBGui-Daten, die der Assistent beim Antworten liest, gehen an den von dir konfigurierten Endpunkt. Weiterleitungen werden nicht verfolgt. Das Entfernen eines Modells löscht den gespeicherten Schlüssel und bricht laufende Chats damit ab.
+
 ## Aktionsfreigabe
 
 PBGui trennt reversible Browseraktionen von persistenten Aktionen. Eine ausdrueckliche Aufforderung zur Auswahl von Pareto-Kandidaten kann die exakten, an den Run gebundenen Zeilen direkt in der offenen Optimize-Seite markieren. Backtest-Compare-Aktionen koennen die aktuelle Auswahl entweder durch 2-20 exakt verwaltete Results ersetzen oder 1-20 neu angeforderte Results wie einen fertigen Holdout zur bestehenden Auswahl hinzufuegen; der Browser entfernt Duplikate und erzwingt weiterhin das Limit von 20 Results. Seiten koennen ausserdem wiederverwendbare Aktionen fuer ihre Elemente anbieten. `show_log` bildet zum Beispiel ausgewaehlte oder laufende Optimize- und Backtest-Jobs oder eine aktive Bot-Config auf die bereits vorhandene Log-Viewer-Funktion der jeweiligen Seite ab, statt ein eigenes Modell-Tool oder eine Python-Analyse zu benoetigen. Die Aktion darf eine andere registrierte PBGui-Seite als Ziel haben: PBGui navigiert dorthin, stellt die aktuelle Unterhaltung automatisch wieder her, behaelt die Aktion waehrend des Ladens der Zieldaten offen und bestaetigt sie erst, nachdem die Zielseite das exakte Element validiert und ihren registrierten Callback ausgefuehrt hat. Die gemeinsame Bruecke kann weder modellgeneriertes JavaScript noch beliebige URLs, Pfade oder DOM-Selektoren ausfuehren.

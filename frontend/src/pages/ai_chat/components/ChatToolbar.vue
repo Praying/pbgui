@@ -56,6 +56,7 @@ const PROVIDER_LABELS: Array<[string, string]> = [
   ['opencode-zen', 'OpenCode Zen'],
   ['opencode-go', 'OpenCode Go'],
   ['openrouter', 'OpenRouter'],
+  ['custom', t('ai.chat.customProvider')],
 ];
 
 const connectedProviders = computed(() => PROVIDER_LABELS.filter(([id]) => (props.providers[id] || {}).connected));

@@ -170,6 +170,21 @@ Models with advertised reasoning variants show an **Effort** selector. **Standar
 
 Models labeled **Chat only** cannot inspect installed Passivbot documentation, source, or current PBGui data. They receive no capability rules or tool names and answer directly from general knowledge. Select a model labeled **PBGui tools** when the answer requires local or installed-runtime evidence. Responses and Messages models can now carry installed version, documentation, and source results back through their native function-result formats without exposing unrestricted filesystem access.
 
+## Custom models (BYOK)
+
+**Custom (BYOK)** connects any OpenAI-compatible service you run or pay for yourself — a hosted API, a gateway, or a local server such as Ollama, vLLM or llama.cpp.
+
+1. In the left pane, open **Custom (BYOK)** and choose **Add custom model**.
+2. Enter the **Base URL** of the service (for example `https://api.example.com/v1`; do not append `/chat/completions` or `/responses`) and the **API key**. The key is optional for local servers, is stored only on the PBGui server, and is never sent back to the browser.
+3. Choose the **Protocol**: *OpenAI Chat Completions* (`/chat/completions`) or *OpenAI Responses* (`/responses`).
+4. Enter the **Model name** exactly as the service expects it, plus an optional display name.
+5. Set the **Context size** and **Max output** in tokens, whether the model **accepts images**, and whether it **supports tool calling**. Turn tool calling off for models that cannot call functions; they then answer as chat-only models.
+6. List the **Thinking levels** the model accepts, separated by commas (for example `low, medium, high`). They are sent as `reasoning_effort` (Chat Completions) or `reasoning.effort` (Responses). Leave the field empty for models without a thinking setting.
+7. Press **Test connection**. PBGui sends one fixed prompt (no conversation, page data or PBGui tools) and reports whether the endpoint answered in the selected protocol, with the response time. You can test unsaved values; leave the key blank when editing to reuse the stored key.
+8. **Save**. The model now appears under the **Custom (BYOK)** provider in the chat toolbar.
+
+Chat messages, and PBGui data the assistant reads while answering, are sent to the endpoint you configure. Redirects are not followed. Removing a model deletes its stored key and cancels running chats that use it.
+
 ## OpenRouter and Jev
 
 You can also stay in a normal ChatGPT or OpenCode conversation and ask, “Use Jev to analyze the Pareto candidates in this Optimize result. Prioritize low drawdown and stable returns; explain the ten candidates to backtest.” The assistant resolves the exact optimizer run and creates a **Jev analysis** proposal showing the exact outbound Jev requests, run, question, and USD budget. Review and approve it in PBGui. Only then does PBGui call Jev; the normal assistant receives Jev's result and explains it. The Jev decision may mark Pareto rows but does not queue backtests. The drawer shows when Jev is unavailable because this PBGui account has no connected OpenRouter key. When an OpenRouter key is connected, the assistant may also suggest a reviewable Jev proposal when you did not name Jev. Only your approval starts a billable Jev request. A stated maximum number of candidates is carried into the proposal; otherwise Jev’s own yes/no decisions determine which candidates are marked.

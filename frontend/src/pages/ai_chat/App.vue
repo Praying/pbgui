@@ -20,6 +20,7 @@ import Composer from './components/Composer.vue';
 import ConversationList from './components/ConversationList.vue';
 import MessageList from './components/MessageList.vue';
 import ProviderPanel from './components/ProviderPanel.vue';
+import CustomModelPanel from './components/CustomModelPanel.vue';
 import ProposalList from './components/ProposalList.vue';
 import ResearchList from './components/ResearchList.vue';
 
@@ -149,6 +150,14 @@ function onQuickReply(actionId: string, value: string): void {
           @go-disconnect="store.disconnectGo"
           @openrouter-connect="store.connectOpenrouter"
           @openrouter-disconnect="store.disconnectOpenrouter"
+        />
+        <CustomModelPanel
+          class="mt-4"
+          :models="store.customModels.value"
+          :transitioning="store.transitioning.value"
+          @save="(form, original, done) => store.saveCustomModel(form, original).then(done)"
+          @remove="store.deleteCustomModel"
+          @test="(form, original, effort, done) => store.testCustomModel(form, original, effort).then(done)"
         />
         <ConversationList
           class="mt-3"

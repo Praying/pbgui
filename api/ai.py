@@ -272,6 +272,66 @@ async def disconnect_openrouter(session: SessionToken = Depends(require_auth)) -
         raise _provider_error("disconnect_openrouter", exc) from exc
 
 
+class CustomModelRequest(BaseModel):
+    """One bring-your-own-key model endpoint; the API key is write-only."""
+
+    model: str = Field(min_length=1, max_length=128)
+    name: str = Field(default="", max_length=80)
+    base_url: str = Field(min_length=1, max_length=512)
+    protocol: str = Field(min_length=1, max_length=16)
+    context: int
+    output_limit: int
+    image_input: bool = False
+    tools: bool = True
+    reasoning_efforts: list[str] = Field(default_factory=list, max_length=16)
+    api_key: str = Field(default="", max_length=1024)
+    original: str = Field(default="", max_length=128)
+    effort: str = Field(default="", max_length=32)
+
+    def config(self) -> dict:
+        """Return the endpoint configuration without the secret or request-only fields."""
+        return self.model_dump(exclude={"api_key", "original", "effort"})
+
+
+@router.get("/providers/custom/models")
+async def list_custom_models(session: SessionToken = Depends(require_auth)) -> JSONResponse:
+    """List the current user's custom models without their API keys."""
+    try:
+        return _json({"models": get_ai_chat_service().custom_models.models(_owner(session))})
+    except Exception as exc:
+        raise _provider_error("list_custom_models", exc) from exc
+
+
+@router.put("/providers/custom/models")
+async def save_custom_model(body: CustomModelRequest, session: SessionToken = Depends(require_auth)) -> JSONResponse:
+    """Add or update one custom model; a blank key keeps the stored one."""
+    try:
+        saved = await get_ai_chat_service().save_custom_model(_owner(session), body.config(), body.api_key, body.original)
+        return _json({"success": True, "model": saved})
+    except Exception as exc:
+        raise _provider_error("save_custom_model", exc) from exc
+
+
+@router.delete("/providers/custom/models")
+async def delete_custom_model(model: str = Query(min_length=1, max_length=128), session: SessionToken = Depends(require_auth)) -> JSONResponse:
+    """Remove one custom model and its stored key."""
+    try:
+        await get_ai_chat_service().delete_custom_model(_owner(session), model)
+        return _json({"success": True})
+    except Exception as exc:
+        raise _provider_error("delete_custom_model", exc) from exc
+
+
+@router.post("/providers/custom/test")
+async def test_custom_model(body: CustomModelRequest, session: SessionToken = Depends(require_auth)) -> JSONResponse:
+    """Verify connectivity of a (possibly unsaved) custom model with one fixed prompt."""
+    try:
+        return _json(await get_ai_chat_service().test_custom_model(
+            _owner(session), body.config(), body.api_key, body.original, body.effort))
+    except Exception as exc:
+        raise _provider_error("test_custom_model", exc) from exc
+
+
 @router.post("/providers/chatgpt/device-login")
 async def start_chatgpt_login(session: SessionToken = Depends(require_auth), profile: str = "default") -> JSONResponse:
     """Start the official ChatGPT device-code login flow."""
