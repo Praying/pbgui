@@ -62,6 +62,8 @@ export interface AiActionPayload {
 export interface AiControlDescriptor {
   id: string;
   role: string;
+  /** Unique-ish handle shown to the model: "<dialog> :: <label>" (the backend requires it). */
+  name: string;
   label: string;
   operations: string[];
   context?: string;
@@ -318,11 +320,15 @@ function aiControlDescriptor(element: Element): AiControlDescriptor | null {
   const descriptor: AiControlDescriptor = {
     id: aiControlId(element),
     role: tag === 'input' ? type || 'input' : role || tag,
+    name: label,
     label,
     operations,
   };
   const controlContext = aiControlContext(element);
-  if (controlContext) descriptor.context = controlContext;
+  if (controlContext) {
+    descriptor.context = controlContext;
+    descriptor.name = (controlContext + ' :: ' + label).slice(0, 320);
+  }
   if (tag === 'select') {
     descriptor.options = Array.from((element as HTMLSelectElement).options)
       .slice(0, 32)

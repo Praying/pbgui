@@ -115,6 +115,9 @@ describe('PBGuiAI page-action bridge (v1.99.2–4 port)', () => {
       expect(ids).not.toContain('api key');
       const search = controls.find((control) => control.label === 'Filter configs')!;
       expect(search.operations).toEqual(['set_value']);
+      // The backend rejects the whole context ("Invalid page context") when a control has no name.
+      expect(controls.every((control) => control.name.length > 0 && control.name.length <= 320)).toBe(true);
+      expect(search.name).toBe('Filter configs');
     } finally {
       rectSpy.mockRestore();
     }
