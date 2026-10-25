@@ -263,6 +263,76 @@ describe('AI Chat page shell', () => {
   });
 });
 
+describe('AI Chat approval flow', () => {
+  async function flush(): Promise<void> {
+    for (let tick = 0; tick < 8; tick += 1) await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  function withApproveResult(body: unknown): void {
+    const base = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation((url: string | URL, init?: RequestInit) =>
+      String(url).endsWith('/p1/approve') ? Promise.resolve(jsonResponse(body)) : base(url, init),
+    );
+  }
+
+  afterEach(() => {
+    delete (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs;
+  });
+
+  it('lists approval cards raised during a turn as soon as the turn finishes', async () => {
+    let turnSent = false;
+    const base = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation((url: string | URL, init?: RequestInit) => {
+      const u = String(url);
+      if (u.endsWith('/c1/turns')) {
+        turnSent = true;
+        return Promise.resolve(jsonResponse({ status: 'queued' }));
+      }
+      if (u.includes('/proposals?')) return Promise.resolve(jsonResponse(turnSent ? PROPOSALS : { proposals: [] }));
+      return base(url, init);
+    });
+    const wrapper = await mountApp();
+    expect(wrapper.find('[data-test="proposal-list"]').exists()).toBe(false);
+
+    await wrapper.find('#prompt').setValue('save the config');
+    await wrapper.find('#send').trigger('click');
+    await flush();
+
+    // The poll saw the finished turn and listed the card it raised, inside
+    // the scrolling transcript rather than docked above the composer.
+    const card = wrapper.find('.overflow-y-auto [data-test="proposal-list"]');
+    expect(card.exists()).toBe(true);
+    expect(card.text()).toContain('Awaiting your approval');
+    expect(card.text()).toContain('Save PB8 optimizer config: cfg-v8');
+  });
+
+  it('follows the AI continuation the server starts after an approval', async () => {
+    const wrapper = await mountApp();
+    (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs = { confirm: vi.fn(() => Promise.resolve(true)) };
+    withApproveResult({ status: 'executed', action: 'save', continuation: { status: 'queued' } });
+    const before = fetchMock.mock.calls.length;
+
+    await wrapper.findAll('button').filter((button) => button.text() === 'Review & approve')[0]!.trigger('click');
+    await flush();
+
+    const later = fetchMock.mock.calls.slice(before).map((call) => String(call[0]));
+    const approveAt = later.findIndex((url) => url.endsWith('/p1/approve'));
+    expect(approveAt).toBeGreaterThanOrEqual(0);
+    expect(later.slice(approveAt + 1).some((url) => /\/conversations\/c1$/.test(url))).toBe(true);
+  });
+
+  it('says so when the approved action could not continue the workflow', async () => {
+    const wrapper = await mountApp();
+    (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs = { confirm: vi.fn(() => Promise.resolve(true)) };
+    withApproveResult({ status: 'executed', action: 'save', continuation: { status: 'not_started' } });
+
+    await wrapper.findAll('button').filter((button) => button.text() === 'Review & approve')[0]!.trigger('click');
+    await flush();
+
+    expect(wrapper.text()).toContain('Approved action completed, but the AI could not continue the workflow.');
+  });
+});
+
 describe('AI proposal pure helpers', () => {
   it('labels known actions and defaults unknown ones', () => {
     const t = (key: string) => key;

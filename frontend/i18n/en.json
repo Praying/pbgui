@@ -1,5 +1,7 @@
 {
   "ai.chat.actionCompleted": "Action completed: {action}",
+  "ai.chat.continuing": "Approved action completed. Continuing the requested workflow...",
+  "ai.chat.continuationNotStarted": "Approved action completed, but the AI could not continue the workflow.",
   "ai.chat.analysisOnly": "Analysis only: PBGui actions and code execution are disabled.",
   "ai.chat.activity": "Activity",
   "ai.chat.applyingAction": "Applying approved action...",
@@ -134,6 +136,7 @@
   "ai.proposal.approveDetail": "Apply the reviewed action. {autostart}Proposal integrity is verified before execution.",
   "ai.proposal.approvePythonDetail": "The reviewed code and sanitized input will run without network or host-data access. Proposal integrity is verified before execution.",
   "ai.proposal.approveTitle": "Approve PBGui action",
+  "ai.proposal.awaitingApproval": "Awaiting your approval",
   "ai.proposal.autostartEnabled": "Queue autostart is enabled; jobs may start immediately.",
   "ai.proposal.detailBacktests": "{jobs} backtest jobs across {exchanges} exchanges",
   "ai.proposal.detailChangedFields": "{count} changed fields",

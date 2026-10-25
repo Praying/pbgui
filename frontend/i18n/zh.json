@@ -1,5 +1,7 @@
 {
   "ai.chat.actionCompleted": "操作已完成：{action}",
+  "ai.chat.continuing": "已批准的操作已完成，AI 正在继续后续步骤...",
+  "ai.chat.continuationNotStarted": "已批准的操作已完成，但 AI 未能继续后续步骤。",
   "ai.chat.analysisOnly": "仅分析模式：PBGui 操作和代码执行已禁用。",
   "ai.chat.activity": "活动",
   "ai.chat.applyingAction": "正在执行已批准的操作...",
@@ -131,6 +133,7 @@
   "ai.proposal.approveDetail": "应用已审查的操作。{autostart}执行前会验证提案完整性。",
   "ai.proposal.approvePythonDetail": "已审查的代码与脱敏输入将在无网络、无主机数据访问的环境中运行。执行前会验证提案完整性。",
   "ai.proposal.approveTitle": "批准 PBGui 操作",
+  "ai.proposal.awaitingApproval": "等待你的批准",
   "ai.proposal.autostartEnabled": "队列自动启动已启用；任务可能立即开始。",
   "ai.proposal.detailBacktests": "{jobs} 个回测任务，覆盖 {exchanges} 个交易所",
   "ai.proposal.detailChangedFields": "{count} 个字段变更",

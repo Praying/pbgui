@@ -98,13 +98,17 @@ export function useStreamingScroll(options: StreamingScrollOptions = {}) {
   /**
    * Call after the list grows (in nextTick, so heights are final). Returns
    * true when it actually moved the view.
+   *
+   * "At the bottom" means where the view was *before* the growth: a chat
+   * reply lands in one piece, taller than the threshold, so re-reading the
+   * geometry now would mistake "the list got longer" for "the user left".
+   * Every user scroll goes through onScroll, which keeps atBottom current.
    */
   function pin(el: HTMLElement | null): boolean {
     if (!el) return false;
     // A recent user scroll wins over the content arriving underneath it.
     if (Date.now() - lastUserScrollAt < quietMs) return false;
-    if (!readAtBottom(el)) {
-      atBottom.value = false;
+    if (!atBottom.value && !readAtBottom(el)) {
       isScrolledUp.value = true;
       return false;
     }

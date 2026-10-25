@@ -313,6 +313,9 @@ export function useAiChat(t: Translate) {
         if (result.busy) {
           setNotice(String(result.activity || t('ai.chat.waitingFor', { provider: providerLabel })) + ' · ' + elapsed + 's' + timingHint, false, true);
         } else {
+          // Approval cards raised during the turn are only listed once it is
+          // over (reconcileProposals clears them while busy), so fetch them now.
+          await reconcileProposals(id);
           return;
         }
       } catch {
@@ -751,7 +754,7 @@ async function sendMessage(retryText?: string): Promise<void> {
     setNotice(approve ? t('ai.chat.applyingAction') : t('ai.chat.rejectingProposal'), false, true);
     try {
       const suffix = approve ? '/approve' : '/reject';
-      const result = await api<{ status?: string; action?: string }>(
+      const result = await api<{ status?: string; action?: string; continuation?: { status?: string } }>(
         '/proposals/' + encodeURIComponent(proposal.proposal_id) + suffix,
         {
           method: 'POST',
@@ -766,11 +769,21 @@ async function sendMessage(retryText?: string): Promise<void> {
         window.PBGuiAI?.openQueuedBacktestCompare?.(result);
         window.dispatchEvent(new CustomEvent('pbgui:ai-action-completed', { detail: result }));
       }
-      setNotice(
-        executed
-          ? t('ai.chat.actionCompleted', { action: String(result.action || 'approved') })
-          : t('ai.chat.proposalStatus', { status: String(result.status || 'rejected') }),
-      );
+      // The server answers an executed approval by starting a hidden AI turn
+      // that reads the result (ai_drawer.js); follow it like any other turn.
+      const continuation = String(result.continuation?.status || '');
+      if ((continuation === 'queued' || continuation === 'running') && id === conversationId.value) {
+        setNotice(t('ai.chat.continuing'), false, true);
+        await loadConversation(id);
+      } else if (continuation === 'not_started') {
+        setNotice(t('ai.chat.continuationNotStarted'), true);
+      } else {
+        setNotice(
+          executed
+            ? t('ai.chat.actionCompleted', { action: String(result.action || 'approved') })
+            : t('ai.chat.proposalStatus', { status: String(result.status || 'rejected') }),
+        );
+      }
     } catch (error) {
       if (id === conversationId.value) {
         const restored = new Set(resolvingProposalIds.value);

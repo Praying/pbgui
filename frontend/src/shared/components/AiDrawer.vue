@@ -142,13 +142,8 @@ function onResearchAction(id: string, action: 'start' | 'cancel'): void {
   void store.actResearch(id, action);
 }
 
-async function onCopy(text: string): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(String(text || ''));
-    store.setNotice(t('ai.chat.copied'));
-  } catch {
-    store.setNotice(t('ai.chat.clipboardDenied'), true);
-  }
+function onCopied(ok: boolean): void {
+  store.setNotice(ok ? t('ai.chat.copied') : t('ai.chat.clipboardDenied'), !ok);
 }
 
 function onQuickReply(actionId: string, value: string): void {
@@ -238,12 +233,16 @@ function onQuickReply(actionId: string, value: string): void {
           :pending-message="store.pendingMessage.value"
           :busy="store.busy.value"
           :quick-reply-action="store.quickReplyAction.value"
-          @copy="onCopy"
+          :conversation-id="store.conversationId.value"
+          @copied="onCopied"
           @rewind="onRewind"
           @quick-reply="onQuickReply"
-        />
+        >
+          <template #tail>
+            <ProposalList :proposals="store.visibleProposals.value" @resolve="onResolveProposal" />
+          </template>
+        </MessageList>
         <ResearchList :items="store.researchItems.value" @action="onResearchAction" />
-        <ProposalList :proposals="store.visibleProposals.value" @resolve="onResolveProposal" />
         <details v-if="store.reasoningSummary.value" class="mx-3 rounded-md border border-border-subtle bg-input p-2 text-xs text-accent-soft">
           <summary class="cursor-pointer">{{ t('ai.chat.reasoningSummary') }}</summary>
           <pre class="max-h-[160px] overflow-auto whitespace-pre-wrap text-secondary">{{ store.reasoningSummary.value }}</pre>

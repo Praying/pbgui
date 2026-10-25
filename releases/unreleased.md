@@ -1,5 +1,17 @@
 # Unreleased
 
+## 修复「AI 对话」审批卡片不显示，并重排消息布局
+
+- 审批卡片不出现：Vue 版轮询在发现回合结束时直接返回，没有重新拉取 `/proposals`（回合进行中提案列表会被清空），AI 在回合里发起的审批卡片要刷新页面才出现。现在回合一结束即拉取；批准后服务器自动启动的续写回合（`continuation` 为 queued/running）也会被加载并轮询，未能启动时给出提示，与旧版抽屉 `ai_drawer.js` 的行为一致。
+- 审批卡片从输入框上方的停靠区移入消息列表末尾（`MessageList` 新增 `#tail` 插槽），带「等待你的批准」标识与底部操作条，随对话滚动。
+- 回复中的大块空白：Vue 包从未加载旧版的 `ai_message_view.css`，`.ai-markdown` 没有任何样式，气泡上的 `whitespace-pre-wrap` 又被继承，HTML 标签之间的换行全部渲染成空行，再叠加浏览器默认的段落/列表外边距。现在 `MessageList` 内补齐段落、列表、标题、行内代码、代码块、引用与表格（横向滚动、表头不换行、吸顶）的排版。
+- 布局：用户消息保留右侧气泡，AI 回复改为通栏正文；回合进行中在末尾显示三点指示（不进入无障碍树，状态仍由通知行播报）。用户气泡原用的 `break-anywhere` 并非有效工具类，改为 `wrap-anywhere`，长 URL 能正确折行。
+- 复制/回退按钮从消息右侧的文字按钮改为消息下方的图标按钮，悬停或键盘聚焦时出现（触屏常显），复制成功后图标短暂变为对勾。Clipboard API 不可用时（经 HTTP 局域网地址访问的非安全上下文）回退到 `execCommand('copy')`，原实现此时必然报「浏览器拒绝了剪贴板访问」。
+- 自动滚动：`useStreamingScroll.pin()` 原先在内容增长**之后**才判断是否位于底部（40px 阈值），整段回复一次性追加时必然被判为「用户已离开」，最新消息被截在可视区外；改为以增长前（由 `onScroll` 维护）的位置判断。`MessageList` 改用 `ResizeObserver` 跟随转录高度，切换会话时直接定位到最新消息。
+- AI 对话页与各 Vue 页面的 AI 抽屉共用上述组件，两处同时生效。
+- 新增测试：`MessageList.test.ts` 7 项（气泡/正文换行、图标操作行、Clipboard 与 execCommand 回退、处理中指示、尾部插槽位置）、`App.test.ts` 审批流程 3 项（旧实现下均失败）、`useStreamingScroll` 1 项。
+- 仅前端改动，不递增 `api/serial.txt`；需重新 `cd frontend && pnpm run build` 后由 `frontend/dist` 生效。
+
 ## 修复「AI 对话」自定义模型（BYOK）换浏览器后不显示
 
 - 根因：AI 数据按 owner 存放，owner 由登录会话的 `user_id` 派生，而 `user_id` 带客户端地址（`welcome:<IP>` / `passwordless:<IP>`）。BYOK 端点按 owner 存为 `{owner}.custom.json`，同一位操作者换浏览器、换设备或换访问地址（局域网 IP 与 localhost、代理出口不同）后就成了另一个 owner，已配置的模型与密钥随之「消失」。

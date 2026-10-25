@@ -47,6 +47,19 @@ describe('useStreamingScroll', () => {
     wrapper.unmount();
   });
 
+  it('follows a reply taller than the threshold when the view was at the bottom', () => {
+    const { api, wrapper } = mountScroll();
+    const el = makeScroller({ scrollTop: 800 });
+    api.attach(el);
+    api.onScroll({ currentTarget: el } as unknown as Event);
+
+    // A whole chat reply arrives at once: 500px below the old bottom.
+    Object.defineProperty(el, 'scrollHeight', { value: 1500, configurable: true });
+    expect(api.pin(el)).toBe(true);
+    expect(el.scrollTop).toBe(1500);
+    wrapper.unmount();
+  });
+
   it('leaves a reader who scrolled up alone', () => {
     const { api, wrapper } = mountScroll();
     const el = makeScroller({ scrollTop: 100 });
