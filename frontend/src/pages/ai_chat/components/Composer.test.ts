@@ -7,11 +7,12 @@ import Composer from './Composer.vue';
  * Enter is the send key, which collides with IME candidate commitment:
  * typing 你好 and pressing Enter to accept the candidate must not send.
  */
-function mountComposer() {
+function mountComposer(props: Partial<{ enabled: boolean; busy: boolean; draft: string }> = {}) {
   const i18n = createI18n({ legacy: false, locale: 'en', messages: { en: {} } });
   return mount(Composer, {
-    props: { enabled: true, busy: false, draft: '' },
+    props: { enabled: true, busy: false, draft: '', ...props },
     global: { plugins: [i18n], stubs: { PbIcon: true } },
+    attachTo: document.body,
   });
 }
 
@@ -56,5 +57,56 @@ describe('AI chat composer Enter handling', () => {
     pressEnter(wrapper, { shiftKey: true });
     await wrapper.vm.$nextTick();
     expect(wrapper.emitted('send')).toBeUndefined();
+  });
+});
+
+describe('AI chat composer surface', () => {
+  it('keeps the send button inert until a draft exists', async () => {
+    const empty = mountComposer();
+    expect(empty.get('#send').attributes('disabled')).toBeDefined();
+    empty.unmount();
+
+    const draft = mountComposer({ draft: 'hello' });
+    expect(draft.get('#send').attributes('disabled')).toBeUndefined();
+  });
+
+  it('swaps Send for Stop while a turn runs', async () => {
+    const wrapper = mountComposer({ busy: true, draft: 'hello' });
+    expect(wrapper.find('#send').exists()).toBe(false);
+    await wrapper.get('#stop').trigger('click');
+    expect(wrapper.emitted('stop')).toHaveLength(1);
+  });
+
+  it('states the keyboard contract and disables the field without a provider', () => {
+    const ready = mountComposer();
+    expect(ready.text()).toContain('ai.chat.composerHint');
+    ready.unmount();
+
+    const blocked = mountComposer({ enabled: false });
+    expect(blocked.text()).toContain('ai.chat.composerDisabledHint');
+    expect(blocked.get('textarea').attributes('disabled')).toBeDefined();
+  });
+
+  it('counts down the remaining characters only near the limit', async () => {
+    const wrapper = mountComposer();
+    expect(wrapper.text()).not.toContain('ai.chat.composerCounter');
+
+    await wrapper.setProps({ draft: 'x'.repeat(11_500) });
+    expect(wrapper.text()).toContain('ai.chat.composerCounter');
+  });
+
+  it('grows with the draft up to the maximum height', async () => {
+    const wrapper = mountComposer();
+    const textarea = wrapper.get('textarea').element as HTMLTextAreaElement;
+    // jsdom reports 0 for scrollHeight, so the height stays at the grown value.
+    Object.defineProperty(textarea, 'scrollHeight', { value: 96, configurable: true });
+    await wrapper.setProps({ draft: 'first line\nsecond line' });
+    await wrapper.vm.$nextTick();
+    expect(textarea.style.height).toBe('96px');
+
+    Object.defineProperty(textarea, 'scrollHeight', { value: 900, configurable: true });
+    await wrapper.setProps({ draft: 'many\nlines\nhere' });
+    await wrapper.vm.$nextTick();
+    expect(textarea.style.height).toBe('180px');
   });
 });

@@ -39,6 +39,8 @@ interface ModalProps {
   description?: string;
   /** Optional header classes for content-heavy dialogs that need a denser chrome. */
   headerClass?: string;
+  /** Extra classes for the action row — long forms pin it to the panel floor. */
+  footerClass?: string;
 }
 
 const props = withDefaults(defineProps<ModalProps>(), {
@@ -48,6 +50,7 @@ const props = withDefaults(defineProps<ModalProps>(), {
   closeLabel: 'Close',
   description: 'Dialog content',
   headerClass: '',
+  footerClass: '',
 });
 
 const emit = defineEmits<{ 'update:open': [open: boolean]; cancel: [] }>();
@@ -90,7 +93,7 @@ function onOpenChange(open: boolean): void {
         </DialogDescription>
         <div class="grid min-h-0 flex-1 gap-3 overflow-y-auto p-5">
           <slot />
-          <div v-if="$slots.footer" class="flex flex-wrap justify-end gap-2">
+          <div v-if="$slots.footer" :class="['flex flex-wrap justify-end gap-2', props.footerClass]">
             <slot name="footer" />
           </div>
         </div>

@@ -39,6 +39,7 @@ interface Window {
     registerPageContext?(registration: unknown): () => void;
     registerPageAction?(registration: unknown): () => void;
     continuePageAction?(url: string): boolean;
+    completePageActionNavigation?(actionId: string): void;
     tryLocalCommand?(message: string): { handled: boolean; message?: string };
     openQueuedBacktestCompare?(result: unknown): boolean;
     collectContext?(): unknown;

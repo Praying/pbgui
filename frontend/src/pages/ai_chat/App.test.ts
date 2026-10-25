@@ -263,6 +263,86 @@ describe('AI Chat page shell', () => {
   });
 });
 
+describe('AI Chat page actions', () => {
+  /* The server pauses a capability turn until the browser confirms a
+     page.perform_action (~45s). The Vue shell never dispatched the event or
+     sent the ack, so every such action waited out that timeout. */
+  const BUSY_WITH_ACTION = {
+    conversation_id: 'c1',
+    model: 'gpt-x',
+    provider: 'chatgpt',
+    busy: true,
+    messages: [{ role: 'user', content: 'hi' }],
+    ui_actions: [
+      {
+        action_id: 'a'.repeat(32),
+        type: 'page.perform_action',
+        target: { page_key: 'info_ai_chat' },
+        payload: { action: 'activate', entity: { kind: 'ui_control', name: 'New chat' } },
+      },
+    ],
+  };
+
+  async function mountBusyChat(response: unknown = BUSY_WITH_ACTION) {
+    fetchMock.mockImplementation((url: string | URL) => {
+      const u = String(url);
+      if (u.endsWith('/status')) return Promise.resolve(jsonResponse(STATUS));
+      if (u.includes('/models?provider=')) return Promise.resolve(jsonResponse(MODELS));
+      if (u.endsWith('/conversations')) return Promise.resolve(jsonResponse(CONVERSATIONS));
+      if (u.includes('/conversations/c1')) return Promise.resolve(jsonResponse(response));
+      if (u.includes('/proposals?')) return Promise.resolve(jsonResponse({ proposals: [] }));
+      return Promise.resolve(jsonResponse({}));
+    });
+    const wrapper = await mountApp();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return wrapper;
+  }
+
+  it('dispatches a model-approved page action and confirms it so the turn can continue', async () => {
+    const seen: CustomEvent[] = [];
+    const listener = (event: Event) => {
+      seen.push(event as CustomEvent);
+      event.preventDefault();
+    };
+    window.addEventListener('pbgui:ai-ui-action', listener);
+    try {
+      await mountBusyChat();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(seen).toHaveLength(1);
+      expect(seen[0]!.detail).toMatchObject({ type: 'page.perform_action' });
+      const ack = fetchMock.mock.calls.find((call) => String(call[0]).includes(`/ui-actions/${'a'.repeat(32)}/ack`));
+      expect(ack).toBeTruthy();
+      expect(ack![1]!.method).toBe('POST');
+    } finally {
+      window.removeEventListener('pbgui:ai-ui-action', listener);
+    }
+  });
+
+  it('leaves an unhandled action for the page that owns it, without acknowledging it', async () => {
+    await mountBusyChat();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/ui-actions/'))).toBe(false);
+  });
+
+  it('does not replay page actions from a finished turn', async () => {
+    let dispatched = 0;
+    const listener = (event: Event) => {
+      dispatched += 1;
+      event.preventDefault();
+    };
+    window.addEventListener('pbgui:ai-ui-action', listener);
+    try {
+      await mountBusyChat({ ...BUSY_WITH_ACTION, busy: false });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(dispatched).toBe(0);
+    } finally {
+      window.removeEventListener('pbgui:ai-ui-action', listener);
+    }
+  });
+});
+
 describe('AI Chat approval flow', () => {
   async function flush(): Promise<void> {
     for (let tick = 0; tick < 8; tick += 1) await new Promise((resolve) => setTimeout(resolve, 0));

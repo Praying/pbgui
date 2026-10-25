@@ -182,6 +182,13 @@ type Translate = (key: string, params?: Record<string, unknown>) => string;
 
 const AI_API_BASE = () => apiPath('/api/ai');
 
+/**
+ * Page actions this browser already handled. Module scope, not per store: on
+ * one page the full chat view and the drawer both poll the same conversation,
+ * and a model-approved click must happen exactly once.
+ */
+const handledPageActions = new Set<string>();
+
 export function useAiChat(t: Translate) {
   /* ── Reactive surface ── */
   const providers = ref<Record<string, ProviderInfo>>({});
@@ -443,6 +450,47 @@ export function useAiChat(t: Translate) {
     const summary = conversations.value.find((item) => item.conversation_id === snapshot.conversation_id);
     if (summary) Object.assign(summary, snapshot);
     if (!snapshot.busy && !snapshot.last_error) delete retryMessages.value[snapshot.conversation_id];
+    void applyPageActions(snapshot);
+  }
+
+  /**
+   * Run the page actions the model requested (ai_drawer.js dispatchUiActions)
+   * and confirm them, so the server-side capability stops waiting.
+   *
+   * Only while the turn is busy: the server waits ~45s for one of these, and
+   * older conversations still carry actions it already reported as
+   * unconfirmed. Replaying those would click controls nobody asked for now.
+   */
+  async function applyPageActions(snapshot: ConversationSummary): Promise<void> {
+    if (!snapshot.busy || snapshot.analysis_only) return;
+    for (const action of snapshot.ui_actions || []) {
+      const actionId = String(action?.action_id || '');
+      if (!actionId || action.type === 'chat.quick_replies' || handledPageActions.has(actionId)) continue;
+      const event = new CustomEvent('pbgui:ai-ui-action', { cancelable: true, detail: action });
+      window.dispatchEvent(event);
+      // An unhandled action stays in the snapshot for the destination page
+      // after a cross-page navigation; this one has nothing to do with it.
+      if (event.defaultPrevented) await acknowledgePageAction(snapshot.conversation_id, actionId);
+    }
+  }
+
+  async function acknowledgePageAction(id: string, actionId: string): Promise<void> {
+    handledPageActions.add(actionId);
+    const context =
+      includeContext.value && window.PBGuiAI && typeof window.PBGuiAI.collectContext === 'function'
+        ? window.PBGuiAI.collectContext()
+        : undefined;
+    try {
+      await api('/conversations/' + encodeURIComponent(id) + '/ui-actions/' + encodeURIComponent(actionId) + '/ack', {
+        method: 'POST',
+        body: JSON.stringify(context ? { context } : {}),
+      });
+      window.PBGuiAI?.completePageActionNavigation?.(actionId);
+    } catch (error) {
+      // Keep it handled: re-dispatching would click the control a second time.
+      // The turn then reports the action as unconfirmed, as before.
+      if (id === conversationId.value) setNotice((error as Error).message, true);
+    }
   }
 
   async function reconcileProposals(id: string): Promise<void> {
