@@ -622,6 +622,117 @@ def test_go_tool_loop_forces_a_final_answer_after_capability_rounds(
     asyncio.run(scenario())
 
 
+_CAPABILITY_LOOPS = [
+    ("_go_responses_agent", "_go_responses_agent_inner", "OpenCode Responses capability turn timed out"),
+    ("_go_messages_agent", "_go_messages_agent_inner", "OpenCode Messages capability turn timed out"),
+    ("_go_chat_completion_agent", "_go_chat_completion_agent_inner", "OpenCode agent capability turn timed out"),
+]
+
+
+@pytest.mark.parametrize(("method_name", "inner_name", "message"), _CAPABILITY_LOOPS)
+def test_capability_loop_keeps_running_while_it_makes_progress(
+    tmp_path: Path, monkeypatch, method_name: str, inner_name: str, message: str
+) -> None:
+    """Slow reasoning rounds add up past the old total cap; a stepping turn must finish."""
+    monkeypatch.setattr("ai_chat._CHAT_TIMEOUT_SECONDS", 0.2)
+    monkeypatch.setattr("ai_chat._OPENCODE_IDLE_TIMEOUT_SECONDS", 0.2)
+    monkeypatch.setattr("ai_chat._OPENCODE_PROGRESS_POLL_SECONDS", 0.01)
+
+    async def scenario() -> None:
+        service = AIChatService(tmp_path / "ai")
+        owner = "a" * 32
+        conversation = await service._conversation(owner, "opencode-go", "model-test", None)
+
+        async def stepping(*args):
+            for step in range(5):
+                await asyncio.sleep(0.1)
+                await service._set_activity(owner, conversation.id, f"Reviewing PBGui results (step {step})")
+            return "answer"
+
+        monkeypatch.setattr(service, inner_name, stepping)
+        loop = asyncio.get_running_loop()
+        started = loop.time()
+        reply = await getattr(service, method_name)(owner, conversation.id, "http://x", "model-test", "key", [], None)
+        assert reply == "answer"
+        assert loop.time() - started > 0.4
+        await service.shutdown()
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(("method_name", "inner_name", "message"), _CAPABILITY_LOOPS)
+def test_capability_loop_times_out_after_a_stall_and_stops_the_round(
+    tmp_path: Path, monkeypatch, method_name: str, inner_name: str, message: str
+) -> None:
+    """A step that never finishes fails the turn and cancels the pending provider request."""
+    monkeypatch.setattr("ai_chat._OPENCODE_IDLE_TIMEOUT_SECONDS", 0.15)
+    monkeypatch.setattr("ai_chat._OPENCODE_PROGRESS_POLL_SECONDS", 0.01)
+
+    async def scenario() -> None:
+        service = AIChatService(tmp_path / "ai")
+        owner = "a" * 32
+        conversation = await service._conversation(owner, "opencode-go", "model-test", None)
+        cancelled = []
+
+        async def stalled(*args):
+            await service._set_activity(owner, conversation.id, "Analyzing request")
+            try:
+                await asyncio.sleep(10)
+            except asyncio.CancelledError:
+                cancelled.append(True)
+                raise
+
+        monkeypatch.setattr(service, inner_name, stalled)
+        with pytest.raises(AIChatError, match=message):
+            await getattr(service, method_name)(owner, conversation.id, "http://x", "model-test", "key", [], None)
+        assert cancelled == [True]
+        await service.shutdown()
+
+    asyncio.run(scenario())
+
+
+def test_capability_loop_ceiling_bounds_a_turn_that_never_answers(tmp_path: Path, monkeypatch) -> None:
+    """Progress resets the idle window but never the absolute ceiling."""
+    monkeypatch.setattr("ai_chat._OPENCODE_IDLE_TIMEOUT_SECONDS", 0.2)
+    monkeypatch.setattr("ai_chat._OPENCODE_TURN_MAX_SECONDS", 0.3)
+    monkeypatch.setattr("ai_chat._OPENCODE_PROGRESS_POLL_SECONDS", 0.01)
+
+    async def scenario() -> None:
+        service = AIChatService(tmp_path / "ai")
+        owner = "a" * 32
+        conversation = await service._conversation(owner, "opencode-go", "model-test", None)
+
+        async def endless(*args):
+            while True:
+                await asyncio.sleep(0.05)
+                await service._set_activity(owner, conversation.id, "Reviewing PBGui results")
+
+        monkeypatch.setattr(service, "_go_responses_agent_inner", endless)
+        with pytest.raises(AIChatError, match="OpenCode Responses capability turn timed out"):
+            await service._go_responses_agent(owner, conversation.id, "http://x", "model-test", "key", [], None)
+        await service.shutdown()
+
+    asyncio.run(scenario())
+
+
+def test_capability_loop_reports_a_raw_timeout_from_a_step_as_the_turn_timeout(tmp_path: Path, monkeypatch) -> None:
+    """An unconverted TimeoutError from a capability must not escape as a raw error."""
+    async def scenario() -> None:
+        service = AIChatService(tmp_path / "ai")
+        owner = "a" * 32
+        conversation = await service._conversation(owner, "opencode-go", "model-test", None)
+
+        async def raw_timeout(*args):
+            raise asyncio.TimeoutError()
+
+        monkeypatch.setattr(service, "_go_responses_agent_inner", raw_timeout)
+        with pytest.raises(AIChatError, match="OpenCode Responses capability turn timed out"):
+            await service._go_responses_agent(owner, conversation.id, "http://x", "model-test", "key", [], None)
+        await service.shutdown()
+
+    asyncio.run(scenario())
+
+
 def test_responses_agent_executes_native_tools_and_replays_results(
     tmp_path: Path, monkeypatch
 ) -> None:

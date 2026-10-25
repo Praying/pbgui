@@ -127,6 +127,13 @@ _CODEX_STALL_CALLS = 4
 _MAX_CODEX_CACHED_REPLAYS = 2
 _OPENCODE_REQUEST_TIMEOUT_SECONDS = 60
 _OPENCODE_REQUEST_ATTEMPTS = 2
+# Capability loops (OpenCode Zen/Go and custom endpoints) fail only after this
+# long without a finished model round or capability step; a slow reasoning
+# model needs several minutes for a healthy multi-step turn. The ceiling still
+# bounds a loop that keeps stepping without ever answering.
+_OPENCODE_IDLE_TIMEOUT_SECONDS = 180
+_OPENCODE_TURN_MAX_SECONDS = 30 * 60
+_OPENCODE_PROGRESS_POLL_SECONDS = 1.0
 _GO_INSTRUCTIONS = (
     "You are the PBGui AI assistant. Reply conversationally in the "
     "user's language. Never claim direct filesystem, shell, credential, or unrestricted PBGui "
@@ -3733,22 +3740,65 @@ class AIChatService:
         metadata: dict[str, Any] | None = None,
     ) -> str:
         """Run one bounded native Responses capability loop."""
+        return await self._run_capability_loop(
+            conversation_id,
+            self._go_responses_agent_inner(
+                owner,
+                conversation_id,
+                base_url,
+                model,
+                api_key,
+                history,
+                variant,
+                metadata,
+            ),
+            "OpenCode Responses capability turn timed out",
+        )
+
+    async def _run_capability_loop(
+        self, conversation_id: str, loop: Awaitable[str], timeout_message: str
+    ) -> str:
+        """Bound one capability loop by inactivity instead of total duration.
+
+        Every model round and capability step publishes activity, which bumps
+        the conversation's activity_step. A healthy multi-step turn with a slow
+        reasoning model easily needs more than a few minutes in total, so only
+        a stretch without any step fails it; the ceiling bounds a loop that
+        keeps stepping without answering.
+        """
+        clock = asyncio.get_running_loop()
+        task = asyncio.ensure_future(loop)
+        started = last_progress = clock.time()
+        last_step = self._activity_step(conversation_id)
         try:
-            return await asyncio.wait_for(
-                self._go_responses_agent_inner(
-                    owner,
-                    conversation_id,
-                    base_url,
-                    model,
-                    api_key,
-                    history,
-                    variant,
-                    metadata,
-                ),
-                timeout=_CHAT_TIMEOUT_SECONDS,
-            )
-        except asyncio.TimeoutError as exc:
-            raise AIChatError("OpenCode Responses capability turn timed out") from exc
+            while True:
+                deadline = min(
+                    last_progress + _OPENCODE_IDLE_TIMEOUT_SECONDS,
+                    started + _OPENCODE_TURN_MAX_SECONDS,
+                )
+                remaining = deadline - clock.time()
+                if remaining <= 0:
+                    raise AIChatError(timeout_message)
+                done, _ = await asyncio.wait(
+                    {task}, timeout=min(remaining, _OPENCODE_PROGRESS_POLL_SECONDS)
+                )
+                if done:
+                    try:
+                        return task.result()
+                    except asyncio.TimeoutError as exc:
+                        raise AIChatError(timeout_message) from exc
+                step = self._activity_step(conversation_id)
+                if step != last_step:
+                    last_step, last_progress = step, clock.time()
+        finally:
+            if not task.done():
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+
+    def _activity_step(self, conversation_id: str) -> int:
+        """Return the visible progress counter of one loaded conversation."""
+        conversation = self.conversations.get(conversation_id)
+        return conversation.activity_step if conversation is not None else 0
 
     async def _go_responses_agent_inner(
         self,
@@ -3915,22 +3965,20 @@ class AIChatService:
         metadata: dict[str, Any] | None = None,
     ) -> str:
         """Run one bounded native Anthropic Messages capability loop."""
-        try:
-            return await asyncio.wait_for(
-                self._go_messages_agent_inner(
-                    owner,
-                    conversation_id,
-                    base_url,
-                    model,
-                    api_key,
-                    history,
-                    variant,
-                    metadata,
-                ),
-                timeout=_CHAT_TIMEOUT_SECONDS,
-            )
-        except asyncio.TimeoutError as exc:
-            raise AIChatError("OpenCode Messages capability turn timed out") from exc
+        return await self._run_capability_loop(
+            conversation_id,
+            self._go_messages_agent_inner(
+                owner,
+                conversation_id,
+                base_url,
+                model,
+                api_key,
+                history,
+                variant,
+                metadata,
+            ),
+            "OpenCode Messages capability turn timed out",
+        )
 
     async def _go_messages_agent_inner(
         self,
@@ -4070,23 +4118,21 @@ class AIChatService:
         effort: str,
         metadata: dict[str, Any] | None = None,
     ) -> str:
-        """Run one provider tool loop under a hard total time budget."""
-        try:
-            return await asyncio.wait_for(
-                self._go_chat_completion_agent_inner(
-                    owner,
-                    conversation_id,
-                    base_url,
-                    model,
-                    api_key,
-                    history,
-                    effort,
-                    metadata,
-                ),
-                timeout=180,
-            )
-        except asyncio.TimeoutError as exc:
-            raise AIChatError("OpenCode agent capability turn timed out") from exc
+        """Run one provider tool loop under the shared inactivity budget."""
+        return await self._run_capability_loop(
+            conversation_id,
+            self._go_chat_completion_agent_inner(
+                owner,
+                conversation_id,
+                base_url,
+                model,
+                api_key,
+                history,
+                effort,
+                metadata,
+            ),
+            "OpenCode agent capability turn timed out",
+        )
 
     async def _go_chat_completion_agent_inner(
         self,

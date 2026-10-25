@@ -1,25 +1,21 @@
 # Unreleased
 
-## 修复「AI 对话」审批卡片不显示，并重排消息布局
+## 修复「AI 对话」反复出现 capability turn timed out
 
-- 审批卡片不出现：Vue 版轮询在发现回合结束时直接返回，没有重新拉取 `/proposals`（回合进行中提案列表会被清空），AI 在回合里发起的审批卡片要刷新页面才出现。现在回合一结束即拉取；批准后服务器自动启动的续写回合（`continuation` 为 queued/running）也会被加载并轮询，未能启动时给出提示，与旧版抽屉 `ai_drawer.js` 的行为一致。
-- 审批卡片从输入框上方的停靠区移入消息列表末尾（`MessageList` 新增 `#tail` 插槽），带「等待你的批准」标识与底部操作条，随对话滚动。
-- 回复中的大块空白：Vue 包从未加载旧版的 `ai_message_view.css`，`.ai-markdown` 没有任何样式，气泡上的 `whitespace-pre-wrap` 又被继承，HTML 标签之间的换行全部渲染成空行，再叠加浏览器默认的段落/列表外边距。现在 `MessageList` 内补齐段落、列表、标题、行内代码、代码块、引用与表格（横向滚动、表头不换行、吸顶）的排版。
-- 布局：用户消息保留右侧气泡，AI 回复改为通栏正文；回合进行中在末尾显示三点指示（不进入无障碍树，状态仍由通知行播报）。用户气泡原用的 `break-anywhere` 并非有效工具类，改为 `wrap-anywhere`，长 URL 能正确折行。
-- 复制/回退按钮从消息右侧的文字按钮改为消息下方的图标按钮，悬停或键盘聚焦时出现（触屏常显），复制成功后图标短暂变为对勾。Clipboard API 不可用时（经 HTTP 局域网地址访问的非安全上下文）回退到 `execCommand('copy')`，原实现此时必然报「浏览器拒绝了剪贴板访问」。
-- 自动滚动：`useStreamingScroll.pin()` 原先在内容增长**之后**才判断是否位于底部（40px 阈值），整段回复一次性追加时必然被判为「用户已离开」，最新消息被截在可视区外；改为以增长前（由 `onScroll` 维护）的位置判断。`MessageList` 改用 `ResizeObserver` 跟随转录高度，切换会话时直接定位到最新消息。
-- AI 对话页与各 Vue 页面的 AI 抽屉共用上述组件，两处同时生效。
-- 新增测试：`MessageList.test.ts` 7 项（气泡/正文换行、图标操作行、Clipboard 与 execCommand 回退、处理中指示、尾部插槽位置）、`App.test.ts` 审批流程 3 项（旧实现下均失败）、`useStreamingScroll` 1 项。
+- 根因：OpenCode Zen/Go 与 BYOK 的三条能力循环（Responses / Messages / Chat Completions）把**整轮**包在一个固定时长的 `asyncio.wait_for` 里——Responses 与 Messages 用 `_CHAT_TIMEOUT_SECONDS`（180 秒），Chat Completions 直接写死 `180`。一轮带工具的高强度推理对话要走「分析 → 多次能力调用 → 复核 → 最终作答」若干轮，单轮几十秒很常见，几分钟的累计时长注定撞上这个与工作量无关的上限；对话越长、思考等级越高越容易触发，因此表现为"最近几轮总是超时"。Codex/ChatGPT 路径此前已改成"无进展才超时"（`test_progressive_gpt_response_exceeds_old_total_cap` 即为该改动设的回归），OpenCode/BYOK 的三条循环没有跟上。
+- 修法：新增 `_run_capability_loop`，三条循环统一改为**无进展超时**——模型轮次或能力步骤每完成一步，会话的 `activity_step` 自增，看门狗只在连续 180 秒没有任何一步完成时判定超时（`_OPENCODE_IDLE_TIMEOUT_SECONDS`），并保留 30 分钟绝对上限（`_OPENCODE_TURN_MAX_SECONDS`）兜住"一直在推进却始终不给答案"的循环。
+- 原本靠外层总时长兜底的单次请求，现在各自有边界：Responses 仍是 `_OPENCODE_REQUEST_TIMEOUT_SECONDS`（60 秒）单请求超时并可重试一次，`_read_json_response` 限制响应体 512KB；Messages 与 Chat Completions 不设单请求超时，看门狗的空闲窗口即为其每步上限；aiohttp 会话另有 120 秒总超时（`_http_session`）。
+- 新增 8 项后端回归测试：三条循环分别覆盖"持续推进可越过旧的总时长上限"与"停滞即超时并取消在途请求"，另有绝对上限生效、未转换的 `TimeoutError` 归为超时文案两项通用守卫。
+- API serial 从 `3345` 递增至 `3346`；需重启 PBApiServer 生效。
+
+## 修复 Vue 版 AI 界面不派发也不确认页面操作，并重做 BYOK 面板与输入框
+
+- 页面操作链路：Vue 版从未派发 `pbgui:ai-ui-action` 事件，也从未 POST `/conversations/{id}/ui-actions/{action_id}/ack`，而 `shared/ai/context.ts` 与 `v7_backtest` 都在等这个事件。模型每次调用 `perform_page_action`（例如「点击新建对话」）后，后端 `_capture_ui_action` 都要空等满 45 秒（`_BROWSER_ACTION_WAIT_SECONDS`）才回「浏览器未确认」，既白耗一轮时间，操作本身也没有执行。现在按旧版 `ai_drawer.js` 的契约补上派发与确认：仅在回合计进行中执行（避免重放历史上已判为未确认的动作），跨实例按 `action_id` 去重（同一页面的完整对话与抽屉会同时轮询同一会话），ack 失败时不重试派发以免重复点击。
+- BYOK 面板重做：已配置项从两行压缩列表改为可点击卡片，显示模型名、密钥已存标记、端点（去掉 scheme）、协议 / 上下文 / 图片 / 工具 / 思考等级标签；点击卡片在共享 `Modal` 中编辑，删除移入对话框（醒目但仍需二次确认），保存后短暂提示。
+- 输入框重做：改为单一圆角输入区，文本域随内容自动增高（上限 180px）、改用正文字体（原为配置编辑用的等宽字体），发送按钮改为图标并内嵌右侧、空草稿时禁用；下方常驻「Enter 发送 · Shift+Enter 换行」提示，接近上限时显示剩余字数。Enter / Shift+Enter / 输入法守卫的行为不变，`#prompt` / `#send` / `#stop` 三个钩子保留。
+- 共享 `Modal` 新增可选 `footerClass`（默认值不变，不影响既有调用方），供长表单把操作条固定在面板底部。
+- 新增 12 项前端测试：BYOK 卡片摘要 / 编辑 / 新增 / 测试结果 / 删除入口，输入框禁用态 / 停止态 / 提示与字数 / 自动增高，以及页面操作的派发、确认、未处理不确认、已结束回合不重放。
 - 仅前端改动，不递增 `api/serial.txt`；需重新 `cd frontend && pnpm run build` 后由 `frontend/dist` 生效。
-
-## 修复「AI 对话」自定义模型（BYOK）换浏览器后不显示
-
-- 根因：AI 数据按 owner 存放，owner 由登录会话的 `user_id` 派生，而 `user_id` 带客户端地址（`welcome:<IP>` / `passwordless:<IP>`）。BYOK 端点按 owner 存为 `{owner}.custom.json`，同一位操作者换浏览器、换设备或换访问地址（局域网 IP 与 localhost、代理出口不同）后就成了另一个 owner，已配置的模型与密钥随之「消失」。
-- BYOK 端点属于服务器配置（与交易所 API 密钥同类），改为实例级单文件 `data/ai/credentials/custom-models.json`，所有会话共享；`CustomModelStore` 与 `check_connection` 不再接收 owner。首次读取时自动合并旧的 `{owner}.custom.json`（按修改时间新者优先、同名模型去重、上限 32 个）并删除旧文件，已配置的模型无需重新填写。
-- 删除模型仍只取消发起删除的会话所属 owner 的进行中对话；其他浏览器里使用该模型的进行中对话会在下一次请求端点时报「Selected custom model is unavailable」。
-- 对话记录、OpenCode Go / OpenRouter 密钥与 ChatGPT 登录仍按访问地址隔离，本次未改动。
-- 新增回归测试：跨客户端地址共享（另一地址的 owner 可见、可删除）与旧文件一次性迁移；帮助文档（中/英/德）补充「自定义模型属于服务器设置」的说明。
-- API serial 从 `3344` 递增至 `3345`；需重启 PBApiServer 生效。
 
 ## 移除「信息 / 币种数据」就绪提示末尾的句号
 
