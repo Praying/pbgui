@@ -1,5 +1,14 @@
 # Unreleased
 
+## 修复「AI 对话」自定义模型（BYOK）换浏览器后不显示
+
+- 根因：AI 数据按 owner 存放，owner 由登录会话的 `user_id` 派生，而 `user_id` 带客户端地址（`welcome:<IP>` / `passwordless:<IP>`）。BYOK 端点按 owner 存为 `{owner}.custom.json`，同一位操作者换浏览器、换设备或换访问地址（局域网 IP 与 localhost、代理出口不同）后就成了另一个 owner，已配置的模型与密钥随之「消失」。
+- BYOK 端点属于服务器配置（与交易所 API 密钥同类），改为实例级单文件 `data/ai/credentials/custom-models.json`，所有会话共享；`CustomModelStore` 与 `check_connection` 不再接收 owner。首次读取时自动合并旧的 `{owner}.custom.json`（按修改时间新者优先、同名模型去重、上限 32 个）并删除旧文件，已配置的模型无需重新填写。
+- 删除模型仍只取消发起删除的会话所属 owner 的进行中对话；其他浏览器里使用该模型的进行中对话会在下一次请求端点时报「Selected custom model is unavailable」。
+- 对话记录、OpenCode Go / OpenRouter 密钥与 ChatGPT 登录仍按访问地址隔离，本次未改动。
+- 新增回归测试：跨客户端地址共享（另一地址的 owner 可见、可删除）与旧文件一次性迁移；帮助文档（中/英/德）补充「自定义模型属于服务器设置」的说明。
+- API serial 从 `3344` 递增至 `3345`；需重启 PBApiServer 生效。
+
 ## 移除「信息 / 币种数据」就绪提示末尾的句号
 
 - 页面顶部状态条在 CMC 池就绪时显示 `market.ready`，中文值为「就绪。」、英文为「Ready.」，与同一行的「已连接」「连接中…」等无标点状态标签不一致；两处翻译值改为「就绪」/「Ready」。该键只被 `useCoinDataState` 使用（`/state` 就绪与空消息兜底），因此只影响本页状态条，不改动服务器消息、日志文本或其它页面。

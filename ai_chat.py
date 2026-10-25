@@ -1499,7 +1499,7 @@ class AIChatService:
                 "opencode-zen": {"available": True, "connected": self.credentials.configured(owner)},
                 "opencode-go": {"available": True, "connected": self.credentials.configured(owner)},
                 "openrouter": {"available": True, "connected": self.credentials.openrouter_configured(owner)},
-                CUSTOM_PROVIDER: {"available": True, "connected": self.custom_models.configured(owner)},
+                CUSTOM_PROVIDER: {"available": True, "connected": self.custom_models.configured()},
             },
             "capabilities": {"chat_only": False, "pbgui_tools": True},
         }
@@ -1602,7 +1602,7 @@ class AIChatService:
         """Validate and store one bring-your-own-key model endpoint."""
         async with self._provider_lock(owner, CUSTOM_PROVIDER):
             try:
-                return self.custom_models.save(owner, config, api_key, original)
+                return self.custom_models.save(config, api_key, original)
             except CustomModelError as exc:
                 raise AIChatError(str(exc)) from exc
 
@@ -1613,17 +1613,17 @@ class AIChatService:
             self.provider_disconnecting.add(state_key)
             try:
                 await self._cancel_provider(owner, CUSTOM_PROVIDER)
-                if not self.custom_models.delete(owner, model):
+                if not self.custom_models.delete(model):
                     raise AIChatError("Custom model not found")
             finally:
                 self.provider_disconnecting.discard(state_key)
 
-    async def test_custom_model(self, owner: str, config: object, api_key: object,
+    async def test_custom_model(self, config: object, api_key: object,
                                 original: str = "", effort: str = "") -> dict[str, Any]:
         """Check that an endpoint answers in its configured protocol, without PBGui data."""
         from ai_byok import check_connection
         try:
-            return await check_connection(self, self.custom_models, owner, config, api_key, original, effort)
+            return await check_connection(self, self.custom_models, config, api_key, original, effort)
         except CustomModelError as exc:
             raise AIChatError(str(exc)) from exc
 
@@ -1742,7 +1742,7 @@ class AIChatService:
             return [{"id": JEV_MODEL, "name": "Jev 1.13 · Structured decisions", "default": True,
                      "tools": False, "decision": True, "retention": "See OpenRouter and TypeSafe terms"}]
         if provider == CUSTOM_PROVIDER:
-            models = self.custom_models.models(owner)
+            models = self.custom_models.models()
             if not models:
                 raise AIChatError("No custom model is configured")
             return models
@@ -1864,7 +1864,7 @@ class AIChatService:
                 raise AIChatError("OpenCode is not connected")
             if provider == "openrouter" and not self.credentials.openrouter_configured(owner):
                 raise AIChatError("OpenRouter is not connected")
-            if provider == CUSTOM_PROVIDER and not self.custom_models.configured(owner):
+            if provider == CUSTOM_PROVIDER and not self.custom_models.configured():
                 raise AIChatError("No custom model is configured")
             if not _pre_reserved:
                 await self._reserve_conversation(conversation)
@@ -3560,11 +3560,11 @@ class AIChatService:
     ) -> str:
         """Run one bounded OpenCode Go request through its documented protocol."""
         if provider == CUSTOM_PROVIDER:
-            entry = self.custom_models.get(owner, model)
+            entry = self.custom_models.get(model)
             if entry is None:
                 raise AIChatError("Selected custom model is unavailable")
             provider_config = {"base_url": entry["base_url"]}
-            available = {model: next(item for item in self.custom_models.models(owner) if item["id"] == model)}
+            available = {model: next(item for item in self.custom_models.models() if item["id"] == model)}
             key = entry["api_key"] or "no-key"
         else:
             provider_config = _OPENCODE_PROVIDERS.get(provider)

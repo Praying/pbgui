@@ -295,9 +295,9 @@ class CustomModelRequest(BaseModel):
 
 @router.get("/providers/custom/models")
 async def list_custom_models(session: SessionToken = Depends(require_auth)) -> JSONResponse:
-    """List the current user's custom models without their API keys."""
+    """List the custom models shared by every session, without their API keys."""
     try:
-        return _json({"models": get_ai_chat_service().custom_models.models(_owner(session))})
+        return _json({"models": get_ai_chat_service().custom_models.models()})
     except Exception as exc:
         raise _provider_error("list_custom_models", exc) from exc
 
@@ -327,7 +327,7 @@ async def test_custom_model(body: CustomModelRequest, session: SessionToken = De
     """Verify connectivity of a (possibly unsaved) custom model with one fixed prompt."""
     try:
         return _json(await get_ai_chat_service().test_custom_model(
-            _owner(session), body.config(), body.api_key, body.original, body.effort))
+            body.config(), body.api_key, body.original, body.effort))
     except Exception as exc:
         raise _provider_error("test_custom_model", exc) from exc
 

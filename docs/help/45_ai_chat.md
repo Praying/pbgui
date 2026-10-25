@@ -183,6 +183,8 @@ Models labeled **Chat only** cannot inspect installed Passivbot documentation, s
 7. Press **Test connection**. PBGui sends one fixed prompt (no conversation, page data or PBGui tools) and reports whether the endpoint answered in the selected protocol, with the response time. You can test unsaved values; leave the key blank when editing to reuse the stored key.
 8. **Save**. The model now appears under the **Custom (BYOK)** provider in the chat toolbar.
 
+Custom models are server settings: every browser and device you sign in to this PBGui from sees the same list.
+
 Chat messages, and PBGui data the assistant reads while answering, are sent to the endpoint you configure. Redirects are not followed. Removing a model deletes its stored key and cancels running chats that use it.
 
 ## OpenRouter and Jev

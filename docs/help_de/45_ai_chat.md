@@ -250,6 +250,8 @@ Jede Frage bewertet einen ausgewählten Optimize-Lauf und markiert bis zu zehn P
 7. Drücke **Test connection**. PBGui sendet einen festen Prompt (ohne Unterhaltung, Seitendaten oder PBGui-Werkzeuge) und meldet, ob der Dienst im gewählten Protokoll antwortet, samt Antwortzeit. Ungespeicherte Werte lassen sich testen; beim Bearbeiten bleibt das Schlüsselfeld leer, um den gespeicherten Schlüssel zu nutzen.
 8. **Save**. Das Modell erscheint in der Chat-Leiste beim Anbieter **Custom (BYOK)**.
 
+Eigene Modelle sind Servereinstellungen: Jeder Browser und jedes Gerät, mit dem du dich bei diesem PBGui anmeldest, sieht dieselbe Liste.
+
 Chat-Nachrichten und PBGui-Daten, die der Assistent beim Antworten liest, gehen an den von dir konfigurierten Endpunkt. Weiterleitungen werden nicht verfolgt. Das Entfernen eines Modells löscht den gespeicherten Schlüssel und bricht laufende Chats damit ab.
 
 ## Aktionsfreigabe

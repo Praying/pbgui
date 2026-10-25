@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 
 import pytest
 
@@ -46,24 +47,46 @@ def test_entry_validation(changes):
 
 def test_store_keeps_key_private_and_reuses_it_when_blank(tmp_path):
     store = _store(tmp_path)
-    public = store.save(OWNER, _config(), "sk-secret-value-123456")
+    public = store.save(_config(), "sk-secret-value-123456")
     assert public["id"] == "my-model" and public["has_key"] and "api_key" not in public
     assert public["reasoning_variants"][0] == {"id": "low", "label": "low", "description": "", "type": "effort", "value": "low"}
-    store.save(OWNER, _config(context=65536), "", original="my-model")
-    assert store.get(OWNER, "my-model")["api_key"] == "sk-secret-value-123456"
-    assert store.get(OWNER, "my-model")["context"] == 65536
-    path = tmp_path / f"{OWNER}.custom.json"
+    store.save(_config(context=65536), "", original="my-model")
+    assert store.get("my-model")["api_key"] == "sk-secret-value-123456"
+    assert store.get("my-model")["context"] == 65536
+    path = tmp_path / "custom-models.json"
     assert oct(path.stat().st_mode & 0o777) == "0o600"
-    assert store.models(OWNER)[0]["default"] is True
+    assert store.models()[0]["default"] is True
 
 
 def test_store_rejects_duplicates_and_deletes(tmp_path):
     store = _store(tmp_path)
-    store.save(OWNER, _config(), "")
+    store.save(_config(), "")
     with pytest.raises(CustomModelError):
-        store.save(OWNER, _config(), "")
-    assert store.delete(OWNER, "my-model") and not store.configured(OWNER)
-    assert not (tmp_path / f"{OWNER}.custom.json").exists()
+        store.save(_config(), "")
+    assert store.delete("my-model") and not store.configured()
+    assert not (tmp_path / "custom-models.json").exists()
+
+
+def _legacy_file(tmp_path, owner, rows, mtime):
+    path = tmp_path / f"{owner}.custom.json"
+    path.write_text(json.dumps({"provider": "custom", "models": rows}), encoding="utf-8")
+    os.utime(path, (mtime, mtime))
+    return path
+
+
+def test_store_adopts_legacy_per_owner_files_once(tmp_path):
+    older = _legacy_file(tmp_path, owner_key("bob"), [
+        {**_config(model="shared", name="Old"), "api_key": "sk-old-value-1234567"},
+        {**_config(model="bob-only"), "api_key": ""},
+    ], 1_000)
+    newer = _legacy_file(tmp_path, OWNER, [{**_config(model="shared", name="New"), "api_key": "sk-new-value-1234567"}], 2_000)
+    store = _store(tmp_path)
+    assert [row["id"] for row in store.models()] == ["shared", "bob-only"]
+    assert store.get("shared")["name"] == "New" and store.get("shared")["api_key"] == "sk-new-value-1234567"
+    assert not older.exists() and not newer.exists()
+    assert oct((tmp_path / "custom-models.json").stat().st_mode & 0o777) == "0o600"
+    assert store.delete("shared") and store.delete("bob-only")
+    assert not store.configured()
 
 
 class _Response:
@@ -106,7 +129,7 @@ def _run(coro):
 
 def test_connection_chat_protocol(tmp_path):
     service = _Service(_Response(200, {"choices": [{"message": {"content": "PBGui connection OK"}}]}))
-    result = _run(check_connection(service, _store(tmp_path), OWNER, _config(), "sk-secret-value-123456", effort="high"))
+    result = _run(check_connection(service, _store(tmp_path), _config(), "sk-secret-value-123456", effort="high"))
     url, kwargs = service.session.calls[0]
     assert result["ok"] and result["reply"] == "PBGui connection OK"
     assert url == "http://127.0.0.1:8000/v1/chat/completions"
@@ -118,22 +141,22 @@ def test_connection_chat_protocol(tmp_path):
 def test_connection_responses_protocol(tmp_path):
     payload = {"output": [{"type": "message", "content": [{"type": "output_text", "text": "OK"}]}]}
     service = _Service(_Response(200, payload))
-    result = _run(check_connection(service, _store(tmp_path), OWNER, _config(protocol="responses"), ""))
+    result = _run(check_connection(service, _store(tmp_path), _config(protocol="responses"), ""))
     url, kwargs = service.session.calls[0]
     assert result["ok"] and url.endswith("/v1/responses") and "max_output_tokens" in kwargs["json"]
     assert kwargs["headers"]["Authorization"] == "Bearer no-key"
 
 
 def test_connection_reports_wrong_format_and_http_errors(tmp_path):
-    wrong = _run(check_connection(_Service(_Response(200, {"hello": 1})), _store(tmp_path), OWNER, _config(), ""))
+    wrong = _run(check_connection(_Service(_Response(200, {"hello": 1})), _store(tmp_path), _config(), ""))
     assert not wrong["ok"] and "format" in wrong["error"]
-    denied = _run(check_connection(_Service(_Response(401, {"error": {"message": "bad key"}})), _store(tmp_path), OWNER, _config(), ""))
+    denied = _run(check_connection(_Service(_Response(401, {"error": {"message": "bad key"}})), _store(tmp_path), _config(), ""))
     assert not denied["ok"] and denied["error"]
 
 
 def test_connection_rejects_unconfigured_effort(tmp_path):
     with pytest.raises(CustomModelError):
-        _run(check_connection(_Service(_Response(200, {})), _store(tmp_path), OWNER, _config(), "", effort="max"))
+        _run(check_connection(_Service(_Response(200, {})), _store(tmp_path), _config(), "", effort="max"))
 
 
 def test_service_exposes_custom_models(tmp_path):
@@ -148,6 +171,18 @@ def test_service_exposes_custom_models(tmp_path):
     _run(service.delete_custom_model(OWNER, "my-model"))
     with pytest.raises(AIChatError):
         _run(service.models(OWNER, "custom"))
+
+
+def test_custom_models_follow_the_operator_across_client_addresses(tmp_path):
+    """Owners derive from the login's client address; endpoints must not."""
+    service = AIChatService(tmp_path)
+    other_browser = owner_key("welcome:192.0.2.7")
+    _run(service.save_custom_model(OWNER, _config(), "sk-secret-value-123456"))
+    assert _run(service.status(other_browser))["providers"]["custom"]["connected"] is True
+    assert [model["id"] for model in _run(service.models(other_browser, "custom"))] == ["my-model"]
+    assert service.custom_models.get("my-model")["api_key"] == "sk-secret-value-123456"
+    _run(service.delete_custom_model(other_browser, "my-model"))
+    assert _run(service.status(OWNER))["providers"]["custom"]["connected"] is False
 
 
 @pytest.mark.parametrize("protocol,path,reply", [

@@ -21,6 +21,9 @@ MAX_MODELS = 32
 MAX_EFFORTS = 16
 _MODEL_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+\-]{0,127}$")
 _EFFORT_ID = re.compile(r"^[A-Za-z0-9_.\-]{1,32}$")
+_STORE_FILE = "custom-models.json"
+_LEGACY_SUFFIX = ".custom.json"
+_LEGACY_OWNER = re.compile(r"^[0-9a-f]{32}$")
 _NO_KEY = "no-key"
 _TEST_PROMPT = "Connection test. Reply briefly with: PBGui connection OK"
 
@@ -130,24 +133,22 @@ def public_model(entry: dict[str, Any]) -> dict[str, Any]:
 
 
 class CustomModelStore:
-    """Owner-only storage for user-defined model endpoints, including their API keys."""
+    """Instance-wide storage for user-defined model endpoints, including their API keys.
+
+    AI owners derive from the client address of each login, so a per-owner
+    file hid a configured endpoint from every other browser or network path
+    of the same PBGui operator. Endpoints are server configuration, like the
+    exchange API keys, and live in one file shared by every session.
+    """
 
     def __init__(self, root: Path, lock_target: Path) -> None:
         """Share the credential root and lock with the other AI providers."""
         self.root = Path(root)
         self.lock_target = lock_target
+        self.path = self.root / _STORE_FILE
 
-    def _path(self, owner: str) -> Path:
-        """Resolve the per-owner file below the credential root."""
-        if len(owner) != 32 or any(char not in "0123456789abcdef" for char in owner):
-            raise CustomModelError("Invalid owner")
-        return self.root / f"{owner}.custom.json"
-
-    def _read(self, owner: str) -> list[dict[str, Any]]:
-        """Load stored entries; callers hold the lock."""
-        path = self._path(owner)
-        if not path.is_file() or path.is_symlink():
-            return []
+    def _load(self, path: Path) -> list[dict[str, Any]]:
+        """Parse one stored file; an unreadable payload counts as empty."""
         try:
             payload = json.loads(read_regular_file_nofollow(path, self.root).decode("utf-8"))
             rows = payload["models"]
@@ -155,40 +156,65 @@ class CustomModelStore:
         except (OSError, UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError, CustomModelError):
             return []
 
-    def _write(self, owner: str, rows: list[dict[str, Any]]) -> None:
+    def _legacy_paths(self) -> list[Path]:
+        """Per-owner files written before endpoints were shared, newest first."""
+        paths = [
+            path for path in self.root.glob(f"*{_LEGACY_SUFFIX}")
+            if _LEGACY_OWNER.match(path.name[:-len(_LEGACY_SUFFIX)]) and path.is_file() and not path.is_symlink()
+        ]
+        return sorted(paths, key=lambda path: path.stat().st_mtime, reverse=True)
+
+    def _read(self) -> list[dict[str, Any]]:
+        """Load stored entries, adopting legacy per-owner files once; callers hold the lock."""
+        if self.path.is_symlink():
+            return []
+        if self.path.is_file():
+            return self._load(self.path)
+        legacy = self._legacy_paths()
+        rows: list[dict[str, Any]] = []
+        for path in legacy:
+            for row in self._load(path):
+                if len(rows) < MAX_MODELS and all(item["model"] != row["model"] for item in rows):
+                    rows.append(row)
+        if rows:
+            self._write(rows)
+            for path in legacy:
+                path.unlink(missing_ok=True)
+        return rows
+
+    def _write(self, rows: list[dict[str, Any]]) -> None:
         """Atomically persist entries; callers hold the lock."""
-        path = self._path(owner)
         if not rows:
-            path.unlink(missing_ok=True)
+            self.path.unlink(missing_ok=True)
             return
-        atomic_write_private_text(path, json.dumps({"provider": PROVIDER, "models": rows}, indent=4) + "\n")
+        atomic_write_private_text(self.path, json.dumps({"provider": PROVIDER, "models": rows}, indent=4) + "\n")
 
-    def configured(self, owner: str) -> bool:
-        """Return whether the owner has at least one custom model."""
-        return bool(self.entries(owner))
+    def configured(self) -> bool:
+        """Return whether at least one custom model exists."""
+        return bool(self.entries())
 
-    def entries(self, owner: str) -> list[dict[str, Any]]:
+    def entries(self) -> list[dict[str, Any]]:
         """Return stored entries including keys, for trusted server-side use only."""
         with advisory_file_lock(self.lock_target):
-            return self._read(owner)
+            return self._read()
 
-    def get(self, owner: str, model: str) -> dict[str, Any] | None:
+    def get(self, model: str) -> dict[str, Any] | None:
         """Return one entry including its key, or None."""
-        return next((row for row in self.entries(owner) if row["model"] == model), None)
+        return next((row for row in self.entries() if row["model"] == model), None)
 
-    def models(self, owner: str) -> list[dict[str, Any]]:
+    def models(self) -> list[dict[str, Any]]:
         """Return key-free model projections, with the first one marked as default."""
-        rows = [public_model(row) for row in self.entries(owner)]
+        rows = [public_model(row) for row in self.entries()]
         if rows:
             rows[0]["default"] = True
         return rows
 
-    def save(self, owner: str, raw: object, api_key: object, original: str = "") -> dict[str, Any]:
+    def save(self, raw: object, api_key: object, original: str = "") -> dict[str, Any]:
         """Add or replace one entry; a blank key keeps the key already stored for it."""
         entry = normalize_entry(raw)
         key = _api_key(api_key)
         with advisory_file_lock(self.lock_target):
-            rows = self._read(owner)
+            rows = self._read()
             previous = next((row for row in rows if row["model"] == original), None) if original else None
             if original and previous is None:
                 raise CustomModelError("Custom model not found")
@@ -203,16 +229,16 @@ class CustomModelStore:
                 rows.append(stored)
             else:
                 rows[rows.index(previous)] = stored
-            self._write(owner, rows)
+            self._write(rows)
         return public_model(stored)
 
-    def delete(self, owner: str, model: str) -> bool:
+    def delete(self, model: str) -> bool:
         """Remove one entry; return whether it existed."""
         with advisory_file_lock(self.lock_target):
-            rows = self._read(owner)
+            rows = self._read()
             kept = [row for row in rows if row["model"] != model]
             if len(kept) != len(rows):
-                self._write(owner, kept)
+                self._write(kept)
             return len(kept) != len(rows)
 
 
@@ -221,7 +247,7 @@ def _auth_headers(key: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {key or _NO_KEY}", "User-Agent": "pbgui-ai/1.0"}
 
 
-async def check_connection(service: Any, store: CustomModelStore, owner: str, raw: object,
+async def check_connection(service: Any, store: CustomModelStore, raw: object,
                           api_key: object, original: str = "", effort: str = "") -> dict[str, Any]:
     """Send one tiny fixed prompt to the configured endpoint; never raises for endpoint failures."""
     from ai_chat import AIChatError, AIChatService
@@ -229,7 +255,7 @@ async def check_connection(service: Any, store: CustomModelStore, owner: str, ra
     entry = normalize_entry(raw)
     key = _api_key(api_key)
     if not key:
-        stored = store.get(owner, original or entry["model"])
+        stored = store.get(original or entry["model"])
         key = stored["api_key"] if stored else ""
     if effort and effort not in entry["reasoning_efforts"]:
         raise CustomModelError("Selected thinking level is not configured for this model")
