@@ -2,6 +2,14 @@
 
 Switching between Log Viewer and Settings preserves edited rotation values. Failed rotation saves show an error next to the affected settings.
 
+Open **System → Logging → Settings**. Browser reload restores the selected
+**Settings** or **Log Viewer** panel from the URL's `view` parameter. A restored
+Settings panel loads current rotation values from the server; unsaved form values
+are not stored across reloads. A direct `?view=settings` link opens Settings.
+Without `view`, Log Viewer is the default. An unknown value shows a short status
+message and normalizes the URL to `view=logs`. Choosing either sidebar panel
+clears that notice, including when Log Viewer is already selected.
+
 If rotation settings cannot be loaded, Settings shows the server error (or HTTP status for a non-JSON response). Existing input values are preserved; the failure is not shown as an empty log list. Switch back to Settings to retry loading.
 
 The Logging page provides a real-time log viewer for all PBGui services.  
@@ -94,6 +102,19 @@ Click **⚙ Settings** in the sidebar to configure log rotation:
 - **Managed logs**: configure size and backup count for dynamic log families
   such as API console, jobs, backtests, optimizations, VPS Manager runs,
   OHLCV preloads, monitor-agent live data, Pareto sessions, and API handoff
+
+All three sections require whole numbers: **Max file size (MB)** / **Max MB**
+from **1 to 10240**, and **Rotated copies** / **Copies** from **0 to 20**.
+Empty, fractional or out-of-range inputs show the affected fields beside Save;
+no save request is sent, and your entries remain unchanged for correction.
+Server validation errors show the field and reason, with multiple errors
+separated by `; `. Failed Settings reads and writes use the same error format;
+unusable error details fall back to the HTTP status. Purge errors are also
+shown as readable text without displaying the full validation payload.
+Successful saves keep the server's status, such as **Applies on next log write**.
+A newer Save attempt, including a local validation failure, supersedes older
+save responses and status timers for that row. An older result cannot replace
+or hide the newer message.
 
 Changes are read on the next log write or before the next managed transcript is
 opened. Logging rotation deliberately has no watcher and does not require a

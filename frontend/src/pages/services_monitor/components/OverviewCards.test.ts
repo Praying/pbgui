@@ -35,6 +35,31 @@ function card(wrapper: ReturnType<typeof mountCards>, svcId: string) {
 }
 
 describe('OverviewCards', () => {
+  it.each(['starting', 'stopping', 'unknown'] as const)('gates actions while PBCoinData is %s', (actualStatus) => {
+    const wrapper = mountCards({ statuses: {
+      ...STATUSES,
+      pbcoindata: { running: false, expected: false, actual_status: actualStatus, can_stop: true, can_enable: true },
+    } });
+    const serviceCard = card(wrapper, 'pbcoindata');
+    expect(serviceCard.find('.card-status-row').text()).not.toContain('Skipped');
+    expect((serviceCard.get('button.start').element as HTMLButtonElement).disabled).toBe(true);
+    expect((serviceCard.get('button.restart').element as HTMLButtonElement).disabled).toBe(true);
+    expect((serviceCard.get('button.enable').element as HTMLButtonElement).disabled).toBe(true);
+    expect((serviceCard.get('button.stop').element as HTMLButtonElement).disabled).toBe(false);
+    wrapper.unmount();
+  });
+
+  it('shows lifecycle failure details without disguising a failed service as skipped', () => {
+    const wrapper = mountCards({ statuses: {
+      ...STATUSES,
+      pbcoindata: { running: false, expected: false, actual_status: 'failed', error: 'Ownership could not be verified' },
+    } });
+    const serviceCard = card(wrapper, 'pbcoindata');
+    expect(serviceCard.find('.card-status-row').text()).toBe('Failed');
+    expect(serviceCard.find('.card-status-row').attributes('title')).toContain('Ownership could not be verified');
+    wrapper.unmount();
+  });
+
   it('renders one card per legacy service plus the workers and migration cards', () => {
     const wrapper = mountCards();
 

@@ -1,6 +1,7 @@
 """Behavioral regressions for Services Monitor status and worker requests."""
 
 import json
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -53,7 +54,9 @@ def _extract_function(source: str, name: str) -> str:
 def _extract_window_function(source: str, name: str) -> str:
     """Extract a function assigned directly to the window object."""
 
-    start = source.index(f"window.{name} = function")
+    match = re.search(rf"window\.{re.escape(name)}\s*=\s*(?:async\s+)?function\b", source)
+    assert match is not None, f"Window function {name} not found"
+    start = match.start()
     return _extract_braced(source, start)
 
 
@@ -241,12 +244,15 @@ def test_settings_load_retries_after_http_failure_and_blocks_duplicate_requests(
     """Only a successfully applied settings response should satisfy the loaded guard."""
 
     source = PAGE.read_text(encoding="utf-8")
-    code = _extract_function(source, "loadSettings")
+    code = "var _settingsDrafts = Object.create(null);\n" + "\n".join(
+        _extract_function(source, name) for name in ('getSettingsDraft', 'releaseSettingsDraft', 'loadSettings')
+    )
     script = """
 const assert = require('node:assert/strict');
 const API_BASE = '/api/services';
 var _settingsLoaded = {};
 var _settingsLoading = {};
+function focusSettingsTarget() {}
 const requests = [];
 const applied = [];
 function fetch(url) { return new Promise(resolve => requests.push({url, resolve})); }
@@ -471,6 +477,62 @@ function assertRecovered() {
 """
 
 
+def test_coindata_readiness_status_and_controls() -> None:
+    """Background readiness overrides Skipped and keeps labels, classes and controls consistent."""
+    source = PAGE.read_text(encoding="utf-8")
+    code = '\n'.join(_extract_function(source, name) for name in (
+        'serviceSkipped', 'serviceStatusClass', 'serviceStatusText',
+        'serviceActionProgressText', 'renderServiceButtons'))
+    _run_node("const assert = require('node:assert/strict');\n"
+              "let _statusRequestState='ready', _serviceActionPending={};\n" + code + r"""
+const svc = {id:'pbcoindata'};
+for (const expected of [true,false]) {
+  const starting = {actual_status:'starting', running:false, expected, can_enable:true};
+  assert.equal(serviceStatusClass(starting), 'starting');
+  assert.match(serviceStatusText(starting, svc.id), /^Starting/);
+  const buttons = renderServiceButtons(svc, starting, false);
+  for (const label of ['Start','Restart','Enable']) assert.ok(buttons.includes('disabled>'+label+'</button>'));
+  assert.ok(!buttons.includes('>Stop</button>'));
+  starting.can_stop = true;
+  assert.ok(renderServiceButtons(svc, starting, true).includes('>Stop</button>'));
+}
+for (const [actual, text, cls] of [['unknown','Unknown',''],['failed','Failed','stopped'],['running','Running','running'],['stopping','Stopping','starting']]) {
+  const item = {actual_status:actual, running:actual==='running', expected:false};
+  assert.equal(serviceStatusText(item, svc.id), text);
+  assert.equal(serviceStatusClass(item), cls);
+  if (actual === 'stopping') {
+    const controls = renderServiceButtons(svc, {...item,can_enable:true}, false);
+    for (const label of ['Start','Restart','Enable']) assert.ok(controls.includes('disabled>'+label+'</button>'));
+    assert.ok(!controls.includes('>Stop</button>'));
+  }
+}
+assert.equal(serviceStatusText({running:false, expected:false}, 'pbdata'), 'Skipped');
+""")
+    _run_node(_service_status_harness() + r"""
+(async () => {
+  const starting = {actual_status:'starting', running:false, expected:false, can_enable:true, can_stop:true};
+  _statusRequestState = 'ready';
+  _status = {...healthy, pbcoindata:starting};
+  updateStatusUI();
+  assert.match(elements['sl-pbcoindata'].textContent, /^Starting/);
+  assert.equal(elements['dot-pbcoindata'].className, 'sb-dot starting');
+  assert.ok(elements['overview-grid'].innerHTML.includes('svc-card starting'));
+  assert.ok(elements['ctrl-btns-pbcoindata'].innerHTML.includes('disabled>Start'));
+  document.hidden = true; listeners.visibilitychange();
+  document.hidden = false; listeners.visibilitychange();
+  requests.at(-1).resolve(response({...healthy, pbcoindata:starting}));
+  await settle();
+  assert.match(elements['sl-pbcoindata'].textContent, /^Starting/);
+  assert.ok(elements['ctrl-btns-pbcoindata'].innerHTML.includes('disabled>Enable'));
+  for (const actual of ['unknown','running','failed','stopping']) {
+    _status = {...healthy, pbcoindata:{...starting, actual_status:actual, running:actual==='running', can_stop:false}};
+    updateStatusUI();
+    assert.ok(elements['sl-pbcoindata'].textContent.startsWith({unknown:'Unknown',running:'Running',failed:'Failed',stopping:'Stopping'}[actual]));
+  }
+})().catch(error => { console.error(error); process.exitCode=1; });
+""")
+
+
 @pytest.mark.parametrize("after_success", [False, True], ids=["initial", "after-success"])
 @pytest.mark.parametrize("failure", ["http", "network", "json"])
 def test_service_status_failure_and_automatic_recovery(after_success: bool, failure: str) -> None:
@@ -545,3 +607,1156 @@ function _resultPopup() { throw new Error('Unexpected action failure'); }
   requests[3].resolve(response(healthy)); await settle(); assertRecovered();
 })().catch(error => { console.error(error); process.exitCode = 1; });
 """)
+
+
+@pytest.mark.parametrize(('kind', 'key', 'field'), [
+    ('system', 'memory', 'mem_error_server'), ('system', 'swap', 'swap_error_server'),
+    ('system', 'disk', 'disk_error_server'), ('system', 'cpu', 'cpu_error_server'),
+    ('instance', 'memory', 'mem_error_v7'), ('instance', 'swap', 'swap_error_v7'),
+    ('instance', 'cpu', 'cpu_error_v7'), ('instance', 'errors', 'error_error_v7'),
+    ('instance', 'tracebacks', 'traceback_error_v7'),
+])
+def test_alert_threshold_links_use_kind_specific_allowlist(kind, key, field):
+    """Only known metrics link to the correct kind's field, retaining the mount prefix."""
+    source = (ROOT / 'frontend/pbgui_nav.js').read_text()
+    code = _extract_function(source, 'alertThresholdLinks')
+    _run_node("""
+const assert = require('node:assert/strict');
+function _getAppBase() { return '/mounted'; }
+function escAttr(text) { return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+""" + code + "\nconst item = " + json.dumps({'kind': kind, 'triggered_thresholds': [key]}) + ";\n" + """
+const html = alertThresholdLinks(item);
+assert.ok(html.includes('/mounted/api/services/main_page#api-server/settings/FIELD'));
+assert.equal((html.match(/<a /g) || []).length, 1);
+assert.ok(!alertThresholdLinks({kind:'offline'}));
+assert.ok(!alertThresholdLinks({kind:'__proto__'}));
+assert.ok(!alertThresholdLinks({kind:'instance',triggered_thresholds:['<img onerror=x>', '__proto__']}).includes('<img'));
+assert.ok(alertThresholdLinks({kind:'instance'}).includes('Threshold settings'));
+""".replace('FIELD', field))
+
+
+def test_settings_request_timeout_abort_stale_response_and_edits():
+    """Bound loading and discard cancelled responses while retaining input made during loading."""
+    source = PAGE.read_text()
+    code = "var _settingsDrafts = Object.create(null);\n" + "\n".join(
+        _extract_function(source, name) for name in ('getSettingsDraft', 'releaseSettingsDraft', 'loadSettings')
+    )
+    _run_node("""
+const assert = require('node:assert/strict');
+const API_BASE = '/mounted/api/services';
+var _settingsLoaded = {}, _settingsLoading = {}, _settingsFieldTarget = {};
+const requests = [], applied = [], timers = new Map(), listeners = {};
+let timerId = 0;
+function setTimeout(fn, ms) { assert.equal(ms,15000); timers.set(++timerId,fn); return timerId; }
+function clearTimeout(id) { timers.delete(id); }
+const field = {id:'apiserver-host', value:'draft.local', checked:false};
+const save = {disabled:false};
+const panel = {querySelector: (sel) => sel === '.form-btn.save' ? save : null,
+  addEventListener:(name,fn)=>listeners[name]=fn, removeEventListener:(name)=>delete listeners[name]};
+const document = {getElementById:id=>id==='apiserver-host'?field:panel};
+function authOptions(options) {return options;}
+function focusSettingsTarget() {}
+function applySettings(svc,data) { applied.push(data.host); field.value = data.host; }
+function fetch(url,options) {return new Promise(resolve=>requests.push({url,options,resolve}));}
+const console = {error:()=>{}};
+""" + code + """
+function response(host) {return {ok:true,json:()=>Promise.resolve({host})};}
+(async()=>{
+  let pending = loadSettings('api-server');
+  assert.equal(save.disabled,true);
+  assert.equal(requests[0].url, '/mounted/api/services/settings/api-server');
+  timers.values().next().value();
+  await pending;
+  assert.equal(requests[0].options.signal.aborted,true);
+  assert.equal(_settingsLoaded['api-server'],undefined);
+  assert.equal(timers.size,0);
+  assert.equal(save.disabled,true);
+  pending = loadSettings('api-server');
+  requests[0].resolve(response('obsolete.local'));
+  await Promise.resolve(); await Promise.resolve();
+  assert.deepEqual(applied,[]);
+  listeners.input({target:field});
+  requests[1].resolve(response('server.local'));
+  await pending;
+  assert.deepEqual(applied,['server.local']);
+  assert.equal(field.value,'draft.local');
+  assert.equal(_settingsFieldTarget,null);
+  assert.equal(save.disabled,false);
+  assert.equal(timers.size,0);
+  delete _settingsLoaded['api-server'];
+  pending=loadSettings('api-server');
+  const old=_settingsLoading['api-server'];
+  delete _settingsLoading['api-server'];
+  old.cancel();
+  await pending;
+  assert.equal(requests[2].options.signal.aborted,true);
+  requests[2].resolve(response('after-unload.local'));
+  await Promise.resolve(); await Promise.resolve();
+  assert.deepEqual(applied,['server.local']);
+  assert.equal(timers.size,0);
+})().catch(error=>{process.stderr.write(error.stack);process.exitCode=1;});
+""")
+
+
+@pytest.mark.parametrize('missing', [False, True])
+def test_settings_same_page_hash_navigation_and_missing_field(missing):
+    """Hash changes and reload use a generation guarded field target and safe fallback."""
+    source = PAGE.read_text()
+    code = '\n'.join(_extract_function(source, name) for name in
+                     ('settingsTargetNotice', 'focusSettingsTarget', 'restoreFromHash'))
+    _run_node("""
+const assert=require('node:assert/strict');
+var _settingsLoaded={}, _settingsFieldTarget=null, _settingsNavigationGeneration=0;
+var MONITOR_THRESHOLD_FIELDS=['mem_error_v7','cpu_error_v7'];
+const notices=[], focused=[];
+let currentHash='#api-server/settings/mem_error_v7';
+const notice={textContent:''};
+const btn={getAttribute:()=> 'settings'};
+const panel={querySelectorAll:()=>[btn],querySelector:()=>notice};
+const document={getElementById:id=>id==='panel-api-server'||id==='api-server-tab-settings'?panel:
+  (MISSING?null:{scrollIntoView:()=>{},focus:()=>focused.push(id)}), createElement:()=>({})};
+const window={location:{pathname:'/mounted/api/services/main_page',search:'',get hash(){return currentHash;}},
+ switchTab:()=>{++_settingsNavigationGeneration;_settingsFieldTarget=null;currentHash='#api-server/settings';},
+ addEventListener:(name,fn)=>{assert.equal(name,'hashchange');window.hashListener=fn;}};
+const history={replaceState:(_,__,url)=>{currentHash='#'+url.split('#')[1];}};
+function selectPanel(){++_settingsNavigationGeneration;_settingsFieldTarget=null;}
+""".replace('MISSING', json.dumps(missing)) + code + "\n" + """
+window.addEventListener('hashchange',restoreFromHash);
+restoreFromHash();
+assert.equal(currentHash,'#api-server/settings/mem_error_v7');
+assert.deepEqual(focused,[]);
+// A newer destination replaces the pending target before loading finishes.
+currentHash='#api-server/settings/cpu_error_v7';
+window.hashListener();
+_settingsLoaded['api-server']=true;
+focusSettingsTarget();
+if (MISSING) {
+  assert.equal(notice.textContent,'This threshold setting is unavailable.');
+  assert.equal(currentHash,'#api-server/settings');
+} else {
+  assert.deepEqual(focused,['mc-cpu_error_v7']);
+  assert.equal(currentHash,'#api-server/settings/cpu_error_v7');
+}
+currentHash='#api-server/settings/<invalid>';
+window.hashListener();
+assert.equal(currentHash,'#api-server/settings');
+assert.equal(notice.textContent,'This threshold setting is unavailable.');
+// A load after leaving the original context must never take focus.
+_settingsLoaded['api-server']=false;
+currentHash='#api-server/settings/mem_error_v7';restoreFromHash();
+++_settingsNavigationGeneration;
+_settingsLoaded['api-server']=true;
+const before=focused.length;focusSettingsTarget();assert.equal(focused.length,before);
+""".replace('MISSING', json.dumps(missing)))
+    assert "window.addEventListener('hashchange', restoreFromHash)" in source
+
+
+@pytest.mark.parametrize('failure', ['timeout', 'http', 'network', 'json'])
+def test_settings_draft_survives_failed_load_retry_and_unload(failure):
+    """Form-owned drafts survive failed attempts, keep newer edits and are released on success or exit."""
+    source = PAGE.read_text()
+    functions = '\n'.join(_extract_function(source, name) for name in
+                          ('getSettingsDraft', 'releaseSettingsDraft', 'loadSettings'))
+    start = source.index("  window.addEventListener('pagehide', function (event) {")
+    unload = source[start:source.index('\n  });', start) + 6]
+    _run_node("""
+const assert = require('node:assert/strict');
+const API_BASE = '/api/services';
+var _settingsLoaded = {}, _settingsLoading = {}, _settingsDrafts = Object.create(null);
+var _settingsFieldTarget = {}, _settingsNavigationGeneration = 0;
+const requests = [], timers = new Map(), listeners = new Map();
+const host = {id:'apiserver-host', value:'', checked:undefined};
+const checkbox = {id:'apiserver-auto-restart', value:'on', checked:false};
+const save = {disabled:false};
+let timerId = 0, applied = 0, pagehide;
+function setTimeout(fn) { timers.set(++timerId,fn); return timerId; }
+function clearTimeout(id) { timers.delete(id); }
+const panel = {
+  querySelector:sel => sel === '.form-btn.save' ? save : null,
+  addEventListener:(name, fn)=>{assert.equal(listeners.has(name),false);listeners.set(name,fn);},
+  removeEventListener:(name, fn)=>{assert.equal(listeners.get(name),fn);listeners.delete(name);}
+};
+const document = {getElementById:id=>id===host.id?host:id===checkbox.id?checkbox:panel};
+const window = {addEventListener:(name,fn)=>{assert.equal(name,'pagehide');pagehide=fn;}};
+function focusSettingsTarget() {}
+function authOptions(options) {return options;}
+function fetch(url,options) {return new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}));}
+function applySettings(svc,data) {applied++;host.value=data.host;checkbox.checked=data.auto_restart;}
+const console = {error:()=>{}};
+""" + functions + '\n' + unload + '\nconst failure = ' + json.dumps(failure) + ";\n" + """
+function response(host) {return {ok:true,json:()=>Promise.resolve({host,auto_restart:true})};}
+(async()=>{
+  let pending = loadSettings('api-server');
+  host.value='before-failure.local';listeners.get('input')({target:host});
+  listeners.get('change')({target:checkbox});
+  const draft=_settingsDrafts['api-server'];
+  if(failure==='timeout') timers.values().next().value();
+  if(failure==='http') requests[0].resolve({ok:false});
+  if(failure==='network') requests[0].reject(new Error('Offline'));
+  if(failure==='json') requests[0].resolve({ok:true,json:()=>Promise.reject(new SyntaxError('Invalid JSON'))});
+  await pending;
+  assert.equal(applied,0);assert.equal(save.disabled,true);
+  assert.equal(listeners.size,2);assert.equal(timers.size,0);
+  assert.strictEqual(_settingsDrafts['api-server'],draft);
+  // Edits made between the failed attempt and Retry belong to the same draft.
+  host.value='after-failure.local';listeners.get('input')({target:host});
+  pending=loadSettings('api-server');
+  assert.strictEqual(_settingsDrafts['api-server'],draft);
+  if(failure==='timeout') requests[0].resolve(response('obsolete.local'));
+  await Promise.resolve();await Promise.resolve();
+  assert.equal(applied,0);
+  requests[1].resolve(response('server.local'));await pending;
+  assert.equal(host.value,'after-failure.local');assert.equal(checkbox.checked,false);
+  assert.equal(save.disabled,false);assert.equal(applied,1);
+  assert.equal(listeners.size,0);assert.equal(draft.edits.size,0);
+  assert.equal(_settingsDrafts['api-server'],undefined);assert.equal(timers.size,0);
+  delete _settingsLoaded['api-server'];
+  pending=loadSettings('api-server');
+  host.value='unloaded.local';listeners.get('input')({target:host});
+  const abandoned=_settingsDrafts['api-server'];
+  pagehide();await pending;
+  assert.equal(requests[2].options.signal.aborted,true);
+  assert.equal(listeners.size,0);assert.equal(abandoned.edits.size,0);
+  assert.equal(_settingsDrafts['api-server'],undefined);assert.equal(timers.size,0);
+  requests[2].resolve(response('too-late.local'));
+  await Promise.resolve();await Promise.resolve();
+  assert.equal(applied,1);assert.equal(host.value,'unloaded.local');
+})().catch(error=>{process.stderr.write(error.stack);process.exitCode=1;});
+""")
+
+
+@pytest.mark.parametrize(('state', 'edited'), [
+    ('pending', True), ('pending', False), ('failed', True), ('loaded', True), ('inactive', True),
+])
+def test_settings_cached_return_preserves_draft_and_navigation(state, edited):
+    """Cached pages retain drafts and targets, resume only active Settings and reject obsolete jobs."""
+    source = PAGE.read_text()
+    functions = '\n'.join(_extract_function(source, name) for name in
+                          ('getSettingsDraft', 'releaseSettingsDraft', 'loadSettings'))
+    lifecycle = []
+    for event in ('pagehide', 'pageshow'):
+        start = source.index("  window.addEventListener('" + event + "', function (event) {")
+        lifecycle.append(source[start:source.index('\n  });', start) + 6])
+    _run_node("""
+const assert = require('node:assert/strict');
+const API_BASE='/api/services';
+var _settingsLoaded={}, _settingsLoading={}, _settingsDrafts=Object.create(null);
+var _settingsNavigationGeneration=7, _settingsFieldTarget={field:'mem_error_v7',generation:7};
+var _currentPanelId='api-server';
+const events={}, listeners=new Map(), requests=[], timers=new Map(), focused=[];
+const host={id:'apiserver-host',value:'',checked:undefined};
+const checkbox={id:'apiserver-auto-restart',value:'on',checked:false};
+const save={disabled:false};
+let timerId=0, active=true, applied=0;
+const pane={
+ classList:{contains:name=>name==='active'&&active},
+ querySelector:sel=>sel==='.form-btn.save'?save:null,
+ addEventListener:(name,fn)=>{assert.equal(listeners.has(name),false);listeners.set(name,fn);},
+ removeEventListener:(name,fn)=>{assert.strictEqual(listeners.get(name),fn);listeners.delete(name);}
+};
+const document={getElementById:id=>id===host.id?host:id===checkbox.id?checkbox:id==='api-server-tab-settings'?pane:null};
+const window={addEventListener:(name,fn)=>events[name]=fn};
+function setTimeout(fn){timers.set(++timerId,fn);return timerId;}
+function clearTimeout(id){timers.delete(id);}
+function authOptions(options){return options;}
+function fetch(url,options){return new Promise(resolve=>requests.push({url,options,resolve}));}
+function applySettings(svc,data){applied++;host.value=data.host;checkbox.checked=data.auto_restart;}
+function focusSettingsTarget(){
+ if(_settingsFieldTarget&&_settingsFieldTarget.generation===_settingsNavigationGeneration){
+   focused.push(_settingsFieldTarget.field);_settingsFieldTarget=null;
+ }
+}
+function restoreFromHash(){throw new Error('A cached page must retain its existing navigation');}
+const console={error:()=>{}};
+""" + functions + '\n' + '\n'.join(lifecycle) + '\nconst state=' + json.dumps(state) + ';const edited=' + json.dumps(edited) + ";\n" + """
+function response(){return {ok:true,json:()=>Promise.resolve({host:'server.local',auto_restart:true})};}
+async function settle(){for(let i=0;i<20;i++)await Promise.resolve();}
+(async()=>{
+ const initial=loadSettings('api-server');
+ if(state==='loaded'){requests[0].resolve(response());await initial;focused.length=0;}
+ if(edited){
+   host.value='unsaved.local';checkbox.checked=false;
+   if(listeners.has('input')){
+     listeners.get('input')({target:host});listeners.get('change')({target:checkbox});
+   }
+ }
+ const draft=_settingsDrafts['api-server'];
+ if(state==='failed'){timers.values().next().value();await initial;}
+ if(state==='inactive')active=false;
+ events.pagehide({persisted:true});
+ await settle();
+ assert.equal(timers.size,0);assert.equal(Object.keys(_settingsLoading).length,0);
+ assert.equal(_settingsNavigationGeneration,7);
+ if(draft){assert.strictEqual(_settingsDrafts['api-server'],draft);assert.equal(listeners.size,2);}
+ const appliedBefore=applied;
+ events.pageshow({persisted:true});
+ if(state==='loaded'){
+   assert.equal(requests.length,1);assert.equal(host.value,'unsaved.local');
+ }else{
+   if(state==='inactive'){
+     assert.equal(requests.length,1);active=true;loadSettings('api-server');
+   }
+   assert.equal(requests.length,2);
+   assert.equal(requests[0].options.signal.aborted,true);
+   // A second pageshow cannot create duplicate requests or listeners.
+   events.pageshow({persisted:true});assert.equal(requests.length,2);
+   requests[0].resolve(response());await settle();assert.equal(applied,appliedBefore);
+   requests[1].resolve(response());await settle();
+   assert.equal(applied,appliedBefore+1);assert.equal(_settingsLoaded['api-server'],true);
+   assert.equal(host.value,edited?'unsaved.local':'server.local');
+   assert.equal(checkbox.checked,edited?false:true);
+   assert.equal(save.disabled,false);assert.equal(listeners.size,0);
+   assert.equal(Object.keys(_settingsDrafts).length,0);assert.equal(draft.edits.size,0);
+ }
+ assert.deepEqual(focused,edited?[]:['mem_error_v7']);
+ // A later final exit must discard an abandoned draft instead of retaining it.
+ delete _settingsLoaded['api-server'];loadSettings('api-server');
+ const abandoned=_settingsDrafts['api-server'];
+ events.pagehide({persisted:false});await settle();
+ assert.equal(abandoned.edits.size,0);assert.equal(listeners.size,0);
+ assert.equal(Object.keys(_settingsDrafts).length,0);assert.equal(timers.size,0);
+})().catch(error=>{process.stderr.write(error.stack);process.exitCode=1;});
+""")
+
+
+def _cmc_harness() -> str:
+    """Exercise actual CMC handlers with deferred HTTP and a deterministic clock."""
+    source = PAGE.read_text(encoding="utf-8")
+    names = (
+        "cmcFetch", "newCmcOperationId", "sameCmcMutation",
+        "clearCmcMutationContext", "cmcMutationOptions", "resolvePendingCmcMutation",
+        "cmcMutationFetch", "setCmcMutationBusy", "cmcNumber", "cmcDuration",
+        "selectedCmcKey", "updateCmcButtons", "cmcMessage", "renderCmcPool",
+        "cmcTimestamp", "cmcViewVisible", "scheduleCmcRefresh", "stopCmcRefresh", "loadCmcPool",
+        "queueCmcSnapshot", "resumeCmcSnapshot", "startCmcPoolRead",
+    )
+    state = source[source.index("  var _cmcPool ="):source.index("  function esc(")]
+    # This helper contains quote regexes, outside the braced extractor's grammar.
+    escape_helper = source[source.index("  function esc("):source.index("  function authOptions(")]
+    lifecycle_start = source.index("  document.addEventListener('visibilitychange'", source.index("  window.loadCmcPool ="))
+    lifecycle = source[lifecycle_start:source.index("  window.selectCmcKey =", lifecycle_start)]
+    return r"""
+const assert = require('node:assert/strict');
+const API_BASE = '/api/services';
+let completed = false;
+process.on('beforeExit', () => assert.equal(completed, true, 'The asynchronous scenario must finish'));
+const timers = new Map(); let timerId = 0;
+function setTimeout(fn, delay) { timers.set(++timerId, {fn, delay}); return timerId; }
+function clearTimeout(id) { timers.delete(id); }
+function fire(delay) {
+  const found = [...timers].find(([id, timer]) => timer.delay === delay);
+  assert.ok(found, 'Expected timer: ' + delay);
+  timers.delete(found[0]); found[1].fn();
+}
+function timerCount(delay) { return [...timers.values()].filter(t => t.delay === delay).length; }
+function deferred() { let resolve, reject; const promise = new Promise((a,b) => {resolve=a;reject=b;}); return {promise, resolve, reject}; }
+const requests = []; const dialogs = []; const events = {};
+const window = {
+  PBGuiDialogs: {confirm() { const d = deferred(); dialogs.push(d); return d.promise; }},
+  addEventListener(name, fn) { events[name] = fn; }
+};
+const scroll = {scrollTop:120, scrollLeft:180};
+const poolScroll = {scrollTop:240, scrollLeft:0};
+const nodes = new Map();
+function element(id) {
+  if (!nodes.has(id)) {
+    let html = '';
+    nodes.set(id, {textContent:'', className:'', disabled:false, hidden:true, value:'',
+      get innerHTML() { return html; },
+      set innerHTML(value) {html=value; if (id === 'cmc-pool-body') {scroll.scrollTop=0;scroll.scrollLeft=0;poolScroll.scrollTop=0;}}
+    });
+  }
+  return nodes.get(id);
+}
+const document = {
+  hidden:false,
+  getElementById:element,
+  querySelectorAll(selector) {
+    if (selector === '[data-cmc-mutation]') return [element('cmc-key-submit')];
+    return selector.includes('.cmc-pool-wrap') ? [scroll, poolScroll] : [scroll];
+  },
+  addEventListener(name, fn) { events[name] = fn; }
+};
+function authOptions(options) { return options; }
+function fetch(path, options) {
+  const d = deferred(); requests.push({...d, path, options}); return d.promise;
+}
+function reply(index, data, status=200) {
+  requests[index].resolve({ok:status<400, status, json:() => Promise.resolve(data)});
+}
+async function drain() { for (let i=0;i<50;i++) await Promise.resolve(); }
+function snapshot(keys=[{id:'a', label:'Test A'}, {id:'b', label:'Test B'}]) { return {keys, ready:true, health:'healthy'}; }
+function replyPool(index, keys) { reply(index, snapshot(keys)); reply(index+1, {authority:{lease_count:0}}); }
+var _currentPanelId = 'pbcoindata';
+""" + state + "\n" + escape_helper + "\n" + "\n".join(_extract_function(source, name) for name in names) + "\n" + lifecycle + "\n" + "\n".join(
+        _extract_window_function(source, name) for name in ("selectCmcKey", "deleteSelectedCmcKey", "toggleSelectedCmcKey")
+    ) + r"""
+_cmcPool = snapshot(); _selectedCmcKeyId = 'a'; _cmcHasSnapshot = true;
+"""
+
+
+@pytest.mark.parametrize("change_selection", [False, True])
+def test_cmc_delete_is_locked_through_dialog_mutation_and_fresh_snapshot(change_selection):
+    """Rapid calls send one DELETE and keep the lock through a required newer read."""
+    _run_node(_cmc_harness() + "\nconst changeSelection = " + json.dumps(change_selection) + r""";
+(async () => {
+  const older = loadCmcPool();
+  const deletion = window.deleteSelectedCmcKey();
+  await window.deleteSelectedCmcKey();
+  assert.equal(dialogs.length, 1);
+  assert.equal(element('cmc-delete-btn').disabled, true);
+  renderCmcPool();
+  assert.equal(element('cmc-delete-btn').disabled, true);
+  dialogs[0].resolve(true); await drain();
+  assert.equal(requests.length, 3);
+  assert.equal(requests[2].options.method, 'DELETE');
+  await window.deleteSelectedCmcKey();
+  if (changeSelection) _selectedCmcKeyId = 'b';
+  reply(2, {}); await drain();
+  assert.equal(_cmcDeleteInFlight, true);
+  assert.equal(requests.length, 3, 'The old read must settle before a new pair starts');
+  replyPool(0); await older; await drain();
+  assert.equal(requests.length, 5, 'Exactly one post-mutation pair is required');
+  renderCmcPool();
+  assert.equal(element('cmc-delete-btn').disabled, true);
+  await window.deleteSelectedCmcKey();
+  assert.equal(requests.length, 5);
+  replyPool(3, [{id:'b',label:'Test B'}]); await deletion;
+  assert.equal(_selectedCmcKeyId, changeSelection ? 'b' : '');
+  assert.equal(_cmcDeleteInFlight, false);
+  assert.equal(element('cmc-delete-btn').disabled, !changeSelection);
+  assert.equal(timerCount(5000), 1);
+  assert.equal(timerCount(15000), 0);
+  assert.equal(dialogs.length, 1);
+})().then(() => {completed=true;}).catch(error => {console.error(error);process.exitCode=1;});
+""")
+
+
+@pytest.mark.parametrize("failure", ["cancel", "dialog", "network", "http", "abort"])
+def test_cmc_delete_unlocks_after_cancel_or_failure(failure):
+    """Cancelled dialogs and failed requests release the local lock without retries."""
+    _run_node(_cmc_harness() + "\nconst failure = " + json.dumps(failure) + r""";
+(async () => {
+  const deletion = window.deleteSelectedCmcKey();
+  if (failure === 'cancel') dialogs[0].resolve(false);
+  else if (failure === 'dialog') dialogs[0].reject(new Error('dialog failed'));
+  else {
+    dialogs[0].resolve(true); await drain();
+    if (failure === 'http') reply(0, {detail:'HTTP failure'}, 500);
+    else requests[0].reject(failure === 'abort' ? new DOMException('cancelled','AbortError') : new Error('network failed'));
+  }
+  await deletion;
+  assert.equal(_cmcDeleteInFlight, false);
+  assert.equal(_cmcMutationBusy, false);
+  assert.equal(_selectedCmcKeyId, 'a');
+  assert.equal(element('cmc-delete-btn').disabled, false);
+  assert.equal(timerCount(5000), 1);
+  assert.equal(requests.length, ['cancel','dialog'].includes(failure) ? 0 : 1);
+  if (['dialog','network','http'].includes(failure)) assert.ok(element('cmc-pool-message').className.includes('error'));
+  const retry = window.deleteSelectedCmcKey();
+  assert.equal(dialogs.length, 2);
+  dialogs[1].resolve(false); await retry;
+})().then(() => {completed=true;}).catch(error => {console.error(error);process.exitCode=1;});
+""")
+
+
+def test_cmc_delete_respects_shared_toggle_lock_before_and_after_confirmation():
+    """A concurrent toggle blocks deletion even if it starts during confirmation."""
+    _run_node(_cmc_harness() + r"""
+(async () => {
+  _cmcMutationBusy = true;
+  await window.deleteSelectedCmcKey(); assert.equal(dialogs.length, 0);
+  _cmcMutationBusy = false;
+  const deletion = window.deleteSelectedCmcKey();
+  window.toggleSelectedCmcKey(); window.toggleSelectedCmcKey(); await drain();
+  assert.equal(requests.length, 1);
+  dialogs[0].resolve(true); await deletion;
+  assert.equal(requests.length, 1);
+  assert.equal(element('cmc-delete-btn').disabled, true);
+  reply(0, {}); await drain();
+  assert.equal(requests.length, 3);
+  replyPool(1); await drain();
+  assert.equal(element('cmc-delete-btn').disabled, false);
+  assert.equal(timerCount(5000), 1);
+})().then(() => {completed=true;}).catch(error => {console.error(error);process.exitCode=1;});
+""")
+
+
+def test_cmc_refresh_coalesces_and_preserves_editing_selection_and_scroll():
+    """One nonoverlapping cycle updates status without changing editing containers."""
+    _run_node(_cmc_harness() + r"""
+(async () => {
+  element('cmc-key-modal').hidden = false;
+  element('cmc-key-label').value = 'unsaved label';
+  document.activeElement = element('cmc-key-label');
+  const initial = loadCmcPool();
+  assert.equal(loadCmcPool(), initial);
+  events.pageshow();
+  assert.equal(requests.length, 2);
+  assert.equal(timerCount(5000), 0);
+  replyPool(0); await initial;
+  assert.equal(timerCount(5000), 1);
+  fire(5000);
+  assert.equal(requests.length, 4);
+  assert.equal(timerCount(5000), 0);
+  assert.ok(!element('cmc-status-text').textContent.includes('Loading'));
+  loadCmcPool(); assert.equal(requests.length, 4);
+  replyPool(2); await drain();
+  assert.equal(_selectedCmcKeyId, 'a');
+  assert.equal(scroll.scrollTop, 120); assert.equal(scroll.scrollLeft, 180);
+  assert.equal(poolScroll.scrollTop, 240);
+  assert.equal(document.activeElement, element('cmc-key-label'));
+  assert.equal(element('cmc-key-label').value, 'unsaved label');
+  assert.equal(element('cmc-key-modal').hidden, false);
+  assert.equal(timerCount(5000), 1);
+  // A later snapshot explains externally removed selection.
+  fire(5000); replyPool(4, [{id:'b'}]); await drain();
+  assert.equal(_selectedCmcKeyId, '');
+  assert.equal(element('cmc-pool-message').textContent, 'The selected CMC key is no longer available.');
+})().then(() => {completed=true;}).catch(error => {console.error(error);process.exitCode=1;});
+""")
+
+
+@pytest.mark.parametrize("failure", ["timeout", "partial"])
+def test_cmc_read_failure_cleans_up_and_recovers(failure):
+    """Timeout and partial failure release both reads and schedule an automatic retry."""
+    _run_node(_cmc_harness() + "\nconst failure = " + json.dumps(failure) + r""";
+(async () => {
+  const first = loadCmcPool();
+  if (failure === 'timeout') fire(15000);
+  else reply(0, {detail:'read failed'}, 503);
+  await first;
+  assert.equal(requests[0].options.signal.aborted, true);
+  assert.equal(requests[1].options.signal.aborted, true);
+  assert.equal(timerCount(15000), 0);
+  assert.equal(timerCount(5000), 1);
+  assert.ok(element('cmc-pool-message').className.includes('error'));
+  if (failure === 'timeout') assert.match(element('cmc-status-text').textContent, /15 seconds/);
+  fire(5000); replyPool(2); await drain();
+  assert.equal(_cmcPool.health, 'healthy');
+  assert.ok(!element('cmc-status-bar').className.includes('error'));
+  // Completion of an obsolete read must not overwrite recovered state.
+  replyPool(0, []); await drain();
+  assert.equal(_cmcPool.keys.length, 2);
+})().then(() => {completed=true;}).catch(error => {console.error(error);process.exitCode=1;});
+""")
+
+
+@pytest.mark.parametrize("leave", ["panel", "hidden", "pagehide"])
+def test_cmc_lifecycle_invalidates_reads_without_resetting_new_controllers(leave):
+    """Leaving cleans up immediately; stale completion cannot disturb the resumed cycle."""
+    _run_node(_cmc_harness() + "\nconst leave = " + json.dumps(leave) + r""";
+(async () => {
+  const old = loadCmcPool();
+  if (leave === 'panel') {_currentPanelId='overview';stopCmcRefresh();}
+  else if (leave === 'hidden') {document.hidden=true;events.visibilitychange();}
+  else events.pagehide();
+  assert.equal(timers.size, 0);
+  assert.equal(requests[0].options.signal.aborted, true);
+  assert.equal(requests[1].options.signal.aborted, true);
+  loadCmcPool(); assert.equal(requests.length, 2);
+  _currentPanelId='pbcoindata'; document.hidden=false;
+  events.pageshow(); events.visibilitychange();
+  assert.equal(requests.length, 4);
+  const resumed = _cmcLoadController;
+  await old;
+  replyPool(0, []); await drain();
+  assert.equal(_cmcLoadController, resumed);
+  assert.equal(resumed.signal.aborted, false);
+  assert.equal(timerCount(15000), 1);
+  replyPool(2); await drain();
+  assert.equal(_cmcPool.keys.length, 2);
+  assert.equal(timerCount(5000), 1);
+})().then(() => {completed=true;}).catch(error => {console.error(error);process.exitCode=1;});
+""")
+
+
+def test_cmc_hidden_delete_is_not_cancelled_or_retried_and_refreshes_on_return():
+    """An in-flight mutation survives pagehide; its snapshot is deferred until return."""
+    _run_node(_cmc_harness() + r"""
+(async () => {
+  const deletion = window.deleteSelectedCmcKey();
+  dialogs[0].resolve(true); await drain();
+  events.pagehide();
+  assert.equal(requests[0].options.signal, undefined);
+  reply(0, {}); await deletion;
+  assert.equal(requests.length, 1);
+  assert.equal(timers.size, 0);
+  assert.equal(_cmcSnapshotRequired, true);
+  events.pageshow(); events.pageshow();
+  assert.equal(requests.length, 3);
+  replyPool(1, [{id:'b'}]); await drain();
+  assert.equal(_cmcPool.keys.length, 1);
+  assert.equal(timerCount(5000), 1);
+})().then(() => {completed=true;}).catch(error => {console.error(error);process.exitCode=1;});
+""")
+
+
+def test_cmc_refresh_navigation_hooks_and_removed_manual_controls():
+    """Panel and Pool entry trigger updates; no manual CMC refresh control remains."""
+    source = PAGE.read_text(encoding="utf-8")
+    assert 'cmc-refresh-btn' not in source
+    assert 'onclick="loadCmcPool()"' not in source
+    assert "if (panelId === 'pbcoindata') loadCmcPool();\n    else stopCmcRefresh();" in _extract_function(source, 'selectPanel')
+    assert "if (tab === 'pool' && svc === 'pbcoindata') loadCmcPool();" in _extract_window_function(source, 'switchTab')
+    for name in ('submitCmcKey', 'submitCmcAuthorityTransfer', 'toggleSelectedCmcKey'):
+        assert 'loadCmcPool(true)' in _extract_window_function(source, name)
+
+
+def test_cmc_delete_snapshot_failure_unlocks_and_polling_recovers():
+    """A failed post-delete read releases the lock and retries only reads automatically."""
+    _run_node(_cmc_harness() + r"""
+(async () => {
+  scheduleCmcRefresh();
+  assert.equal(timerCount(5000), 1);
+  const deletion = window.deleteSelectedCmcKey();
+  assert.equal(timerCount(5000), 0);
+  await loadCmcPool(); assert.equal(requests.length, 0);
+  dialogs[0].resolve(true); await drain();
+  _selectedCmcKeyId = 'b';
+  reply(0, {}); await drain();
+  assert.equal(requests.length, 3);
+  assert.equal(_cmcDeleteInFlight, true);
+  reply(1, {detail:'snapshot unavailable'}, 503); await deletion;
+  assert.equal(requests[2].options.signal.aborted, true);
+  assert.equal(_cmcDeleteInFlight, false);
+  assert.equal(_selectedCmcKeyId, 'b');
+  assert.equal(element('cmc-delete-btn').disabled, false);
+  assert.equal(timerCount(5000), 1);
+  fire(5000); replyPool(3, [{id:'b'}]); await drain();
+  assert.equal(requests.filter(r => r.options.method === 'DELETE').length, 1);
+  assert.equal(_cmcPool.keys.length, 1);
+  assert.equal(timerCount(5000), 1);
+})().then(() => {completed=true;}).catch(error => {console.error(error);process.exitCode=1;});
+""")
+
+
+def test_cmc_repeated_fresh_requests_share_one_queued_snapshot():
+    """Multiple snapshot waiters share the one follow-up pair, including its completion."""
+    _run_node(_cmc_harness() + r"""
+(async () => {
+  const old = loadCmcPool();
+  const fresh = loadCmcPool(true);
+  assert.equal(loadCmcPool(true), fresh);
+  assert.equal(loadCmcPool(), fresh);
+  replyPool(0); await old; await drain();
+  assert.equal(requests.length, 4);
+  let settled = false;
+  fresh.then(() => {settled=true;}); await drain();
+  assert.equal(settled, false);
+  assert.equal(timerCount(5000), 0);
+  replyPool(2, [{id:'b'}]); await fresh;
+  assert.equal(settled, true);
+  assert.equal(requests.length, 4);
+  assert.equal(timerCount(5000), 1);
+})().then(() => {completed=true;}).catch(error => {console.error(error);process.exitCode=1;});
+""")
+
+
+@pytest.mark.parametrize("outcome", ["success", "http", "network"])
+@pytest.mark.parametrize("order", ["read_first", "mutation_first"])
+def test_cmc_delete_snapshot_waits_for_intervening_mutation(outcome, order):
+    """A queued post-delete read survives another mutation, without early unlock or extra reads."""
+    _run_node(_cmc_harness() + '\nconst outcome=' + json.dumps(outcome) + ';const order=' + json.dumps(order) + r""";
+(async () => {
+  const older = loadCmcPool();
+  const deletion = window.deleteSelectedCmcKey();
+  dialogs[0].resolve(true); await drain();
+  reply(2, {}); await drain();
+  _selectedCmcKeyId = 'b';
+  window.toggleSelectedCmcKey(); await drain();
+  assert.equal(requests.length, 4);
+  function completeMutation() {
+    if (outcome === 'network') requests[3].reject(new Error('isolated network failure'));
+    else reply(3, outcome === 'http' ? {detail:'isolated HTTP failure'} : {}, outcome === 'http' ? 503 : 200);
+  }
+  if (order === 'read_first') {
+    replyPool(0); await older; await drain();
+    assert.equal(_cmcDeleteInFlight, true, 'An old read cannot complete the delete snapshot');
+    assert.equal(element('cmc-delete-btn').disabled, true);
+    assert.equal(requests.length, 4, 'No reads may start during the intervening mutation');
+    assert.equal(timerCount(5000), 0);
+    completeMutation(); await drain();
+  } else {
+    completeMutation(); await drain();
+    assert.equal(requests.length, 4, 'Do not overlap the old and fresh read pairs');
+    assert.equal(_cmcDeleteInFlight, true);
+    replyPool(0); await older; await drain();
+  }
+  assert.equal(requests.length, 6, 'Exactly one fresh pair starts after both prerequisites');
+  assert.equal(_cmcDeleteInFlight, true);
+  renderCmcPool();
+  assert.equal(element('cmc-delete-btn').disabled, true);
+  await window.deleteSelectedCmcKey();
+  assert.equal(dialogs.length, 1);
+  assert.equal(timerCount(5000), 0);
+  replyPool(4, [{id:'b',label:'Test B'}]); await deletion; await drain();
+  assert.equal(_cmcDeleteInFlight, false);
+  assert.equal(element('cmc-delete-btn').disabled, false);
+  assert.equal(_selectedCmcKeyId, 'b');
+  assert.equal(_cmcPool.keys.some(key=>key.id==='a'), false);
+  assert.equal(requests.length, 6);
+  assert.equal(requests.filter(r=>r.options.method==='DELETE').length, 1);
+  assert.equal(requests.filter(r=>r.options.method==='POST').length, 1);
+  assert.equal(timerCount(5000), 1);
+  assert.equal(timerCount(15000), 0);
+})().then(()=>{completed=true;}).catch(error=>{console.error(error);process.exitCode=1;});
+""")
+
+
+@pytest.mark.parametrize("phase", ["waiting", "loading"])
+def test_cmc_deferred_snapshot_cleanup_preserves_resumed_owner(phase):
+    """Stopping a deferred snapshot releases waiters and never revives its old owner."""
+    _run_node(_cmc_harness() + '\nconst phase=' + json.dumps(phase) + r""";
+(async () => {
+  const older = loadCmcPool();
+  const deletion = window.deleteSelectedCmcKey();
+  dialogs[0].resolve(true); await drain();
+  reply(2, {}); await drain();
+  _selectedCmcKeyId='b'; window.toggleSelectedCmcKey(); await drain();
+  replyPool(0); await older; await drain();
+  if (phase === 'loading') {
+    reply(3, {detail:'isolated mutation failure'}, 503); await drain();
+    assert.equal(requests.length, 6);
+  }
+  const abandoned = _cmcQueuedLoad;
+  assert.ok(abandoned);
+  events.pagehide(); await deletion;
+  assert.equal(_cmcQueuedLoad, null);
+  assert.equal(timers.size, 0);
+  assert.equal(_cmcSnapshotRequired, true);
+  if (phase === 'loading') assert.equal(requests[4].options.signal.aborted, true);
+  events.pageshow(); await drain();
+  let freshIndex;
+  if (phase === 'waiting') {
+    assert.equal(requests.length, 4);
+    assert.notEqual(_cmcQueuedLoad, abandoned);
+    reply(3, {detail:'isolated mutation failure'}, 503); await drain();
+    assert.equal(requests.length, 6);
+    freshIndex=4;
+  } else {
+    assert.equal(requests.length, 8);
+    freshIndex=6;
+  }
+  const controller = _cmcLoadController;
+  if (phase === 'loading') replyPool(4, []);
+  await drain();
+  assert.equal(_cmcLoadController, controller);
+  assert.equal(controller.signal.aborted, false);
+  replyPool(freshIndex, [{id:'b'}]); await drain();
+  assert.equal(_cmcPool.keys.length, 1);
+  assert.equal(_cmcPool.keys[0].id, 'b');
+  assert.equal(_cmcQueuedLoad, null);
+  assert.equal(timerCount(5000), 1);
+  assert.equal(timerCount(15000), 0);
+  assert.equal(requests.filter(r=>r.options.method==='DELETE').length, 1);
+  assert.equal(requests.filter(r=>r.options.method==='POST').length, 1);
+})().then(()=>{completed=true;}).catch(error=>{console.error(error);process.exitCode=1;});
+""")
+
+
+def test_cmc_fresh_snapshot_waits_for_shared_lock_without_existing_read():
+    """A snapshot requested under the shared lock remains pending and coalesces with success."""
+    _run_node(_cmc_harness() + r"""
+(async () => {
+  window.toggleSelectedCmcKey(); await drain();
+  let settled=false;
+  const fresh=loadCmcPool(true);
+  fresh.then(()=>{settled=true;});
+  assert.equal(loadCmcPool(true), fresh);
+  await drain();
+  assert.equal(settled, false);
+  assert.equal(requests.length, 1);
+  reply(0, {}); await drain();
+  assert.equal(requests.length, 3);
+  assert.equal(settled, false);
+  replyPool(1); await fresh; await drain();
+  assert.equal(settled, true);
+  assert.equal(requests.length, 3);
+  assert.equal(timerCount(5000), 1);
+})().then(()=>{completed=true;}).catch(error=>{console.error(error);process.exitCode=1;});
+""")
+
+
+def test_cmc_newer_mutation_keeps_snapshot_waiters_until_newer_read():
+    """A later mutation cannot coalesce into a read that predates its completion."""
+    _run_node(_cmc_harness() + r"""
+(async () => {
+  const older=loadCmcPool();
+  const deletion=window.deleteSelectedCmcKey();
+  dialogs[0].resolve(true); await drain();
+  reply(2, {}); await drain();
+  _selectedCmcKeyId='b'; window.toggleSelectedCmcKey(); await drain();
+  replyPool(0); await older; await drain();
+  reply(3, {}); await drain();
+  assert.equal(requests.length, 6);
+  _cmcPool.keys.push({id:'c',label:'Test C'});
+  _selectedCmcKeyId='c'; window.toggleSelectedCmcKey(); await drain();
+  assert.equal(requests.length, 7);
+  reply(6, {}); await drain();
+  assert.equal(requests.length, 7, 'The pending read must finish before another pair starts');
+  assert.equal(_cmcDeleteInFlight, true);
+  replyPool(4, [{id:'b'}, {id:'c',active:true}]); await drain();
+  assert.equal(requests.length, 9, 'The later mutation requires a newer snapshot');
+  assert.equal(_cmcDeleteInFlight, true);
+  assert.equal(element('cmc-delete-btn').disabled, true);
+  assert.equal(timerCount(5000), 0);
+  replyPool(7, [{id:'b'}, {id:'c',active:false}]); await deletion; await drain();
+  assert.equal(_cmcPool.keys.find(key=>key.id==='c').active, false);
+  assert.equal(_selectedCmcKeyId, 'c');
+  assert.equal(_cmcDeleteInFlight, false);
+  assert.equal(_cmcQueuedLoad, null);
+  assert.equal(requests.length, 9);
+  assert.equal(requests.filter(r=>r.options.method==='DELETE').length, 1);
+  assert.equal(requests.filter(r=>r.options.method==='POST').length, 2);
+  assert.equal(timerCount(5000), 1);
+})().then(()=>{completed=true;}).catch(error=>{console.error(error);process.exitCode=1;});
+""")
+
+
+@pytest.mark.parametrize(
+    ("dismiss", "focus_case"),
+    [
+        ("cancel", "trigger"),
+        ("escape", "trigger"),
+        ("cancel", "other_input"),
+        ("escape", "other_input"),
+        ("cancel", "new_dialog"),
+        ("cancel", "hidden_view"),
+        ("cancel", "disabled_trigger"),
+        ("cancel", "removed_trigger"),
+        ("cancel", "different_trigger"),
+    ],
+)
+def test_cmc_cancel_restores_focus_without_overriding_new_context(dismiss, focus_case):
+    """Actual dialog dismissal restores the enabled trigger without stealing newer focus."""
+    playwright = pytest.importorskip("playwright.sync_api")
+    source = PAGE.read_text(encoding="utf-8")
+    state = source[source.index("  var _cmcPool ="):source.index("  function esc(")]
+    functions = "\n".join(
+        _extract_function(source, name)
+        for name in ("selectedCmcKey", "updateCmcButtons", "cmcViewVisible", "cmcMessage")
+    )
+    script = state + "\n" + functions + "\n" + _extract_window_function(source, "deleteSelectedCmcKey") + """
+var _currentPanelId = 'pbcoindata';
+_cmcPool = {keys:[{id:'a',label:'Test A'}]};
+_selectedCmcKeyId = 'a';
+function scheduleCmcRefresh() {} // Polling is covered by the deterministic Node tests.
+window.requests = [];
+window.fetch = function () { window.requests.push('unexpected request'); return Promise.reject(new Error('No HTTP expected')); };
+updateCmcButtons();
+"""
+    with playwright.sync_playwright() as driver:
+        browser = driver.chromium.launch(headless=True)
+        try:
+            page = browser.new_page()
+            page.set_default_timeout(3000)
+            page.route("**/*", lambda route: route.abort())
+            errors = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            page.set_content("""
+<button id="cmc-delete-btn" onclick="window.deletion = deleteSelectedCmcKey()">Delete</button>
+<input id="other-input" value="unsaved draft">
+""")
+            page.add_script_tag(content=(ROOT / "frontend/js/pbgui_dialogs.js").read_text(encoding="utf-8"))
+            page.add_script_tag(content=script)
+            if focus_case == "different_trigger":
+                page.locator("#other-input").focus()
+                page.evaluate("() => { window.deletion = window.deleteSelectedCmcKey(); }")
+            else:
+                page.locator("#cmc-delete-btn").focus()
+                page.keyboard.press("Enter")
+            playwright.expect(page.locator("#pbgui-dialog-ovl")).to_be_visible()
+            playwright.expect(page.locator("#cmc-delete-btn")).to_be_disabled()
+
+            close = (
+                "document.getElementById('pbgui-dialog-cancel').click();"
+                if dismiss == "cancel"
+                else "document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape',bubbles:true}));"
+            )
+            changes = {
+                "other_input": "document.getElementById('other-input').focus();",
+                "new_dialog": "window.PBGuiDialogs.confirm({title:'New decision',confirmText:'Continue'});",
+                "hidden_view": "_currentPanelId = 'overview';",
+                "disabled_trigger": "_cmcPool.keys = [];",
+                "removed_trigger": "document.getElementById('cmc-delete-btn').remove();",
+            }
+            if focus_case in changes:
+                # Keep close and the context change in one JS stack, before the handler resumes.
+                page.evaluate("() => {" + close + changes[focus_case] + "}")
+            elif dismiss == "cancel":
+                page.locator("#pbgui-dialog-cancel").click()
+            else:
+                page.keyboard.press("Escape")
+            page.evaluate("window.deletion")
+            page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+            focus = page.evaluate("document.activeElement.id || document.activeElement.tagName")
+            if focus_case == "trigger":
+                assert focus == "cmc-delete-btn"
+            elif focus_case in ("other_input", "different_trigger"):
+                assert focus == "other-input"
+            elif focus_case == "new_dialog":
+                assert focus == "pbgui-dialog-accept"
+                playwright.expect(page.locator("#pbgui-dialog-ovl")).to_be_visible()
+                playwright.expect(page.locator("#pbgui-dialog-title")).to_have_text("New decision")
+            else:
+                assert focus == "BODY"
+            if focus_case != "new_dialog":
+                playwright.expect(page.locator("#pbgui-dialog-ovl")).to_be_hidden()
+            if focus_case not in ("disabled_trigger", "removed_trigger"):
+                playwright.expect(page.locator("#cmc-delete-btn")).to_be_enabled()
+            assert page.locator("#other-input").input_value() == "unsaved draft"
+            assert page.evaluate("window.requests") == []
+            assert errors == []
+        finally:
+            browser.close()
+
+
+@pytest.mark.parametrize("leave", ["panel", "hidden", "pagehide"])
+@pytest.mark.parametrize("leave_point", ["mutation", "snapshot"])
+@pytest.mark.parametrize("other_selected", [False, True])
+def test_cmc_known_deleted_cache_row_stays_blocked_on_return(leave, leave_point, other_selected):
+    """Successful deletion stays protected across a deferred or aborted return snapshot."""
+    settings = json.dumps(dict(leave=leave, leavePoint=leave_point, otherSelected=other_selected))
+    _run_node(_cmc_harness() + '\nconst settings=' + settings + r""";
+(async()=>{
+  function leaveView() {
+    if(settings.leave==='panel'){_currentPanelId='overview';stopCmcRefresh();}
+    else if(settings.leave==='hidden'){document.hidden=true;events.visibilitychange();}
+    else events.pagehide();
+  }
+  function returnView() {
+    if(settings.leave==='panel'){_currentPanelId='pbcoindata';loadCmcPool();}
+    else if(settings.leave==='hidden'){document.hidden=false;events.visibilitychange();}
+    else events.pageshow();
+  }
+  const deletion=window.deleteSelectedCmcKey();
+  dialogs[0].resolve(true);await drain();
+  if(settings.otherSelected) window.selectCmcKey('b');
+  if(settings.leavePoint==='mutation') leaveView();
+  reply(0,{});await drain();
+  if(settings.leavePoint==='snapshot') {
+    assert.equal(requests.length,3);
+    leaveView();
+  } else assert.equal(requests.length,1);
+  await deletion;
+  assert.equal(timers.size,0);
+  const freshIndex=requests.length;
+  returnView();await drain();
+  assert.equal(requests.length,freshIndex+2);
+  const selected=settings.otherSelected?'b':'';
+  window.selectCmcKey('a');
+  assert.equal(_selectedCmcKeyId,selected,'A cached deleted row must not replace a different selection');
+  assert.equal(element('cmc-delete-btn').disabled,!settings.otherSelected);
+  assert.match(element('cmc-pool-body').innerHTML,/data-cmc-deleted="true"/);
+  // Direct handler calls must be protected too, even with an obsolete selected ID.
+  _selectedCmcKeyId='a';updateCmcButtons();
+  assert.equal(selectedCmcKey(),null);
+  assert.equal(element('cmc-delete-btn').disabled,true);
+  await window.deleteSelectedCmcKey();assert.equal(dialogs.length,1);
+  _selectedCmcKeyId=selected;renderCmcPool();
+  const controller=_cmcLoadController;
+  if(settings.leavePoint==='snapshot') {replyPool(1);await drain();}
+  assert.equal(_cmcLoadController,controller);
+  assert.equal(controller.signal.aborted,false);
+  window.selectCmcKey('a');assert.equal(_selectedCmcKeyId,selected);
+  replyPool(freshIndex,[{id:'b',label:'Test B'}]);await drain();
+  assert.equal(_selectedCmcKeyId,selected);
+  assert.equal(_cmcPool.keys.some(key=>key.id==='a'),false);
+  window.selectCmcKey('b');assert.equal(element('cmc-delete-btn').disabled,false);
+  assert.equal(requests.filter(request=>request.options.method==='DELETE').length,1);
+  assert.equal(timerCount(5000),1);assert.equal(timerCount(15000),0);
+})().then(()=>{completed=true;}).catch(error=>{console.error(error);process.exitCode=1;});
+""")
+
+
+@pytest.mark.parametrize("failure", ["http", "timeout"])
+@pytest.mark.parametrize("current_contains_key", [False, True])
+def test_cmc_known_deleted_row_requires_successful_current_snapshot(failure, current_contains_key):
+    """Old, failed and timed-out reads cannot restore actions; a successful new snapshot can."""
+    settings = json.dumps(dict(failure=failure, containsKey=current_contains_key))
+    _run_node(_cmc_harness() + '\nconst settings=' + settings + r""";
+(async()=>{
+  const older=loadCmcPool();
+  const deletion=window.deleteSelectedCmcKey();
+  dialogs[0].resolve(true);await drain();reply(2,{});await drain();
+  replyPool(0);await older;await drain();
+  assert.equal(requests.length,5);
+  window.selectCmcKey('a');assert.equal(_selectedCmcKeyId,'');
+  if(settings.failure==='timeout') fire(15000);
+  else reply(3,{detail:'isolated read failure'},503);
+  await deletion;
+  window.selectCmcKey('a');assert.equal(_selectedCmcKeyId,'');
+  assert.equal(element('cmc-delete-btn').disabled,true);
+  await window.deleteSelectedCmcKey();assert.equal(dialogs.length,1);
+  fire(5000);assert.equal(requests.length,7);
+  replyPool(5,settings.containsKey?[{id:'a'},{id:'b'}]:[{id:'b'}]);await drain();
+  window.selectCmcKey('a');
+  assert.equal(_selectedCmcKeyId,settings.containsKey?'a':'');
+  assert.equal(element('cmc-delete-btn').disabled,!settings.containsKey);
+  assert.equal(requests.filter(request=>request.options.method==='DELETE').length,1);
+  assert.equal(timerCount(5000),1);assert.equal(timerCount(15000),0);
+})().then(()=>{completed=true;}).catch(error=>{console.error(error);process.exitCode=1;});
+""")
+
+
+def _render_cmc_services_page(prefix, monkeypatch):
+    """Run the actual allowlisted page renderer with synthetic version metadata only."""
+    import ast
+    import sys
+    from types import ModuleType
+    from fastapi import Request
+    from fastapi.responses import HTMLResponse
+    from api.page_templates import render_page_urls, script_json
+
+    path = ROOT / 'api/services.py'
+    node = next(node for node in ast.parse(path.read_text(encoding='utf-8')).body
+                if isinstance(node, ast.FunctionDef) and node.name == 'get_main_page')
+    node.decorator_list = []
+    node.returns = None
+    for argument in node.args.args:
+        argument.annotation = None
+    node.args.defaults = [ast.Constant(None) for _ in node.args.defaults]
+    pure = ModuleType('pbgui_purefunc')
+    pure.PBGUI_VERSION = 'test'
+    pure.PBGUI_SERIAL = 'test'
+    monkeypatch.setitem(sys.modules, 'pbgui_purefunc', pure)
+    namespace = dict(__file__=str(path), Path=Path, HTMLResponse=HTMLResponse,
+                     render_page_urls=render_page_urls, script_json=script_json)
+    module = ast.fix_missing_locations(ast.Module(body=[node], type_ignores=[]))
+    exec(compile(module, str(path), 'exec'), namespace)
+    request = Request(dict(type='http', method='GET', scheme='http', path='/api/services/main_page',
+                           root_path=prefix, server=('cmc.test', 80), headers=[]))
+    return namespace['get_main_page'](request).body
+
+
+@pytest.mark.parametrize("prefix", ['', '/mounted'])
+@pytest.mark.parametrize("leave_point", ['mutation', 'snapshot'])
+@pytest.mark.parametrize("other_selected", [False, True])
+def test_cmc_real_menu_return_does_not_restore_deleted_cached_action(prefix, leave_point, other_selected, monkeypatch):
+    """Actual menu, renderer and rows keep a deleted cached key blocked until the return read."""
+    import mimetypes
+    from urllib.parse import urlparse
+
+    playwright = pytest.importorskip('playwright.sync_api')
+    html = _render_cmc_services_page(prefix, monkeypatch)
+    pool = {'ready': True, 'health': 'ok', 'keys': [
+        {'id': 'qa-alpha', 'label': 'qa-alpha', 'active': True},
+        {'id': 'qa-beta', 'label': 'qa-beta', 'active': True},
+    ]}
+    services = ('pbcluster', 'pbrun', 'pbdata', 'pbcoindata', 'monitor-agent', 'vps-monitor', 'api-server')
+    deletes, reads, errors, unexpected = [], [], [], []
+    hold_reads = False
+    with playwright.sync_playwright() as driver:
+        browser = driver.chromium.launch(headless=True)
+        try:
+            page = browser.new_page(viewport={'width': 1450, 'height': 1000})
+            page.set_default_timeout(3000)
+            page.clock.install()
+            page.on('pageerror', lambda error: errors.append(str(error)))
+            page.add_init_script("""
+window.WebSocket=class {
+  static OPEN=1; constructor(){this.readyState=1;setTimeout(()=>this.onopen?.({}),0);}
+  send(){} close(){this.readyState=3;this.onclose?.({});}
+};
+""")
+
+            def respond(route):
+                """Serve local assets and synthetic replies; never forward any request."""
+                request = route.request
+                url = urlparse(request.url)
+                if url.hostname != 'cmc.test' or (prefix and not url.path.startswith(prefix + '/')):
+                    unexpected.append(request.url)
+                    route.fulfill(status=451, body='Blocked fixture request')
+                    return
+                path = url.path[len(prefix):] if prefix else url.path
+                if request.method == 'DELETE' and path == '/api/services/cmc-pool/keys/qa-alpha':
+                    deletes.append(route)
+                elif path == '/api/services/cmc-pool':
+                    if hold_reads:
+                        reads.append(route)
+                    else:
+                        route.fulfill(json=pool)
+                elif path == '/api/services/cmc-pool/leases':
+                    route.fulfill(json={'authority': {}, 'leases': []})
+                elif path == '/app/start.html':
+                    route.fulfill(content_type='text/html', body='<nav id="topnav"></nav><script>window.PBGUI_NAV_CONFIG={current:"welcome",authenticated:true,apiBase:' + json.dumps(prefix + '/api') + '};</script><script src="' + prefix + '/app/pbgui_nav.js"></script>')
+                elif path == '/api/services/main_page':
+                    route.fulfill(content_type='text/html', body=html)
+                elif path.startswith('/app/'):
+                    asset = (ROOT / 'frontend' / path.removeprefix('/app/')).resolve()
+                    if asset.is_relative_to((ROOT / 'frontend').resolve()) and asset.is_file():
+                        route.fulfill(body=asset.read_bytes(), content_type=mimetypes.guess_type(asset)[0] or 'application/octet-stream')
+                    else:
+                        unexpected.append(path)
+                        route.fulfill(status=404, body='Missing local asset')
+                elif path == '/api/services/status':
+                    route.fulfill(json={name: {'running': True, 'enabled': True, 'can_enable': True} for name in services})
+                elif path == '/api/services/workers/summary':
+                    route.fulfill(json={'counts': {'total': 7, 'running': 7}})
+                elif path == '/api/services/migration/status':
+                    route.fulfill(json={'migration_needed': False, 'warnings': []})
+                elif path.endswith('/stream'):
+                    route.fulfill(status=204, body='')
+                elif path in {'/api/server-status', '/api/vps/alerts', '/api/ai/preferences', '/api/token-refresh', '/api/auth/me', '/api/notify_log'}:
+                    route.fulfill(json={'ok': True, 'authenticated': True, 'drawer_open': False, 'items': [],
+                                        'summary': {'new_count': 0, 'ack_count': 0, 'total_active': 0}})
+                else:
+                    unexpected.append(path)
+                    route.fulfill(status=404, json={'detail': 'Unexpected fixture request'})
+
+            page.route('**/*', respond)
+
+            def wait_routes(routes, count):
+                """Drain local route callbacks without advancing the controlled page clock."""
+                for _ in range(100):
+                    if len(routes) == count:
+                        return
+                    page.wait_for_timeout(10)
+                assert len(routes) == count
+
+            page.goto('http://cmc.test' + prefix + '/app/start.html')
+            page.locator('.nav-group-btn', has_text='System').click()
+            page.locator('.nav-item[data-page="system_services"]').click()
+            page.locator('.sb-btn[data-panel="pbcoindata"]').click()
+            page.locator('.tab-btn[data-svc="pbcoindata"][data-tab="pool"]').click()
+            alpha = page.locator('#cmc-pool-body [data-key-id="qa-alpha"]')
+            playwright.expect(alpha).to_be_visible()
+            hold_reads = True
+            alpha.click()
+            page.locator('#cmc-delete-btn').click()
+            page.locator('#pbgui-dialog-accept').click()
+            wait_routes(deletes, 1)
+            if other_selected:
+                page.locator('#cmc-pool-body [data-key-id="qa-beta"]').click()
+            if leave_point == 'mutation':
+                page.locator('.sb-btn[data-panel="overview"]').click()
+            deletes[0].fulfill(json={'ok': True})
+            playwright.expect(alpha.locator('.cmc-state')).to_have_text('deleted')
+            if leave_point == 'snapshot':
+                wait_routes(reads, 1)
+                page.locator('.sb-btn[data-panel="overview"]').click()
+            page.locator('.sb-btn[data-panel="pbcoindata"]').click()
+            wait_routes(reads, 2 if leave_point == 'snapshot' else 1)
+            playwright.expect(alpha).to_have_attribute('data-cmc-deleted', 'true')
+            alpha.click()
+            if other_selected:
+                playwright.expect(page.locator('#cmc-pool-body tr.selected')).to_have_attribute('data-key-id', 'qa-beta')
+                playwright.expect(page.locator('#cmc-delete-btn')).to_be_enabled()
+            else:
+                playwright.expect(page.locator('#cmc-pool-body tr.selected')).to_have_count(0)
+                playwright.expect(page.locator('#cmc-delete-btn')).to_be_disabled()
+            reads[-1].fulfill(json={**pool, 'keys': [pool['keys'][1]]})
+            playwright.expect(alpha).to_have_count(0)
+            page.locator('#cmc-pool-body [data-key-id="qa-beta"]').click()
+            trigger = page.locator('#cmc-delete-btn')
+            trigger.focus()
+            trigger.press('Enter')
+            page.keyboard.press('Escape')
+            playwright.expect(trigger).to_be_focused()
+            assert len(deletes) == 1
+            assert not errors, errors
+            assert not unexpected, unexpected
+        finally:
+            page.unroute_all(behavior='ignoreErrors')
+            browser.close()

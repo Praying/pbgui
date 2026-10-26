@@ -119,6 +119,21 @@ describe('pnlTraces (render.js:1595-1642)', () => {
   it('falls back to bar mode for unknown modes (legacy else branch)', () => {
     expect(pnlTraces(bars, 'bogus')[0]!.type).toBe('bar');
   });
+
+  it('keeps unavailable daily values separate from genuine zero labels', () => {
+    const dailyValues = [5, null, '3', 0, '', false, Infinity, 'bad'];
+    const trace = pnlTraces(dailyValues.map((income, index) => ({ date: String(index), income })), 'bar')[0]!;
+    expect(trace.y).toEqual([5, null, 3, 0, null, null, null, null]);
+    expect(trace.text).toEqual(['5.00', '', '3.00', '0.00', '', '', '', '']);
+    expect(trace.textposition).toEqual(['auto', 'auto', 'auto', 'outside', 'auto', 'auto', 'auto', 'auto']);
+    expect(trace.cliponaxis).toBe(false);
+  });
+
+  it('does not connect missing cumulative values or reinterpret overflow as zero', () => {
+    const trace = pnlTraces([5, null, '8', Infinity, null].map((income, index) => ({ date: String(index), income })), 'line')[0]!;
+    expect(trace.y).toEqual([5, null, 8, null, null]);
+    expect(trace.connectgaps).toBe(false);
+  });
 });
 
 describe('pnlLayout (render.js:1644-1656)', () => {

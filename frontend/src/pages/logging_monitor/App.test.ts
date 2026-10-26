@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { flushPromises, mount } from '@vue/test-utils';
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import { openSelect, selectOptionTexts } from '@/shared/testing/select';
 import App from './App.vue';
+
+enableAutoUnmount(afterEach);
 
 const apiFetchMock = vi.fn();
 vi.mock('@/shared/api', async () => {
@@ -67,6 +69,7 @@ function openSocket(): FakeWebSocket {
 }
 
 beforeEach(() => {
+  window.history.replaceState({}, '', '/');
   (globalThis as typeof globalThis & { __BOOT__: Record<string, unknown> }).__BOOT__ = {
     origin: 'http://test',
     base_prefix: '',
@@ -88,11 +91,68 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  window.history.replaceState({}, '', '/');
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
 describe('Logging Monitor Vue page', () => {
+  it('restores the settings view without removing unrelated URL state', async () => {
+    window.history.replaceState({ navigation: 'preserved' }, '', '/?view=settings&fixture=kept');
+    const wrapper = mountApp();
+    await flushPromises();
+    expect(wrapper.findComponent({ name: 'AppShell' }).props('activeSection')).toBe('settings');
+    await wrapper.get('[data-testid="rail-section-logs"]').trigger('click');
+    expect(new URLSearchParams(window.location.search).get('view')).toBe('logs');
+    expect(new URLSearchParams(window.location.search).get('fixture')).toBe('kept');
+    expect(window.history.state).toEqual({ navigation: 'preserved' });
+  });
+
+  it('rejects invalid rotation values without changing the input or submitting', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    await wrapper.get('[data-testid="rail-section-settings"]').trigger('click');
+    await wrapper.get('[data-field="default-max-mb"]').setValue('2.5');
+    await wrapper.get('[data-save-scope="default"]').trigger('click');
+    await flushPromises();
+    expect((wrapper.get('[data-field="default-max-mb"]').element as HTMLInputElement).value).toBe('2.5');
+    expect(wrapper.text()).toContain('File size must be an integer');
+    expect(apiFetchMock.mock.calls.filter(([, options]) => options?.method === 'POST')).toHaveLength(0);
+  });
+
+  it('keeps each pending save locked independently and preserves later edits', async () => {
+    const pendingReplies = new Map<string, (value: unknown) => void>();
+    const existingImplementation = apiFetchMock.getMockImplementation()!;
+    apiFetchMock.mockImplementation((url: string, options?: RequestInit) => {
+      if (options?.method !== 'POST') return existingImplementation(url, options);
+      const scope = JSON.parse(String(options.body)).scope as string;
+      return new Promise((resolve) => { pendingReplies.set(scope, resolve); });
+    });
+    const wrapper = mountApp();
+    await flushPromises();
+    await wrapper.get('[data-testid="rail-section-settings"]').trigger('click');
+    await wrapper.get('[data-save-scope="default"]').trigger('click');
+    await wrapper.get('[data-save-scope="managed:api_console"]').trigger('click');
+    await wrapper.get('[data-field="default-max-mb"]').setValue('99');
+    expect((wrapper.get('[data-save-scope="default"]').element as HTMLButtonElement).disabled).toBe(true);
+    pendingReplies.get('managed:api_console')!({ success: true });
+    await flushPromises();
+    expect((wrapper.get('[data-save-scope="default"]').element as HTMLButtonElement).disabled).toBe(true);
+    pendingReplies.get('default')!({ success: false });
+    await flushPromises();
+    expect(wrapper.text()).toContain('The rotation settings were not saved.');
+    expect((wrapper.get('[data-field="default-max-mb"]').element as HTMLInputElement).value).toBe('99');
+  });
+
+  it('retains a rotation draft when a background snapshot arrives', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    await wrapper.get('[data-field="default-max-mb"]').setValue('77');
+    window.dispatchEvent(new Event('pageshow'));
+    await flushPromises();
+    expect((wrapper.get('[data-field="default-max-mb"]').element as HTMLInputElement).value).toBe('77');
+  });
+
   it('mounts the shared log viewer with the system presets and restart control', async () => {
     const wrapper = mountApp();
     await flushPromises();

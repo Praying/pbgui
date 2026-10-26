@@ -108,8 +108,8 @@ def test_v7_falls_back_to_legacy_template_with_injections(
 
     assert resp.status_code == 200
     assert resp.headers["cache-control"] == "no-store"
-    assert 'var API_BASE = "http://testserver/api/v7";' in resp.text
-    assert 'var WS_BASE = "ws://testserver";' in resp.text
+    assert 'var API_BASE = "/api/v7";' in resp.text
+    assert "(window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host" in resp.text
     assert 'var INSTANCE_NAME = "alice";' in resp.text
     assert 'var IS_NEW = "false";' in resp.text
     assert 'var DRAFT_ID = "d-9";' in resp.text
@@ -137,7 +137,7 @@ def test_v8_falls_back_to_legacy_template_with_v8_injections(
 
     assert resp.status_code == 200
     assert resp.headers["cache-control"] == "no-store"
-    assert 'var API_BASE = "http://testserver/api/v8";' in resp.text
+    assert 'var API_BASE = "/api/v8";' in resp.text
     assert 'var INSTANCE_NAME = "";' in resp.text
     assert 'var IS_NEW = "true";' in resp.text
     assert 'var DRAFT_ID = "d-8";' in resp.text

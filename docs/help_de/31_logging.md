@@ -1,5 +1,14 @@
 # Logging
 
+Öffnen Sie **System → Logging → Settings**. Nach einem Browserreload wird die
+ausgewählte Ansicht **Settings** oder **Log Viewer** über den URL-Parameter `view`
+wiederhergestellt. Settings lädt dabei aktuelle Rotationswerte vom Server;
+ungespeicherte Formularwerte werden nicht über einen Reload hinweg gespeichert.
+Ein Direktlink mit `?view=settings` öffnet Settings. Ohne `view` ist Log Viewer
+die Standardansicht. Ein unbekannter Wert zeigt einen kurzen Statushinweis und
+wird in der URL auf `view=logs` korrigiert. Die Auswahl einer der beiden
+Sidebar-Ansichten entfernt diesen Hinweis, auch wenn Log Viewer bereits aktiv ist.
+
 Wenn die Rotationseinstellungen nicht geladen werden koennen, zeigt Settings den Serverfehler beziehungsweise bei einer Antwort ohne JSON den HTTP-Status. Vorhandene Eingabewerte bleiben erhalten; der Fehler erscheint nicht als leere Logliste. Erneutes Wechseln zu Settings startet einen weiteren Ladeversuch.
 
 Der Wechsel zwischen Log Viewer und Settings erhält bearbeitete Rotationswerte. Fehlgeschlagene Speicherungen zeigen einen Fehler neben den betroffenen Einstellungen.
@@ -94,6 +103,21 @@ Auf **⚙ Settings** in der Sidebar klicken, um die Log-Rotation zu konfiguriere
 - **Managed Logs**: Größe und Backup-Anzahl für dynamische Log-Familien wie
   API-Konsole, Jobs, Backtests, Optimierungen, VPS-Manager-Runs,
   OHLCV-Preloads, Monitor-Agent-Livedaten, Pareto-Sessions und API-Handoff
+
+Alle drei Bereiche verlangen ganze Zahlen: **Max file size (MB)** / **Max MB**
+von **1 bis 10240** und **Rotated copies** / **Copies** von **0 bis 20**.
+Leere, nicht ganzzahlige oder außerhalb dieser Grenzen liegende Eingaben zeigen
+die betroffenen Felder neben Save an. Es wird keine Speicheranfrage gesendet;
+Ihre Eingaben bleiben zur Korrektur unverändert erhalten.
+Servervalidierungsfehler nennen Feld und Grund; mehrere Meldungen sind durch
+`; ` getrennt. Fehlgeschlagene Settings-Lese- und Speicheranfragen verwenden
+dasselbe Fehlerformat. Unbrauchbare Fehlerdetails zeigen ersatzweise den
+HTTP-Status. Auch Purge-Fehler erscheinen als lesbarer Text, ohne die gesamte
+Validierungsantwort anzuzeigen. Erfolgreiches Speichern erhält die Servermeldung,
+etwa **Applies on next log write**.
+Ein neuer Save-Versuch, auch bei lokal abgelehnten Eingaben, löst ältere
+Speicherantworten und Status-Timer derselben Zeile ab. Ein älteres Ergebnis
+kann die neuere Meldung weder ersetzen noch ausblenden.
 
 Änderungen werden beim nächsten Log-Schreibvorgang oder vor dem Öffnen des
 nächsten verwalteten Transkripts gelesen. Die Log-Rotation besitzt bewusst

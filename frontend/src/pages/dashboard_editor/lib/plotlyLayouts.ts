@@ -117,11 +117,20 @@ function modeTraces(
   bars: DatedBar[],
   mode: string,
   valueKey: string,
-  hoverLabel: string
+  hoverLabel: string,
+  preserveMissingValues = false,
 ): PlotlyTrace[] {
-  const dates = bars.map((b) => b.date);
-  const values = bars.map((b) => Number(b[valueKey]));
-  const colors = signColors(values);
+  const dates = bars.map((bar) => bar.date);
+  const values = bars.map((bar) => {
+    const rawValue = bar[valueKey];
+    if (!preserveMissingValues) return Number(rawValue);
+    const isNumeric = typeof rawValue === 'number'
+      || (typeof rawValue === 'string' && rawValue.trim() !== '');
+    const numericValue = isNumeric ? Number(rawValue) : NaN;
+    return Number.isFinite(numericValue) ? numericValue : null;
+  });
+  const colors = values.map((value) => value === null ? 'rgba(0,0,0,0)' : value < 0 ? NEG_COLOR : POS_COLOR);
+  const hasMissingValues = values.includes(null);
 
   if (mode === 'line') {
     return [
@@ -130,6 +139,7 @@ function modeTraces(
         y: values,
         type: 'scatter',
         mode: 'lines+markers',
+        ...(hasMissingValues ? { connectgaps: false } : {}),
         line: { color: LINE_COLOR, width: 1 },
         marker: { color: colors, size: 6 },
         hovertemplate: `<b>%{x}</b><br>${hoverLabel}: %{y:.2f}<extra></extra>`,
@@ -142,15 +152,18 @@ function modeTraces(
       y: values,
       type: 'bar',
       marker: { color: colors },
-      text: values.map((v) => v.toFixed(2)),
-      textposition: 'auto',
+      text: values.map((value) => value === null ? '' : value.toFixed(2)),
+      textposition: preserveMissingValues && values.includes(0)
+        ? values.map((value) => value === 0 ? 'outside' : 'auto')
+        : 'auto',
+      ...(preserveMissingValues && values.includes(0) ? { cliponaxis: false } : {}),
       hovertemplate: `<b>%{x}</b><br>${hoverLabel}: %{y:.2f}<extra></extra>`,
     },
   ];
 }
 
 export function pnlTraces(bars: DatedBar[], mode: string): PlotlyTrace[] {
-  return modeTraces(bars, mode, 'income', dashT('dash.income', 'Income'));
+  return modeTraces(bars, mode, 'income', dashT('dash.income', 'Income'), true);
 }
 
 export function adgTraces(bars: DatedBar[], mode: string): PlotlyTrace[] {

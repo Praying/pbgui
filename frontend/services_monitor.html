@@ -89,6 +89,8 @@
     .card-status-row { display: flex; align-items: center; gap: 5px; font-size: var(--fs-xs); color: #64748b; }
     .card-dot { width: 7px; height: 7px; border-radius: 50%; background: #4a5568; flex-shrink: 0; }
     .card-dot.running { background: #21c354; }
+    .sb-dot.starting, .status-dot.starting, .card-dot.starting { background: #d69e2e; }
+    .svc-card.starting { border-color: rgba(214,158,46,0.45); }
     .card-dot.stopped { background: #ff4b4b; }
     .card-dot.warn { background: #f59e0b; }
     .card-btn {
@@ -347,8 +349,6 @@
     .cmc-status-bar.error { background:#2d1515; border-color:#7f1d1d; color:#fca5a5; }
     .cmc-status-bar.loading { background:#131b2b; color:#4a5568; }
     .cmc-status-text { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .cmc-refresh-btn { background:none; border:none; color:inherit; cursor:pointer; font-size:1rem; opacity:0.7; padding:0 2px; flex-shrink:0; }
-    .cmc-refresh-btn:hover { opacity:1; }
     .cmc-pool-wrap { padding:1rem 1.5rem 1.5rem; overflow-y:auto; flex:1; }
     .cmc-summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:0.6rem; margin-bottom:0.8rem; }
     .cmc-summary-card { background:#131b2b; border:1px solid #1e2736; border-radius:8px; padding:0.55rem 0.7rem; min-width:0; }
@@ -676,7 +676,6 @@
         <span id="ctrl-btns-pbcoindata"></span>
       </div>
       <div class="cmc-status-bar loading" id="cmc-status-bar">
-        <button class="cmc-refresh-btn" onclick="loadCmcPool()" title="Refresh">&#8635;</button>
         <span class="cmc-status-text" id="cmc-status-text">Loading CMC pool&#8230;</span>
       </div>
       <div class="tab-bar">
@@ -697,7 +696,6 @@
             <button class="form-btn" id="cmc-disable-btn" type="button" onclick="toggleSelectedCmcKey()" disabled>Disable</button>
             <button class="form-btn" id="cmc-delete-btn" type="button" onclick="deleteSelectedCmcKey()" disabled>Delete</button>
             <button class="form-btn" id="cmc-authority-btn" type="button" onclick="openCmcAuthorityModal()" disabled>Transfer Authority</button>
-            <button class="form-btn" type="button" onclick="loadCmcPool()">Refresh</button>
             <span class="cmc-pool-message" id="cmc-pool-message"></span>
           </div>
           <div class="cmc-pool-warnings" id="cmc-pool-warnings"></div>
@@ -911,8 +909,8 @@ window.PBGUI_NAV_CONFIG = {
   serial:   PBGUI_SERIAL
 };
 </script>
-<script src="/app/js/pbgui_dialogs.js?v=11"></script>
-<script src="/app/js/shared_help_overlay.js?v=9"></script>
+<script src="/app/js/pbgui_dialogs.js?v=12"></script>
+<script src="/app/js/shared_help_overlay.js?v=11"></script>
 <script src="/app/js/pbgui_icons.js?v=1"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 <!-- Guide button override — must run AFTER pbgui_nav.js DOMContentLoaded handler -->
@@ -1154,6 +1152,13 @@ window.PBGUI_NAV_CONFIG = {
   var _pollerMetricsTimer = null;
   var _settingsLoaded = {};
   var _settingsLoading = {};
+  var _settingsDrafts = Object.create(null);
+  var _settingsNavigationGeneration = 0;
+  var _settingsFieldTarget = null;
+  var MONITOR_THRESHOLD_FIELDS = [
+    'mem_error_server', 'swap_error_server', 'disk_error_server', 'cpu_error_server',
+    'mem_error_v7', 'swap_error_v7', 'cpu_error_v7', 'error_error_v7', 'traceback_error_v7'
+  ];
   var _workers = { counts: { total: 0, running: 0 }, groups: [] };
   var _workerIndex = {};
   var _workersGeneration = 0;
@@ -1176,6 +1181,15 @@ window.PBGUI_NAV_CONFIG = {
   var _cmcLoadController = null;
   var _cmcMutationGeneration = 0;
   var _cmcMutationBusy = false;
+  var _cmcDeleteInFlight = false;
+  var _cmcDeletedKeyIds = new Map();
+  var _cmcLoadPromise = null;
+  var _cmcQueuedLoad = null;
+  var _cmcLoadTimeout = null;
+  var _cmcRefreshTimer = null;
+  var _cmcSnapshotRequired = false;
+  var _cmcHasSnapshot = false;
+  var _cmcPageHidden = false;
 
   function esc(value) {
     return String(value == null ? '' : value)
@@ -1244,15 +1258,22 @@ window.PBGUI_NAV_CONFIG = {
   });
 
   function serviceSkipped(item) {
-    return item.expected === false && !item.running;
+    return item.expected === false && !item.running && !['starting', 'stopping', 'unknown', 'failed'].includes(item.actual_status);
   }
 
   function serviceStatusClass(item) {
+    if (['starting', 'stopping'].includes(item.actual_status)) return 'starting';
+    if (item.actual_status === 'unknown') return '';
+    if (item.actual_status === 'failed') return 'stopped';
     return serviceSkipped(item) ? '' : (item.running ? 'running' : 'stopped');
   }
 
   function serviceStatusText(item, svcId) {
     var base = serviceSkipped(item) ? 'Skipped' : (item.running ? 'Running' : 'Stopped');
+    if (item.actual_status === 'starting') base = 'Starting';
+    if (item.actual_status === 'stopping') base = 'Stopping';
+    if (item.actual_status === 'unknown') base = 'Unknown';
+    if (item.actual_status === 'failed') base = 'Failed';
     if (item.can_enable) {
       base += ' · ' + (item.enabled ? 'Enabled' : 'Disabled');
     }
@@ -1282,6 +1303,7 @@ window.PBGUI_NAV_CONFIG = {
   function serviceStatusTitle(item) {
     var parts = [];
     if (item.reason) parts.push(item.reason);
+    if (item.error) parts.push(item.error);
     if (item.unit) parts.push('Unit: ' + item.unit);
     if (item.systemd_state) parts.push('State: ' + item.systemd_state);
     if (item.systemd_enabled_state) parts.push('Autostart: ' + item.systemd_enabled_state);
@@ -1298,6 +1320,13 @@ window.PBGUI_NAV_CONFIG = {
     var disabledAttr = pending ? ' disabled' : '';
     var pendingText = pending ? serviceActionProgressText(pending) : '';
     var html = '';
+    if (svc.id === 'pbcoindata' && ['starting', 'stopping', 'unknown'].includes(item.actual_status)) {
+      if (item.can_stop) html += '<button class="' + cls + ' stop" onclick="svcAction(\'' + svc.id + '\',\'stop\')' + stopProp + '"' + disabledAttr + '>Stop</button>';
+      html += '<button class="' + cls + ' start" disabled>Start</button>';
+      html += '<button class="' + cls + ' restart" disabled>Restart</button>';
+      if (item.can_enable && !item.enabled) html += '<button class="' + cls + ' enable" disabled>Enable</button>';
+      return html;
+    }
     if (!skipped) {
       if (svc.isApiServer) {
         html += running
@@ -1796,7 +1825,7 @@ window.PBGUI_NAV_CONFIG = {
 
   function getWorkerMonitorUrl(item) {
     if (!item || !item.monitor_path) return '';
-    return item.monitor_path;
+    return BASE_PREFIX + item.monitor_path;
   }
 
   function updateWorkerLog(item) {
@@ -1966,6 +1995,8 @@ window.PBGUI_NAV_CONFIG = {
 
   /* ── Panel navigation ──────────────────────────────────── */
   function selectPanel(panelId, tab) {
+    ++_settingsNavigationGeneration;
+    _settingsFieldTarget = null;
     _currentPanelId = panelId;
     document.querySelectorAll('.sb-btn').forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-panel') === panelId);
@@ -1980,6 +2011,7 @@ window.PBGUI_NAV_CONFIG = {
     clearInterval(_fetchSummaryTimer); _fetchSummaryTimer = null;
     clearInterval(_pollerMetricsTimer); _pollerMetricsTimer = null;
     if (panelId === 'pbcoindata') loadCmcPool();
+    else stopCmcRefresh();
     window.fetchWorkers(panelId === 'workers');
     if (panelId === 'migration') loadMigrationStatus(true);
     /* update guide keyword for the active panel */
@@ -1997,6 +2029,8 @@ window.PBGUI_NAV_CONFIG = {
 
   /* ── Tab switching ─────────────────────────────────────── */
   window.switchTab = function (btn) {
+    ++_settingsNavigationGeneration;
+    _settingsFieldTarget = null;
     var svc = btn.getAttribute('data-svc');
     var tab = btn.getAttribute('data-tab');
     var panel = document.getElementById('panel-' + svc);
@@ -2024,20 +2058,67 @@ window.PBGUI_NAV_CONFIG = {
   };
 
   /* ── Restore panel/tab from URL hash on load ───────────── */
-  (function restoreFromHash() {
-    var hash = window.location.hash.replace('#', '');
-    if (!hash) return;
-    var parts = hash.split('/');
+  function settingsTargetNotice(message) {
+    var pane = document.getElementById('api-server-tab-settings');
+    if (!pane) return;
+    var notice = pane.querySelector('.settings-target-notice');
+    if (!notice) {
+      notice = document.createElement('div');
+      notice.className = 'settings-target-notice';
+      pane.prepend(notice);
+    }
+    notice.textContent = message;
+  }
+
+  function focusSettingsTarget() {
+    var target = _settingsFieldTarget;
+    if (!target || target.generation !== _settingsNavigationGeneration || !_settingsLoaded['api-server']) return;
+    _settingsFieldTarget = null;
+    var field = document.getElementById('mc-' + target.field);
+    if (!field) {
+      settingsTargetNotice('This threshold setting is unavailable.');
+      history.replaceState(null, '', window.location.pathname + window.location.search + '#api-server/settings');
+      return;
+    }
+    field.scrollIntoView({block: 'center'});
+    field.focus({preventScroll: true});
+  }
+
+  function restoreFromHash() {
+    var parts = window.location.hash.replace('#', '').split('/');
     var panelId = parts[0];
-    var tabId   = parts[1] || null;
+    var tabId = parts[1] || null;
+    // Match known DOM values instead of interpolating hash contents into selectors.
     var panel = document.getElementById('panel-' + panelId);
     if (!panel) return;
     selectPanel(panelId);
     if (tabId) {
-      var tabBtn = panel.querySelector('.tab-btn[data-tab="' + tabId + '"]');
+      var tabBtn = Array.from(panel.querySelectorAll('.tab-btn')).find(function (btn) {
+        return btn.getAttribute('data-tab') === tabId;
+      });
       if (tabBtn) window.switchTab(tabBtn);
     }
-  })();
+    if (panelId === 'api-server' && tabId === 'settings') {
+      settingsTargetNotice('');
+      if (parts[2]) {
+        if (parts.length !== 3 || MONITOR_THRESHOLD_FIELDS.indexOf(parts[2]) === -1) {
+          settingsTargetNotice('This threshold setting is unavailable.');
+          return;
+        }
+        _settingsFieldTarget = {field: parts[2], generation: _settingsNavigationGeneration};
+        history.replaceState(null, '', window.location.pathname + window.location.search + '#api-server/settings/' + parts[2]);
+        focusSettingsTarget();
+      }
+    }
+  }
+  window.addEventListener('hashchange', restoreFromHash);
+  window.addEventListener('pageshow', function (event) {
+    if (!event.persisted) return;
+    // A cached page already retains its panel, tab, field target and editing context.
+    var pane = document.getElementById(_currentPanelId + '-tab-settings');
+    if (pane && pane.classList.contains('active')) loadSettings(_currentPanelId);
+  });
+  restoreFromHash();
 
   /* ── Log viewer ────────────────────────────────────────── */
   function initLogViewer(svcId) {
@@ -2140,18 +2221,64 @@ window.PBGUI_NAV_CONFIG = {
   };
 
   /* ── Settings loaders ──────────────────────────────────── */
+  function getSettingsDraft(svcId, panel) {
+    if (_settingsDrafts[svcId]) return _settingsDrafts[svcId];
+    var draft = {panel: panel, edits: new Map()};
+    draft.rememberEdit = function (event) {
+      var field = event.target;
+      if (svcId === 'api-server') _settingsFieldTarget = null;
+      if (field.id) draft.edits.set(field.id, {value: field.value, checked: field.checked});
+    };
+    if (panel) {
+      panel.addEventListener('input', draft.rememberEdit);
+      panel.addEventListener('change', draft.rememberEdit);
+    }
+    _settingsDrafts[svcId] = draft;
+    return draft;
+  }
+
+  function releaseSettingsDraft(svcId, draft) {
+    if (draft.panel) {
+      draft.panel.removeEventListener('input', draft.rememberEdit);
+      draft.panel.removeEventListener('change', draft.rememberEdit);
+    }
+    draft.edits.clear();
+    if (_settingsDrafts[svcId] === draft) delete _settingsDrafts[svcId];
+  }
+
   function loadSettings(svcId) {
     var ep = { pbcoindata: '/settings/pbcoindata', pbdata: '/settings/pbdata', 'api-server': '/settings/api-server' }[svcId];
     if (!ep || _settingsLoaded[svcId] || _settingsLoading[svcId]) return Promise.resolve();
-    _settingsLoading[svcId] = true;
-    return fetch(API_BASE + ep, authOptions())
+    var controller = new AbortController();
+    var job = {controller: controller};
+    _settingsLoading[svcId] = job;
+    var panelNode = typeof document === 'undefined' ? null : document.getElementById(svcId + '-tab-settings');
+    var save = panelNode && panelNode.querySelector('.form-btn.save');
+    if (save) save.disabled = true;
+    var draft = getSettingsDraft(svcId, panelNode);
+    var timeout;
+    var cancelled = new Promise(function (_, reject) {
+      job.cancel = function () { clearTimeout(timeout); controller.abort(); reject(new Error('Settings request cancelled.')); };
+      timeout = setTimeout(function () {
+        controller.abort();
+        reject(new Error('Settings request timed out.'));
+      }, 15000);
+    });
+    return Promise.race([fetch(API_BASE + ep, authOptions({signal: controller.signal}))
       .then(function (r) {
         if (!r.ok) throw new Error('Settings request failed.');
         return r.json();
-      })
+      }), cancelled])
       .then(function (data) {
+        if (_settingsLoading[svcId] !== job) return;
         applySettings(svcId, data);
+        draft.edits.forEach(function (edit, id) {
+          var field = document.getElementById(id);
+          if (field) { field.value = edit.value; field.checked = edit.checked; }
+        });
+        releaseSettingsDraft(svcId, draft);
         _settingsLoaded[svcId] = true;
+        if (svcId === 'api-server') focusSettingsTarget();
         var panel = typeof document === 'undefined' ? null : document.getElementById(svcId + '-tab-settings');
         if (panel && svcId !== 'pbdata') {
           var notice = panel.querySelector('.settings-load-error');
@@ -2161,6 +2288,7 @@ window.PBGUI_NAV_CONFIG = {
         }
       })
       .catch(function (error) {
+        if (_settingsLoading[svcId] !== job) return;
         console.error('Failed to load service settings', error);
         if (svcId !== 'pbdata') {
           var panel = typeof document === 'undefined' ? null : document.getElementById(svcId + '-tab-settings');
@@ -2193,8 +2321,28 @@ window.PBGUI_NAV_CONFIG = {
         retry.addEventListener('click', function () { loadSettings(svcId); });
         wrap.append(message, retry);
       })
-      .finally(function () { delete _settingsLoading[svcId]; });
+      .finally(function () {
+        clearTimeout(timeout);
+        if (_settingsLoading[svcId] === job) delete _settingsLoading[svcId];
+      });
   }
+
+  window.addEventListener('pagehide', function (event) {
+    var persisted = !!(event && event.persisted);
+    if (!persisted) {
+      ++_settingsNavigationGeneration;
+      _settingsFieldTarget = null;
+    }
+    Object.keys(_settingsLoading).forEach(function (svcId) {
+      var job = _settingsLoading[svcId];
+      delete _settingsLoading[svcId];
+      job.cancel();
+    });
+    if (persisted) return;
+    Object.keys(_settingsDrafts).forEach(function (svcId) {
+      releaseSettingsDraft(svcId, _settingsDrafts[svcId]);
+    });
+  });
 
   function applySettings(svcId, data) {
     if (svcId === 'pbcoindata') {
@@ -2997,7 +3145,7 @@ window.PBGUI_NAV_CONFIG = {
           var result = record.result;
           clearCmcMutationContext(pending, true);
           if (same) return { context: pending, payload: result };
-          loadCmcPool();
+          loadCmcPool(true);
           throw new Error('Previous CMC operation ' + pending.operationId + ' completed. Review the refreshed pool, then retry this action.');
         }
         if (!same) {
@@ -3044,6 +3192,11 @@ window.PBGUI_NAV_CONFIG = {
 
   function setCmcMutationBusy(busy) {
     _cmcMutationBusy = !!busy;
+    clearTimeout(_cmcRefreshTimer); _cmcRefreshTimer = null;
+    if (!busy) {
+      resumeCmcSnapshot();
+      scheduleCmcRefresh();
+    }
     updateCmcButtons();
     document.querySelectorAll('[data-cmc-mutation]').forEach(function (button) {
       button.disabled = _cmcMutationBusy;
@@ -3065,6 +3218,7 @@ window.PBGUI_NAV_CONFIG = {
   }
 
   function selectedCmcKey() {
+    if (_cmcDeletedKeyIds.has(_selectedCmcKeyId)) return null;
     return (_cmcPool.keys || []).find(function (item) { return item.id === _selectedCmcKeyId; }) || null;
   }
 
@@ -3081,7 +3235,7 @@ window.PBGUI_NAV_CONFIG = {
       disable.disabled = _cmcMutationBusy || !selected;
       disable.textContent = selected && selected.active === false ? 'Re-enable' : 'Disable';
     }
-    if (remove) remove.disabled = _cmcMutationBusy || !selected;
+    if (remove) remove.disabled = _cmcDeleteInFlight || _cmcMutationBusy || !selected;
     if (authorityButton) {
       var selectedDomain = selected && (_cmcLeases.domains || []).find(function (item) { return item.quota_domain_id === selected.quota_domain_id; });
       var authorityTargets = (_cmcPool.eligible_authority_nodes || []).filter(function (node) { return !selectedDomain || node.node_id !== selectedDomain.authority_node_id; });
@@ -3097,9 +3251,15 @@ window.PBGUI_NAV_CONFIG = {
   }
 
   function renderCmcPool() {
+    // Only status/table containers are updated; dialogs and editing fields stay mounted.
+    var scrollPositions = Array.from(document.querySelectorAll('#main-content, #pbcoindata-tab-pool, #panel-pbcoindata .cmc-pool-wrap, #panel-pbcoindata .cmc-table-wrap')).map(function (element) {
+      return { element: element, top: element.scrollTop, left: element.scrollLeft };
+    });
     var keys = _cmcPool.keys || [];
-    if (_selectedCmcKeyId && !keys.some(function (item) { return item.id === _selectedCmcKeyId; })) {
+    if (_selectedCmcKeyId && (_cmcDeletedKeyIds.has(_selectedCmcKeyId)
+        || !keys.some(function (item) { return item.id === _selectedCmcKeyId; }))) {
       _selectedCmcKeyId = '';
+      cmcMessage('The selected CMC key is no longer available.', false);
     }
     var authority = _cmcLeases.authority || {};
     var keyUsage = {};
@@ -3134,11 +3294,12 @@ window.PBGUI_NAV_CONFIG = {
         body.innerHTML = '<tr><td colspan="20" style="color:#64748b;cursor:default;">No CMC keys configured.</td></tr>';
       } else {
         body.innerHTML = keys.map(function (item) {
-          var state = item.local_state || (item.active === false ? 'disabled' : (item.status || 'active'));
+          var deleted = _cmcDeletedKeyIds.has(item.id);
+          var state = deleted ? 'deleted' : (item.local_state || (item.active === false ? 'disabled' : (item.status || 'active')));
           var usage = keyUsage[item.id] || {};
           var domain = domains[item.quota_domain_id] || {};
           var rowClass = item.id === _selectedCmcKeyId ? ' class="selected"' : '';
-          return '<tr' + rowClass + ' data-key-id="' + esc(item.id) + '" onclick="selectCmcKey(this.dataset.keyId)">'
+          return '<tr' + rowClass + (deleted ? ' data-cmc-deleted="true"' : '') + ' data-key-id="' + esc(item.id) + '" onclick="selectCmcKey(this.dataset.keyId)">'
             + '<td>' + esc(item.label || item.id) + '</td>'
             + '<td><span class="cmc-state ' + esc(state) + '">' + esc(state) + '</span></td>'
             + '<td>' + esc(item.desired_state || '-') + '</td>'
@@ -3191,6 +3352,10 @@ window.PBGUI_NAV_CONFIG = {
         : 'CMC pool is not configured. Add an active key to enable CMC requests.';
     }
     updateCmcButtons();
+    scrollPositions.forEach(function (position) {
+      position.element.scrollTop = position.top;
+      position.element.scrollLeft = position.left;
+    });
   }
 
   function cmcTimestamp(value) {
@@ -3200,36 +3365,155 @@ window.PBGUI_NAV_CONFIG = {
     return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
   }
 
-  function loadCmcPool() {
+  function cmcViewVisible() {
+    return _currentPanelId === 'pbcoindata' && !document.hidden && !_cmcPageHidden;
+  }
+
+  function scheduleCmcRefresh() {
+    clearTimeout(_cmcRefreshTimer); _cmcRefreshTimer = null;
+    if (!cmcViewVisible() || _cmcDeleteInFlight || _cmcMutationBusy || _cmcLoadPromise || _cmcQueuedLoad) return;
+    _cmcRefreshTimer = setTimeout(function () {
+      _cmcRefreshTimer = null;
+      loadCmcPool();
+    }, 5000);
+  }
+
+  function stopCmcRefresh() {
+    clearTimeout(_cmcRefreshTimer); _cmcRefreshTimer = null;
+    clearTimeout(_cmcLoadTimeout); _cmcLoadTimeout = null;
+    ++_cmcLoadGeneration;
+    var controller = _cmcLoadController;
+    var queued = _cmcQueuedLoad;
+    _cmcLoadController = null;
+    _cmcLoadPromise = null;
+    _cmcQueuedLoad = null;
+    if (queued) {
+      _cmcSnapshotRequired = true;
+      queued.resolve(); // Visibility changes defer the snapshot to the next entry.
+    }
+    if (controller) controller.abort();
+  }
+
+  function queueCmcSnapshot() {
+    if (!_cmcQueuedLoad) {
+      var queued = { loading: false, mutationGeneration: null, resolve: null, promise: null };
+      queued.promise = new Promise(function (resolve) { queued.resolve = resolve; });
+      _cmcQueuedLoad = queued;
+    }
+    var pending = _cmcQueuedLoad.promise;
+    resumeCmcSnapshot();
+    return pending;
+  }
+
+  function resumeCmcSnapshot() {
+    var queued = _cmcQueuedLoad;
+    if (!queued || queued.loading || !cmcViewVisible() || _cmcMutationBusy || _cmcLoadPromise) return;
+    queued.loading = true;
+    queued.mutationGeneration = _cmcMutationGeneration;
+    startCmcPoolRead().then(function () {
+      if (_cmcQueuedLoad !== queued) return;
+      queued.loading = false;
+      if (_cmcSnapshotRequired) {
+        resumeCmcSnapshot();
+        return;
+      }
+      _cmcQueuedLoad = null;
+      queued.resolve();
+      scheduleCmcRefresh();
+    });
+  }
+
+  function loadCmcPool(fresh) {
+    // Completion handlers for the same mutation share the read already started
+    // when its shared lock was released. A newer mutation still needs a new read.
+    if (fresh === true && _cmcQueuedLoad && _cmcQueuedLoad.loading && !_cmcMutationBusy
+        && _cmcQueuedLoad.mutationGeneration === _cmcMutationGeneration) return _cmcQueuedLoad.promise;
+    if (fresh === true) _cmcSnapshotRequired = true;
+    if (!cmcViewVisible()) return Promise.resolve();
+    if (_cmcQueuedLoad) return queueCmcSnapshot();
+    if (_cmcMutationBusy) {
+      return _cmcSnapshotRequired ? queueCmcSnapshot() : (_cmcLoadPromise || Promise.resolve());
+    }
+    if (_cmcDeleteInFlight && fresh !== true) return _cmcLoadPromise || Promise.resolve();
+    if (_cmcLoadPromise) {
+      return _cmcSnapshotRequired ? queueCmcSnapshot() : _cmcLoadPromise;
+    }
+    return startCmcPoolRead();
+  }
+
+  function startCmcPoolRead() {
+    _cmcSnapshotRequired = false;
+    clearTimeout(_cmcRefreshTimer); _cmcRefreshTimer = null;
     var generation = ++_cmcLoadGeneration;
-    if (_cmcLoadController) _cmcLoadController.abort();
-    _cmcLoadController = new AbortController();
-    var signal = _cmcLoadController.signal;
+    var controller = new AbortController();
+    _cmcLoadController = controller;
+    var signal = controller.signal;
+    var timedOut = false;
+    var onAbort;
+    var interrupted = new Promise(function (resolve, reject) {
+      onAbort = function () { reject(new DOMException('CMC read cancelled', 'AbortError')); };
+      signal.addEventListener('abort', onAbort, { once: true });
+    });
+    var timeout = setTimeout(function () { timedOut = true; controller.abort(); }, 15000);
+    _cmcLoadTimeout = timeout;
     var bar = document.getElementById('cmc-status-bar');
     var text = document.getElementById('cmc-status-text');
-    if (bar) bar.className = 'cmc-status-bar loading';
-    if (text) text.textContent = 'Loading CMC pool\u2026';
-    cmcMessage('Loading\u2026', false);
-    return Promise.all([
+    if (!_cmcHasSnapshot) {
+      if (bar) bar.className = 'cmc-status-bar loading';
+      if (text) text.textContent = 'Loading CMC pool\u2026';
+      cmcMessage('Loading\u2026', false);
+    }
+    var pending = Promise.race([Promise.all([
       cmcFetch('/cmc-pool', { signal: signal, cache: 'no-store' }),
       cmcFetch('/cmc-pool/leases', { signal: signal, cache: 'no-store' })
-    ]).then(function (results) {
+    ]), interrupted]).then(function (results) {
       if (generation !== _cmcLoadGeneration) return;
       _cmcPool = results[0] || { keys: [] };
       _cmcUsage = _cmcPool;
       _cmcLeases = results[1] || { authority: {}, leases: [] };
+      // A pre-delete response or an interrupted/failed read cannot restore a cached action.
+      _cmcDeletedKeyIds.forEach(function (deletedGeneration, keyId) {
+        if (generation > deletedGeneration || !(_cmcPool.keys || []).some(function (item) { return item.id === keyId; })) {
+          _cmcDeletedKeyIds.delete(keyId);
+        }
+      });
+      _cmcHasSnapshot = true;
       cmcMessage(((_cmcLeases.authority || {}).lease_count || 0) + ' lease records', false);
       renderCmcPool();
     }).catch(function (error) {
-      if (generation !== _cmcLoadGeneration || error.name === 'AbortError') return;
+      if (generation !== _cmcLoadGeneration || (error.name === 'AbortError' && !timedOut)) return;
+      if (timedOut) error = new Error('CMC pool request timed out after 15 seconds.');
       if (bar) bar.className = 'cmc-status-bar error';
       if (text) text.textContent = 'CMC pool unavailable: ' + error.message;
       cmcMessage(error.message, true);
+    }).finally(function () {
+      clearTimeout(timeout);
+      signal.removeEventListener('abort', onAbort);
+      controller.abort(); // Also release the other read on partial failure.
+      if (generation !== _cmcLoadGeneration) return;
+      _cmcLoadTimeout = null;
+      _cmcLoadController = null;
+      _cmcLoadPromise = null;
+      resumeCmcSnapshot();
+      scheduleCmcRefresh();
     });
+    _cmcLoadPromise = pending;
+    return pending;
   }
   window.loadCmcPool = loadCmcPool;
 
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) stopCmcRefresh();
+    else loadCmcPool();
+  });
+  window.addEventListener('pagehide', function () { _cmcPageHidden = true; stopCmcRefresh(); });
+  window.addEventListener('pageshow', function () { _cmcPageHidden = false; loadCmcPool(); });
+
   window.selectCmcKey = function (keyId) {
+    if (_cmcDeletedKeyIds.has(String(keyId || ''))) {
+      cmcMessage('This CMC key was deleted. Waiting for an updated pool.', false);
+      return;
+    }
     _selectedCmcKeyId = String(keyId || '');
     renderCmcPool();
   };
@@ -3321,7 +3605,7 @@ window.PBGUI_NAV_CONFIG = {
     }).then(function () {
       document.getElementById('cmc-key-modal').hidden = true;
       _cmcOperationId = '';
-      return loadCmcPool();
+      return loadCmcPool(true);
     }).catch(function (error) {
       if (error.name === 'AbortError') return;
       errorTarget.textContent = error.message;
@@ -3398,7 +3682,7 @@ window.PBGUI_NAV_CONFIG = {
       document.getElementById('cmc-authority-modal').hidden = true;
       _cmcAuthorityOperationId = '';
       cmcMessage('Authority transferred. Operation ' + (payload.operation_id || operationId) + '.', false);
-      return loadCmcPool();
+      return loadCmcPool(true);
     }).catch(function (error) {
       document.getElementById('cmc-authority-error').textContent = error.message;
     });
@@ -3419,32 +3703,58 @@ window.PBGUI_NAV_CONFIG = {
       body: enable ? { active: true } : {},
       modal: ''
     })
-      .then(loadCmcPool)
+      .then(function () { return loadCmcPool(true); })
       .catch(function (error) { if (error.name !== 'AbortError') cmcMessage(error.message, true); });
   };
 
   window.deleteSelectedCmcKey = async function () {
+    if (_cmcDeleteInFlight || _cmcMutationBusy) return;
     var selected = selectedCmcKey();
     if (!selected) return;
-    var confirmed = await window.PBGuiDialogs.confirm({
-      title: 'Delete CMC key',
-      message: 'Delete "' + (selected.label || selected.id) + '" from the pool?',
-      detail: 'This publishes a cluster tombstone. The secret cannot be revealed or restored from this UI.',
-      confirmText: 'Delete'
-    });
-    if (!confirmed) return;
-    cmcMutationFetch({
-      operationId: newCmcOperationId('cmc-delete'),
-      action: 'cmc_delete',
-      target: selected.id,
-      path: '/cmc-pool/keys/' + encodeURIComponent(selected.id),
-      method: 'DELETE',
-      transport: 'query',
-      body: {},
-      modal: ''
-    })
-      .then(function () { _selectedCmcKeyId = ''; return loadCmcPool(); })
-      .catch(function (error) { if (error.name !== 'AbortError') cmcMessage(error.message, true); });
+    var focusTarget = document.getElementById('cmc-delete-btn');
+    if (document.activeElement !== focusTarget) focusTarget = null;
+    var confirmed = false;
+    _cmcDeleteInFlight = true;
+    clearTimeout(_cmcRefreshTimer); _cmcRefreshTimer = null;
+    updateCmcButtons();
+    try {
+      confirmed = await window.PBGuiDialogs.confirm({
+        title: 'Delete CMC key',
+        message: 'Delete "' + (selected.label || selected.id) + '" from the pool?',
+        detail: 'This publishes a cluster tombstone. The secret cannot be revealed or restored from this UI.',
+        confirmText: 'Delete'
+      });
+      if (!confirmed || _cmcMutationBusy) return;
+      await cmcMutationFetch({
+        operationId: newCmcOperationId('cmc-delete'),
+        action: 'cmc_delete',
+        target: selected.id,
+        path: '/cmc-pool/keys/' + encodeURIComponent(selected.id),
+        method: 'DELETE',
+        transport: 'query',
+        body: {},
+        modal: ''
+      });
+      _cmcDeletedKeyIds.set(selected.id, _cmcLoadGeneration);
+      if (_selectedCmcKeyId === selected.id) _selectedCmcKeyId = '';
+      renderCmcPool();
+      await loadCmcPool(true);
+    } catch (error) {
+      if (error.name !== 'AbortError') cmcMessage(error.message, true);
+    } finally {
+      _cmcDeleteInFlight = false;
+      updateCmcButtons();
+      // The shared dialog closes before this disabled trigger becomes usable.
+      if (!confirmed && focusTarget && focusTarget.isConnected && !focusTarget.disabled && cmcViewVisible()) {
+        var active = document.activeElement;
+        var dialog = document.getElementById('pbgui-dialog-ovl');
+        if ((!dialog || !dialog.classList.contains('visible'))
+            && (active === document.body || (dialog && dialog.contains(active)))) {
+          focusTarget.focus({ preventScroll: true });
+        }
+      }
+      scheduleCmcRefresh();
+    }
   };
 
   window.saveCoinDataSettings = function () {
@@ -3485,6 +3795,7 @@ window.PBGUI_NAV_CONFIG = {
   };
 
   window.saveApiServerSettings = async function () {
+    if (!_settingsLoaded['api-server'] || _settingsLoading['api-server']) return;
     var hosts = [];
     document.querySelectorAll('#vps-hosts-select .tag:not(.inactive)').forEach(function (el) { hosts.push(el.getAttribute('data-host')); });
     var body = {

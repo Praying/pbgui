@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref, useSlots } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PhCheck, PhCopy } from '@phosphor-icons/vue';
+import { resolveNavigationHref } from '@/shared/lib/navigationHref';
 import IconButton from './IconButton.vue';
 
 interface BreadcrumbItem {
@@ -108,7 +109,7 @@ onBeforeUnmount(() => {
               <a
                 v-if="breadcrumb.href && index < headerBreadcrumbs.length - 1"
                 class="workspace-header__breadcrumb-link"
-                :href="breadcrumb.href"
+                :href="resolveNavigationHref(breadcrumb.href)"
               >
                 {{ breadcrumb.label }}
               </a>

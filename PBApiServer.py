@@ -547,9 +547,10 @@ def _configured_cors() -> tuple[list[str], bool]:
     return origins, True
 
 
-def _restart_current_api_systemd_unit(service_units=(), *, monitor_handoff: bool | None = None) -> bool:
-    """Restart stale PBGui daemons and API when systemd owns this process."""
-    env = _systemd_user_env()
+def _systemd_owns_current_api() -> bool:
+    """Inspect whether the active systemd user API unit owns this process."""
+    if not sys.platform.startswith("linux"):
+        return False
     try:
         status = subprocess.run(
             ["systemctl", "--user", "show", _API_SYSTEMD_UNIT, "-p", "ActiveState", "-p", "MainPID"],
@@ -557,9 +558,17 @@ def _restart_current_api_systemd_unit(service_units=(), *, monitor_handoff: bool
             capture_output=True,
             text=True,
             timeout=5,
-            env=env,
+            env=_systemd_user_env(),
         )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    except Exception as exc:
+        _log(
+            SERVICE,
+            f"[systemd] API ownership inspection failed: {type(exc).__name__}",
+            level="ERROR",
+            meta={"traceback": traceback.format_exc()},
+        )
         return False
 
     if status.returncode != 0:
@@ -574,7 +583,12 @@ def _restart_current_api_systemd_unit(service_units=(), *, monitor_handoff: bool
         main_pid = int(props.get("MainPID", "0") or "0")
     except ValueError:
         main_pid = 0
-    if props.get("ActiveState") != "active" or main_pid != os.getpid():
+    return props.get("ActiveState") == "active" and main_pid == os.getpid()
+
+
+def _restart_current_api_systemd_unit(service_units=(), *, monitor_handoff: bool | None = None) -> bool:
+    """Restart stale PBGui daemons and API when systemd owns this process."""
+    if not _systemd_owns_current_api():
         return False
 
     if monitor_handoff is None:
@@ -778,10 +792,12 @@ async def _worker_watchdog_loop() -> None:
     """
     from task_queue import list_jobs
     from task_worker_ownership import ensure_task_worker_started, get_task_worker_status
+    from pbcoindata_process import reap_children
     _log(SERVICE, "[watchdog] task-worker watchdog started", level="INFO")
     while True:
         try:
             await asyncio.sleep(_WATCHDOG_INTERVAL_S)
+            reap_children()
             worker_status = await asyncio.to_thread(get_task_worker_status)
             if worker_status.running or worker_status.suppressed:
                 continue
@@ -913,8 +929,11 @@ async def _lifespan(app: FastAPI):
             monitor = VPSMonitor()
             streamer = AsyncLogStreamer(monitor.pool)
             _vps_monitor_in_process = True
-            _runtime_restart_reasons.append("VPS Monitor systemd migration required")
-            _log(SERVICE, "[lifespan] using in-process VPS monitor compatibility mode", level="WARNING")
+            if await asyncio.to_thread(_systemd_owns_current_api):
+                _runtime_restart_reasons.append("VPS Monitor systemd migration required")
+                _log(SERVICE, "[lifespan] using in-process VPS monitor compatibility mode", level="WARNING")
+            else:
+                _log(SERVICE, "[lifespan] using in-process VPS monitor", level="INFO")
         vps_init(monitor, streamer)
         v7_init(monitor)
         v8_init(monitor)
@@ -954,6 +973,12 @@ async def _lifespan(app: FastAPI):
                 task.cancel()
         if lifecycle_tasks:
             await asyncio.gather(*lifecycle_tasks, return_exceptions=True)
+
+        try:
+            from pbcoindata_process import reap_children
+            reap_children()
+        except Exception as exc:
+            _log(SERVICE, f"[lifespan] PBCoinData child reaping failed: {type(exc).__name__}", level="ERROR", meta={"traceback": traceback.format_exc()})
 
         try:
             await loop8_shutdown()

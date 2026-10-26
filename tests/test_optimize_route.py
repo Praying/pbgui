@@ -45,7 +45,7 @@ def test_legacy_fallback_keeps_v7_and_v8_placeholders(clients, tmp_path, monkeyp
     legacy = '<script>var TOKEN="%%TOKEN%%";var API_BASE="%%API_BASE%%";var WS_BASE="%%WS_BASE%%";var OV="%%OPTIMIZE_VERSION%%";var BV="%%BACKTEST_VERSION%%";var CURRENT="%%OPTIMIZE_NAV_CURRENT%%";var LIMITS=%%LIMITS_META%%;</script>'
     set_files(monkeypatch, tmp_path, None, legacy)
     monkeypatch.setattr(optimize_v7, 'get_optimize_limits_meta_payload', lambda: {'metrics': ['adg']})
-    monkeypatch.setattr(optimize_v8, 'get_pb8_optimize_metadata', lambda: {'limits': {'metrics': ['adg']}})
+    monkeypatch.setattr(optimize_v8, 'get_pb8_optimize_metadata', lambda **_options: {'limits': {'metrics': ['adg']}})
     response7 = clients[0].get('/api/optimize-v7/main_page')
     response8 = clients[1].get('/api/optimize-v8/main_page')
     assert '/api/optimize-v7' in response7.text and 'var OV="v7"' in response7.text

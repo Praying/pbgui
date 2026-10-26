@@ -58,4 +58,24 @@ describe('useEscapeClose', () => {
     expect(onEscape).not.toHaveBeenCalled();
     wrapper.unmount();
   });
+
+  it('closes only the top owner and returns ownership after it closes', async () => {
+    const parentClosed = vi.fn();
+    const childClosed = vi.fn();
+    const parent = mountHarness(parentClosed);
+    const child = mountHarness(childClosed);
+    parent.active.value = true;
+    await nextTick();
+    child.active.value = true;
+    await nextTick();
+    pressEscape();
+    expect(childClosed).toHaveBeenCalledTimes(1);
+    expect(parentClosed).not.toHaveBeenCalled();
+    child.active.value = false;
+    await nextTick();
+    pressEscape();
+    expect(parentClosed).toHaveBeenCalledTimes(1);
+    child.wrapper.unmount();
+    parent.wrapper.unmount();
+  });
 });

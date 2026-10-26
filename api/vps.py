@@ -561,17 +561,13 @@ def get_main_page(
 
     def _inject(html: str, req: Request) -> str:
         from pathlib import Path as _P
-        scheme = req.url.scheme
-        host = req.url.hostname or "127.0.0.1"
-        port = req.url.port
-        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-        ws_base = origin.replace("http://", "ws://").replace("https://", "wss://")
-        html = html.replace('"%%WS_BASE%%"', json.dumps(ws_base))
+        from api.page_templates import render_page_urls, script_json
 
+        html = render_page_urls(req, html, "/api/vps")
         from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION
-        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace('"%%VERSION%%"', script_json(PBGUI_VERSION))
         html = html.replace("%%VERSION%%", PBGUI_VERSION)
-        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace('"%%SERIAL%%"', script_json(PBGUI_SERIAL))
         html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
         nav_js = _P(__file__).parent.parent / "frontend" / "pbgui_nav.js"
         nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION

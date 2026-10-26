@@ -30,8 +30,7 @@ interface ModalProps {
   panelClass?: string;
   /** Disable Esc/backdrop close for flows that must be answered (rare). */
   dismissable?: boolean;
-  /** Close on backdrop click/✕ independently of Esc (legacy modals that
-   *  intentionally never closed on backdrop pass false here). */
+  /** Explicit opt-in for a consumer exception; normal dialogs retain explicit close actions. */
   backdropClose?: boolean;
   /** Already-translated aria-label for the ✕ button (ui primitives stay i18n-free). */
   closeLabel?: string;
@@ -46,7 +45,7 @@ interface ModalProps {
 const props = withDefaults(defineProps<ModalProps>(), {
   panelClass: 'w-[min(520px,94vw)]',
   dismissable: true,
-  backdropClose: true,
+  backdropClose: false,
   closeLabel: 'Close',
   description: 'Dialog content',
   headerClass: '',

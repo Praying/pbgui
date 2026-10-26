@@ -1,5 +1,14 @@
 # Unreleased
 
+## 合入 main v2.09.5–v2.09.10，Vue 适配进行中
+
+- 已执行不提交的合并并解决冲突，保留当前分支的 Vue 页面入口、固定 Dashboard、国际化及现有 AI 超时/页面操作确认改动；旧版 fallback 同步使用挂载安全的 URL 与脚本 JSON 渲染。
+- Vue PNL 保留无效值与缺失值的空档，真实零值显示 `0.00`，不改变 ADG 的既有数据语义；Services 显示 PBCoinData 生命周期及失败原因，并限制过渡/未知状态的操作。
+- Vue Logging 恢复 `?view=logs|settings`，保留其它 URL 参数；轮转设置严格校验，不改写无效输入，按 scope 管理保存状态，自动同步保留草稿，读取/保存均有期限且不自动重放写操作。
+- 共享 Vue 导航保留挂载前缀；对话框默认不接受外部点击关闭，手写窗口补齐顶层 Tab/Escape 所有权与焦点恢复；Vue 入口同步更新共享 Guide/Dialogs 资源版本。
+- 本条是阶段记录，不代表全部适配完成：AI Loops Vue 界面、Market Data/Optimize Settings、CMC 删除快照锁、VPS/Vast 异步操作、Orders 图表及回测/策略恢复仍需继续适配和验收。未提交、未推送、未操作任何远端主机。
+- API serial 保留上游 `3432` 后递增至 `3433`；后续若继续修改 API/startup，需要再次递增。完整离线后端测试目前受测试 mock 合同及缺失 Playwright 依赖阻塞，不报告为通过。
+
 ## 修复「AI 对话」反复出现 capability turn timed out
 
 - 根因：OpenCode Zen/Go 与 BYOK 的三条能力循环（Responses / Messages / Chat Completions）把**整轮**包在一个固定时长的 `asyncio.wait_for` 里——Responses 与 Messages 用 `_CHAT_TIMEOUT_SECONDS`（180 秒），Chat Completions 直接写死 `180`。一轮带工具的高强度推理对话要走「分析 → 多次能力调用 → 复核 → 最终作答」若干轮，单轮几十秒很常见，几分钟的累计时长注定撞上这个与工作量无关的上限；对话越长、思考等级越高越容易触发，因此表现为"最近几轮总是超时"。Codex/ChatGPT 路径此前已改成"无进展才超时"（`test_progressive_gpt_response_exceeds_old_total_cap` 即为该改动设的回归），OpenCode/BYOK 的三条循环没有跟上。

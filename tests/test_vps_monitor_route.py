@@ -56,7 +56,7 @@ def test_vps_page_falls_back_without_session_fields(client: TestClient, tmp_path
     _set_files(monkeypatch, tmp_path, None, legacy)
     response = client.get("/api/vps/main_page")
     assert response.status_code == 200
-    assert "ws://testserver" in response.text
+    assert "(window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host" in response.text
     assert "%%" not in response.text
     assert "tok-1" not in response.text
 

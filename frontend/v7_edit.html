@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PBv7 Edit</title>
+<title>%%RUN_LABEL%% Edit</title>
   <link rel="stylesheet" href="/app/css/sidebar.css?v=6">
   <link rel="stylesheet" href="/app/css/sidebar_controls.css?v=2">
   <style>
@@ -1241,7 +1241,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <div id="data-tip-tooltip"></div>
 
 <script src="/app/js/editor_shared.js?v=17"></script>
-<script src="/app/js/pbgui_dialogs.js?v=11"></script>
+<script src="/app/js/pbgui_dialogs.js?v=12"></script>
 <script src="/app/js/run_editor_adapter.js?v=10"></script>
 <script src="/app/js/log_viewer_panel.js?v=50"></script>
 <script src="/app/js/coin_overrides_editor.js?v=27"></script>
@@ -1802,7 +1802,7 @@ function goBacktest() {
     return res.json();
   }).then(function(data) {
     var queryKey = runEditorAdapter.isV8 ? 'opt_draft_id' : 'draft_id';
-    var url = (runEditorAdapter.isV8 ? request.page : window.location.origin + '/api/backtest-v7/main_page')
+    var url = (runEditorAdapter.isV8 ? request.page : API_BASE.replace(/\/api\/v7$/, '/api/backtest-v7') + '/main_page')
       + '?' + queryKey + '=' + encodeURIComponent(data.draft_id)
       + '&draft_name=' + encodeURIComponent(INSTANCE_NAME || config.live.user || 'draft');
     window.location.href = url;
@@ -1812,9 +1812,7 @@ function goBacktest() {
 }
 
 function strategyExplorerApiBase() {
-  var match = String(API_BASE || '').match(/^(https?:\/\/[^/]+)/);
-  var origin = match ? match[1] : window.location.origin;
-  return origin + (runEditorAdapter.isV8 ? '/api/strategy-explorer-v8' : '/api/strategy-explorer');
+  return API_BASE.replace(/\/api\/v[78]$/, runEditorAdapter.isV8 ? '/api/strategy-explorer-v8' : '/api/strategy-explorer');
 }
 
 function goStrategyExplorer() {
@@ -4338,7 +4336,7 @@ window.PBGUI_NAV_CONFIG = {
   });
 })();
 </script>
-<script src="/app/js/shared_help_overlay.js?v=9"></script>
+<script src="/app/js/shared_help_overlay.js?v=11"></script>
 <script src="/app/js/pbgui_icons.js?v=1"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 

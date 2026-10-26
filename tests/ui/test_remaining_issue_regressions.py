@@ -127,12 +127,33 @@ const apiPost=async()=>{if(failure==='network')throw new Error('offline');return
 
 def test_logging_view_preserves_loaded_settings():
     """Returning to Settings leaves the existing form and its unsaved values alone."""
-    execute(function('logging_monitor.html','showView')+r'''
+    execute(function('logging_monitor.html','updateLoggingViewUrl')+function('logging_monitor.html','showView')+r'''
 const assert=require('node:assert/strict');let settingsVisible=false,rotationSettingsLoaded=true,rotationSettingsLoading=false;
+const window={location:new URL('http://logging.test/mounted/api/logging/main_page?other=kept#anchor'),history:{state:{kept:true},replaceState(state,unused,url){assert.deepEqual(state,{kept:true});window.location=new URL(url,window.location);}}};
 const document={getElementById:()=>({style:{},classList:{add(){},remove(){}}})};
 function loadRotationSettings(){throw new Error('Must not reload the edited form');}
 showView('viewer');showView('settings');assert.equal(settingsVisible,true);
+assert.equal(window.location.pathname,'/mounted/api/logging/main_page');assert.equal(window.location.search,'?other=kept&view=settings');assert.equal(window.location.hash,'#anchor');
 ''')
+
+
+@pytest.mark.parametrize('query,expected,replacements', [
+    ('', 'logs', 0), ('?view=logs', 'logs', 0),
+    ('?view=settings', 'settings', 0), ('?view=unknown', 'logs', 1),
+])
+def test_logging_view_url_restoration(query, expected, replacements):
+    """Restore only allowed panels without unnecessary initial history replacements."""
+    helpers = ''.join(function('logging_monitor.html', name) for name in (
+        'loggingViewFromUrl', 'updateLoggingViewUrl', 'restoreLoggingView', 'showView'))
+    execute(helpers + f'const query={json.dumps(query)},expected={json.dumps(expected)};' + r'''
+const assert=require('node:assert/strict');let settingsVisible=false,rotationSettingsLoaded=false,rotationSettingsLoading=false,loads=0,replaced=0;
+const state={keep:42};const window={location:new URL('http://logging.test/prefix/api/logging/main_page'+query+'#kept'),history:{state,replaceState(s,unused,url){assert.equal(s,state);replaced++;window.location=new URL(url,window.location);}}};
+const status={hidden:true};const document={getElementById:id=>id==='logging-view-status'?status:({style:{},classList:{add(){},remove(){}}})};
+function loadRotationSettings(){loads++;rotationSettingsLoading=true;}
+restoreLoggingView();assert.equal(settingsVisible,expected==='settings');assert.equal(loads,expected==='settings'?1:0);
+assert.equal(window.location.pathname,'/prefix/api/logging/main_page');assert.equal(window.location.hash,'#kept');
+assert.equal(status.hidden,query!=='?view=unknown');
+''' + f'assert.equal(replaced,{replacements});')
 
 
 def test_coin_data_error_is_handled():
@@ -287,17 +308,105 @@ const document={getElementById:()=>({addEventListener:(type,fn)=>click=fn})},api
 ''')
 
 
-@pytest.mark.parametrize('action',['executeDelete','executeForcedMode'])
-def test_old_run_action_cannot_close_new_modal(action):
-    """Completion only dismisses the initiating modal; duplicate confirms are ignored."""
-    execute(function('v7_run.html',action)+f'const action={json.dumps(action)};'+r'''
-const assert=require('node:assert/strict');let resolve,requests=0,closed=0;
-const root={firstElementChild:{}},confirm={disabled:false},cancel={disabled:false};
-const document={getElementById:id=>id==='modal-root'?root:id==='modal-confirm'?confirm:cancel};
-const apiFetch=()=>{requests++;return new Promise(r=>resolve=r);};function closeModal(){closed++;}function toast(){}function render(){}function loadInstances(){}
-let instances=[],rowMap={};
-(async()=>{eval(action)('alice','panic','Panic',1);eval(action)('alice','panic','Panic',1);assert.equal(requests,1);assert.equal(cancel.disabled,true);
-root.firstElementChild={newModal:true};resolve({ok:true,json:async()=>({version:2})});await new Promise(setImmediate);assert.equal(closed,0);})().catch(e=>{console.error(e);process.exitCode=1;});
+def run_action_source():
+    """Extract the production locks and complete confirmation/request handlers."""
+    page = (ROOT / 'frontend/v7_run.html').read_text()
+    locks = page[page.index('var _deleteConfirmationPending'):page.index('async function confirmDelete')]
+    return locks + ''.join(function('v7_run.html', name) for name in (
+        'normalizedForcedMode', 'confirmDelete', 'executeDelete',
+        'confirmForcedMode', 'executeForcedMode',
+    ))
+
+
+@pytest.mark.parametrize('action', ['executeDelete', 'executeForcedMode'])
+@pytest.mark.parametrize('ending', ['success', 'http', 'network', 'json'])
+def test_old_run_action_cannot_close_new_modal(action, ending):
+    """Hold request locks through parsing; late success/errors never touch a newer dialog."""
+    execute(run_action_source() + f'const action={json.dumps(action)},ending={json.dumps(ending)};' + r'''
+const assert=require('node:assert/strict');
+let resolve, reject, parse, parseReject, requests=0, closed=0, renders=0, loads=0;
+const messages=[], root={firstElementChild:{newModal:true}}, focus={newDialog:true};
+const document={activeElement:focus,getElementById(){throw Error('Unexpected modal DOM access');}};
+const window={PBGuiDialogs:{close(){closed++;}}};
+const apiFetch=()=>{requests++;return new Promise((yes,no)=>{resolve=yes;reject=no;});};
+function closeModal(){closed++;root.firstElementChild=null;document.activeElement=null;}
+function toast(message,kind){messages.push([message,kind]);}
+function render(){renders++;}function loadInstances(){loads++;}
+let instances=[{name:'alice'}],rowMap={};
+const invoke=()=>eval(action)('alice','panic','Panic',1);
+const locked=()=>action==='executeDelete'?_deleteInFlight:_forcedModeInFlight;
+(async()=>{
+  const first=invoke();assert.ok(first instanceof Promise);
+  await invoke();assert.equal(requests,1);assert.equal(locked(),true);
+  const newer=root.firstElementChild;
+  if(ending==='network') reject(Error('offline'));
+  else {
+    resolve({ok:ending!=='http',status:ending==='http'?409:200,json:()=>new Promise((yes,no)=>{parse=yes;parseReject=no;})});
+    await new Promise(setImmediate);
+    // Headers have arrived, but the write must stay locked until parsing finishes.
+    await invoke();assert.equal(requests,1);assert.equal(locked(),true);
+    if(ending==='json') parseReject(Error('invalid JSON'));
+    else parse(ending==='http'?{detail:'Synthetic conflict'}:{version:2,hosts:{test:{success:true}}});
+  }
+  await first;
+  assert.equal(locked(),false);assert.equal(closed,0);
+  assert.equal(root.firstElementChild,newer);assert.equal(document.activeElement,focus);
+  assert.equal(messages.at(-1)[1],ending==='success'?'ok':'err');
+  assert.equal(renders,ending==='success'&&action==='executeDelete'?1:0);
+  assert.equal(loads,ending==='success'&&action==='executeForcedMode'?1:0);
+  if(ending==='http') assert.match(messages.at(-1)[0],/Synthetic conflict/);
+  if(ending==='success'&&action==='executeDelete') assert.match(messages.at(-1)[0],/1\/1 hosts OK/);
+  const retry=invoke();assert.equal(requests,2);
+  resolve({ok:true,json:async()=>({version:3})});await retry;
+  assert.equal(locked(),false);assert.equal(closed,0);
+})().catch(e=>{console.error(e);process.exitCode=1;});
+''')
+
+
+@pytest.mark.parametrize('mode', ['delete', 'panic', 'graceful_stop', 'tp_only', 'normal'])
+def test_run_confirmation_cancellation_guards_and_payloads(mode):
+    """Abort safely, recover from dialog failures, and keep exact write payloads on acceptance."""
+    execute(run_action_source() + f'const mode={json.dumps(mode)};' + r'''
+const assert=require('node:assert/strict');
+let resolveDialog,rejectDialog,resolveRequest,dialogs=0,requests=[],options;
+const name='alice<&"',messages=[];
+let instances=[{name,forced_mode_long:'panic'}],rowMap={};
+const window={PBGuiDialogs:{confirm(value){dialogs++;options=value;return new Promise((yes,no)=>{resolveDialog=yes;rejectDialog=no;});}}};
+function toast(message,kind){messages.push([message,kind]);}function render(){}function loadInstances(){}
+const apiFetch=(path,init)=>{requests.push([path,init]);return new Promise(yes=>resolveRequest=yes);};
+const invoke=()=>mode==='delete'?confirmDelete(name):confirmForcedMode(name,mode,7);
+const pending=()=>mode==='delete'?_deleteConfirmationPending:_forcedModeConfirmationPending;
+(async()=>{
+  const cancelled=invoke();await invoke();assert.equal(dialogs,1);assert.equal(pending(),true);
+  // Another row action cannot replace an unanswered Run confirmation.
+  await (mode==='delete'?confirmForcedMode(name,'panic',7):confirmDelete(name));
+  assert.equal(dialogs,1);assert.ok(options.message.includes(name));
+  const labels={delete:'Delete',panic:'Panic',graceful_stop:'Graceful Stop',tp_only:'Take Profit Only',normal:'Publish Normal'};
+  assert.equal(options.confirmText,labels[mode]);
+  if(mode==='normal') assert.match(options.detail,/Panic closes already executed cannot be undone/);
+  resolveDialog(false);await cancelled;assert.equal(pending(),false);assert.equal(requests.length,0);
+  const failed=invoke();rejectDialog(Error('Synthetic dialog failure'));await failed;
+  assert.equal(pending(),false);assert.equal(requests.length,0);assert.equal(messages.at(-1)[1],'err');
+  const shared=window.PBGuiDialogs;window.PBGuiDialogs=null;await invoke();
+  assert.equal(requests.length,0);assert.match(messages.at(-1)[0],/confirmation dialog could not be loaded/);
+  window.PBGuiDialogs=shared;
+  if(mode==='delete'){
+    instances[0].running_on=['test-host'];await invoke();assert.equal(dialogs,2);
+    assert.match(messages.at(-1)[0],/Cannot delete/);instances[0].running_on=[];
+  }
+  const accepted=invoke();resolveDialog(true);await new Promise(setImmediate);
+  await invoke();assert.equal(dialogs,3);assert.equal(requests.length,1);
+  assert.equal(requests[0][0],'/instances/'+encodeURIComponent(name)+(mode==='delete'?'':'/forced-mode'));
+  if(mode==='delete') assert.deepEqual(requests[0][1],{method:'DELETE'});
+  else {
+    assert.equal(requests[0][1].method,'POST');
+    assert.deepEqual(requests[0][1].headers,{'Content-Type':'application/json'});
+    assert.deepEqual(JSON.parse(requests[0][1].body),mode==='normal'?{mode,expected_version:7}:{mode});
+  }
+  resolveRequest({ok:true,json:async()=>({version:8})});await accepted;
+  const reopened=invoke();assert.equal(dialogs,4);resolveDialog(false);await reopened;
+  assert.equal(requests.length,1);assert.equal(pending(),false);
+})().catch(e=>{console.error(e);process.exitCode=1;});
 ''')
 
 

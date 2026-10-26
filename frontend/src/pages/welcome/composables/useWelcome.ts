@@ -5,7 +5,7 @@
  * (:1470-1524), the file browser (:1039-1157) and the banner (:1002-1011).
  */
 
-import { computed, ref, type ComputedRef, type Ref } from 'vue';
+import { computed, getCurrentScope, onScopeDispose, ref, type ComputedRef, type Ref } from 'vue';
 import { serverMsg } from '@/shared/i18n';
 import { apiOrigin } from '../config';
 import { loginSecuritySummary, type LoginSecurity } from '../lib/loginSecurity';
@@ -120,6 +120,14 @@ export interface UseWelcome {
 
 export function useWelcome(options: { t: TranslateFn }): UseWelcome {
   const t = options.t;
+  let authenticationReloadTimer: ReturnType<typeof setTimeout> | undefined;
+  let scopeDisposed = false;
+  if (getCurrentScope()) {
+    onScopeDispose(() => {
+      scopeDisposed = true;
+      clearTimeout(authenticationReloadTimer);
+    });
+  }
 
   const banner = ref<{ message: string; kind: BannerKind }>({ message: '', kind: 'info' });
   const activeSection = ref<'overview' | 'setup' | 'password'>('overview');
@@ -392,10 +400,14 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
           }),
         },
       );
+      if (scopeDisposed) return;
       currentPassword.value = '';
       newPassword.value = '';
       setBanner(serverMsg(String(data.message || '')) || t('misc.welcome.passwordUpdated'), 'success');
-      setTimeout(() => window.location.reload(), 250); // :1486
+      clearTimeout(authenticationReloadTimer);
+      authenticationReloadTimer = setTimeout(() => {
+        if (!scopeDisposed && typeof window !== 'undefined') window.location.reload();
+      }, 250);
     } catch (error) {
       setBanner(serverMsg(error instanceof Error ? error.message : String(error)), 'error');
       focusSection('password');

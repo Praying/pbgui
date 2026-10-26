@@ -2664,21 +2664,20 @@ def get_v8_hosts(
 def _apply_placeholders(html: str, request: Request, replacements: dict[str, Any]) -> str:
     """Fill the same-origin API and shared-nav placeholders of a PB8 page."""
 
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+    from api.page_templates import render_page_urls, script_json
+
+    html = render_page_urls(request, html, "/api/v8")
     values = {
-        "API_BASE": origin + "/api/v8",
-        "WS_BASE": origin.replace("http://", "ws://").replace("https://", "wss://"),
         "VERSION": pbgui_purefunc.PBGUI_VERSION,
         "SERIAL": pbgui_purefunc.PBGUI_SERIAL,
         "MASTER_NAME": _master_hostname(),
         **replacements,
     }
     for key, value in values.items():
-        html = html.replace(f'"%%{key}%%"', json.dumps(value))
-        html = html.replace(f"%%{key}%%", str(value))
+        html = html.replace(f'"%%{key}%%"', script_json(value))
+        if key in {"VERSION", "SERIAL"}:
+            html = html.replace(f"%%{key}%%", str(value))
+    html = html.replace("%%RUN_LABEL%%", "PBv8")
     nav = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
     return html.replace("%%NAV_HASH%%", str(int(nav.stat().st_mtime)) if nav.exists() else pbgui_purefunc.PBGUI_VERSION)
 

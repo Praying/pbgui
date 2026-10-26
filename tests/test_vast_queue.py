@@ -1,5 +1,6 @@
 """Offline shared-rental scheduling, queue cancellation and cached transfer contracts."""
 import json
+import shutil
 import time
 from pathlib import Path
 
@@ -11,6 +12,8 @@ from vast_queue import CloudQueue, worker_step
 from vast_job_runner import rental_payload
 from setup.vast_gpu_benchmark import cloud_worker
 from vast_direction_fixtures import direction_config
+from vast_integrity_fixtures import freeze_test_proof
+from test_vast_ohlcv_integrity import preparation
 
 
 @pytest.fixture
@@ -30,6 +33,7 @@ def queue(tmp_path):
         if i:
             ensure_private_directory(directory / 'input')
             write_json(directory / 'input/optimize.json', direction_config())
+            freeze_test_proof(store, identifier)
     queue.update(worker_id=worker)
     return queue, worker
 
@@ -46,6 +50,106 @@ def test_two_jobs_share_worker_and_deadline(queue):
     assert queue.store.read(worker)['deadline'] == 10000
     assert not queue.store.read(worker, 'control.json')['cleanup']
     assert worker_step(queue, worker, now=201) == second
+
+
+@pytest.mark.parametrize('change', ['completed', 'failed', 'cancelled', 'ready', 'lease', 'collected'])
+def test_rental_end_rechecks_inventory_under_state_lock(queue, monkeypatch, change):
+    """Rental-end writes use current lease/status/result evidence, never the list snapshot."""
+    queue, worker = queue
+    store, identifier = queue.store, 'b'*32
+    store.update(worker, rental_state='deletion_verified')
+    store.update(identifier, status='collecting', lease_id=worker)
+    original = store.list_with_errors
+
+    def changed_after_snapshot():
+        """Commit a concurrent state change after listing and before the conditional writer."""
+        rows = original()
+        if change == 'lease':
+            store.update(identifier, lease_id='d'*32)
+        elif change == 'collected':
+            store.update(identifier, final_collected=True)
+        else:
+            store.update(identifier, status=change)
+        return rows
+
+    monkeypatch.setattr(store, 'list_with_errors', changed_after_snapshot)
+    assert worker_step(queue, worker, now=100) is None
+    row = store.read(identifier)
+    if change == 'collected':
+        assert row['status'] == 'failed'
+        assert row['error'] == 'Raw results saved locally; result import needs retry'
+    elif change == 'lease':
+        assert row['status'] == 'collecting' and row['lease_id'] == 'd'*32
+    else:
+        assert row['status'] == change
+
+
+@pytest.mark.parametrize('order', ['recover_first', 'rental_first'])
+def test_rental_end_and_recover_both_orders(queue, tmp_path, monkeypatch, order):
+    """Real threads exercise both rental-end/publication orderings without a lock inversion."""
+    import threading
+    import msgpack
+    from contextlib import contextmanager
+    from concurrent.futures import ThreadPoolExecutor
+    import vast_job_runner as runner
+    import vast_queue
+    queue, worker = queue
+    store, identifier = queue.store, 'b'*32
+    store.update(worker, rental_state='deletion_verified')
+    store.update(identifier, status='collecting', lease_id=worker, final_collected=True)
+    final = ensure_private_directory(store.directory(identifier) / 'final-results')
+    result = ensure_private_directory(final / 'optimize_results/run')
+    (result / 'all_results.bin').write_bytes(msgpack.packb({'metrics': {}}))
+    write_json(final / 'finished.json', {'exit_code': 0})
+    write_json(store.directory(identifier) / 'input/manifest.json', {})
+    intent = store.read(identifier, 'intent.json')
+    intent.update(results_root=str(tmp_path / 'optimize_results'), source_config_sha256='synthetic')
+    write_json(store.directory(identifier) / 'intent.json', intent)
+    importing, release_import, state_attempt, release_state, rental_written = [threading.Event() for _ in range(5)]
+    original_import, original_lock, update = runner.import_results, vast_queue.advisory_file_lock, store.update
+
+    def held_import(*args, **kwargs):
+        """Keep Finalize owned while the queue obtains its inventory."""
+        importing.set()
+        assert release_import.wait(5)
+        return original_import(*args, **kwargs)
+
+    @contextmanager
+    def tracked_lock(target):
+        """Delay only the queue's State acquisition, without holding State or acquiring Finalize."""
+        if Path(target) == store.directory(identifier) / '.state-lock':
+            state_attempt.set()
+            if order == 'recover_first':
+                assert release_state.wait(5)
+        with original_lock(target):
+            yield
+
+    def tracked_update(identifier, **changes):
+        """Signal after the rental writer's conditional State transaction."""
+        row = update(identifier, **changes)
+        if changes.get('error') == 'Raw results saved locally; result import needs retry':
+            rental_written.set()
+        return row
+
+    monkeypatch.setattr(runner, 'import_results', held_import)
+    monkeypatch.setattr(vast_queue, 'advisory_file_lock', tracked_lock)
+    monkeypatch.setattr(store, 'update', tracked_update)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        api = executor.submit(runner.finalize_collected_results, store, identifier)
+        try:
+            assert importing.wait(5)
+            rental = executor.submit(worker_step, queue, worker, now=100)
+            assert state_attempt.wait(5)
+            if order == 'rental_first':
+                assert rental_written.wait(5)
+            release_import.set()
+            assert api.result(timeout=5)['status'] == 'completed'
+        finally:
+            release_import.set()
+            release_state.set()
+        assert rental.result(timeout=5) is None
+    assert store.read(identifier)['status'] == 'completed'
+    assert store.read(identifier)['error'] is None
 
 
 def test_reserved_rental_profile_can_change_only_before_first_job(queue):
@@ -658,35 +762,52 @@ def test_manual_rental_can_end_and_cannot_outlive_deadline(queue, stop, now):
 
 
 @pytest.mark.parametrize('expired_bundle', [False, True])
-def test_missing_local_metadata_blocks_rental_before_worker_creation(tmp_path, monkeypatch, expired_bundle):
-    """Missing local snapshots and expired bundles both block a paid worker."""
+def test_missing_local_metadata_blocks_rental_before_worker_creation(preparation, tmp_path, monkeypatch, expired_bundle):
+    """Genuinely admitted input still cannot rent with missing or expired metadata."""
     import vast_market_cache
     import vast_queue
+    from vast_ohlcv_integrity import require_manifest_proof
     from vast_provider import VastError
 
-    store = JobStore(tmp_path / 'vast')
-    row = store.create_preparation('offline-cache', 512, 4, False)
-    store.update(row['id'], status='ready', exchanges=['bybit'])
-    input_dir = store.directory(row['id']) / 'input'
-    input_dir.mkdir()
-    write_json(input_dir / 'optimize.json', direction_config())
-    manifest = {'files': [{'path': 'ohlcv/bybit/1m/BTC_USDT:USDT/2024-01-01.npy'}]}
-    if expired_bundle:
-        manifest['public_market_cache_mtimes'] = {'bybit': time.time() - 86401}
-    write_json(input_dir / 'manifest.json', manifest)
+    p = preparation
+    store, row = p.store, p.run()
+    assert row['status'] == 'ready' and row['rental_state'] == 'none'
+    manifest = require_manifest_proof(store, row['id'])
+    assert len(manifest['files']) == 2
+    immutable = {name: (store.directory(row['id']) / name).read_bytes() for name in
+                 ('input/manifest.json', 'input/optimize.json', 'input.tar.gz')}
     market_root = tmp_path / 'data/coindata'
-    mapping = market_root / 'bybit/mapping.json'
-    mapping.parent.mkdir(parents=True)
-    mapping.write_text(json.dumps([{'coin': 'BTC', 'ccxt_symbol': 'BTC/USDT:USDT',
-                                    'quote': 'USDT', 'swap': True, 'linear': True}]))
+    shutil.copytree(p.mapping, market_root / 'bybit')
     monkeypatch.setattr(vast_queue, 'PROJECT', tmp_path)
     monkeypatch.setattr(vast_market_cache, 'MARKET_ROOT', market_root)
+
+    rental_calls = []
+    def start(*args, **kwargs):
+        """Fail at the local rental boundary before any provider or supervisor access."""
+        rental_calls.append(args)
+        pytest.fail('Metadata rejection must precede rental startup')
+
+    monkeypatch.setattr(store, 'start', start)
+    if expired_bundle:
+        # Age the real proof without rewriting/resealing its immutable snapshot.
+        expired = manifest['metadata_snapshot']['markets']['bybit']['fetched_at'] + 86401
+        monkeypatch.setattr(time, 'time', lambda: expired)
+        reason = 'Queue a cloud optimizer config first'
+    else:
+        (market_root / 'bybit/ccxt_markets.json').unlink()
+        reason = 'Local market metadata is missing for bybit'
     queue = CloudQueue(store)
-    reason = 'Prepared market cache is invalid or expired' if expired_bundle else 'Local market metadata is missing for bybit'
     with pytest.raises(VastError, match=reason):
         queue.start({'id': 42, 'machine_id': 70}, 1, 1, 300)
+    if expired_bundle:
+        failed = store.read(row['id'])
+        assert failed['status'] == 'failed'
+        assert 'Prepared market metadata is missing or expired' in failed['error']
+    assert rental_calls == []
+    assert not any(item.get('kind') == 'worker' for item in store.list())
     assert queue.worker() is None
     assert queue.read().get('worker_id') is None
+    assert all((store.directory(row['id']) / name).read_bytes() == data for name, data in immutable.items())
 
 
 def test_rent_without_jobs_starts_services_immediately(tmp_path, monkeypatch):

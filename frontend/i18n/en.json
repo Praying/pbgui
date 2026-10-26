@@ -1,4 +1,8 @@
 {
+  "nav.close_notification_log": "Close notification log",
+  "sysmon.rotationInvalidSize": "File size must be an integer from 1 to 10240 MB.",
+  "sysmon.rotationInvalidCopies": "Backup copies must be an integer from 0 to 20.",
+  "sysmon.rotationSaveFailed": "The rotation settings were not saved.",
   "ai.chat.actionCompleted": "Action completed: {action}",
   "ai.chat.continuing": "Approved action completed. Continuing the requested workflow...",
   "ai.chat.continuationNotStarted": "Approved action completed, but the AI could not continue the workflow.",

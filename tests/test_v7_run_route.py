@@ -104,8 +104,8 @@ def test_v7_falls_back_to_legacy_template_with_injections(
 
     assert resp.status_code == 200
     assert resp.headers["cache-control"] == "no-store"
-    assert 'var API_BASE = "http://testserver/api/v7";' in resp.text
-    assert 'var WS_BASE = "ws://testserver";' in resp.text
+    assert 'var API_BASE = "/api/v7";' in resp.text
+    assert "(window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host" in resp.text
     assert 'var RUN_VERSION = "v7";' in resp.text
     assert "%%API_BASE%%" not in resp.text
     assert "%%WS_BASE%%" not in resp.text
@@ -135,7 +135,7 @@ def test_v8_falls_back_to_legacy_template_with_v8_injections(
 
     assert resp.status_code == 200
     assert resp.headers["cache-control"] == "no-store"
-    assert 'var API_BASE = "http://testserver/api/v8";' in resp.text
+    assert 'var API_BASE = "/api/v8";' in resp.text
     assert 'var RUN_VERSION = "v8";' in resp.text
     assert "%%API_BASE%%" not in resp.text
     assert "%%RUN_VERSION%%" not in resp.text

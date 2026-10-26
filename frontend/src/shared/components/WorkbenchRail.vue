@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, wa
 import { PhGridFour, PhMoon, PhRows, PhSidebarSimple, PhSparkle, PhSun } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import type { NavigationGroup, NavigationItem, PageSection } from '@/shared/navigation';
+import { resolveNavigationHref } from '@/shared/lib/navigationHref';
 import { markAiUserInteraction, useAiDrawerAvailable } from '@/shared/ai/drawer';
 import { toggleAiDrawer, useAiDrawer } from '@/shared/ai/useAiDrawer';
 import { useDensity } from '@/shared/composables/useDensity';
@@ -296,7 +297,7 @@ onBeforeUnmount(() => {
                 'workbench-rail__item--active': item.pageKey === props.activePage && !item.disabled,
                 'workbench-rail__item--disabled': item.disabled,
               }"
-              :href="item.disabled ? undefined : item.href"
+              :href="item.disabled ? undefined : resolveNavigationHref(item.href)"
               :target="item.external ? '_blank' : undefined"
               :rel="item.external ? 'noopener noreferrer' : undefined"
               :aria-current="item.pageKey === props.activePage && !item.disabled ? 'page' : undefined"

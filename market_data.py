@@ -6,6 +6,7 @@ import configparser
 from io import StringIO
 import re
 import calendar
+import threading
 from datetime import date, datetime, timedelta, timezone
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,7 +16,8 @@ import numpy as np
 from logging_helpers import human_log
 from file_lock import advisory_file_lock
 from market_data_sources import get_source_minutes_for_range
-from PBCoinData import CoinData, compute_coin_name, get_symbol_for_coin, normalize_symbol
+from market_symbol_mapping import disambiguate_multiplier_market_coins
+from PBCoinData import CoinData, compute_coin_name, get_symbol_for_coin, normalize_symbol, get_hyperliquid_hip3_alias
 import pbgui_purefunc
 from pbgui_purefunc import load_symbols_from_ini
 from secure_files import atomic_write_private_text, ensure_private_directory, secure_private_file
@@ -180,7 +182,7 @@ def _get_hyperliquid_ccxt_symbol_for_market_id(market_id: str) -> str:
         return ""
 
 
-def normalize_market_data_coin_dir(exchange: str, coin: str) -> str:
+def normalize_market_data_coin_dir(exchange: str, coin: str, *, mapping: list[dict] | None = None) -> str:
     ex = str(exchange or "").strip().lower()
     raw = str(coin or "").strip()
     if not raw:
@@ -188,17 +190,9 @@ def normalize_market_data_coin_dir(exchange: str, coin: str) -> str:
     if ex != "hyperliquid":
         return raw.upper()
 
-    raw_base = str(raw).split("/")[0].strip()
-    raw_base_l = raw_base.lower()
-    if raw_base_l.startswith("xyz:") or raw_base_l.startswith("xyz-"):
-        tail = raw_base[4:].strip()
-        tail_u = tail.upper()
-        for suffix in ("_USDC:USDC", "_USDT:USDT", "_USDC_USDC", "_USDT_USDT"):
-            if tail_u.endswith(suffix):
-                tail = tail[: -len(suffix)]
-                break
-        tail = str(tail).strip(" _:-")
-        return f"XYZ-{tail.upper()}_USDC:USDC" if tail else ""
+    hip3 = get_hyperliquid_hip3_alias(raw, mapping)
+    if hip3:
+        return f"{hip3}_USDC:USDC"
 
     sym = raw
     if str(raw).strip().isdigit():
@@ -310,16 +304,16 @@ def _normalize_market_data_exchange(exchange: str) -> str:
     return ex
 
 
-def _canonical_enabled_coin(exchange: str, coin: str) -> str:
+def _canonical_enabled_coin(exchange: str, coin: str, *, mapping: list[dict] | None = None) -> str:
     ex = _normalize_market_data_exchange(exchange)
     s = str(coin or "").strip()
     if not s:
         return ""
     if ex == "hyperliquid":
-        lower = s.lower()
-        if lower.startswith("xyz:") or lower.startswith("xyz-"):
-            tail = s[4:].strip().upper()
-            return f"xyz:{tail}" if tail else ""
+        hip3 = get_hyperliquid_hip3_alias(s, mapping)
+        if hip3:
+            dex, ticker = hip3.split("-", 1)
+            return f"{dex.lower()}:{ticker}"
     return s.upper()
 
 
@@ -412,6 +406,108 @@ def set_auto_enable_new_coins(exchange: str, enabled: bool) -> MarketDataConfig:
         cfg.auto_enable_new_coins[ex] = bool(enabled)
         save_market_data_config(cfg)
         return cfg
+
+
+class CoinSnapshotReadError(RuntimeError):
+    """Local Coin Data cannot be read consistently; never imply availability."""
+
+
+@dataclass
+class MarketDataCoinSnapshot:
+    """One local mapping generation, independent of credentials and live APIs."""
+
+    coin_options: list[str]
+    coin_data_available: bool
+
+
+_COIN_SNAPSHOT_EXCHANGES = frozenset({"binance", "bybit", "bitget", "okx", "hyperliquid", "kucoin", "gateio"})
+_COIN_SNAPSHOT_LOCK = threading.RLock()
+# At most one source generation per supported exchange, even across root changes.
+_COIN_SNAPSHOT_CACHE: dict[str, tuple[Path, tuple | None, MarketDataCoinSnapshot]] = {}
+
+
+def _coin_mapping_signature(path: Path) -> tuple[int, int, int] | None:
+    """Include identity so atomic replacement and recreation invalidate a hit."""
+    try:
+        stat = path.stat()
+    except FileNotFoundError:
+        return None
+    return stat.st_mtime_ns, stat.st_size, stat.st_ino
+
+
+def _local_mapping_coin_options(exchange: str, mapping: list[dict]) -> list[str]:
+    """Mirror the unfiltered active CoinData universe using only local rows."""
+    coins: set[str] = set()
+    for row in disambiguate_multiplier_market_coins(mapping):
+        if not bool(row.get("active", True)) or not bool(row.get("swap", False)) or not bool(row.get("linear", True)):
+            continue
+        quote = str(row.get("quote") or "").upper()
+        if exchange in {"okx", "bitget", "kucoin"} and quote != "USDT":
+            continue
+        if exchange == "hyperliquid":
+            try:
+                open_interest = float(row["open_interest"])
+            except (KeyError, TypeError, ValueError):
+                open_interest = None
+            if open_interest is not None and open_interest <= 0:
+                continue
+        coin = str(row.get("coin") or "").strip()
+        if not coin:
+            if exchange == "hyperliquid":
+                symbol = str(row.get("ccxt_symbol") or row.get("symbol") or "")
+                coin = normalize_symbol(symbol, mapping_record=row if row.get("is_hip3") else None)
+            else:
+                symbol = str(row.get("symbol") or row.get("ccxt_symbol") or "")
+                coin = compute_coin_name(symbol, quote)
+        coin = _canonical_enabled_coin(exchange, coin, mapping=[row])
+        if coin:
+            coins.add(coin)
+    return sorted(coins)
+
+
+def get_local_market_data_coin_snapshot(exchange: str, *, root: Path | None = None) -> MarketDataCoinSnapshot:
+    """Read the writer's mapping root, with signature invalidation and no WAN work.
+
+    Missing data is a normal unavailable state. Corrupt, unreadable or repeatedly
+    changing generations fail explicitly rather than returning a stale success.
+    """
+    ex = _normalize_market_data_exchange(exchange)
+    if ex not in _COIN_SNAPSHOT_EXCHANGES:
+        raise ValueError("Unsupported Coin Data exchange")
+    data_root = (Path(root) if root is not None else Path.cwd()).resolve() / "data" / "coindata"
+    path = data_root / ex / "mapping.json"
+    try:
+        with _COIN_SNAPSHOT_LOCK:
+            for _attempt in range(2):
+                if not path.resolve().is_relative_to(data_root):
+                    raise ValueError("Coin Data mapping is outside the configured root")
+                before = _coin_mapping_signature(path)
+                cached = _COIN_SNAPSHOT_CACHE.get(ex)
+                if cached is not None and cached[0] == path and cached[1] == before:
+                    snapshot = cached[2]
+                    return MarketDataCoinSnapshot(list(snapshot.coin_options), snapshot.coin_data_available)
+                try:
+                    mapping = json.loads(path.read_text(encoding="utf-8")) if before is not None else None
+                except (OSError, ValueError):
+                    if _coin_mapping_signature(path) != before:
+                        continue
+                    raise
+                if _coin_mapping_signature(path) != before:
+                    continue
+                if before is None:
+                    snapshot = MarketDataCoinSnapshot([], False)
+                else:
+                    if not isinstance(mapping, list) or any(not isinstance(row, dict) for row in mapping):
+                        raise ValueError("Coin Data mapping must be a list of market records")
+                    if any(row.get(key) is not None and not isinstance(row[key], str) for row in mapping for key in ("coin", "symbol", "ccxt_symbol", "base", "quote", "dex")):
+                        raise ValueError("Coin Data market identifiers must be strings")
+                    snapshot = MarketDataCoinSnapshot(_local_mapping_coin_options(ex, mapping), True)
+                _COIN_SNAPSHOT_CACHE[ex] = (path, before, snapshot)
+                return MarketDataCoinSnapshot(list(snapshot.coin_options), snapshot.coin_data_available)
+            raise OSError("Coin Data mapping changed during both read attempts")
+    except (OSError, ValueError) as exc:
+        human_log(SERVICE, f"Reading local {ex} Coin Data failed ({type(exc).__name__})", level="ERROR")
+        raise CoinSnapshotReadError("Unable to read local Coin Data. Check Coin Data and try again.") from exc
 
 
 def get_market_data_coin_options(exchange: str) -> list[str]:

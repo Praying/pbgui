@@ -9,13 +9,16 @@ import type { MigrationStatus, ServiceAction, ServiceStatus } from './types';
 /** vue-i18n-compatible translator: t(key) or t(key, named). */
 export type Translate = (key: string, named?: Record<string, string | number>) => string;
 
-/** Legacy serviceSkipped: `expected === false && !running` renders as "Skipped". */
+/** Transitional or uncertain ownership must not be presented as intentionally skipped. */
 export function serviceSkipped(item: ServiceStatus): boolean {
-  return item.expected === false && !item.running;
+  return item.expected === false && !item.running
+    && !['starting', 'stopping', 'unknown', 'failed'].includes(item.actual_status || '');
 }
 
 /** Legacy serviceStatusClass: '' for skipped, otherwise running/stopped. */
 export function serviceStatusClass(item: ServiceStatus): string {
+  if (['starting', 'stopping', 'unknown'].includes(item.actual_status || '')) return 'warn';
+  if (item.actual_status === 'failed') return 'stopped';
   return serviceSkipped(item) ? '' : item.running ? 'running' : 'stopped';
 }
 
@@ -52,6 +55,10 @@ export function serviceStatusText(
     : item.running
       ? t('sysmon.running')
       : t('sysmon.stopped');
+  if (item.actual_status === 'starting') base = t('sysmon.starting');
+  if (item.actual_status === 'stopping') base = t('sysmon.stopping');
+  if (item.actual_status === 'unknown') base = t('common.unknown');
+  if (item.actual_status === 'failed') base = t('sysmon.failed');
   if (item.can_enable) {
     base += ' · ' + (item.enabled ? t('common.enabled') : t('common.disabled'));
   }
@@ -63,6 +70,7 @@ export function serviceStatusText(
 export function serviceStatusTitle(t: Translate, item: ServiceStatus): string {
   const parts: string[] = [];
   if (item.reason) parts.push(item.reason);
+  if (item.error) parts.push(item.error);
   if (item.unit) parts.push(t('sysmon.unit', { v: item.unit }));
   if (item.systemd_state) parts.push(t('sysmon.stateColon', { v: item.systemd_state }));
   if (item.systemd_enabled_state) parts.push(t('sysmon.autostartColon', { v: item.systemd_enabled_state }));
@@ -92,6 +100,12 @@ export function serviceButtons(
     label: pending === action ? serviceActionProgressText(t, pending) : t(`sysmon.${action}`),
     disabled: pending !== null,
   });
+  if (['starting', 'stopping', 'unknown'].includes(item.actual_status || '')) {
+    if (item.can_stop) buttons.push(make('stop'));
+    buttons.push({ ...make('start'), disabled: true }, { ...make('restart'), disabled: true });
+    if (item.can_enable && !item.enabled) buttons.push({ ...make('enable'), disabled: true });
+    return buttons;
+  }
   if (!serviceSkipped(item)) {
     if (isApiServer) {
       buttons.push(item.running ? make('restart') : make('start'));

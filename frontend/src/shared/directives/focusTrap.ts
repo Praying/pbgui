@@ -35,6 +35,7 @@ interface TrapState {
 }
 
 const states = new WeakMap<HTMLElement, TrapState>();
+const activeTraps: HTMLElement[] = [];
 
 function isVisible(el: HTMLElement): boolean {
   // Attribute and computed-style checks only: layout-based tests
@@ -59,9 +60,15 @@ function enabled(binding: DirectiveBinding<boolean | undefined>): boolean {
 function attach(el: HTMLElement): void {
   if (states.has(el)) return;
   const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  activeTraps.push(el);
 
   const onKeydown = (event: KeyboardEvent): void => {
-    if (event.key !== 'Tab') return;
+    const activeTrap = activeTraps.filter((element) => element.isConnected && isVisible(element)).at(-1);
+    if (event.key !== 'Tab' || event.defaultPrevented || activeTrap !== el) return;
+    const focusedDialog = document.activeElement instanceof HTMLElement
+      ? document.activeElement.closest<HTMLElement>('[role="dialog"], dialog[open]')
+      : null;
+    if (focusedDialog && !el.contains(focusedDialog) && !activeTraps.includes(focusedDialog)) return;
     const items = tabbableWithin(el);
     if (items.length === 0) {
       event.preventDefault();
@@ -80,7 +87,7 @@ function attach(el: HTMLElement): void {
     }
   };
 
-  el.addEventListener('keydown', onKeydown);
+  document.addEventListener('keydown', onKeydown);
   states.set(el, { previous, onKeydown });
 
   // A dialog must be focusable to receive focus when it has no controls.
@@ -89,7 +96,7 @@ function attach(el: HTMLElement): void {
   // Defer one frame so v-if content and autofocus inputs are in the DOM, and
   // never steal focus the dialog already placed inside itself.
   queueMicrotask(() => {
-    if (!el.isConnected || el.contains(document.activeElement)) return;
+    if (!states.has(el) || !el.isConnected || activeTraps.at(-1) !== el || el.contains(document.activeElement)) return;
     const target = el.querySelector<HTMLElement>('[autofocus]') ?? tabbableWithin(el)[0] ?? el;
     target.focus({ preventScroll: true });
   });
@@ -98,8 +105,10 @@ function attach(el: HTMLElement): void {
 function detach(el: HTMLElement): void {
   const state = states.get(el);
   if (!state) return;
-  el.removeEventListener('keydown', state.onKeydown);
+  document.removeEventListener('keydown', state.onKeydown);
   states.delete(el);
+  const trapIndex = activeTraps.indexOf(el);
+  if (trapIndex >= 0) activeTraps.splice(trapIndex, 1);
   // Only restore focus if it is still inside the dialog or lost to <body>;
   // if the page already moved focus somewhere meaningful, leave it.
   const active = document.activeElement;

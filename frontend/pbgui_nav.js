@@ -279,6 +279,16 @@
       label: label,
       operations: operations
     };
+    var visibleText = aiContextText(element.textContent || '', 160).replace(/\s+/g, ' ');
+    var tooltip = aiContextText(element.getAttribute('title') || '', 160);
+    if (!aiControlSensitive(element, visibleText + ' ' + tooltip)) {
+      if (visibleText) descriptor.visible_text = visibleText;
+      if (tooltip) descriptor.tooltip = tooltip;
+    }
+    if (element.hasAttribute('data-host-block-toggle')) {
+      descriptor.operations = [];
+      descriptor.requires_proposal = true;
+    }
     var controlContext = aiControlContext(element);
     if (controlContext) descriptor.context = controlContext;
     descriptor.name = controlContext ? controlContext + ' :: ' + label : label;
@@ -325,6 +335,7 @@
   function resolveAIControl(controlId, operation) {
     collectAIControls();
     var entry = _aiControlElements[String(controlId || '')];
+    if (entry && entry.element.hasAttribute('data-host-block-toggle')) throw new Error('Use propose_vast_host_block for an explicit block or unblock');
     if (!entry || entry.descriptor.operations.indexOf(operation) < 0) throw new Error('PBGui control is no longer available');
     return entry.element;
   }
@@ -341,6 +352,7 @@
         && (descriptor.name.toLowerCase() === requested || descriptor.label.toLowerCase() === requested);
     });
     if (matches.length !== 1) throw new Error(matches.length ? 'PBGui control name is ambiguous' : 'PBGui control is not available');
+    if (matches[0].element.hasAttribute('data-host-block-toggle')) throw new Error('Use propose_vast_host_block for an explicit block or unblock');
     return matches[0].element;
   }
 
@@ -429,6 +441,15 @@
         var value = _aiContextProviders[id]();
         if (!value || typeof value !== 'object') return;
         if (value.section && !context.section) context.section = aiContextText(value.section, 128);
+        if (value.current_cloud_job && !context.current_cloud_job
+            && /^[0-9a-f]{32}$/.test(String(value.current_cloud_job.job_id || ''))) {
+          context.current_cloud_job = {job_id: value.current_cloud_job.job_id};
+          var target = value.current_cloud_job;
+          if (/^[0-9a-f]{32}$/.test(String(target.lease_id || ''))) context.current_cloud_job.lease_id = target.lease_id;
+          if (Number.isSafeInteger(target.machine_id) && target.machine_id > 0) context.current_cloud_job.machine_id = target.machine_id;
+          if (typeof target.blocked === 'boolean' || target.blocked === null) context.current_cloud_job.blocked = target.blocked;
+          if (Number.isSafeInteger(target.host_block_revision) && target.host_block_revision >= 0) context.current_cloud_job.host_block_revision = target.host_block_revision;
+        }
         if (Array.isArray(value.entities)) {
           value.entities.slice(0, 8).forEach(function (entity) {
             var projected = aiContextEntity(entity);
@@ -1109,9 +1130,13 @@
     if (prefix === undefined) {
       var apiBase = String(cfg().apiBase || '');
       try {
-        var apiPath = new URL(apiBase, window.location.origin).pathname;
-        var apiMarker = apiPath.lastIndexOf('/api/');
-        if (apiMarker >= 0) prefix = apiPath.slice(0, apiMarker);
+        var apiUrl = new URL(apiBase, window.location.origin);
+        // Implicit mounts belong to this origin; explicit origins remain supported.
+        if (apiUrl.origin === window.location.origin) {
+          var apiPath = apiUrl.pathname;
+          var apiMarker = apiPath.endsWith('/api') ? apiPath.length - 4 : apiPath.lastIndexOf('/api/');
+          if (apiMarker >= 0) prefix = apiPath.slice(0, apiMarker);
+        }
       } catch (_) {
         prefix = undefined;
       }
@@ -1389,6 +1414,26 @@
     try { return new Date(value * 1000).toLocaleString(); } catch (_) { return 'n/a'; }
   }
 
+  function alertThresholdLinks(item) {
+    var maps = {
+      system: {memory: ['mem_error_server', 'Memory'], swap: ['swap_error_server', 'Swap'],
+        disk: ['disk_error_server', 'Disk'], cpu: ['cpu_error_server', 'CPU']},
+      instance: {memory: ['mem_error_v7', 'Memory'], swap: ['swap_error_v7', 'Swap'],
+        cpu: ['cpu_error_v7', 'CPU'], errors: ['error_error_v7', 'Errors'], tracebacks: ['traceback_error_v7', 'Tracebacks']}
+    };
+    var map = Object.prototype.hasOwnProperty.call(maps, item.kind) ? maps[item.kind] : null;
+    if (!map) return '';
+    var base = _getAppBase() + '/api/services/main_page#api-server/settings';
+    var keys = Array.isArray(item.triggered_thresholds) ? item.triggered_thresholds : [];
+    var links = keys.filter(function (key, index) {
+      return Object.prototype.hasOwnProperty.call(map, key) && keys.indexOf(key) === index;
+    }).map(function (key) {
+      return '<a data-alert-settings href="' + escAttr(base + '/' + map[key][0]) + '">Adjust ' + map[key][1] + ' threshold</a>';
+    });
+    if (!links.length) links.push('<a data-alert-settings href="' + escAttr(base) + '">Threshold settings</a>');
+    return '<div class="pbgui-alert-meta">' + links.join(' · ') + '</div>';
+  }
+
   function renderAlertOverlay() {
     var summaryEl = document.getElementById('pbgui-alert-summary');
     var listEl = document.getElementById('pbgui-alert-list');
@@ -1438,7 +1483,7 @@
         html +=   '<div class="pbgui-alert-actions"><button type="button" class="pbgui-modal-btn secondary" data-alert-ack="' + escAttr(item.id) + '">' + esc(navT('nav.alert_ack_btn', 'Ack')) + '</button></div>';
       }
       html +=   '</div>';
-      html +=   '<div class="pbgui-alert-details">' + details + '</div>';
+      html +=   '<div class="pbgui-alert-details">' + details + '</div>' + alertThresholdLinks(item);
       html += '</div>';
     });
     if (history.length) {
@@ -1463,11 +1508,17 @@
         html +=       '</div>';
         html +=     '</div>';
         html +=   '</div>';
-        html +=   '<div class="pbgui-alert-details">' + details + '</div>';
+        html +=   '<div class="pbgui-alert-details">' + details + '</div>' + alertThresholdLinks(item);
         html += '</div>';
       });
     }
     listEl.innerHTML = html;
+    listEl.querySelectorAll('[data-alert-settings]').forEach(function (link) {
+      link.addEventListener('click', function () {
+        closeAlertOverlay();
+        if (link.href === window.location.href) window.dispatchEvent(new Event('hashchange'));
+      });
+    });
     listEl.querySelectorAll('[data-alert-ack]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         ackAlert(btn.getAttribute('data-alert-ack') || '');
@@ -2072,9 +2123,27 @@
         opener();
         return;
       }
-      var targetTopic = guideTopic || '00_overview';
-      var helpBase = (apiOrigin || '') + (FASTAPI_PAGES['help'] || '/api/help/main_page');
-      window.location.href = helpBase + '?topic=' + encodeURIComponent(targetTopic);
+      if (window.PBGuiSharedHelp && typeof window.PBGuiSharedHelp.open === 'function') {
+        window.PBGuiSharedHelp.open(guideTopic);
+        return;
+      }
+
+      guideBtn.disabled = true;
+      var script = document.createElement('script');
+      script.src = _appPath('/app/js/shared_help_overlay.js?v=11');
+      script.onload = function () {
+        guideBtn.disabled = false;
+        if (window.PBGuiSharedHelp && typeof window.PBGuiSharedHelp.open === 'function') {
+          window.PBGuiSharedHelp.open(guideTopic);
+          return;
+        }
+        navTo('help');
+      };
+      script.onerror = function () {
+        guideBtn.disabled = false;
+        navTo('help');
+      };
+      document.head.appendChild(script);
     });
 
     /* Notify button → open inline floating log panel */
@@ -2131,8 +2200,16 @@
           document.head.appendChild(usage);
           return;
         }
+        if (!window.PBGuiJevTransferPreview) {
+          var transferPreview = document.createElement('script');
+          transferPreview.src = _appPath('/app/js/jev_transfer_preview.js?v=1');
+          transferPreview.onload = loadDrawerScript;
+          transferPreview.onerror = function () { _aiDrawerLoading = false; };
+          document.head.appendChild(transferPreview);
+          return;
+        }
         var script = document.createElement('script');
-        script.src = _appPath('/app/js/ai_drawer.js?v=77');
+        script.src = _appPath('/app/js/ai_drawer.js?v=80');
         script.onload = function () { _aiDrawerLoading = false; if (show && window.PBGuiAI && window.PBGuiAI.open) window.PBGuiAI.open(); window.dispatchEvent(new Event('pbgui:ai-ready')); };
         script.onerror = function () { _aiDrawerLoading = false; };
         document.head.appendChild(script);
@@ -2142,7 +2219,7 @@
         return;
       }
       var dialogs = document.createElement('script');
-      dialogs.src = _appPath('/app/js/pbgui_dialogs.js?v=11');
+      dialogs.src = _appPath('/app/js/pbgui_dialogs.js?v=12');
       dialogs.onload = loadDrawerScript;
       dialogs.onerror = loadDrawerScript;
       document.head.appendChild(dialogs);

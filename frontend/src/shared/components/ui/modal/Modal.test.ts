@@ -83,6 +83,16 @@ describe('Modal', () => {
     expect(onUpdate).not.toHaveBeenCalled();
   });
 
+  it('does not dismiss a normal dialog on outside pointer interaction', async () => {
+    const onUpdate = vi.fn();
+    await mountModal(true, { 'onUpdate:open': onUpdate });
+    document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(onUpdate).not.toHaveBeenCalled();
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  });
+
   it('closes through the ✕ button', async () => {
     const onUpdate = vi.fn();
     await mountModal(true, { 'onUpdate:open': onUpdate });

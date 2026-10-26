@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="icon" type="image/svg+xml" href="/app/favicon.svg?v=2">
-<title>PBv7 Run</title>
+<title>%%RUN_LABEL%% Run</title>
 <script src="/app/i18n.js?v=1"></script>
 <link rel="stylesheet" href="/app/src/styles/tokens.css">
-<script src="/app/js/pbgui_dialogs.js?v=11"></script>
+<script src="/app/js/pbgui_dialogs.js?v=12"></script>
 <script src="/app/js/run_list_adapter.js?v=3"></script>
   <link rel="stylesheet" href="/app/css/sidebar.css?v=6">
   <link rel="stylesheet" href="/app/css/sidebar_controls.css?v=2">
@@ -1143,49 +1143,54 @@ async function convertInstanceToV8(name) {
 }
 
 /* ─── Delete Instance (modal confirm → API DELETE) ────────── */
-function confirmDelete(name) {
+var _deleteConfirmationPending = false;
+var _forcedModeConfirmationPending = false;
+var _deleteInFlight = false;
+var _forcedModeInFlight = false;
+
+async function confirmDelete(name) {
+  if (_deleteConfirmationPending || _forcedModeConfirmationPending || _deleteInFlight) return;
   var inst = instances.find(function(r) { return r.name === name; });
   if (inst && inst.running_on && inst.running_on.length > 0) {
     toast(PBGuiI18n.t('v7run.cannotDeleteRunning', { name: name, hosts: inst.running_on.join(', ') }), 'err');
     return;
   }
-  var root = document.getElementById('modal-root');
-  root.innerHTML =
-    '<div class="modal-overlay" id="modal-overlay">' +
-      '<div class="modal-box">' +
-        '<h3>' + PBGuiI18n.t('v7run.deleteInstanceConfirm') + '</h3>' +
-        '<p class="warn">\u26A0 ' + esc(name) + '</p>' +
-        '<p>' + PBGuiI18n.t('v7run.deleteInstanceWarning') + '</p>' +
-        '<div class="modal-btns">' +
-          '<button class="modal-btn-cancel" id="modal-cancel">' + PBGuiI18n.t('common.cancel') + '</button>' +
-          '<button class="modal-btn-delete" id="modal-confirm">' + PBGuiI18n.t('common.delete') + '</button>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  document.getElementById('modal-cancel').onclick = closeModal;
-  document.getElementById('modal-confirm').onclick = function() {
-    executeDelete(name);
-  };
+  if (!window.PBGuiDialogs || typeof window.PBGuiDialogs.confirm !== 'function') {
+    toast('Delete unavailable: confirmation dialog could not be loaded.', 'err');
+    return;
+  }
+  var accepted;
+  _deleteConfirmationPending = true;
+  try {
+    accepted = await window.PBGuiDialogs.confirm({
+      title: PBGuiI18n.t('v7run.deleteInstanceConfirm'),
+      message: '\u26A0 ' + name,
+      detail: PBGuiI18n.t('v7run.deleteInstanceWarning'),
+      confirmText: PBGuiI18n.t('common.delete')
+    });
+  } catch (e) {
+    toast('Delete failed: ' + e.message, 'err');
+  } finally {
+    _deleteConfirmationPending = false;
+  }
+  if (accepted) return executeDelete(name);
 }
 
-function executeDelete(name) {
+async function executeDelete(name) {
   var runtimeI18n = typeof PBGuiI18n === 'undefined' ? { t: function(key) { return key; }, serverMsg: function(value) { return value; } } : PBGuiI18n;
-  var confirmBtn = document.getElementById('modal-confirm');
-  if (confirmBtn && confirmBtn.disabled) return;
-  var cancelBtn = document.getElementById('modal-cancel');
-  if (cancelBtn) cancelBtn.disabled = true;
-  var ownedModal = document.getElementById('modal-root').firstElementChild;
-  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = runtimeI18n.t('v7run.deleting'); }
-  apiFetch('/instances/' + encodeURIComponent(name), { method: 'DELETE' }).then(function(res) {
+  if (_deleteInFlight) return;
+  _deleteInFlight = true;
+  try {
+    var res = await apiFetch('/instances/' + encodeURIComponent(name), { method: 'DELETE' });
     if (res.status === 409) {
-      return res.json().then(function(d) { throw new Error(d.detail ? runtimeI18n.serverMsg(d.detail) : runtimeI18n.t('v7run.instanceRunning')); });
+      var conflict = await res.json();
+      throw new Error(conflict.detail ? runtimeI18n.serverMsg(conflict.detail) : runtimeI18n.t('v7run.instanceRunning'));
     }
     if (!res.ok) {
-      return res.json().then(function(d) { throw new Error(d.detail ? runtimeI18n.serverMsg(d.detail) : ('HTTP ' + res.status)); });
+      var error = await res.json();
+      throw new Error(error.detail ? runtimeI18n.serverMsg(error.detail) : 'HTTP ' + res.status);
     }
-    return res.json();
-  }).then(function(data) {
-    if (document.getElementById('modal-root').firstElementChild === ownedModal) closeModal();
+    var data = await res.json();
     var hostInfo = '';
     if (data.hosts) {
       var ok = 0, fail = 0;
@@ -1201,10 +1206,11 @@ function executeDelete(name) {
     instances = instances.filter(function(r) { return r.name !== name; });
     if (rowMap[name]) { rowMap[name].tr.remove(); delete rowMap[name]; }
     render();
-  }).catch(function(e) {
-    if (document.getElementById('modal-root').firstElementChild === ownedModal) closeModal();
+  } catch (e) {
     toast(runtimeI18n.t('v7run.deleteFailed') + ': ' + e.message, 'err');
-  });
+  } finally {
+    _deleteInFlight = false;
+  }
 }
 
 function openBalanceCalculator(name) {
@@ -1234,7 +1240,8 @@ function openBalanceCalculator(name) {
   window.location.href = window.location.origin + '/api/balance-calc/main_page?' + params.toString();
 }
 
-function confirmForcedMode(name, mode, expectedVersion) {
+async function confirmForcedMode(name, mode, expectedVersion) {
+  if (_deleteConfirmationPending || _forcedModeConfirmationPending || _forcedModeInFlight) return;
   var modes = {
     panic: { title: PBGuiI18n.t('v7run.panicTitle'), text: PBGuiI18n.t('v7run.panic'), css: 'modal-btn-delete', value: 'panic' },
     graceful_stop: { title: PBGuiI18n.t('v7run.gracefulStopTitle'), text: PBGuiI18n.t('v7run.gracefulStop'), css: 'modal-btn-graceful', value: 'graceful_stop' },
@@ -1248,50 +1255,49 @@ function confirmForcedMode(name, mode, expectedVersion) {
     ? PBGuiI18n.t('v7run.clearForcedModeDetail')
     : PBGuiI18n.t('v7run.forcedModeDetail', { mode: info.value });
   if (mode === 'normal' && hasPanic) detail += ' ' + PBGuiI18n.t('v7run.clearForcedModePanicWarning');
-  var root = document.getElementById('modal-root');
-  root.innerHTML =
-    '<div class="modal-overlay" id="modal-overlay">' +
-      '<div class="modal-box" role="dialog" aria-modal="true">' +
-        '<h3>' + info.title + '</h3>' +
-        '<p class="warn">' + esc(name) + '</p>' +
-        '<p>' + detail + '</p>' +
-        '<div class="modal-btns">' +
-          '<button class="modal-btn-cancel" id="modal-cancel">' + PBGuiI18n.t('common.cancel') + '</button>' +
-          '<button class="' + info.css + '" id="modal-confirm">' + info.text + '</button>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  document.getElementById('modal-cancel').onclick = closeModal;
-  document.getElementById('modal-confirm').onclick = function() {
-    executeForcedMode(name, mode, info.text, expectedVersion);
-  };
+  if (!window.PBGuiDialogs || typeof window.PBGuiDialogs.confirm !== 'function') {
+    toast(info.text + ' unavailable: confirmation dialog could not be loaded.', 'err');
+    return;
+  }
+  var accepted;
+  _forcedModeConfirmationPending = true;
+  try {
+    accepted = await window.PBGuiDialogs.confirm({
+      title: info.title,
+      message: name,
+      detail: detail,
+      confirmText: info.text
+    });
+  } catch (e) {
+    toast(info.text + ' failed: ' + e.message, 'err');
+  } finally {
+    _forcedModeConfirmationPending = false;
+  }
+  if (accepted) return executeForcedMode(name, mode, info.text, expectedVersion);
 }
 
-function executeForcedMode(name, mode, actionText, expectedVersion) {
+async function executeForcedMode(name, mode, actionText, expectedVersion) {
   var runtimeI18n = typeof PBGuiI18n === 'undefined' ? { t: function(key) { return key; }, serverMsg: function(value) { return value; } } : PBGuiI18n;
-  var confirmBtn = document.getElementById('modal-confirm');
-  if (confirmBtn && confirmBtn.disabled) return;
-  var cancelBtn = document.getElementById('modal-cancel');
-  if (cancelBtn) cancelBtn.disabled = true;
-  var ownedModal = document.getElementById('modal-root').firstElementChild;
-  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = runtimeI18n.t('v7run.syncing'); }
-  apiFetch('/instances/' + encodeURIComponent(name) + '/forced-mode', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(mode === 'normal' ? { mode: mode, expected_version: Number(expectedVersion) } : { mode: mode })
-  }).then(function(res) {
+  if (_forcedModeInFlight) return;
+  _forcedModeInFlight = true;
+  try {
+    var res = await apiFetch('/instances/' + encodeURIComponent(name) + '/forced-mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mode === 'normal' ? { mode: mode, expected_version: Number(expectedVersion) } : { mode: mode })
+    });
     if (!res.ok) {
-      return res.json().then(function(d) { throw new Error(d.detail ? runtimeI18n.serverMsg(d.detail) : ('HTTP ' + res.status)); });
+      var error = await res.json();
+      throw new Error(error.detail ? runtimeI18n.serverMsg(error.detail) : 'HTTP ' + res.status);
     }
-    return res.json();
-  }).then(function(data) {
-    if (document.getElementById('modal-root').firstElementChild === ownedModal) closeModal();
+    var data = await res.json();
     toast(runtimeI18n.t('v7run.forcedModeSynced', { action: actionText, name: name, version: data.version }), 'ok');
     loadInstances();
-  }).catch(function(e) {
-    if (document.getElementById('modal-root').firstElementChild === ownedModal) closeModal();
+  } catch (e) {
     toast(runtimeI18n.t('v7run.forcedModeFailed', { action: actionText }) + ': ' + e.message, 'err');
-  });
+  } finally {
+    _forcedModeInFlight = false;
+  }
 }
 
 function closeModal() {

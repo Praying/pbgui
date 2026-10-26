@@ -30,7 +30,8 @@ import { vFocusTrap } from '@/shared/directives/focusTrap';
 type PageView = 'logs' | 'settings';
 
 const { t } = useI18n();
-const view = ref<PageView>('logs');
+const initialView = new URLSearchParams(window.location.search).get('view');
+const view = ref<PageView>(initialView === 'settings' ? 'settings' : 'logs');
 
 /* AI drawer page context — Vue port of the legacy logging registration. */
 useAiPageContext({ id: 'logging', getContext: () => ({ section: 'Logging' }) });
@@ -39,19 +40,32 @@ const sections = computed<PageSection[]>(() => [
   { key: 'settings', label: t('sysmon.settings') },
 ]);
 function onSectionSelect(key: string): void {
-  if (key === 'logs' || key === 'settings') view.value = key;
+  if (key !== 'logs' && key !== 'settings') return;
+  view.value = key;
+  const destination = new URL(window.location.href);
+  destination.searchParams.set('view', key);
+  window.history.replaceState(window.history.state, '', destination);
+  void synchronize();
 }
 const files = ref<LogFilesPayload>({ files: [], sizes: {}, rotated: {} });
 const rotation = ref<RotationPayload>({ default: { max_mb: 10, backup_count: 0 }, per_service: {}, managed_scopes: {} });
 const currentFile = ref('');
 const selectedVariant = ref('current');
 const loading = ref(true);
+const rotationLoaded = ref(false);
 const error = ref('');
 const purgeOpen = ref(false);
 const purging = ref(false);
-const savingScope = ref('');
+const savingScopes = ref(new Set<string>());
 const messages = ref<Record<string, string>>({});
+const messageErrors = ref<Record<string, boolean>>({});
 const messageTimers = new Map<string, number>();
+const saveRequests = new Map<string, AbortController>();
+let disposed = false;
+let rotationBaseline = '';
+let synchronizationPending = false;
+let synchronizationTimer: number | undefined;
+const readRequests = new Set<AbortController>();
 const logViewer = ref<LogViewerHandle | null>(null);
 
 const variants = computed(() => files.value.rotated[currentFile.value] || []);
@@ -65,16 +79,39 @@ function detail(errorValue: unknown): string {
 function normalizedRule(rule: RotationRule): RotationRule {
   const maxMb = Number(rule.max_mb);
   const copies = Number(rule.backup_count);
-  return {
-    max_mb: Number.isFinite(maxMb) ? Math.max(1, Math.trunc(maxMb)) : 10,
-    backup_count: Number.isFinite(copies) ? Math.max(0, Math.trunc(copies)) : 0,
-  };
+  if (String(rule.max_mb).trim() === '' || !Number.isInteger(maxMb) || maxMb < 1 || maxMb > 10240) throw new Error(t('sysmon.rotationInvalidSize'));
+  if (String(rule.backup_count).trim() === '' || !Number.isInteger(copies) || copies < 0 || copies > 20) throw new Error(t('sysmon.rotationInvalidCopies'));
+  return { max_mb: maxMb, backup_count: copies };
 }
+
+async function readSnapshot<Payload>(url: string): Promise<Payload> {
+  const controller = new AbortController();
+  readRequests.add(controller);
+  const timeout = window.setTimeout(() => controller.abort(), 15000);
+  try {
+    return await apiFetch<Payload>(url, { signal: controller.signal });
+  } finally {
+    window.clearTimeout(timeout);
+    readRequests.delete(controller);
+  }
+}
+
 async function loadFiles(): Promise<void> {
-  files.value = await apiFetch<LogFilesPayload>(loggingApiBase());
+  const snapshot = await readSnapshot<LogFilesPayload>(loggingApiBase());
+  if (!disposed) files.value = snapshot;
 }
 async function loadRotation(): Promise<void> {
-  rotation.value = await apiFetch<RotationPayload>(`${loggingApiBase()}/rotation`);
+  const draftBeforeRead = JSON.stringify(rotation.value);
+  const snapshot = await readSnapshot<RotationPayload>(`${loggingApiBase()}/rotation`);
+  if (disposed) return;
+  normalizedRule(snapshot.default);
+  const draftUnchanged = JSON.stringify(rotation.value) === draftBeforeRead;
+  const hasUnsavedEdits = rotationLoaded.value && draftBeforeRead !== rotationBaseline;
+  if (draftUnchanged && !hasUnsavedEdits && savingScopes.value.size === 0) {
+    rotation.value = structuredClone(snapshot);
+    rotationBaseline = JSON.stringify(snapshot);
+  }
+  rotationLoaded.value = true;
 }
 async function initialize(): Promise<void> {
   loading.value = true;
@@ -83,8 +120,22 @@ async function initialize(): Promise<void> {
   catch (caught) { error.value = detail(caught); }
   finally { loading.value = false; }
 }
-function showMessage(scope: string, text: string): void {
+
+async function synchronize(): Promise<void> {
+  if (disposed || synchronizationPending || document.hidden || loading.value) return;
+  synchronizationPending = true;
+  try {
+    await Promise.all([loadFiles(), loadRotation()]);
+    if (!disposed) error.value = '';
+  } catch (caught) {
+    if (!disposed) error.value = detail(caught);
+  } finally {
+    synchronizationPending = false;
+  }
+}
+function showMessage(scope: string, text: string, isError = false): void {
   messages.value = { ...messages.value, [scope]: text };
+  messageErrors.value = { ...messageErrors.value, [scope]: isError };
   const existing = messageTimers.get(scope);
   if (existing !== undefined) window.clearTimeout(existing);
   messageTimers.set(scope, window.setTimeout(() => {
@@ -95,19 +146,31 @@ function showMessage(scope: string, text: string): void {
   }, 2500));
 }
 async function saveRule(scope: string, rule: RotationRule): Promise<void> {
-  savingScope.value = scope;
-  error.value = '';
+  if (!rotationLoaded.value || savingScopes.value.has(scope) || disposed) return;
+  const controller = new AbortController();
+  const priorTimer = messageTimers.get(scope);
+  if (priorTimer !== undefined) window.clearTimeout(priorTimer);
+  messages.value = { ...messages.value, [scope]: '' };
+  savingScopes.value.add(scope);
+  saveRequests.set(scope, controller);
+  const timeout = window.setTimeout(() => controller.abort(), 15000);
   try {
     const normalized = normalizedRule(rule);
-    rule.max_mb = normalized.max_mb;
-    rule.backup_count = normalized.backup_count;
     const result = await apiFetch<{ success: boolean; apply?: { message?: string } }>(`${loggingApiBase()}/rotation`, {
       method: 'POST',
       body: JSON.stringify({ scope, ...normalized }),
+      signal: controller.signal,
     });
-    if (result.success) showMessage(scope, result.apply?.message ? serverMsg(result.apply.message) : t('sysmon.saved'));
-  } catch (caught) { error.value = detail(caught); }
-  finally { savingScope.value = ''; }
+    if (disposed) return;
+    if (!result.success) throw new Error(t('sysmon.rotationSaveFailed'));
+    showMessage(scope, result.apply?.message ? serverMsg(result.apply.message) : t('sysmon.saved'));
+  } catch (caught) {
+    if (!disposed) showMessage(scope, detail(caught), true);
+  } finally {
+    window.clearTimeout(timeout);
+    saveRequests.delete(scope);
+    savingScopes.value.delete(scope);
+  }
 }
 function onFileChange(filename: string): void {
   currentFile.value = filename;
@@ -138,12 +201,21 @@ function onKeydown(event: KeyboardEvent): void {
 onMounted(() => {
   document.title = t('sysmon.loggingTitle');
   void initialize();
+  synchronizationTimer = window.setInterval(() => { void synchronize(); }, 5000);
+  window.addEventListener('pageshow', synchronize);
+  document.addEventListener('visibilitychange', synchronize);
   window.addEventListener('keydown', onKeydown);
   (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = () => {
     window.location.href = '/api/help/main_page?topic=31_logging';
   };
 });
 onBeforeUnmount(() => {
+  disposed = true;
+  window.clearInterval(synchronizationTimer);
+  window.removeEventListener('pageshow', synchronize);
+  document.removeEventListener('visibilitychange', synchronize);
+  readRequests.forEach((controller) => controller.abort());
+  saveRequests.forEach((controller) => controller.abort());
   messageTimers.forEach((timer) => window.clearTimeout(timer));
   window.removeEventListener('keydown', onKeydown);
   delete (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER;
@@ -208,17 +280,16 @@ onBeforeUnmount(() => {
           class="mx-3.5 my-2 text-danger-soft"
           :title="t('common.error')"
           :message="error"
-          :retry-label="t('common.refresh')"
-          @retry="initialize"
         />
 
+        <fieldset :disabled="!rotationLoaded" class="contents">
         <article class="mb-5 rounded-lg border border-border-default bg-panel px-5 py-4 max-[700px]:p-3">
           <h2 class="mb-3 border-b border-border-default pb-2 text-md font-semibold text-primary">{{ t('sysmon.defaultRotation') }}</h2>
           <div class="flex flex-wrap items-end gap-3">
             <label class="grid gap-1 text-sm text-secondary">{{ t('sysmon.maxFileSizeMb') }}<Input class="w-auto" v-model.number="rotation.default.max_mb" data-field="default-max-mb" type="number" min="1" max="10240"  /></label>
             <label class="grid gap-1 text-sm text-secondary">{{ t('sysmon.rotatedCopies') }}<Input class="w-auto" v-model.number="rotation.default.backup_count" data-field="default-backup-count" type="number" min="0" max="20"  /></label>
-            <Button type="button" variant="primary" data-save-scope="default" :disabled="savingScope === 'default'" @click="saveRule('default', rotation.default)">{{ t('common.save') }}</Button>
-            <span class="text-xs text-success-soft" role="status" aria-live="polite">{{ messages.default || '' }}</span>
+            <Button type="button" variant="primary" data-save-scope="default" :disabled="!rotationLoaded || savingScopes.has('default')" @click="saveRule('default', rotation.default)">{{ t('common.save') }}</Button>
+            <span class="text-xs" :class="messageErrors.default ? 'text-danger-soft' : 'text-success-soft'" role="status" aria-live="polite">{{ messages.default || '' }}</span>
           </div>
         </article>
 
@@ -241,7 +312,7 @@ onBeforeUnmount(() => {
                 <tr v-for="[scopeId, rule] in managedRows" :key="scopeId">
                   <td class="font-mono text-primary">{{ (rule as ManagedRotationRule).label || scopeId }}</td><td class="px-2.5 py-2 border-b border-border-subtle">{{ (rule as ManagedRotationRule).description }}</td>
                   <td class="px-2.5 py-2 border-b border-border-subtle"><Input class="w-[90px]" v-model.number="rule.max_mb" type="number" min="1" max="10240"  /></td><td class="px-2.5 py-2 border-b border-border-subtle"><Input class="w-[90px]" v-model.number="rule.backup_count" type="number" min="0" max="20"  /></td>
-                  <td class="px-2.5 py-2 border-b border-border-subtle"><Button type="button" variant="default" :data-save-scope="`managed:${scopeId}`" @click="saveRule(`managed:${scopeId}`, rule)">{{ t('common.save') }}</Button></td><td class="text-xs text-success-soft">{{ messages[`managed:${scopeId}`] || '' }}</td>
+                  <td class="px-2.5 py-2 border-b border-border-subtle"><Button type="button" variant="default" :data-save-scope="`managed:${scopeId}`" :disabled="loading || savingScopes.has(`managed:${scopeId}`)" @click="saveRule(`managed:${scopeId}`, rule)">{{ t('common.save') }}</Button></td><td class="text-xs" :class="messageErrors[`managed:${scopeId}`] ? 'text-danger-soft' : 'text-success-soft'">{{ messages[`managed:${scopeId}`] || '' }}</td>
                 </tr>
               </tbody>
             </Table>
@@ -265,13 +336,14 @@ onBeforeUnmount(() => {
               <tbody>
                 <tr v-for="[service, rule] in serviceRows" :key="service">
                   <td class="font-mono text-primary">{{ service }}</td><td class="px-2.5 py-2 border-b border-border-subtle"><Input class="w-[90px]" v-model.number="rule.max_mb" type="number" min="1" max="10240"  /></td><td class="px-2.5 py-2 border-b border-border-subtle"><Input class="w-[90px]" v-model.number="rule.backup_count" type="number" min="0" max="20"  /></td>
-                  <td class="px-2.5 py-2 border-b border-border-subtle"><Button type="button" variant="default" :data-save-scope="service" @click="saveRule(service, rule)">{{ t('common.save') }}</Button></td><td class="text-xs text-success-soft">{{ messages[service] || '' }}</td>
+                  <td class="px-2.5 py-2 border-b border-border-subtle"><Button type="button" variant="default" :data-save-scope="service" :disabled="loading || savingScopes.has(service)" @click="saveRule(service, rule)">{{ t('common.save') }}</Button></td><td class="text-xs" :class="messageErrors[service] ? 'text-danger-soft' : 'text-success-soft'">{{ messages[service] || '' }}</td>
                 </tr>
               </tbody>
             </Table>
             <EmptyState v-else-if="!loading" :title="t('sysmon.noLogFilesFound')" />
           </div>
         </article>
+        </fieldset>
       </section>
     </div>
   </div>

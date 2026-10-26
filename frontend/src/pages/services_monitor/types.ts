@@ -9,8 +9,11 @@
 /** GET /status item — consumed by updateStatusUI, serviceStatus* helpers, renderServiceButtons. */
 export interface ServiceStatus {
   running?: boolean;
-  /** `expected === false && !running` renders as "skipped" instead of stopped. */
-  expected?: boolean;
+  /** Unknown lifecycle ownership is not the same as an intentionally skipped service. */
+  expected?: boolean | null;
+  actual_status?: 'running' | 'stopped' | 'starting' | 'stopping' | 'unknown' | 'failed';
+  can_stop?: boolean;
+  error?: string;
   enabled?: boolean;
   can_enable?: boolean;
   enable_blocked_reason?: string;

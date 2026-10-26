@@ -97,8 +97,8 @@ def test_pareto_falls_back_to_legacy_template_with_injections(
 
     assert resp.status_code == 200
     assert resp.headers["cache-control"] == "no-store"
-    assert 'var API_BASE = "http://testserver/api/pareto-explorer";' in resp.text
-    assert 'var WS_BASE = "ws://testserver";' in resp.text
+    assert 'var API_BASE = "/api/pareto-explorer";' in resp.text
+    assert "(window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host" in resp.text
     assert 'var RESULT_PATH = "/data/opt/r1";' in resp.text
     # query seed honoured when no result directory resolves
     assert 'var OPTIMIZE_VERSION = "v8";' in resp.text

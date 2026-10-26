@@ -19,6 +19,8 @@ from task_queue import (
 from api.auth import require_auth, SessionToken, serve_vue_page
 from task_worker import start_pending_job
 
+SERVICE = "TaskQueue"
+
 router = APIRouter()
 
 

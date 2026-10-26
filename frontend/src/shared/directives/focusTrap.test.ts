@@ -110,4 +110,33 @@ describe('v-focus-trap', () => {
     expect(document.activeElement?.id).not.toBe('a');
     wrapper.unmount();
   });
+
+  it('recovers focus when Tab starts outside the active dialog', async () => {
+    const { wrapper } = mountDialog();
+    await Promise.resolve();
+    const opener = wrapper.get('#opener').element as HTMLElement;
+    opener.focus();
+    expect(tab(opener).defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(wrapper.get('#a').element);
+    opener.focus();
+    expect(tab(opener, true).defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(wrapper.get('#c').element);
+    wrapper.unmount();
+  });
+
+  it('gives the most recently opened dialog exclusive focus containment', async () => {
+    const parentDialog = mountDialog();
+    await Promise.resolve();
+    const childDialog = mountDialog();
+    await Promise.resolve();
+    const parentLastControl = parentDialog.wrapper.get('#c').element as HTMLElement;
+    parentLastControl.focus();
+    tab(parentLastControl);
+    expect(document.activeElement).toBe(childDialog.wrapper.get('#a').element);
+    childDialog.wrapper.unmount();
+    parentLastControl.focus();
+    tab(parentLastControl);
+    expect(document.activeElement).toBe(parentDialog.wrapper.get('#a').element);
+    parentDialog.wrapper.unmount();
+  });
 });

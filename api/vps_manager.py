@@ -637,16 +637,13 @@ def get_main_page(
     del session
 
     def _inject(html: str, req: Request) -> str:
-        scheme = req.url.scheme
-        host = req.url.hostname or "127.0.0.1"
-        port = req.url.port
-        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-        html = html.replace('"%%API_BASE%%"', json.dumps(origin + "/api/vps-manager"))
-        html = html.replace('"%%WS_BASE%%"', json.dumps(origin.replace("http://", "ws://").replace("https://", "wss://")))
+        from api.page_templates import render_page_urls, script_json
+
+        html = render_page_urls(req, html, "/api/vps-manager")
         from pbgui_purefunc import PBGUI_VERSION, PBGUI_SERIAL
-        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace('"%%VERSION%%"', script_json(PBGUI_VERSION))
         html = html.replace("%%VERSION%%", PBGUI_VERSION)
-        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace('"%%SERIAL%%"', script_json(PBGUI_SERIAL))
         html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
         nav_js = Path(__file__).resolve().parent.parent / "frontend" / "pbgui_nav.js"
         nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
@@ -918,7 +915,8 @@ async def ws_vps_manager(websocket: WebSocket):
                     await websocket.send_json({"type": "result", "cmd": cmd, "success": True, "data": data})
                 elif cmd == "save_vps_logging_config":
                     data = await asyncio.to_thread(service.save_vps_logging_config, msg.get("data") or {})
-                    await websocket.send_json({"type": "result", "cmd": cmd, "success": True, "data": data})
+                    await websocket.send_json({"type": "result", "cmd": cmd, "success": True, "data": data,
+                                               "request_id": str(msg.get("request_id") or "")})
                 elif cmd == "save_vps_deploy_settings":
                     data = await asyncio.to_thread(service.save_vps_deploy_settings, msg.get("data") or {})
                     await websocket.send_json({"type": "result", "cmd": cmd, "success": True, "data": data})

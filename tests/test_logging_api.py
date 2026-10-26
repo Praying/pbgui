@@ -2,6 +2,8 @@
 
 from pathlib import Path
 from types import SimpleNamespace
+from html.parser import HTMLParser
+import re
 
 import pytest
 from fastapi import FastAPI
@@ -19,6 +21,8 @@ def isolated_log_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     log_root = tmp_path / "logs"
     log_root.mkdir()
     monkeypatch.setattr(logging_helpers, "LOG_ROOT", log_root)
+    monkeypatch.setattr(logging_helpers, "PBGUI_INI", tmp_path / "pbgui.ini")
+    monkeypatch.setattr(logging_helpers, "PBGDIR", tmp_path)
     return log_root
 
 
@@ -172,18 +176,23 @@ def test_rotation_settings_resolve_by_physical_logfile(isolated_log_root, monkey
     """Grouped PBGui settings should be requested by physical logfile stem."""
     logfile = isolated_log_root / "PBGui.log"
     logfile.touch()
+    logging_helpers.PBGUI_INI.write_text(
+        "[logging]\nrotate_pbgui_max_bytes=2097152\nrotate_pbgui_backup_count=4\n"
+    )
+    monkeypatch.setitem(logging_helpers.LOG_GROUPS, "PBGui", "OtherGroup")
     requested = []
+    original = logging_api.get_rotation_settings_bulk
 
-    def fake_settings(**kwargs):
-        requested.append(kwargs)
-        return 2 * 1024 * 1024, 4
+    def tracked_bulk(logfiles):
+        """Record the bulk boundary while resolving the real physical INI key."""
+        requested.append(logfiles)
+        return original(logfiles)
 
-    monkeypatch.setattr(logging_api, "get_rotate_defaults", lambda: (1024 * 1024, 1))
-    monkeypatch.setattr(logging_api, "get_rotate_settings", fake_settings)
+    monkeypatch.setattr(logging_api, "get_rotation_settings_bulk", tracked_bulk)
 
     result = logging_api.get_rotation(SimpleNamespace())
 
-    assert requested == [{"logfile": str(logfile)}]
+    assert requested == [[logfile]]
     assert result["per_service"]["PBGui"] == {"max_mb": 2, "backup_count": 4}
     assert set(result["managed_scopes"]) == set(logging_helpers.MANAGED_LOG_SCOPES)
 
@@ -258,3 +267,27 @@ def test_logging_ui_builds_managed_rows_without_html_interpolation():
     assert "textContent" in managed_block
     assert "innerHTML" not in managed_block
     assert "managed:" in html
+
+
+def test_rotation_input_limits_match_backend_for_static_and_dynamic_rows():
+    """Default, managed and per-log input attributes must match the API bounds."""
+    html = (Path(logging_api.__file__).parent.parent / 'frontend/logging_monitor.html').read_text(encoding='utf-8')
+    inputs = {}
+
+    class InputParser(HTMLParser):
+        """Collect static input attributes without executing the page."""
+
+        def handle_starttag(self, tag, attrs):
+            """Keep only inputs that have an ID."""
+            attrs = dict(attrs)
+            if tag == 'input' and attrs.get('id'):
+                inputs[attrs['id']] = attrs
+
+    InputParser().feed(html)
+    max_mb = str(logging_api.MAX_ROTATE_MAX_BYTES // (1024 * 1024))
+    copies = str(logging_api.MAX_ROTATE_BACKUP_COUNT)
+    for field, lower, upper in [('def-max-mb', '1', max_mb), ('def-backup-count', '0', copies)]:
+        assert (inputs[field]['min'], inputs[field]['max']) == (lower, upper)
+    for variable, lower, upper in [('maxInput', '1', max_mb), ('copiesInput', '0', copies)]:
+        limits = re.findall(rf"{variable}\.min = '(\d+)'; {variable}\.max = '(\d+)'", html)
+        assert limits == [(lower, upper), (lower, upper)]  # Managed and per-log renderers.
