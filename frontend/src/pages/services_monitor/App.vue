@@ -96,6 +96,13 @@ interface PanelDef {
   task: string;
 }
 
+interface SettingsSaveResult {
+  id: number;
+  service: string;
+  message: string;
+  isError: boolean;
+}
+
 /** Sidebar/panel registry in legacy page order; ids match legacy data-panel values. */
 const PANELS: PanelDef[] = [
   { id: 'overview', name: 'Overview', i18nKey: 'sysmon.overview', component: 'OverviewCards', task: 'Task 9' },
@@ -157,6 +164,8 @@ const migrationStatus = ref<MigrationStatus | null>(null);
 const migrationBusy = ref<'test' | 'run' | null>(null);
 /** Legacy forced-reload placeholder (loadMigrationStatus(true) until the fetch settles). */
 const migrationLoading = ref(false);
+const settingsSaveResults = ref<SettingsSaveResult[]>([]);
+let settingsSaveResultId = 0;
 /** Legacy _apiRestartPendingUntil: the 90s window opened by a run with api_restart. */
 let migrationRestartPendingUntil = 0;
 /** Legacy _migrationRestartTimer. */
@@ -165,6 +174,21 @@ let migrationRestartTimer: ReturnType<typeof setTimeout> | undefined;
 /** Legacy apiRestartPending: true while the restart window has not elapsed. */
 function apiRestartPending(): boolean {
   return migrationRestartPendingUntil > 0 && Date.now() < migrationRestartPendingUntil;
+}
+
+function handleSettingsSaveResult(event: Event): void {
+  const detail = (event as CustomEvent<{ service?: string; message?: string; isError?: boolean }>).detail || {};
+  const service = String(detail.service || '').trim();
+  const message = String(detail.message || '').trim();
+  if (!service || !message) return;
+  settingsSaveResults.value = [
+    { id: ++settingsSaveResultId, service, message, isError: detail.isError === true },
+    ...settingsSaveResults.value,
+  ].slice(0, 8);
+}
+
+function dismissSettingsSaveResult(id: number): void {
+  settingsSaveResults.value = settingsSaveResults.value.filter((result) => result.id !== id);
 }
 
 /** Legacy scheduleMigrationRestartCheck: one-shot 3s retry (default), replace pending. */
@@ -654,6 +678,7 @@ async function serviceAction(svcId: string, action: ServiceAction): Promise<void
 }
 
 onMounted(() => {
+  window.addEventListener('pbgui:settings-save-result', handleSettingsSaveResult);
   document.title = t('sysmon.servicesTitle');
   statusPolling.start();
   void fetchWorkers(); // legacy fired fetchWorkers(false) once on load
@@ -667,6 +692,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  window.removeEventListener('pbgui:settings-save-result', handleSettingsSaveResult);
   statusPolling.stop();
   workersPolling.stop();
   migrationPolling.stop();
@@ -692,6 +718,19 @@ onUnmounted(() => {
         :tone="statusLoadError ? 'danger' : 'warning'"
       />
     </template>
+
+    <div v-if="settingsSaveResults.length" class="mx-3 mt-3 grid shrink-0 gap-2" data-test="settings-save-results" aria-label="Settings save results">
+      <div
+        v-for="result in settingsSaveResults"
+        :key="result.id"
+        class="flex items-start gap-2 rounded-lg border px-3 py-2 text-compact"
+        :class="result.isError ? 'border-danger/40 bg-danger/10 text-danger-soft' : 'border-success/35 bg-success/10 text-success-soft'"
+        :role="result.isError ? 'alert' : 'status'"
+      >
+        <span class="min-w-0 flex-1 break-words">{{ result.service }}: {{ result.message }}</span>
+        <Button type="button" variant="ghost" size="sm" class="shrink-0 px-2 text-xs" @click="dismissSettingsSaveResult(result.id)">{{ t('common.close') }}</Button>
+      </div>
+    </div>
 
   <div id="page-body">
     <!-- Main content — one container per legacy panel; Tasks 10–14 replace the

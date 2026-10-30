@@ -438,7 +438,17 @@ function handleResult(message: JsonRecord): void {
   const cmd = String(message.cmd || '');
   if (message.success === false) { showNotice(message.error || message.data?.error, 'err'); return; }
   const data = message.data || {};
-  if (cmd === 'probe_vps_host_key') setModal('host-key', data);
+  if (cmd === 'init_vps') {
+    const initializedHostname = String(data.hostname || '').trim();
+    if (!initializedHostname) {
+      showNotice(t('vpsmgr.initializationHostnameMissing'), 'err');
+      return;
+    }
+    showNotice(t('vpsmgr.commandStarted'));
+    setContext('vps-task-log', initializedHostname);
+    void nextTick(initSharedLogViewer);
+  }
+  else if (cmd === 'probe_vps_host_key') setModal('host-key', data);
   else if (cmd === 'trust_vps_host_key') { closeModal(); showNotice(t('vpsmgr.trusted')); send({ cmd: 'refresh' }); }
   else if (cmd === 'read_ufw_rules') { applyUfwData(data); showNotice(t('vpsmgr.ufwRulesLoaded')); }
   else if (cmd === 'preview_ufw_rules') setModal('ufw-preview', data);

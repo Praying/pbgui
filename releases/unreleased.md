@@ -1,5 +1,12 @@
 # Unreleased
 
+## 合入 main v2.09.11–v2.09.14 并适配 Vue 3 优化工作台
+
+- 合入远端 `main` 的 PB8 收敛检测、OHLCV 预检、优化运行器、帮助错误处理及 VPS 初始化跟踪修复；API serial 从上游 `3450` 递增至 `3451`。
+- Vue 3 PB8 Optimize 编辑器增加本地收敛配置，日志仪表盘展示收敛阶段、改善次数、耐心进度和最近检查；PB8 配置列表在页面可见时自动轮询并保留有效选择。
+- Vue 3 Services Monitor 将设置保存结果提升到页面级并跨面板保留；Vue 3 VPS Manager 使用服务端返回的 hostname 跟踪初始化任务日志；共享 legacy fallback 页面同步使用更新后的 Guide 资源版本，并保留现有 Vue 入口与 Tailwind CSS v4.3 适配。
+- 前端 `pnpm run typecheck` 和 `pnpm test` 通过；Python pytest 未执行，因为当前环境未安装 `pytest`。
+
 ## 合入 main v2.09.5–v2.09.10，Vue 适配进行中
 
 - 已执行不提交的合并并解决冲突，保留当前分支的 Vue 页面入口、固定 Dashboard、国际化及现有 AI 超时/页面操作确认改动；旧版 fallback 同步使用挂载安全的 URL 与脚本 JSON 渲染。

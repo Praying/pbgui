@@ -113,6 +113,7 @@ button { cursor: pointer; }
 textarea, pre.debug-json { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: #0c1018; color: var(--text); font-family: var(--mono); font-size: var(--fs-xs); padding: 10px; overflow: auto; }
 textarea { min-height: 480px; resize: vertical; }
 #raw-config-panel .json-panel-wrap { margin-top: 0; }
+#raw-config-panel .json-pre { font-size: var(--fs-sm); }
 #raw-config-panel .json-pre[contenteditable="true"] { outline: none; cursor: text; }
 #raw-config-panel .json-pre.raw-invalid { border-color: rgb(var(--danger-rgb, 229 97 92) / .55); color: #ee8d84; }
 .raw-config-status { margin-top: 8px; color: var(--text-dim); font-size: var(--fs-xs); }
@@ -159,7 +160,7 @@ pre.debug-json { max-height: 460px; white-space: pre-wrap; word-break: break-wor
 .slider-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .slider-meta { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
 .slider-label .help { color: var(--text-dim); border: 1px solid var(--border); border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
-.slider-value { color: var(--accent); font-size: var(--fs-xs); font-weight: 700; padding-left: 0; font-family: var(--mono); }
+.slider-value { color: var(--accent); font-size: var(--fs-sm); font-weight: 700; padding-left: 0; font-family: var(--mono); }
 input.param-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 14px; background: transparent; accent-color: var(--accent); cursor: pointer; }
 input.param-slider::-webkit-slider-runnable-track { height: 4px; background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--range-fill, 50%), rgba(255,255,255,.22) var(--range-fill, 50%), rgba(255,255,255,.22) 100%); border-radius: 999px; }
 input.param-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 0; margin-top: -4px; box-shadow: 0 0 0 1px rgba(19, 17, 20,.95); }

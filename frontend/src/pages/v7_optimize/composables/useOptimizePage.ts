@@ -199,6 +199,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
   }
 
   let settingsGeneration = 0;
+  let configsGeneration = 0;
   let queueGeneration = 0;
   let resultsGeneration = 0;
   let paretoGeneration = 0;
@@ -257,8 +258,12 @@ export function useOptimizePage(options: OptimizePageOptions) {
   }
 
   async function loadConfigs(): Promise<void> {
+    const generation = ++configsGeneration;
     const data = await request<{ configs?: ConfigSummary[] }>('/configs');
+    if (generation !== configsGeneration) return;
     configs.value = data.configs ?? [];
+    const availableNames = new Set(configs.value.map((config) => String(config.name || '')));
+    selectedConfigs.value = new Set([...selectedConfigs.value].filter((name) => availableNames.has(name)));
   }
 
   async function loadQueue(): Promise<void> {

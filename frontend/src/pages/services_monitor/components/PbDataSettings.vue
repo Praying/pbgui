@@ -154,6 +154,9 @@ function flash(text: string, isError: boolean): void {
   saveMsg.value = text;
   saveMsgIsError.value = isError;
   saveMsgVisible.value = true;
+  window.dispatchEvent(new CustomEvent('pbgui:settings-save-result', {
+    detail: { service: 'PBData', message: text, isError },
+  }));
   clearTimeout(flashTimer);
   flashTimer = setTimeout(() => {
     saveMsgVisible.value = false;

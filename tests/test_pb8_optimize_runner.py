@@ -182,6 +182,41 @@ def test_runner_persists_sweep_plan_only_beside_its_open_result(tmp_path, monkey
     assert oct((result_dir / SWEEP_PLAN_FILENAME).stat().st_mode & 0o777) == "0o600"
 
 
+
+def test_runner_publishes_exact_evaluation_count_sidecar(tmp_path) -> None:
+    """New runs expose ResultRecorder.n_iters without rescanning all_results.bin."""
+    result_dir = tmp_path / "result"
+    result_dir.mkdir()
+
+    class Store:
+        """Minimal PB8 Pareto store."""
+
+        directory = str(result_dir)
+        n_iters = 0
+
+    class ResultRecorder:
+        """Minimal PB8 recorder patched by the PBGui runner."""
+
+        def __init__(self):
+            self.store = Store()
+            self.results_file = None
+
+        def record(self, _data):
+            self.store.n_iters += 1
+
+    module = SimpleNamespace(ResultRecorder=ResultRecorder)
+    publish_final = pb8_optimize_runner._install_evaluation_progress_publisher(module)
+    recorder = ResultRecorder()
+
+    recorder.record({})
+    recorder.record({})
+    publish_final()
+
+    payload = json.loads(
+        (result_dir / pb8_optimize_runner.EVALUATION_PROGRESS_FILENAME).read_text(encoding="utf-8")
+    )
+    assert payload["evaluations"] == 2
+    assert payload["contract_version"] == 1
 def test_runner_fails_closed_when_sweep_sidecar_cannot_be_persisted(tmp_path, monkeypatch) -> None:
     """A successful optimizer exit cannot publish success without its immutable Sweep plan."""
     state = tmp_path / "state.json"

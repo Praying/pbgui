@@ -141,7 +141,7 @@ async function main() {
       }
       assert.equal(b.streams[0].url, origin + expected + '/api/server-status/stream');
       b.nodes['pbgui-guide-btn'].click();
-      assert.equal(b.assets.at(-1).src, expected + '/app/js/shared_help_overlay.js?v=11');
+      assert.equal(b.assets.at(-1).src, expected + '/app/js/shared_help_overlay.js?v=12');
       b.assets.at(-1).onerror();
       assert.equal(c.location.href, origin + expected + '/api/help/main_page');
     }
@@ -222,7 +222,7 @@ async function main() {
     assert.equal(b.requests.at(-1).input, app + '/api/vps/alerts/ack-all');
 
     b.nodes['pbgui-guide-btn'].click();
-    assert.equal(b.assets.at(-1).src, prefix + '/app/js/shared_help_overlay.js?v=11');
+    assert.equal(b.assets.at(-1).src, prefix + '/app/js/shared_help_overlay.js?v=12');
     b.assets.at(-1).onerror();
     assert.equal(c.location.href, app + '/api/help/main_page');
     b.nodes['pbgui-ai-btn'].click();

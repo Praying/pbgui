@@ -31,6 +31,7 @@ import {
   migrateOptimizeBackend,
   normalizeGpuSettings,
   normalizeScenarioEndDate,
+  objectValue,
   parseJsonObject,
   scenarioLabels,
   setPath,
@@ -154,6 +155,10 @@ const objectiveScenarioName = ref('');
 const fineTuneText = ref('');
 const polishPercentageText = ref('');
 const polishBoundsMode = ref('clamp');
+const convergenceEnabled = ref(false);
+const convergenceMinExactText = ref('512');
+const convergencePatienceText = ref('512');
+const convergenceToleranceText = ref('0.25');
 const newBoundKey = ref('');
 const availableCoins = ref<string[]>([]);
 const additionalParamJson = ref<Record<string, string>>({});
@@ -176,6 +181,16 @@ let vastValidationTimer: number | undefined;
 let lastVastValidationSignature = '';
 
 function json(value: unknown): string { return JSON.stringify(value ?? {}, null, 2); }
+function parsePositiveInteger(value: string, label: string): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) throw new Error(`${label} must be a positive integer.`);
+  return parsed;
+}
+function parseNonNegativeNumber(value: string, label: string): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) throw new Error(`${label} must be a non-negative number.`);
+  return parsed;
+}
 function csv(value: unknown): string { return Array.isArray(value) ? value.map(String).join(', ') : String(value ?? ''); }
 function coinText(value: unknown): string { return value === 'all' ? 'all' : csv(value); }
 function parseCsv(value: string): string[] { return [...new Set(value.split(',').map((item) => item.trim()).filter(Boolean))]; }
@@ -437,6 +452,11 @@ function load(source: OptimizeEditorDraft | null): void {
   const polish = runtime.polish_percentage == null ? null : Number(runtime.polish_percentage);
   polishPercentageText.value = polish !== null && Number.isFinite(polish) ? String(polish * 100) : '';
   polishBoundsMode.value = String(runtime.polish_bounds_mode || 'clamp');
+  const convergence = isObject(runtime.convergence_config) ? runtime.convergence_config : runtime;
+  convergenceEnabled.value = convergence.convergence_enabled === true;
+  convergenceMinExactText.value = String(convergence.convergence_min_exact ?? 512);
+  convergencePatienceText.value = String(convergence.convergence_patience ?? 512);
+  convergenceToleranceText.value = String(convergence.convergence_tolerance_pct ?? 0.25);
 }
 
 function pymooObject(): JsonObject {
@@ -1171,6 +1191,16 @@ function applyTextSections(): void {
   local.value.backtest.coin_sources = parseJsonObject(coinSourcesJson.value, 'Coin sources');
   local.value.runtimeOverrides = normalizeRuntimeOverrideMap(parseJsonObject(runtimeJson.value, 'Runtime overrides'));
   runtimeJson.value = json(local.value.runtimeOverrides);
+  if (props.version === 'v8') {
+    const runtime = objectValue(local.value.pbgui.optimize_runtime);
+    runtime.convergence_config = {
+      convergence_enabled: convergenceEnabled.value,
+      convergence_min_exact: parsePositiveInteger(convergenceMinExactText.value, 'Convergence minimum exact evaluations'),
+      convergence_patience: parsePositiveInteger(convergencePatienceText.value, 'Convergence patience'),
+      convergence_tolerance_pct: parseNonNegativeNumber(convergenceToleranceText.value, 'Convergence tolerance'),
+    };
+    local.value.pbgui.optimize_runtime = runtime;
+  }
   local.value.overrideConfigs = parseJsonObject(overrideJson.value, 'Override configs');
   applySeedState();
   applyAdditionalJsonParams();
@@ -1898,6 +1928,34 @@ function preflight(): void {
                     <SelectItem v-for="mode in polishBoundsModeOptions" :key="mode" :value="mode">{{ mode }}</SelectItem>
                   </SelectContent>
                 </SelectRoot>
+              </label>
+            </div>
+          </div>
+
+          <div v-if="version === 'v8'" class="rounded-xl border border-border-default/80 bg-surface-deep/30 p-4 shadow-xs" data-test="local-convergence-settings">
+            <div class="mb-3 flex items-center gap-2">
+              <div class="flex h-6 w-6 items-center justify-center rounded-md bg-accent/10 text-accent">
+                <PbIcon :icon="PhSliders" class="h-3.5 w-3.5" />
+              </div>
+              <h4 class="text-compact font-semibold text-primary uppercase tracking-label">{{ t('v7optimize.localConvergenceTitle') }}</h4>
+              <span class="text-xs text-dim ml-1">{{ t('v7optimize.localConvergenceDescription') }}</span>
+            </div>
+            <div class="grid grid-cols-[minmax(180px,1fr)_repeat(3,minmax(130px,1fr))] items-end gap-3 max-[900px]:grid-cols-2 max-[600px]:grid-cols-1">
+              <label class="flex min-h-(--control-height-lg) items-center gap-2 rounded-lg border border-border-default/70 bg-surface-deep/60 px-3 cursor-pointer select-none">
+                <Checkbox data-field="local-convergence-enabled" v-model="convergenceEnabled" />
+                <span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.localConvergenceEnabledTip')">{{ t('v7optimize.localConvergenceEnabled') }}</span>
+              </label>
+              <label class="grid gap-1.5 text-xs text-secondary">
+                <span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.localConvergenceMinExactTip')">{{ t('v7optimize.localConvergenceMinExact') }}</span>
+                <Input data-field="local-convergence-min-exact" type="number" min="1" step="1" class="h-(--control-height-lg) text-compact tabular-nums" v-model="convergenceMinExactText" />
+              </label>
+              <label class="grid gap-1.5 text-xs text-secondary">
+                <span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.localConvergencePatienceTip')">{{ t('v7optimize.localConvergencePatience') }}</span>
+                <Input data-field="local-convergence-patience" type="number" min="1" step="1" class="h-(--control-height-lg) text-compact tabular-nums" v-model="convergencePatienceText" />
+              </label>
+              <label class="grid gap-1.5 text-xs text-secondary">
+                <span class="text-compact font-medium text-primary" :data-tip="t('v7optimize.localConvergenceToleranceTip')">{{ t('v7optimize.localConvergenceTolerance') }}</span>
+                <Input data-field="local-convergence-tolerance" type="number" min="0" step="0.01" class="h-(--control-height-lg) text-compact tabular-nums" v-model="convergenceToleranceText" />
               </label>
             </div>
           </div>

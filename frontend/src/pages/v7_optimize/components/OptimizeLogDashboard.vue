@@ -80,6 +80,28 @@ const objectivesText = computed(() => formatMetricPairs(props.status ? (props.st
 const rangesText = computed(() => formatRangePairs(props.status ? (props.status.metrics as Record<string, unknown> | undefined)?.ranges : null));
 const activityText = computed(() => (props.statusError ? t('v7optimize.logStatusUnavailable') : logActivity(props.status)));
 const errorText = computed(() => (props.statusError ? props.statusError : logError(props.status)));
+const localConvergence = computed(() => {
+  const value = props.status?.convergence;
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+});
+const convergencePhase = computed(() => String(localConvergence.value?.phase || ''));
+const convergenceImprovement = computed(() => {
+  const value = localConvergence.value?.last_improvement_exact;
+  return value == null ? t('v7optimize.localConvergenceNone') : String(value);
+});
+const convergenceProgress = computed(() => {
+  const state = localConvergence.value;
+  if (!state) return t('v7optimize.localConvergenceWaiting');
+  const checked = state.checked_exact == null ? '?' : String(state.checked_exact);
+  const remaining = state.remaining == null ? '?' : String(state.remaining);
+  return `${checked} / ${remaining}`;
+});
+const convergenceChecked = computed(() => {
+  const value = localConvergence.value?.checked_exact;
+  return value == null ? t('v7optimize.localConvergenceNone') : String(value);
+});
 </script>
 
 <template>
@@ -155,6 +177,25 @@ const errorText = computed(() => (props.statusError ? props.statusError : logErr
       <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2" data-test="log-card-queue">
         <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.queue') }}</div>
         <div class="mt-1 overflow-hidden text-sm font-semibold text-primary whitespace-nowrap text-ellipsis" data-test="log-queue">{{ queueText }}</div>
+      </div>
+    </div>
+
+    <div v-if="localConvergence" class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2" data-test="local-convergence-status">
+      <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2">
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.localConvergencePhase') }}</div>
+        <div class="mt-1 text-sm font-semibold text-primary">{{ convergencePhase || t('v7optimize.localConvergenceWaiting') }}</div>
+      </div>
+      <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2">
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.localConvergenceImprovement') }}</div>
+        <div class="mt-1 text-sm font-semibold tabular-nums text-primary">{{ convergenceImprovement }}</div>
+      </div>
+      <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2">
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.localConvergenceProgress') }}</div>
+        <div class="mt-1 text-sm font-semibold tabular-nums text-primary">{{ convergenceProgress }}</div>
+      </div>
+      <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2">
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.localConvergenceChecked') }}</div>
+        <div class="mt-1 text-sm font-semibold tabular-nums text-primary">{{ convergenceChecked }}</div>
       </div>
     </div>
 
