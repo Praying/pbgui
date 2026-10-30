@@ -1737,6 +1737,7 @@
   "market.testResolve": "Test Resolve",
   "market.tiingoGetApiToken": "Get API token",
   "market.tiingoOfficialUsage": "Official usage",
+  "market.tiingoResources": "Tiingo resources",
   "market.testTiingo": "Test Tiingo",
   "market.testingSsh": "Testing SSH connection and destination path…",
   "market.tickerOrCompany": "Ticker or company name",

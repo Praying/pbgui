@@ -32,22 +32,36 @@ const { t } = useI18n();
       <div>
         <div class="eyebrow">{{ t('market.tiingoSettingsStockPerp') }}</div>
       </div>
-      <div class="panel-actions">
-        <!-- Direct links to Tiingo's token and usage pages (v2.02.5). -->
-        <a
-          class="btn small secondary"
-          href="https://www.tiingo.com/account/api/token"
-          target="_blank"
-          rel="noopener noreferrer"
-        >{{ t('market.tiingoGetApiToken') }}</a>
-        <a
-          class="btn small secondary"
-          href="https://www.tiingo.com/account/api/usage"
-          target="_blank"
-          rel="noopener noreferrer"
-        >{{ t('market.tiingoOfficialUsage') }}</a>
+      <div class="panel-actions tiingo-actions w-full sm:w-auto sm:justify-end">
+        <div
+          class="tiingo-resource-actions inline-flex w-full items-center gap-1 rounded-lg border border-border-subtle bg-surface-deep/55 p-1 sm:w-auto"
+          role="group"
+          :aria-label="t('market.tiingoResources')"
+        >
+          <!-- Direct links to Tiingo's token and usage pages (v2.02.5). -->
+          <Button
+            as="a"
+            size="sm"
+            variant="secondary"
+            class="min-w-0 flex-1 sm:flex-none"
+            href="https://www.tiingo.com/account/api/token"
+            target="_blank"
+            rel="noopener noreferrer"
+          >{{ t('market.tiingoGetApiToken') }}</Button>
+          <Button
+            as="a"
+            size="sm"
+            variant="secondary"
+            class="min-w-0 flex-1 sm:flex-none"
+            href="https://www.tiingo.com/account/api/usage"
+            target="_blank"
+            rel="noopener noreferrer"
+          >{{ t('market.tiingoOfficialUsage') }}</Button>
+        </div>
         <Button
-          variant="info"
+          variant="primary"
+          size="sm"
+          class="w-full sm:w-auto"
           id="btn-test-tiingo"
           type="button"
           @click="tiingo.test()"
