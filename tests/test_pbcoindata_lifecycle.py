@@ -1313,3 +1313,29 @@ def test_systemd_idle_queries_real_empty_property_format(guarded_idle,systemd_ow
     result=process.unload_preflight(state.root,policy(),state.actual,manager='systemd',recovery={'recovery_ready':True,'controller':'systemd'},restart_check=lambda:(True,''))
     assert result['allowed']==(not job),result
     assert process._launch_path(state.root).read_bytes()==before
+
+
+@pytest.mark.parametrize('case', ['enabled', 'disabled', 'inactive', 'disabled-inactive', 'missing', 'legacy'])
+def test_monitor_migration_tracks_installation_independently_of_service_state(tmp_path, case):
+    """The monitor agrees with Services when PBData is stopped or autostart is off."""
+    from master.async_monitor import HOST_META_SCRIPT
+    tree = ast.parse(HOST_META_SCRIPT.split('\n', 1)[1].rsplit('\nPY', 1)[0])
+    function = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'build_systemd_migration_status')
+    root = tmp_path / 'pbgui'
+    root.mkdir()
+    python = tmp_path / 'venv_pbgui/bin/python'
+    python.parent.mkdir(parents=True)
+    python.touch()
+    def unit_status(unit, exists):
+        """Return only synthetic systemd state; never query real services."""
+        target = unit == 'pbgui-pbdata.service'
+        return {'unit': unit, 'exists': 'no' if target and case == 'missing' else 'yes',
+                'enabled': 'disabled' if target and 'disabled' in case else 'enabled',
+                'active': 'inactive' if target and 'inactive' in case else 'active'}
+    namespace = {'Path': Path, 'time': time, 'run': lambda *a, **k: 'systemctl',
+                 'systemd_user_manager_ok': lambda value: (True, ''), 'systemd_unit_status': unit_status,
+                 'collect_legacy_pbgui_processes': lambda path: [], 'collect_legacy_cron_count': lambda path: int(case == 'legacy')}
+    exec(compile(ast.Module(body=[function], type_ignores=[]), 'isolated migration status', 'exec'), namespace)
+    result = namespace[function.name](str(root), False, True, False)
+    assert result['migration_complete'] is (case not in ['missing', 'legacy'])
+    assert result['migration_needed'] is (case in ['missing', 'legacy'])

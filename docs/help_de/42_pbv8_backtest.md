@@ -1,5 +1,9 @@
 # PBv8 Backtest
 
+Markiere bei aktiviertem **Include page context** ein Ergebnis und bitte PBGui AI, dessen ausgeführte Config für einen gewünschten Zeitraum und getrennte Börsen erneut zu backtesten. Eine gemeinsame Freigabe stellt einen Job je Börse in die Queue; Strategie, Risiko, Coins und Override-Dateien bleiben erhalten. Für „den ganzen verfügbaren Zeitraum“ liest der Assistent zuerst den Kerzenbestand. Die Vorschau zeigt exakte Daten, Börsen, Quelle und Autostart-Status. Diese unabhängigen Läufe verändern weder das Originalergebnis noch die Zeitfenster eines AI Loops.
+
+Ergebnisse erscheinen schrittweise, während weitere Seiten laden. Ein Ladevorgang verwendet einen gemeinsamen Dateiscan für alle Seiten; spätere Seiten durchsuchen nicht erneut den gesamten Ergebnisbaum. Neue Ladevorgänge und automatische Aktualisierungen erfassen die aktuellen Dateien. Läuft eine Seitenfolge ab, lädt PBGui sie einmal automatisch neu und erhält dabei den gewählten Filter und den angeforderten Loop-Vergleich.
+
 Ergebnislinks aus AI Loops laden die gefilterten Ergebnisse vor einer anderen gespeicherten Ansicht oder den Archiven. **Results** zeigt während der Prüfung des zugehörigen nativen Jobs **Opening…**; der Vergleich zeigt beim Lesen der Equity-Daten einen Ladehinweis. **Back to AI Loop** stellt die ursprüngliche Runde, den Tab, aufgeklappte Zeilen, Auswahl und Scrollposition wieder her; aktuelle Loop-Daten werden anschließend automatisch geladen. Ist der Loop nicht mehr verfügbar, erklärt PBGui dies im ursprünglichen Queue-/Results-Kontext. Ein überschrittenes Anfragezeitlimit zeigt einen Fehler, statt die Navigation dauerhaft zu sperren.
 
 Kann eine Equity-Datei nicht geladen werden, bleiben die übrigen verfügbaren Kurven sichtbar; ein Hinweis nennt die Anzahl betroffener ausgewählter Ergebnisse. Die Auswahl bleibt erhalten. Kann keine der ausgewählten Equity-Dateien geladen werden, zeigt der Vergleich einen Fehler statt eines leeren Charts.
@@ -57,6 +61,8 @@ Die Migration stoppt, wenn nicht unterstützte Felder oder manuell zu prüfende 
 
 ## Editor
 
+**Startdatum-Kurzbefehle:** PB8 Backtest verwendet dieselben Schaltflächen **1st** und **All** wie Optimize. **1st** wählt den frühesten ausgewählten Markt mit OHLCV-Abdeckung; **All** wählt das erste Datum, das für alle ausgewählten Börsen und Coins verfügbar ist. Beide berücksichtigen das PB8-Warmup und ändern das Basis-Startdatum, nicht das Enddatum oder die Datumswerte der Suite-Szenarien. Fortschritt und **Stop** verwenden denselben Abfrageablauf. Die Abfrage des Marktstarts kann Börsenmetadaten laden; sie wählt keinen vollständigen lokalen Datenbereich.
+
 Die visuellen Controls und die JSON-Synchronisierung werden direkt mit PBv7 geteilt. Bei kanonischen V8-Configs liest und schreibt der Adapter Exposure und Positionszahl unter `bot.<side>.risk`; die Long/Short- und Raw-JSON-Editoren erhalten alle verschachtelten V8-Bereiche wie `risk`, `strategy`, `forager`, `hsl` und `unstuck`. Import und Speichern werden mit dem installierten PB8-Loader vorbereitet; ungültiges JSON blockiert das Speichern. PBGui-eigene Metadaten im Top-Level-Objekt `pbgui` bleiben unverändert, auch wenn die installierte PB8-Version diese Felder nicht kennt.
 
 Die häufig verwendeten Kapital- und Ausführungsfelder bleiben für die schnelle Bearbeitung sichtbar. Fee Overrides, `market_order_slippage_pct`, `filter_by_min_effective_cost`, `hsl_signal_mode` und `logging_level` sind unter **Advanced execution settings** zusammengefasst.
@@ -76,6 +82,8 @@ Häufig verwendete PB8-spezifische Backtest-Felder besitzen strukturierte Contro
 **Additional Parameters** enthält Result Metrics, den von PBGui verwalteten `base_dir` als Read-only-Feld sowie die Expertenoptionen `hlcvs_data_dir` und `hlcvs_data_override_mode`. Prepared-Dataset-Replay benötigt einen serverseitigen PB8-Dataset-Pfad mit gültigem Manifest und bleibt normalerweise auf `null`; PB8 löst Datasets dann automatisch auf. Zukünftige unbekannte Top-Level-Backtest-Felder erscheinen ebenfalls in diesem Fallback-Bereich.
 
 ## Queue
+
+Die automatische Queue-Prüfung läuft im Hintergrund, damit aufbewahrte abgeschlossene Jobs die Navigation nicht blockieren. Geänderte Queue-Einträge und laufende Prozesse werden automatisch neu geprüft.
 
 Die V8-Queue liegt separat unter `data/bt_v8_queue`. **Start** startet `<venv_pb8>/bin/passivbot backtest <snapshot>`. **Stop**, **Restart**, **Delete** und **Clear Finished** betreffen nur V8-Queue-Einträge. Live-Queue-Updates verwenden den versionsspezifischen WebSocket `/api/backtest-v8/ws/bt8`; die bisherige Route `/ws/bt7` bleibt als authentifizierter Kompatibilitaetsalias bestehen.
 

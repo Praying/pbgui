@@ -1,15 +1,15 @@
 /* Offline regression for Vast jobs polling when the browser tab is hidden. */
 'use strict';
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
+const assert = browserAssert;
+const fs = testSources;
+const path = sourcePath;
+const vm = browserScope;
 
 const source = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'js', 'vast.js'), 'utf8');
-const start = source.indexOf('  async function refreshJobs(preferred)');
+const start = source.indexOf('  async function refreshJobs(');
 const end = source.indexOf('  let validationGeneration', start);
 const listenerStart = source.indexOf("  document.addEventListener('visibilitychange'");
-const listenerEnd = source.indexOf("\n  window.addEventListener('pagehide'", listenerStart);
+const listenerEnd = source.indexOf("\n  window.addEventListener('hashchange'", listenerStart);
 assert.ok(start > 0 && end > start && listenerStart > 0 && listenerEnd > listenerStart);
 const pollCode = source.slice(start, end);
 const visibilityCode = source.slice(listenerStart, listenerEnd);
@@ -37,6 +37,9 @@ const context = vm.createContext({
     calibrationWorkerAvailable: false,
     selectedJobId: null,
     stoppingJobs: new Map(),
+    uncertainStops: new Map(),
+    unreadableJobs: [],
+    reconcileExcludedOffers() {},
     clearSecrets() {},
     el() { return null; },
     message() {},
@@ -108,4 +111,4 @@ const activeTimers = () => timers.filter(timer => !timer.cleared);
     await vm.runInContext('refreshJobs()', context);
     assert.equal(activeTimers().length, 1);
     assert.equal(activeTimers()[0].delay, 10000);
-})().catch(error => { console.error(error); process.exitCode = 1; });
+})().catch(error => { console.error(error); testResult.exitCode = 1; });

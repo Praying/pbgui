@@ -9,6 +9,8 @@ interface ProviderPanelProps {
   chatgpt: ProviderInfo;
   go: ProviderInfo;
   openrouter: ProviderInfo;
+  claude: ProviderInfo;
+  deepseek: ProviderInfo;
   transitioning: boolean;
   loginVisible: boolean;
   loginInstructions: string;
@@ -31,6 +33,10 @@ const emit = defineEmits<{
   goDisconnect: [];
   openrouterConnect: [];
   openrouterDisconnect: [];
+  claudeConnect: [];
+  claudeDisconnect: [];
+  deepseekConnect: [];
+  deepseekDisconnect: [];
   profileChange: [profile: string];
 }>();
 
@@ -38,6 +44,7 @@ const { t } = useI18n();
 
 const goKey = defineModel<string>('goKey', { default: '' });
 const openrouterKey = defineModel<string>('openrouterKey', { default: '' });
+const deepseekKey = defineModel<string>('deepseekKey', { default: '' });
 
 function usageLabel(windowDurationMinutes: number | undefined): string {
   if (windowDurationMinutes === 300) return '5h';
@@ -206,6 +213,30 @@ function onGoConnect(): void {
         <Button type="button" variant="primary" class="shrink-0" :disabled="transitioning" @click="emit('openrouterConnect')">{{ t('ai.chat.connect') }}</Button>
       </div>
       <Button v-else type="button" variant="danger" class="mt-1.5" :disabled="transitioning" @click="emit('openrouterDisconnect')">{{ t('ai.chat.disconnect') }}</Button>
+    </section>
+
+    <!-- Claude Agent -->
+    <section class="rounded-lg border border-border-subtle bg-panel p-4 shadow-panel">
+      <div class="mb-2 flex items-center justify-between gap-2">
+        <span class="font-bold text-primary">Claude Agent</span>
+        <span class="text-micro" :class="claude.connected ? 'text-success' : 'text-secondary'">{{ claude.connected ? t('ai.chat.connected') : t('ai.chat.notConnected') }}</span>
+      </div>
+      <p class="mb-2.5 text-xs text-secondary">Use the native Claude sign-in flow without exposing credentials to the browser.</p>
+      <Button v-if="!claude.connected" type="button" variant="primary" :disabled="transitioning" @click="emit('claudeConnect')">Sign in</Button>
+      <Button v-else type="button" variant="danger" :disabled="transitioning" @click="emit('claudeDisconnect')">{{ t('ai.chat.disconnect') }}</Button>
+    </section>
+
+    <!-- DeepSeek -->
+    <section class="rounded-lg border border-border-subtle bg-panel p-4 shadow-panel">
+      <div class="mb-2 flex items-center justify-between gap-2">
+        <span class="font-bold text-primary">DeepSeek</span>
+        <span class="text-micro" :class="deepseek.connected ? 'text-success' : 'text-secondary'">{{ deepseek.connected ? t('ai.chat.connected') : t('ai.chat.notConnected') }}</span>
+      </div>
+      <div v-if="!deepseek.connected" class="flex gap-2">
+        <Input v-model="deepseekKey" type="password" autocomplete="new-password" placeholder="DeepSeek API key" aria-label="DeepSeek API key" class="min-w-0 flex-1" />
+        <Button type="button" variant="primary" class="shrink-0" :disabled="transitioning" @click="emit('deepseekConnect')">{{ t('ai.chat.connect') }}</Button>
+      </div>
+      <Button v-else type="button" variant="danger" class="mt-1.5" :disabled="transitioning" @click="emit('deepseekDisconnect')">{{ t('ai.chat.disconnect') }}</Button>
     </section>
   </div>
 </template>

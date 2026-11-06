@@ -1,5 +1,19 @@
 # Vast.ai GPU-Queue
 
+## Collect Pareto
+
+Eine abgeschlossene Veröffentlichung wird auch nach der Rückkehr aus einem verborgenen Browser-Tab automatisch geladen. Der gewählte Results-/Paretos-Kontext bleibt erhalten, auch ohne aktive lokale Optimizer-Läufe; Browser-Neuladen oder erneutes Collect ist nicht nötig.
+
+Ist Collect nicht verfügbar, steht der Grund neben den Log-Aktionen, einschließlich des Hinweises auf einen veralteten Run-Supervisor. Nach erfolgreicher Veröffentlichung aktualisiert Collect die aktuelle Results-/Paretos-Ansicht ausdrücklich, auch wenn während des Imports bereits eine Job-Aktualisierung eingetroffen ist. Snapshot-Sperren behalten ihre gemeinsame Identität auch über symbolisch verknüpfte Vorfahren wie `data`. Die bisherigen Pfadprüfungen für JobStore und Zugangsdaten gelten weiter: Die Store-Wurzel selbst muss ein reguläres Verzeichnis sein oder über ihren kanonischen Pfad konfiguriert werden. Symbolische Links auf Sperrdateien und Verzeichniswechsel während der Sammlung werden abgelehnt.
+
+Öffne **PBv8 → Optimize → Queue → Open log**. **Collect Pareto** neben **Stop & collect** veröffentlicht den aktuellen unveränderlichen Pareto-Snapshot, ohne den Optimizer zu stoppen, Mietbereinigung anzufordern oder Konvergenz beziehungsweise Finalisierung auszuführen. Wiederholtes Sammeln aktualisiert denselben Ergebniseintrag. Results und Pareto Explorer aktualisieren sich automatisch; Jobauswahl und Seitenkontext bleiben erhalten. Stop bleibt während der Sammlung bedienbar.
+
+Entferntes Sammeln benötigt die Snapshot-Transaktionsfähigkeit des aktuellen Run-Supervisors und eine bereits verifizierte Worker-Verbindung. Ein veralteter Supervisor muss ausdrücklich über die vorhandenen Supervisor-Bedienelemente neu gestartet werden; Collect startet ihn nicht neu. Stop und finale Sammlung haben Vorrang. Das manuelle Teiltransferlimit beträgt einschließlich des neuen Archivs 1 GiB; Mietfrist, Reserve für finale Sammlung, Budget und Leerlaufbereinigung gelten weiter. Collect verlängert keine Miete. Fehlende Pareto-Daten oder unerreichbare Instanzen erhalten das bisher veröffentlichte Ergebnis. Nach Browser-Timeout bleibt der Ausgang unbestätigt; der Jobstatus aktualisiert sich automatisch, ohne den POST zu wiederholen.
+
+Verifizierte Finaldaten lassen sich nach Mietende ohne Vast-Zugriff lokal veröffentlichen. Collect bestimmt nicht den Ausführungsstatus. Bei ausstehender Finalisierung bleibt **Retry result import** auch nach Veröffentlichung des vollständigen Ergebnisses verfügbar. Die Aktion führt die reguläre lokale Finalisierung aus; vollständig abgeschlossene terminale Ergebnisse erhalten keine unnötige Wiederholung.
+
+Das Warten auf lokale Job-Metadaten verwendet dieselbe Sammlungsfrist und denselben Shutdown-Abbruch. Vor der Veröffentlichung erhält ein Abbruch das bisherige Ergebnis. Ist die Veröffentlichung bereits übernommen, werden die passenden Job-Metadaten noch vor Abschluss der Anfrage fertiggeschrieben.
+
 ## Verifizierte Hostsperren im KI-Chat
 
 Unlesbare lokale Hostmetadaten oder beschädigte Ausführungsnachweise werden als Fehler oder unbestätigter Ausgang gemeldet. Sie belegen keine erfolgreiche Sperre und erlauben keinen weiteren Schreibversuch. Die ausschließlich lesende Statusabfrage prüft den Nachweis gegen den freigegebenen Job, Lease, die Maschine, den Boolean und die Revision, bevor sie historischen Erfolg meldet.
@@ -286,9 +300,15 @@ diesem Cloud-Profil nicht unterstützt. Ein historischer Traceback-Pfad wie
 Ohne Originalkonfiguration und Miet-Intent lässt sich der historische FET-Fehler
 nicht rekonstruieren.
 
+## Einen vorbereiteten Optimizer starten
+
+Unter **PBv8 → Optimize → Queue** beim vorbereiteten Cloud-Job **▶ Start** oder **Open log → Start** wählen. Die Prüfung nennt genau diesen eingefrorenen Job, Börsen/Zeitraum, Iterationen, GPU-Anforderungen, maximalen Stundenpreis, Budget, Stunden und Stagnationsregel. **Start job** genehmigt eine GPU-Miete für diesen Job und deren automatische Bereinigung danach. **Cancel** mietet und startet nichts.
+
+Das funktioniert auch mit bereits von einer KI-Anfrage vorbereiteten Eingaben; ein KI-Chat oder Modellaufruf ist nicht erforderlich. Die gemeinsame Queue kann pausiert bleiben. Andere Jobs und globales **Auto rent & start** bleiben unverändert. Ein späteres Pause/End oder Änderungen an Eingabe, Konto oder gespeicherten Limits machen eine offene Prüfung ungültig. Erneut Start wählen, um aktuelle Werte zu prüfen. Prüfungen verfallen nach 15 Minuten. Eine wiederholte Bestätigung derselben Prüfung mietet keine zweite GPU. Bestehende Kapazitäts- und Bereinigungsprüfungen gelten weiterhin; eine vorhandene Miete wird nicht automatisch beendet.
+
 ## GPU-Pool und gemeinsame Mieten
 
-Unter **Rental & Automation** lässt sich **Max concurrent GPUs** einstellen (Standard **1**, maximal **16**). Damit nicht jeder Queue-Job von Hand gestartet werden muss, **Auto rent & start** auf **On** stellen und speichern. Die Bestätigung genehmigt ausdrücklich die Budgetziele pro Miete und für alle gleichzeitigen Mieten. Danach reicht **Save & Queue**: Sobald die Eingabevorbereitung fertig ist, mietet PBGui bis zum gespeicherten Limit und startet pro GPU einen Optimizer. Passende freie GPUs werden zuerst wiederverwendet. Aufbauende und noch nicht nachweislich gelöschte Mieten zählen zum Limit. **Auto rent & start** funktioniert auch mit Limit 1. Bei ausgeschaltetem Auto rent mietet **Start** nur eine GPU für die bestehende Queue, selbst wenn Max concurrent GPUs höher eingestellt ist; ein weiterer Queue-Job genehmigt keine zusätzliche Miete. Fuer eine weitere ausdrueckliche Miete waehrend laufender Jobs unter **GPU & Offers** ein anderes Angebot auswaehlen und **Rent** klicken. Die reservierte GPU auf ihrer eigenen Queue-Karte mit **Start queue** starten; jeweils nur eine manuelle Reservierung kann auf diesen Start warten.
+Unter **Rental & Automation** lässt sich **Max concurrent GPUs** einstellen (Standard **1**, maximal **16**). Damit nicht jeder Queue-Job von Hand gestartet werden muss, **Auto rent & start** auf **On** stellen und speichern. Die Bestätigung genehmigt ausdrücklich die Budgetziele pro Miete und für alle gleichzeitigen Mieten. Danach reicht **Save & Queue**: Sobald die Eingabevorbereitung fertig ist, mietet PBGui bis zum gespeicherten Limit und startet pro GPU einen Optimizer. Passende freie GPUs werden zuerst wiederverwendet. Aufbauende und noch nicht nachweislich gelöschte Mieten zählen zum Limit. **Auto rent & start** funktioniert auch mit Limit 1. **Start** in einer Jobzeile prüft unabhängig von Auto rent nur diesen ausgewählten Job. Ein weiterer Job genehmigt keine manuelle Miete. Fuer eine weitere ausdrueckliche Miete waehrend laufender Jobs unter **GPU & Offers** ein anderes Angebot auswaehlen und **Rent** klicken. Die reservierte GPU auf ihrer eigenen Queue-Karte mit **Start queue** starten; jeweils nur eine manuelle Reservierung kann auf diesen Start warten.
 
 Stunden, Budget und Leerlaufregel gelten **pro GPU-Miete**. Die Einstellungen zeigen die Summe der gleichzeitig geltenden Budgetziele. Dies ist kein Gesamtbudget über die Laufzeit des Pools: Solange der Pool aktiv ist und vorbereitete Jobs warten, kann er nach Ende einer Miete Ersatz-GPUs mieten. Neue Angebote müssen die genehmigten Anforderungen und Host-Sperren erfüllen. Ohne passendes Angebot zeigt die Queue den Grund und versucht es automatisch erneut.
 
@@ -296,11 +316,7 @@ Stunden, Budget und Leerlaufregel gelten **pro GPU-Miete**. Die Einstellungen ze
 
 Benötigt ein später hinzugefügter Job mehr Transferreserve, kann ein Worker mit aktuellem Budget-Control-Guard ungenutzte Mietzeit innerhalb desselben genehmigten Budgets in Transferreserve umschichten. PBGui startet den Job erst nach Bestätigung der verkürzten Deadline durch den Worker. Während einer ausstehenden Anpassung greift keine Leerlaufbereinigung. Bei älteren Guards oder unzureichendem Restbudget zeigt PBGui einen Hinweis zur manuellen Anpassung von **Transfer reserve/Budget**. Unbestätigte Reserven werden nicht ausgegeben und das Budget wird nicht automatisch erhöht.
 
-Unter **Rental & Automation** maximale Stunden, Budgetziel und Leerlaufregel zusammen mit den GPU-Anforderungen speichern. **Start** in der Jobzeile mietet direkt mit diesen gespeicherten Vorgaben, und sucht ein aktuelles passendes Angebot.
-Im Einzelmietmodus mietet PBGui einmal, richtet verifiziertes SSH ein und arbeitet die Jobs
-nacheinander auf derselben GPU ab. Ergebnisse werden jeweils vor dem nächsten
-Start lokal gesichert und importiert. Die CPU-Parallelität pro Lauf kommt aus
-der jeweiligen Optimizer-Konfiguration.
+Unter **Rental & Automation** maximale Stunden, Budgetziel und Leerlaufregel zusammen mit den GPU-Anforderungen speichern. Gemeinsame Mieten über **Auto rent & start** oder **Start queue** einer ausdrücklich gemieteten GPU richten verifiziertes SSH ein und bearbeiten passende Queue-Jobs nacheinander auf dieser GPU. Ergebnisse werden vor dem nächsten Start lokal gesichert und importiert. Die CPU-Parallelität kommt aus der jeweiligen Optimizer-Konfiguration. **Start** in einer Jobzeile verwendet dagegen die Einzeljob-Prüfung oben und beendet die eigene Miete nach diesem Job.
 
 Auch später hinzugefügte passende Jobs verwenden denselben Worker. Kursdaten
 werden anhand ihrer Prüfsummen zwischengespeichert; nur fehlende oder geänderte
@@ -345,6 +361,32 @@ PBGui teilt die Anfragedrosselung zwischen seinen lokalen Prozessen: vorsorglich
 Erst **deletion_verified**
 bestätigt die Löschung; blosses Stoppen kann weitere Speicherkosten verursachen.
 
+### Große Pareto-Sammlungen
+
+Manuelles Sammeln verwendet eine gemeinsame Frist für Verbindung, Übertragung,
+Verifikation und lokale Veröffentlichung. Standard sind 120 Sekunden plus eine
+Sekunde pro Pareto-JSON-Datei, mindestens 120 und höchstens 3600 Sekunden. PBGui
+verwendet den gespeicherten `pareto_count` oder bei fehlender Anzahl eine zeitlich
+begrenzte entfernte Dateinamenabfrage. Die dreiminütige Reserve für die abschließende
+Sammlung vor Mietende hat weiterhin Vorrang.
+
+Betreiber können `[vast] collect_timeout_seconds` in `pbgui.ini` oder die
+Umgebungsvariable `PBGUI_COLLECT_TIMEOUT_SECONDS` setzen. Der INI-Wert hat Vorrang;
+ausdrücklich gesetzte positive Fristen werden nicht auf 3600 Sekunden begrenzt.
+`[vast] collect_batch_files` legt die Paketgröße fest: standardmäßig 100
+Pareto-JSON-Dateien, zulässig sind positive ganze Zahlen.
+
+Jedes Paket wird vor der Veröffentlichung vollständig vorbereitet. Bei Timeout
+wird nur das noch unbestätigte Paket verworfen; die Meldung nennt **N/M Dateien**,
+bereits veröffentlichte Dateien bleiben erhalten. Der Job speichert
+`collection_incomplete` und `collection_progress` mit `published_files` und
+`total_files`; jedes bestätigte Paket aktualisiert außerdem `.pbgui_vast.json`.
+Ein erneuter Versuch desselben verifizierten Snapshots setzt am gespeicherten
+Paketstand fort. Veraltete Dateien der vorherigen Front werden erst nach dem
+letzten Paket entfernt. Bis dahin wird ein finales Ergebnis ausdrücklich als
+teilweise veröffentlicht markiert. Die Download-Verifikation bleibt vollständig:
+abgebrochene Downloads werden nicht veröffentlicht.
+
 ## Grenzen und Wiederaufnahme
 
 Vorübergehende Upload-/SSH-Fehler erhalten ein Wiederherstellungsfenster von 15 Minuten statt einer Grenze von zwei Versuchen. PBGui wartet zunächst 15, dann 30 und anschließend höchstens 60 Sekunden zwischen Versuchen und verwendet Teildateien bzw. geprüfte Blöcke weiter. Neuer beobachteter Transferfortschritt erneuert das Fenster; wiederholte Versuche ohne Fortschritt nicht. Das Log zeigt den nächsten Versuch und den ursprünglichen Verbindungsfehler. Der separate 15-Minuten-Timer für die Worker-Einrichtung gilt nach erfolgreicher Health-Prüfung nicht mehr für den Upload. Die Mietfrist abzüglich drei Minuten für Ergebnissicherung begrenzt weiterhin die Übertragung. Stop reagiert auch während der Wartezeit. Identitäts-, Integritäts- und Speicherplatzfehler führen weiterhin zum sofortigen Abbruch; Mietfrist und Budget werden nicht automatisch verlängert.
@@ -354,7 +396,11 @@ Controller und Mietwächter überleben Browser-/API-Neustarts. Ein entfernter
 Wächter versucht die Löschung unabhängig zur festen Frist. Nach einem Neustart
 des PBGui-Rechners mit **Resume supervision** die temporären Dienste wiederherstellen.
 
-**Budget**, **Deadline** und **Transfer reserve** stehen in eigenen Karten. Reserve-Eingaben zeigen vier Nachkommastellen. Das Eingabefeld für die Deadline-Anpassung startet immer mit 60 Minuten. Anpassungen sind in ganzen Minuten von 1 bis 1.440 möglich, innerhalb von Budget, 24-Stunden-Mietlimit und Aufräumreserve. Bei einer ausdrücklich angeforderten Deadline-Änderung aktualisiert PBGui einen älteren Mietwächter, während der Optimizer weiterläuft. Der neue Wächter muss zuerst die unveränderte Deadline bestätigen; erst danach wird die gewünschte Änderung gesendet. Bei fehlgeschlagener Übergabe wird der alte Wächter wieder aktiviert. Unbestätigte Anpassungen bleiben ausstehend und verlängern die lokale Deadline nicht. Während der Übergabe ist ein API-Neustart blockiert.
+Aktualisierte Worker für mehrtägige Mieten unterstützen Budget-, Deadline- und Transferreserve-Änderungen in der Queue und im zugeordneten Loop. Automatische Erhöhungen der Transferreserve warten weiterhin auf die Bestätigung des Workers und bleiben innerhalb des gewählten Budgets. Eine Budgetänderung verlängert die Loop-Laufzeit nicht automatisch.
+
+Das Eingabefeld für die maximale Mietdauer übernimmt die Grenze des aktiven Worker-Images. Bis ein veröffentlichtes Image für mehrtägige Mieten aktiviert ist, lehnt die API neue Mieteinstellungen, Starts und wartende Performance-Tests über 24 Stunden vor der Angebotsauswahl ab. Bereits gespeicherte längere Einstellungen bleiben zur Korrektur sichtbar. Ein nicht unterstützter wartender Test wird mit einer Erklärung abgebrochen, statt endlos erneut versucht zu werden.
+
+**Budget**, **Deadline** und **Transfer reserve** stehen in eigenen Karten. Reserve-Eingaben zeigen vier Nachkommastellen. Das Eingabefeld für die Deadline-Anpassung startet immer mit 60 Minuten. Anpassungen sind in ganzen Minuten von 1 bis 1.440 möglich, innerhalb von Budget und Aufräumreserve. Mehrtägige Mieten benötigen ein geprüftes Worker-Image mit entsprechendem Mietwächter; ältere Images behalten ihre Sicherheitsgrenze von 24 Stunden. Das aktive Image bleibt unverändert, bis der Kandidat gebaut, geprüft und veröffentlicht wurde. Bei einer ausdrücklich angeforderten Deadline-Änderung aktualisiert PBGui einen älteren Mietwächter, während der Optimizer weiterläuft. Der neue Wächter muss zuerst die unveränderte Deadline bestätigen; erst danach wird die gewünschte Änderung gesendet. Bei fehlgeschlagener Übergabe wird der alte Wächter wieder aktiviert. Unbestätigte Anpassungen bleiben ausstehend und verlängern die lokale Deadline nicht. Während der Übergabe ist ein API-Neustart blockiert.
 
 In der Karte der aktiven Miete kann das **Budgetziel** geändert werden. PBGui
 berechnet daraus die Löschfrist neu und übergibt die Änderung zur Bestätigung an

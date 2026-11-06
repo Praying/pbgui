@@ -151,6 +151,7 @@
   const stoppingJobs = new Map();
   const uncertainStops = new Map();
   const jobActions = new Map();
+  const collectingJobs = new Map();
   let actionLifecycle = 0;
   let actionView = null, actionViewGeneration = 0;
   const deletingJobs = new Set();
@@ -162,9 +163,14 @@
     return stoppingJobs.get(job.id) || (job.stop_requested ? 'Stop requested' : null);
   }
   function canRecoverJob(job) {
-    return !!job?.final_collected && ((!job.result_path || job.result_partial) ||
+    return !!job?.final_collected && ((!['completed','cancelled','failed'].includes(job.status)) || (!job.result_path || job.result_partial) ||
       (job.collection_incomplete && !!job.collection_error) ||
       (job.status === 'failed' && job.error === 'Raw results saved locally; result import needs retry'));
+  }
+  function canCollectJob(job) {
+    return !!job && job.collect_available === true && !['worker','calibration'].includes(job.kind)
+      && (!!job.final_collected || (job.uploaded && !stopPhase(job)))
+      && !jobActions.has(job.id) && !collectingJobs.has(job.id);
   }
   function canStopJob(job) {
     return !!job && (!stopPhase(job) || stopRetryAvailable(job)) && ['provisioning', 'uploading', 'running', 'collecting'].includes(job.status);
@@ -188,6 +194,7 @@
     }
     actionLifecycle++;
     jobActions.clear();
+    collectingJobs.clear();
   }
   function currentObservedOptimizer(item) {
     const observed = item?.observed_optimizer;
@@ -215,7 +222,7 @@
     const controller = new AbortController();
     controllers.add(controller);
     let timedOut = false;
-    const timer = setTimeout(() => { timedOut = true; controller.abort(); }, (["/jobs/prepare", "/queue/start"].includes(path) || path.endsWith('/requeue')) ? 600000 : 30000);
+    const timer = setTimeout(() => { timedOut = true; controller.abort(); }, (["/jobs/prepare", "/queue/start"].includes(path) || /^\/jobs\/[a-f0-9]{32}\/start$/.test(path) || path.endsWith('/requeue')) ? 600000 : path.endsWith('/collect') ? 120000 : 30000);
     try {
       const response = await fetch(apiBase + path, {
         credentials: 'same-origin', cache: 'no-store', ...options,
@@ -254,6 +261,11 @@
   }
 
   function renderSettings(data) {
+    if (Object.hasOwn(data, 'maximum_rental_hours')) {
+      const maximum = data.maximum_rental_hours;
+      if (Number.isFinite(maximum) && maximum > 0) el('job-hours').max = String(maximum);
+      else el('job-hours').removeAttribute('max');
+    }
     el('key-status').textContent = data.configured ? 'API key saved locally.' : 'No API key saved.';
     accountConfigured = !!data.configured;
     if (!accountConfigured && settingsVisible && settingsView === 'offers') showSettings('account');
@@ -1545,7 +1557,13 @@
     el('resume-worker').disabled ||= !queueState.paused;
     el('stop-job').textContent = stopRetryAvailable(job) ? 'Retry stop & collect' : stopPhase(job) || 'Stop & collect';
     el('stop-job').disabled = !canStopJob(job) || jobActions.has(job?.id);
-    el('recover-job').disabled = !canRecoverJob(job) || jobActions.has(job?.id);
+    el('recover-job').disabled = !canRecoverJob(job) || jobActions.has(job?.id) || collectingJobs.has(job?.id);
+    el('collect-job').disabled = !canCollectJob(job);
+    el('collect-job').textContent = collectingJobs.has(job?.id) ? 'Collecting Pareto…' : 'Collect Pareto';
+    el('collect-job').setAttribute('aria-description', job?.collect_unavailable_reason || '');
+    const collectReason = el('collect-unavailable-reason');
+    collectReason.textContent = job?.collect_available === false ? job.collect_unavailable_reason || '' : '';
+    collectReason.hidden = !collectReason.textContent;
     el('recover-job').textContent = jobActions.get(job?.id)?.action === 'recover' ? 'Importing results…' : 'Retry result import';
     el('job-results').hidden = !job || !job.result_path;
   }
@@ -1556,6 +1574,11 @@
     if (window.state) window.state.logResultName = job.result_path.split('/').pop() || job.config_name;
     openLogPanelResults();
   }
+
+  el('job-results').addEventListener('click', event => {
+    event.preventDefault();
+    if (!disposed) openCloudResults(selectedJob());
+  });
 
   function renderQueueOverview() {
     const banner = el('queue-rental');
@@ -2263,7 +2286,7 @@
         budgetInput.title = 'Budget target in USD'; budgetInput.setAttribute('aria-label', 'Budget target in USD');
         budgetInput = retainInput(budgetInput, 'Budget target in USD');
         const budgetButton = document.createElement('button'); budgetButton.type = 'button'; budgetButton.className = 'btn'; budgetButton.textContent = budgetChanging ? 'Saving…' : 'Save budget';
-        budgetButton.title = rental.deadline_protocol !== 2 ? 'Requires the updated budget-control worker guard' : 'Save budget target and recalculate deadline';
+        budgetButton.title = ![2, 3].includes(rental.deadline_protocol) ? 'Requires the updated budget-control worker guard' : 'Save budget target and recalculate deadline';
         budgetButton.disabled = rental.deadline_pending || budgetChanging;
         budgetButton.addEventListener('click', () => {
           const value = Number(budgetInput.value);
@@ -2288,7 +2311,7 @@
         for (const direction of [-1, 1]) {
           const button = document.createElement('button'); button.type = 'button'; button.className = 'btn';
           button.textContent = direction < 0 ? '−' : '+';
-          button.title = rental.deadline_protocol !== 1 && rental.deadline_protocol !== 2 ? 'Requires an updated worker deadline guard' : (direction < 0 ? 'Shorten' : 'Extend') + ' deadline by entered minutes';
+          button.title = ![1, 2, 3].includes(rental.deadline_protocol) ? 'Requires an updated worker deadline guard' : (direction < 0 ? 'Shorten' : 'Extend') + ' deadline by entered minutes';
           button.setAttribute('aria-label', button.title);
           button.disabled = rental.deadline_pending || deadlineChanging;
           button.addEventListener('click', () => {
@@ -2315,7 +2338,7 @@
         reserveInput.title = 'Transfer reserve in USD'; reserveInput.setAttribute('aria-label', 'Transfer reserve in USD');
         reserveInput = retainInput(reserveInput, 'Transfer reserve in USD');
         const reserveButton = document.createElement('button'); reserveButton.type = 'button'; reserveButton.className = 'btn'; reserveButton.textContent = reserveChanging ? 'Saving…' : 'Save reserve';
-        reserveButton.title = rental.deadline_protocol !== 2 ? 'Requires the updated budget-control worker guard' : 'Save transfer reserve and shorten deadline if needed';
+        reserveButton.title = ![2, 3].includes(rental.deadline_protocol) ? 'Requires the updated budget-control worker guard' : 'Save transfer reserve and shorten deadline if needed';
         reserveButton.disabled = rental.deadline_pending || reserveChanging;
         reserveButton.addEventListener('click', () => {
           const value = Number(reserveInput.value);
@@ -2332,7 +2355,7 @@
           if (!event.target.closest('button')) return;
           let reason = '';
           if (!active) reason = 'This rental is not active.';
-          else if (![1, 2].includes(rental.deadline_protocol)) reason = 'Worker is not ready for changes yet. Please try again after startup.';
+          else if (![1, 2, 3].includes(rental.deadline_protocol)) reason = 'Worker is not ready for changes yet. Please try again after startup.';
           else if (rental.deadline_protocol === 1 && label !== 'Deadline') reason = 'This worker version does not support changing this value.';
           if (reason) {
             event.stopPropagation();
@@ -2598,6 +2621,9 @@
     renderCloudDashboard(observedOptimizerJob(item));
     el('optlog-activity').textContent = observed.activity || 'Optimizer process detected';
     el('stop-job').disabled = true;
+    el('collect-job').disabled = true;
+    el('collect-unavailable-reason').textContent = '';
+    el('collect-unavailable-reason').hidden = true;
     el('recover-job').disabled = true;
     el('requeue-job').hidden = true;
     el('start-job').hidden = true;
@@ -2935,8 +2961,47 @@
       if (!disposed) renderJob();
     }
   }
+  async function startSingleCloudJob(job) {
+    if (startingQueue || renting || workerAction || disposed) return;
+    startingQueue = true; startingJobId = job.id;
+    renderJob(); renderQueueMaybeDeferred();
+    message('Reviewing optimizer start…');
+    try {
+      const path = '/jobs/' + encodeURIComponent(job.id);
+      const review = await request(path + '/start-preview', {method:'POST'});
+      if (disposed) return;
+      const convergence = review.convergence || {};
+      const stopping = convergence.convergence_enabled
+        ? 'Stop after ' + String(convergence.convergence_patience) + ' exact evaluations without improvement above ' + String(convergence.convergence_tolerance_pct) + '%, after at least ' + String(convergence.convergence_min_exact) + ' exact evaluations.'
+        : 'Run until the iteration, time or budget limit.';
+      const confirmed = await window.PBGuiDialogs.confirm({
+        title:'Start this Vast optimizer?', confirmText:'Start job',
+        message:String(review.name) + '\n' + String(review.iterations) + ' iterations · ' + (review.exchanges || []).join(', ') +
+          '\n' + String(review.start_date || '') + ' → ' + String(review.end_date || '') +
+          '\nGPU: ' + String(review.gpu_name || 'Saved requirements') + ', up to $' + fmt(review.max_price_per_hour,2) + '/hour.' +
+          '\nBudget: $' + fmt(review.budget,2) + ' · Duration: up to ' + String(review.hours) + ' hours.' +
+          '\n' + stopping + '\nRent one GPU for this job and clean it up afterward. Other queued jobs and Auto rent stay unchanged.'
+      });
+      if (disposed || !confirmed) { if (!disposed) message(''); return; }
+      message('Starting this optimizer…');
+      await request(path + '/start', {method:'POST', body:JSON.stringify({
+        review_id:review.review_id, payload_digest:review.payload_digest, accept_rental_and_cleanup:true
+      })});
+      if (!disposed) {
+        await refreshJobs(job.id);
+        message('Job rental authorized. GPU preparation and optimizer progress appear automatically.');
+      }
+    } catch (error) {
+      if (!disposed) { message(error.message, true); if (typeof toast === 'function') toast(error.message, 'err'); }
+    } finally {
+      startingQueue = false; startingJobId = null;
+      if (!disposed) { renderJob(); renderQueueMaybeDeferred(); }
+    }
+  }
+
   async function startCloudQueue(job) {
     if (renting || startingQueue || workerAction || disposed || !supervision || (!savedPreferences && !(worker && !['none','deletion_verified'].includes(worker.rental_state))) || (job && deletingJobs.has(job.id))) return;
+    if (job && job.kind !== 'calibration') return startSingleCloudJob(job);
     if (savedPreferences?.auto_rent && !(await window.PBGuiDialogs.confirm({
       title:'Start GPU pool',
       message:'Automatically rent up to ' + savedPreferences.max_rentals + ' GPUs for queued jobs, with a budget target of $' + fmt(savedPreferences.budget,2) + ' per rental (up to $' + fmt(savedPreferences.max_rentals * savedPreferences.budget,2) + ' simultaneously)? Each rental lasts at most ' + savedPreferences.hours + ' hours. Replacement rentals may be started while jobs remain queued. Pause queue prevents new rentals; End rentals stops the pool.',
@@ -3152,10 +3217,40 @@
   });
   el('settings-end-rental')?.addEventListener('click', () => el('end-worker')?.click());
   el('start-job').addEventListener('click', () => startCloudQueue(selectedJob()));
+  async function runCollect(identifier) {
+    const job = jobRows.find(row => row.id === identifier);
+    if (disposed || !canCollectJob(job)) return;
+    const token = {lifecycle:actionLifecycle, view:actionViewGeneration,
+      log:window.state?.logContextGeneration};
+    collectingJobs.set(identifier, token);
+    const owns = () => !disposed && actionLifecycle === token.lifecycle && collectingJobs.get(identifier) === token;
+    const visible = () => owns() && actionViewGeneration === token.view && selectedJobId === identifier
+      && window.state?.cloudLogId === identifier && window.state?.logContextGeneration === token.log;
+    const repaint = () => {
+      renderJob();
+      const displayed = jobRows.find(row => row.id === window.state?.cloudLogId);
+      if (displayed) renderCloudDashboard(displayed);
+    };
+    repaint();
+    try {
+      await request('/jobs/' + encodeURIComponent(identifier) + '/collect', {method:'POST'});
+      if (!owns()) return;
+      await refreshJobs(undefined, true);
+      // A poll may already have consumed last_backup_at before import finished.
+      // Refresh the current panel explicitly; never restore an abandoned log.
+      if (owns() && typeof refreshLiveResultsDuringRun === 'function') await refreshLiveResultsDuringRun(true);
+      if (visible()) message('Pareto results collected. Optimizer and rental controls were not changed.');
+    } catch (error) {
+      if (visible()) message(error.message, true);
+    } finally {
+      if (owns()) { collectingJobs.delete(identifier); repaint(); }
+    }
+  }
+  el('collect-job').addEventListener('click', () => { void runCollect(selectedJob()?.id); });
   async function runJobAction(action, identifier) {
     let job = jobRows.find(row => row.id === identifier);
     const eligible = () => action === 'stop' ? canStopJob(job) : canRecoverJob(job);
-    if (disposed || jobActions.has(identifier) || !eligible()) return;
+    if (disposed || jobActions.has(identifier) || (action === 'recover' && collectingJobs.has(identifier)) || !eligible()) return;
     const token = {action, lifecycle:actionLifecycle, view:actionViewGeneration,
       uncertain:uncertainStops.has(identifier), submitted:false};
     jobActions.set(identifier, token);

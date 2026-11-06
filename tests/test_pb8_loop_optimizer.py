@@ -1,6 +1,8 @@
 """Offline autonomous PB8 loop policy, budgeting, ownership and recovery contracts."""
 from __future__ import annotations
 
+from javascript_checks import run_javascript
+
 import asyncio
 import copy
 import json
@@ -552,7 +554,7 @@ def test_candidate_evidence_is_not_shortlisted_by_goal_score(record, tmp_path, m
 
 
 def test_invalid_gpu_variant_is_repaired_before_job_allocation(record, tmp_path, monkeypatch):
-    """Native GPU errors return to AI repair without launching a doomed job."""
+    """Worker edits return to AI repair before allocation; approved drift guards stay fixed."""
     store, row = record
     monkeypatch.setattr('pb8_loop_controller._log', lambda *args, **kwargs: None)
     async def isolated_operation(function, *args):
@@ -563,6 +565,7 @@ def test_invalid_gpu_variant_is_repaired_before_job_allocation(record, tmp_path,
         """Capture an isolated GPU input before initial AI variant selection."""
         value['settings']['execution'] = 'vast'
         value['initial_config'] = valid_gpu_config()
+        value['initial_config']['optimize']['gpu'] = {'validate_per_generation': 32, 'drift_window': 256}
         value.update(phase='bootstrap', rubric=RULE, bootstrap_candidates=[],
                      bootstrap={'status': 'evaluating', 'candidate_count': 0, 'sources': []})
     store.update(OWNER, row['id'], bootstrap)
@@ -572,17 +575,19 @@ def test_invalid_gpu_variant_is_repaired_before_job_allocation(record, tmp_path,
             changed = copy.deepcopy(current['initial_config'])
             changed['optimize']['gpu'] = {'validate_per_generation': 32,
                                           'drift_window': 256 if evidence.get('repair_error') else 128}
+            if evidence.get('repair_error'):
+                changed['optimize']['scoring'].append({'metric': 'drawdown_worst_strategy_eq', 'goal': 'min'})
             return {'variants': [{'config': changed, 'overrides': {}}]}
     backend = FakeBackend()
     controller = LoopController(tmp_path, store=store, backend=backend, ai=AI())
     asyncio.run(controller.tick(OWNER, row['id']))
     current = store.read(OWNER, row['id'])
     assert current['status'] == 'running' and current['phase'] == 'bootstrap'
-    assert 'at least 256' in current['repair_error']
+    assert 'Worker execution settings are fixed' in current['repair_error']
     assert current['jobs'] == [] and not backend.starts and not backend.prepared
     asyncio.run(controller.tick(OWNER, row['id']))
     current = store.read(OWNER, row['id'])
-    assert current['phase'] == 'optimize' and current['errors'] == 0
+    assert current['phase'] == 'optimize' and current['errors'] == 0, current.get('repair_error')
     assert len(current['jobs']) == 1 and current['repair_error'] is None
 
 
@@ -734,6 +739,7 @@ def test_three_vast_slots_use_frozen_budget_and_reject_fourth(tmp_path, monkeypa
     from secure_files import ensure_private_directory
     from vast_provider import VastError
     from vast_direction_fixtures import direction_config
+    from vast_integrity_fixtures import freeze_test_proof
     store = LoopStore(tmp_path / 'data/loop_optimizer')
     preferences = RentalPreferences(gpu_name='RTX 3060', budget=5, max_rentals=3).model_dump()
     row = store.create(OWNER, settings(execution='vast', vast=preferences), valid_gpu_config(), {}, {'pb8': 'commit'}, [], config()['backtest'])
@@ -744,6 +750,7 @@ def test_three_vast_slots_use_frozen_budget_and_reject_fourth(tmp_path, monkeypa
     folder = ensure_private_directory(directory / 'input')
     write_json(folder / 'optimize.json', direction_config())
     write_json(folder / 'manifest.json', {'config_sha256': digest(folder / 'optimize.json')})
+    freeze_test_proof(jobs, 'b' * 32)
     monkeypatch.setattr(vast_queue, 'PROJECT', tmp_path)
     monkeypatch.setattr(vast_queue, 'preflight_local_metadata', lambda *args: None)
     def start(identifier, offer, hours, budget):
@@ -1568,12 +1575,14 @@ def test_overlapping_progress_watches_have_one_timer():
     """Share initial work, render before rental, reject stale replies and retain action updates."""
     import subprocess
     script = r"""
-const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const assert=browserAssert,fs=testSources,vm=browserScope;
 const source=fs.readFileSync('frontend/js/pb8_loop_optimizer.js','utf8');
-const body=source.slice(source.indexOf('  function cancelRentalRead('),source.indexOf('  function mount()'));
+const body=source.slice(source.indexOf('  function settleInitialView('),source.indexOf('  function navigationTiming('))+source.slice(source.indexOf('  function cancelRentalRead('),source.indexOf('  function mount()'));
 const pending=[],rentals=[],timers=new Map(),order=[];let count=0;
 const run={id:'a',settings:{execution:'vast'}},snapshots=new Map();
 const context=vm.createContext({AbortController,performance,Map,Set,Promise,
+ URL,location:{href:'http://localhost/'},auxiliaryBlocked:new Map(),auxiliaryFlights:new Map(),detailFlights:new Map(),detailQueue:[],detailActive:0,
+ uiError:'',uiErrorPanel:'',pollError:'',pollErrorPanel:'',definitionsLoaded:false,renderWorkflow(){},overviewLoaded:false,initialViewWaiters:[],
  timer:null,watchGeneration:0,generation:0,rentalGeneration:0,rentalFlight:null,pollFlight:null,pollAgain:false,pollBlocked:'',stopped:false,
  rows:[],definitions:[],selected:'a',selectedRuns:new Set(['a']),rentalSnapshots:snapshots,
  reportView:'',document:{hidden:false,getElementById:()=>null},window:{state:{}},state:{panel:'loops-queue',navigationSeq:1},loopRenderStarted:0,
@@ -1585,7 +1594,7 @@ const context=vm.createContext({AbortController,performance,Map,Set,Promise,
 });
 vm.runInContext(body,context);
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
-function reply(){assert.equal(pending.length,2);pending.shift().resolve({loops:[run]});pending.shift().resolve({configs:[]});}
+function reply(){assert.equal(pending.length,2);pending.splice(0).forEach(item=>item.resolve(item.path==='/configs'?{configs:[]}:{loops:[run]}));}
 (async()=>{
  const first=context.watch(),second=context.watch();assert.equal(pending.length,2,'one initial fetch pair');
  reply();await first;await second;
@@ -1603,9 +1612,9 @@ function reply(){assert.equal(pending.length,2);pending.shift().resolve({loops:[
  assert.equal(timers.size,0,'shutdown cannot revive timer');
  // A BFCache restart can finish cancelled old work and start a new cycle.
  context.stopped=false;const resumed=context.watch();reply();await resumed;assert.equal(timers.size,1);
-})().catch(error=>{console.error(error);process.exitCode=1;});
+})().catch(error=>{console.error(error);testResult.exitCode=1;});
 """
-    result = subprocess.run(['node','-e',script], cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True, timeout=10)
+    result = run_javascript(['-e',script], cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, result.stdout + result.stderr
 
 
@@ -1613,20 +1622,22 @@ def test_slow_rental_reads_survive_regular_polls():
     """Five-second reads finish across three-second polls; context changes and suspension cancel them."""
     import subprocess
     script = r"""
-const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const assert=browserAssert,fs=testSources,vm=browserScope;
 const source=fs.readFileSync('frontend/js/pb8_loop_optimizer.js','utf8');
-const body=source.slice(source.indexOf('  function cancelRentalRead('),source.indexOf('  function mount()'));
+const body=source.slice(source.indexOf('  function settleInitialView('),source.indexOf('  function navigationTiming('))+source.slice(source.indexOf('  function cancelRentalRead('),source.indexOf('  function mount()'));
 let clock=0,next=0,rentalRequests=0,aborted=0,rentalRenders=0,loopRenders=0;
 const timers=new Map(),snapshots=new Map(),runs=[{id:'fixture',settings:{execution:'vast'}},{id:'other',settings:{execution:'vast'}}];
 function schedule(fn,delay){timers.set(++next,{fn,due:clock+delay});return next;}
 const context=vm.createContext({AbortController,performance,Map,Set,Promise,
+ URL,location:{href:'http://localhost/'},auxiliaryBlocked:new Map(),auxiliaryFlights:new Map(),detailFlights:new Map(),detailQueue:[],detailActive:0,
+ uiError:'',uiErrorPanel:'',pollError:'',pollErrorPanel:'',definitionsLoaded:false,renderWorkflow(){},overviewLoaded:false,initialViewWaiters:[],
  timer:null,watchGeneration:0,generation:0,rentalGeneration:0,rentalFlight:null,pollFlight:null,pollAgain:false,pollBlocked:'',stopped:false,
  rows:[],definitions:[],selected:'fixture',selectedRuns:new Set(['fixture']),rentalSnapshots:snapshots,
  reportView:'',document:{hidden:false,getElementById:()=>null},window:{state:{}},state:{panel:'loops-queue',navigationSeq:1},loopRenderStarted:null,
  isLoopPanel:()=>true,render(){loopRenders++;},restoreLoopScroll(){},navigationTiming(){},restoreNativeLog:async()=>{},
  rentalRun:()=>runs.find(run=>run.id===context.selected),renderRental(){rentalRenders++;},refreshRentalBilling(){},showMessages(){},forgetRun(){},
  request(path,body,method,options){
-   if(path==='')return Promise.resolve({loops:runs});if(path==='/configs')return Promise.resolve({configs:[]});
+   if(path==='?summary=true')return Promise.resolve({loops:runs});if(path==='/configs')return Promise.resolve({configs:[]});
    const attempt=++rentalRequests;
    return new Promise((resolve,reject)=>{
      const timer=schedule(()=>resolve({rental:{worker_id:'worker-'+attempt}}),5000);
@@ -1648,9 +1659,9 @@ async function advance(ms){const end=clock+ms;while(true){const entry=[...timers
  context.state.panel='loops-queue';await context.poll(false);
  context.stopped=true;context.watchGeneration++;context.clearTimeout(context.timer);context.cancelRentalRead();assert.equal(aborted,3);
  context.stopped=false;await context.watch();await advance(5000);assert.equal(rentalRenders,3,'resumed lifecycle starts a fresh read');assert.equal(snapshots.has('other'),true);
-})().catch(error=>{console.error(error);process.exitCode=1;});
+})().catch(error=>{console.error(error);testResult.exitCode=1;});
 """
-    result = subprocess.run(['node','-e',script], cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True, timeout=10)
+    result = run_javascript(['-e',script], cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, result.stdout + result.stderr
 
 
@@ -1749,7 +1760,7 @@ def test_saved_results_use_optional_jev_once_before_adjustment(record,tmp_path):
 
 def test_jev_projection_preserves_goal_evidence_within_context(record, monkeypatch):
     """Large optimizer metric catalogs cannot prevent a goal-specific JEV consultation."""
-    import ai_openrouter
+    import ai_jev
     from ai_token_budget import estimate_jev_input_tokens, JEV_CONTEXT_TOKENS
     store, row = record
     row = store.update(OWNER, row['id'], lambda current: current.update(
@@ -1760,10 +1771,10 @@ def test_jev_projection_preserves_goal_evidence_within_context(record, monkeypat
     original = {'state': {'goals': row['settings']['goals'], 'candidates': candidates},
                 'questions': {'best': {'type': 'choice', 'instructions': 'Choose the best candidate',
                                       'criteria': {item['id']: json.dumps(item['metrics'])[:500] for item in candidates}}}}
-    with pytest.raises(ai_openrouter.OpenRouterDecisionError, match='context budget'):
-        ai_openrouter.prepare_user_jev_payload(ai_openrouter.JEV_MODEL, original)
+    with pytest.raises(ai_jev.OpenRouterDecisionError, match='context budget'):
+        ai_jev.prepare_user_jev_payload(ai_jev.JEV_MODEL, original)
     events = []
-    async def budget(session, key, requests, maximum):
+    async def budget(transport, requests, maximum):
         """Check the production payload before any reservation or dispatch."""
         assert store.read(OWNER, row['id'])['jev_usd_reserved'] == 0
         request = requests[0]
@@ -1774,13 +1785,13 @@ def test_jev_projection_preserves_goal_evidence_within_context(record, monkeypat
         assert set(request['questions']['best']['criteria']) == {item['id'] for item in candidates}
         assert maximum == row['settings']['jev_max_cost_usd']
         events.append('budget')
-    async def send(session, key, request):
+    async def send(transport, request):
         """Return a typed transport fixture after the durable cost reservation."""
         assert store.read(OWNER, row['id'])['jev_usd_reserved'] == row['settings']['jev_max_cost_usd']
         events.append('send')
         return 'Choice: ' + candidates[0]['id']
-    monkeypatch.setattr(ai_openrouter, 'check_jev_budget', budget)
-    monkeypatch.setattr(ai_openrouter, '_send_structured_jev_request', send)
+    monkeypatch.setattr(ai_jev, 'check_jev_budget', budget)
+    monkeypatch.setattr(ai_jev, '_send_structured_jev_request', send)
     chat = _loop_chat_for_payloads([])
     chat.credentials.openrouter_configured = lambda owner: True
     chat.credentials.load_openrouter_key = lambda owner: 'test-only-key'
@@ -1792,23 +1803,23 @@ def test_jev_projection_preserves_goal_evidence_within_context(record, monkeypat
 
 def test_jev_cost_rejection_does_not_reserve_or_dispatch(record, monkeypatch):
     """Projection cannot bypass the existing shared JEV consultation cost limit."""
-    import ai_openrouter
+    import ai_jev
     store, row = record
     row = store.update(OWNER, row['id'], lambda current: current.update(
         rubric=RULE, settings={**current['settings'], 'jev_budget_usd': .05, 'jev_max_cost_usd': .01}))
     candidates = [{'id': 'c_first', 'metrics': {'gain': 1}}, {'id': 'c_second', 'metrics': {'gain': 2}}]
     async def budget(*args):
         """Reject the cost estimate before a paid request."""
-        raise ai_openrouter.JevBudgetExceeded(.1)
+        raise ai_jev.JevBudgetExceeded(.1)
     async def send(*args):
         """No provider traffic is allowed after failed preflight."""
         pytest.fail('JEV must not dispatch after cost rejection')
-    monkeypatch.setattr(ai_openrouter, 'check_jev_budget', budget)
-    monkeypatch.setattr(ai_openrouter, '_send_structured_jev_request', send)
+    monkeypatch.setattr(ai_jev, 'check_jev_budget', budget)
+    monkeypatch.setattr(ai_jev, '_send_structured_jev_request', send)
     chat = _loop_chat_for_payloads([])
     chat.credentials.openrouter_configured = lambda owner: True
     chat.credentials.load_openrouter_key = lambda owner: 'test-only-key'
-    with pytest.raises(ai_openrouter.JevBudgetExceeded):
+    with pytest.raises(ai_jev.JevBudgetExceeded):
         asyncio.run(LoopAI(store, chat).jev(row, candidates))
     assert store.read(OWNER, row['id'])['jev_usd_reserved'] == 0
 
@@ -1816,7 +1827,7 @@ def test_jev_cost_rejection_does_not_reserve_or_dispatch(record, monkeypatch):
 @pytest.mark.parametrize('known_error', [True, False])
 def test_initial_jev_failure_retains_safe_reason_only(record, tmp_path, known_error):
     """Known JEV diagnostics survive without exposing arbitrary transport exception details."""
-    from ai_openrouter import OpenRouterDecisionError
+    from ai_jev import OpenRouterDecisionError
     store, row = record
     class AI(SavedResultAI):
         """Request optional JEV and reject it with a controlled diagnostic."""
@@ -2405,7 +2416,12 @@ def test_loop_overview_options_do_not_load_or_validate_legacy_sources(tmp_path, 
     def forbidden(*args, **kwargs):
         raise AssertionError('Overview must not prepare a selected config')
 
-    monkeypatch.setattr(opt, 'list_configs', lambda *args, **kwargs: {'configs': [{'name': 'legacy'}]})
+    def names_only(session, *, include_result_summary, include_backtest_counts):
+        assert include_result_summary is False
+        assert include_backtest_counts is False
+        return {'configs': [{'name': 'legacy'}]}
+
+    monkeypatch.setattr(opt, 'list_configs', names_only)
     monkeypatch.setattr(opt, 'get_config', forbidden)
     monkeypatch.setattr(api_loop, '_source_bundle', forbidden)
     monkeypatch.setattr(api_loop, '_controller', SimpleNamespace(backend=SimpleNamespace(initial=forbidden)))
@@ -2577,7 +2593,7 @@ def test_loop_table_sort_raw_values_and_immutable_groups():
     """Exercise production comparators, every column, fallback dates and immutable semantic references."""
     import subprocess
     script = r"""
-const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const assert=browserAssert,fs=testSources,vm=browserScope;
 const source=fs.readFileSync('frontend/js/pb8_loop_optimizer.js','utf8');
 function fn(name){const start=source.indexOf('  function '+name+'(');return source.slice(start,source.indexOf('\n  function ',start+1));}
 const context=vm.createContext({Intl,Date,workflow:{},selectedObserver:(run,round,kind)=>(run.observer_jobs||[]).find(job=>job.round===round&&job.kind===kind)});
@@ -2641,7 +2657,7 @@ equal(runSortValue(small,small.cycles,small.cycles[0],null,'Loop 1','selection')
 equal(runSortValue(small,small.cycles,{...small.cycles[0],ai_evaluated:true,winner_candidate_id:'ten'},null,'Loop 1','selection'),'ten');
 `,context);
 """
-    result = subprocess.run(['node', '-e', script], cwd=Path(__file__).resolve().parents[1],
+    result = run_javascript(['-e', script], cwd=Path(__file__).resolve().parents[1],
                             capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, result.stdout + result.stderr
 
@@ -2650,7 +2666,7 @@ def test_loop_config_action_handlers_reject_unavailable_targets():
     """Validate action targets independently of button state and recheck after asynchronous confirmation."""
     import subprocess
     script = r"""
-const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const assert=browserAssert,fs=testSources,vm=browserScope;
 const source=fs.readFileSync('frontend/js/pb8_loop_optimizer.js','utf8');
 function fn(name){const start=source.indexOf('  '+(name==='knownDefinitions'?'function ':'async function ')+name+'(');const rest=source.slice(start);return rest.slice(0,rest.search(/\n  (?:async )?function /));}
 const events=[];
@@ -2678,8 +2694,8 @@ vm.runInContext(['knownDefinitions','openDefinition','queueDefinitions','deleteD
  context.definitions=[{name:'saved'}];context.definitionsLoaded=false;
  await context.queueDefinitions(['saved']);assert.deepEqual(events,['ai','/configs/saved/queue','poll']);
  assert.equal(context.queueing,false);
-})().catch(error=>{console.error(error);process.exitCode=1;});
+})().catch(error=>{console.error(error);testResult.exitCode=1;});
 """
-    result = subprocess.run(['node', '-e', script], cwd=Path(__file__).resolve().parents[1],
+    result = run_javascript(['-e', script], cwd=Path(__file__).resolve().parents[1],
                             capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, result.stdout + result.stderr

@@ -27,6 +27,7 @@ Before creating or modifying pages, top navigation, sidebars, main views, or pag
 ## Project Architecture
 
 ### Stack
+- **Project-wide stack policy**: [docs/architecture.md](docs/architecture.md) is mandatory. Use Python/FastAPI and browser Vanilla JS only; no Node.js/npm dependencies in application, installation, build or project-owned test tooling. Existing legacy tooling deviations must be reported explicitly rather than treated as exceptions or copied into new code.
 - **Backend**: FastAPI. All new features as FastAPI routes.
 - **Frontend**: Vanilla JS + HTML (no React, Vue, jQuery). Served via FastAPI `/app/` static mount.
 - **CSS**: Custom dark theme, CSS variables per page (`:root`), no Tailwind/Bootstrap.
@@ -195,8 +196,7 @@ SSE /api/live/stream → delta applies on top of DB snapshot
 - Use `@pytest.mark.parametrize` for multiple cases.
 - Module/class/function docstrings required.
 
-<!-- gitnexus:start -->
-# GitNexus — Code Intelligence
+## Python-only change analysis
 
 This project is indexed by GitNexus as **pbgui** (60584 symbols, 169558 relationships, 1065 execution flows).
 
@@ -239,3 +239,9 @@ This project is indexed by GitNexus as **pbgui** (60584 symbols, 169558 relation
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
+
+- Before editing, run `python tools/code_impact.py SYMBOL --repo .` once for the affected scope and review actual callers/imports. It builds a fresh AST inventory without executing project modules or requiring a separate index/runtime.
+- Treat `UNKNOWN`, unresolved dynamic receivers and ambiguous names as requiring source inspection. An empty caller list never proves code is unused.
+- Warn before changes with HIGH or CRITICAL impact. Review authentication, persistence, concurrency and background ownership boundaries explicitly.
+- Before committing, run `python tools/code_impact.py --changed --repo .` and review changed Python definitions plus the changed browser JavaScript and its focused tests. This inventory is conservative and does not claim cross-language call resolution.
+- Do not add a JavaScript-based code indexer, package bootstrap or automation server to the project. Browser tests use the direct Python driver documented in `tests/README.md`.

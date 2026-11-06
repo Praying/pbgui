@@ -37,7 +37,7 @@ def test_apply_rechecks_remote_swap_even_when_target_is_already_saved(remote_swa
     service._build_vps_config = lambda token, obj: {"swap": obj.swap}
     service._start_vps_config_apply = lambda *args, **kwargs: starts.append(kwargs) or {"started": True}
 
-    result = service.save_vps_config("session", "test-vps", {"swap": "2G", "check_remote_swap": True})
+    result = service.save_vps_config("session", "test-vps", {"swap": "2G", "check_remote_swap": True}, apply_remote=True)
 
     assert reads == [True]
     assert vps.user_pw is None
@@ -102,3 +102,32 @@ def test_remote_swap_read_distinguishes_no_swap_from_command_failure(monkeypatch
     else:
         assert vps.fetch_vps_info()["swap"] == expected
     assert closed == [True]
+
+
+@pytest.mark.parametrize('kwargs', [{}, {'apply_remote': False}])
+def test_command_presave_cannot_apply_remote_settings(kwargs):
+    """Default and explicitly local saves never probe or alter remote swap/firewall."""
+    service = object.__new__(VPSManagerService)
+    vps = SimpleNamespace(hostname='fixture',swap='6G',firewall=False,firewall_ssh_port=22,firewall_ssh_ips='',save=lambda:None)
+    service._require_vps=lambda host:vps
+    service._build_vps_config=lambda *args:{'swap':vps.swap}
+    def apply_form(token,obj,form):
+        """Persist a changed form in isolated memory only."""
+        obj.swap=form['swap'];obj.firewall=form['firewall']
+    service._apply_vps_setup_form=apply_form
+    def forbidden(*args,**kwargs):
+        """No remote IO or task may occur from an implicit save."""
+        pytest.fail('Implicit save attempted remote work')
+    vps.fetch_vps_info=forbidden
+    service._start_vps_config_apply=forbidden
+    result=service.save_vps_config('fixture-token','fixture',{'swap':'0','firewall':True,'check_remote_swap':True},**kwargs)
+    assert result['remote_apply']['started'] is False
+    assert result['swap_changed'] and result['firewall_changed']
+
+
+@pytest.mark.parametrize('value', [None,0,1,'false','true'])
+def test_remote_apply_requires_boolean(value):
+    """Malformed websocket flags cannot turn a save into a remote apply."""
+    service=object.__new__(VPSManagerService)
+    with pytest.raises(ValueError,match='boolean'):
+        service.save_vps_config('fixture','fixture',{},apply_remote=value)

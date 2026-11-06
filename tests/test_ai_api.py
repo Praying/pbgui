@@ -210,9 +210,10 @@ def test_jev_preview_routes_are_owner_scoped_and_no_store(monkeypatch) -> None:
     class FakeService:
         """Record the explicit preview lifecycle."""
 
-        async def preview_jev_transfer(self, owner, conversation_id, message, model):
+        async def preview_jev_transfer(self, owner, conversation_id, message, model, provider):
             assert len(owner) == 32 and conversation_id == "a" * 32
             assert message == "request" and model == "typesafe/jev-1.13"
+            assert provider == "openrouter"
             return {"preview_id": "b" * 32, "payload": {"state": "request"}}
 
         async def discard_jev_preview(self, owner, conversation_id, preview_id):

@@ -19,11 +19,13 @@ from vast_credentials import VastCredentialStore
 from vast_jobs import SUPPORTED_RENTAL_IMAGES, SUPPORTED_RENTAL_IMAGE_REVISIONS, PROJECT, JobStore, digest, job_id, write_json
 from vast_provider import VastRateLimit, VastClient, VastError, positive_id
 from vast_transfer import WorkerConnection, import_results
+from vast_snapshot import snapshot, bounded_lock
 
 SERVICE = "VastRunner"
 RUNNER_CODE_SERIAL = (PROJECT / "api/serial.txt").read_text().strip()
 UPLOAD_RECOVERY_SECONDS = 15 * 60
 UPLOAD_FINISH_RESERVE_SECONDS = 180
+COLLECT_TEARDOWN_GRACE_SECONDS = 240
 
 
 def schedule_upload_retry(store: JobStore, identifier: str, exc: Exception, deadline: float) -> None:
@@ -104,7 +106,11 @@ def validate_intent(intent: dict, identifier: str) -> dict:
     if intent.get("label") != "pbgui-vast-" + identifier:
         raise VastError("Invalid cloud rental ownership")
     duration = float(intent["deadline"]) - float(intent["accepted_at"])
-    if not 0 < duration <= 86400 or not .1 <= float(intent["budget_usd"]) <= 100:
+    from vast_worker_capabilities import supports
+    import math
+    if (not math.isfinite(duration) or duration <= 0
+            or (duration > 86400 and not supports(intent['image'], 'multi_day'))
+            or not .1 <= float(intent["budget_usd"]) <= 100):
         raise VastError("Invalid cloud rental limits")
     positive_id(intent["offer"]["id"])
     return intent
@@ -123,7 +129,16 @@ def rental_payload(intent: dict, registry_token: str = "") -> dict:
                "nohup /usr/local/bin/python /work/pbgui/worker.py guard > /work/pbgui/guard.log 2>&1 < /dev/null &\n")
     return {"client_id": "me", "image": intent["image"], "disk": intent["offer"]["disk_gb"],
             "label": intent["label"], "runtype": "ssh_direct", "target_state": "running", "cancel_unavail": True,
-            "onstart": startup, "env": {"PBGUI_DEADLINE": str(intent["deadline"]), "PBGUI_JOB_ID": intent["id"], "PBGUI_MAX_DEADLINE": str(maximum_deadline(intent)), "PBGUI_HARD_DEADLINE": str(intent['accepted_at'] + 86400 if 'accepted_at' in intent else maximum_deadline(intent))}}
+            "onstart": startup, "env": {"PBGUI_DEADLINE": str(intent["deadline"]), "PBGUI_JOB_ID": intent["id"], "PBGUI_MAX_DEADLINE": str(maximum_deadline(intent)), "PBGUI_HARD_DEADLINE": str(_guard_hard_deadline(intent))}}
+
+
+def _guard_hard_deadline(intent: dict) -> float:
+    """Bound the new guard by the maximum permitted budget; retain legacy limits."""
+    from vast_deadline import maximum_deadline
+    from vast_worker_capabilities import supports
+    if supports(intent.get('image', ''), 'multi_day'):
+        return maximum_deadline(dict(intent, budget_usd=100))
+    return intent['accepted_at'] + 86400 if 'accepted_at' in intent else maximum_deadline(intent)
 
 
 def owned_instance(client: VastClient, intent: dict, *, fresh: bool = False,
@@ -290,6 +305,63 @@ def _create_and_observe(store, identifier, client, intent, registry_token, now):
     return _observe_rental(store, identifier, client, intent, now, ending, observed, marker, state)
 
 
+def _collection_outstanding(state: dict, now: float) -> bool:
+    """True while the supervisor's final collection may still be running.
+
+    The final collection owns the instance until it publishes (final_collected)
+    or fails into a completed/failed terminal status. A cancelled job is only
+    collection-finished once final_collected is set: a cancel that arrives as
+    part of the stop/deadline path can precede the final collection, so it must
+    not release the teardown by itself. Its own allowance is bounded, so the
+    grace window below can never leak a rental indefinitely.
+    """
+    if state.get('final_collected') or state.get('status') in {'completed', 'failed'}:
+        return False
+    if state.get('status') != 'collecting' and not state.get('stop_rpc_at') and not state.get('final_collection_at'):
+        return False
+    anchor = float(state.get('collection_teardown_started_at') or state.get('final_collection_at') or state.get('stop_rpc_at') or 0)
+    return anchor <= 0 or now - anchor <= COLLECT_TEARDOWN_GRACE_SECONDS
+
+
+def _record_collection_outstanding(store, identifier, state, now):
+    """True while this record's own or bound-job collection may still run.
+
+    A worker/lease record carries no collection state itself; the jobs bound
+    to it (lease_id == identifier, or its active_job) own status, final_collected
+    and the collection anchors. A job record owns that state directly and is
+    checked as-is. Only the healthy inventory and the worker's own active_job
+    pointer are consulted, so an unreadable foreign record never blocks this
+    lease's teardown.
+    """
+    def outstanding(row):
+        # Normal completion can enter collecting without a Stop RPC. Persist
+        # the first teardown observation once, so supervisor crashes and later
+        # status writes cannot renew the cleanup allowance.
+        if not _collection_outstanding(row, now):
+            return False
+        with advisory_file_lock(store.directory(row['id']) / '.state-lock'):
+            current = store.read(row['id'])
+            if not _collection_outstanding(current, now):
+                return False
+            if not current.get('collection_teardown_started_at'):
+                anchor = current.get('final_collection_at') or current.get('stop_rpc_at') or now
+                current = store.update(row['id'], collection_teardown_started_at=anchor)
+            return _collection_outstanding(current, now)
+
+    if state.get('kind') != 'worker':
+        return outstanding(state)
+    rows, _unreadable = store.list_with_errors()
+    active_id = state.get('active_job')
+    pending = False
+    for row in rows:
+        if row.get('id') == identifier:
+            continue
+        if row.get('lease_id') == identifier or (active_id and row.get('id') == active_id):
+            if outstanding(row):
+                pending = True
+    return pending
+
+
 def _observe_rental(store, identifier, client, intent, now, ending, observed, marker, state):
     """Only fresh provider absence can release a rental authorization."""
     try:
@@ -302,6 +374,11 @@ def _observe_rental(store, identifier, client, intent, now, ending, observed, ma
         if state.get("instance_id") and row["id"] != state["instance_id"]:
             store.update(identifier, absent_checks=0)
             raise VastError("Instance ID does not match the rental authorization")
+        if ending and _record_collection_outstanding(store, identifier, state, now):
+            # The final collection owns this instance until it finishes or its
+            # bounded allowance passes; never destroy under an in-flight collect.
+            store.update(identifier, provider_checked_at=now, cleanup_error=None)
+            return False
         store.update(identifier, instance_id=row["id"], rental_state="destroy_pending" if ending else "active",
                      provider_status=str(row.get("actual_status") or "unknown")[:50], absent_checks=0, cleanup_error=None, creation_error=None,
                      provider_seen_at=now, provider_checked_at=now,
@@ -524,7 +601,7 @@ def _persist_finalization_error(store: JobStore, identifier: str, *, preserve_ex
 
 def finalize_collected_results(store: JobStore, identifier: str, *, check=None, preserve_execution=False) -> dict:
     """Serialize import, assessment and final status across API, runner and stop callers."""
-    with advisory_file_lock(store.directory(identifier) / '.finalize-lock'):
+    with bounded_lock(store.directory(identifier) / '.finalize-lock', check=check or (lambda: None), check_on_acquire=False), bounded_lock(store.directory(identifier) / '.snapshot-lock', check=check or (lambda: None), check_on_acquire=False):
         try:
             return _finalize_collected_results_locked(store, identifier, check=check)
         except Exception as exc:
@@ -647,41 +724,52 @@ def stop_and_collect(connection, store, identifier, intent, *, lease_id=None):
     finalized = False
     collection_failed = False
     try:
-        # A recovered supervisor publishes the already verified archive instead
-        # of downloading it again with a new or depleted allowance.
-        final = state.get('final_collected') or bool(progress.get('finished'))
-        if not state.get('stop_snapshot_collected') and not state.get('final_collected'):
-            connection.collect(final, timeout=remaining())
-            store.update(identifier, stop_snapshot_collected=True)
+        # Keep the persisted Stop allowance; lock waits do not renew it.
+        with snapshot(store, identifier, check=remaining):
+            current = store.read(identifier)
+            final = current.get('final_collected') or bool(progress.get('finished'))
+            if not current.get('stop_snapshot_collected') and not current.get('final_collected'):
+                connection.collect(final, timeout=remaining(), ignore_quota=True)
+                store.update(identifier, stop_snapshot_collected=True)
+            if not final:
+                sources = store.directory(identifier) / 'partial-results/optimize_results'
+                if sources.is_dir():
+                    imported = import_results(store, identifier, partial=True, check=remaining)
+                    store.update(identifier, **imported)
+                store.update(identifier, collection_incomplete=True, collection_error=None,
+                             stop_results_published=True)
+        # Never acquire Finalize while holding Snapshot.
         if final:
             finalize_collected_results(store, identifier, check=remaining, preserve_execution=True)
             finalized = True
-        else:
-            sources = store.directory(identifier) / 'partial-results/optimize_results'
-            if sources.is_dir():
-                imported = import_results(store, identifier, partial=True, check=remaining)
-                store.update(identifier, **imported)
-        store.update(identifier, collection_incomplete=not final, collection_error=None)
-        store.update(identifier, stop_results_published=True)
+            store.update(identifier, collection_incomplete=False, collection_error=None,
+                         stop_results_published=True)
     except Exception as exc:
         _log(SERVICE, 'Final collection incomplete: ' + type(exc).__name__, level='WARNING')
         collection_failed = True
     if not finalized:
         # Match every finalizer's Finalize-before-State order, then re-read
         # collection and completion so a concurrent successful recovery wins.
-        with advisory_file_lock(store.directory(identifier) / '.finalize-lock'):
-            with advisory_file_lock(store.directory(identifier) / '.state-lock'):
-                current = store.read(identifier)
-                collected = bool(current.get('final_collected'))
-                if not collected:
-                    changes = {} if current['status'] in {'failed', 'completed', 'cancelled'} else {'status': 'cancelled'}
-                    if collection_failed:
-                        changes.update(collection_incomplete=True,
-                            collection_error='Final collection could not finish; available verified snapshots and logs are retained')
-                    if changes:
-                        store.update(identifier, **changes)
-            if collected:
-                _persist_finalization_error(store, identifier, preserve_execution=True)
+        try:
+            with bounded_lock(store.directory(identifier) / '.finalize-lock', blocking=False), bounded_lock(store.directory(identifier) / '.snapshot-lock', blocking=False):
+                with bounded_lock(store.directory(identifier) / '.state-lock', blocking=False):
+                    current = store.read(identifier)
+                    collected = bool(current.get('final_collected'))
+                    if not collected:
+                        changes = {} if current['status'] in {'failed', 'completed', 'cancelled'} else {'status': 'cancelled'}
+                        if collection_failed:
+                            changes.update(collection_incomplete=True,
+                                collection_error='Final collection could not finish; available verified snapshots and logs are retained')
+                        if changes:
+                            store.update(identifier, **changes)
+                if collected:
+                    _persist_finalization_error(store, identifier, preserve_execution=True)
+        except VastError as exc:
+            if 'Collection is busy' not in str(exc):
+                raise
+            # Another publisher owns the outcome. Retry from the persisted
+            # Stop markers instead of waiting beyond the Stop deadline.
+            return False
     if not lease_id:
         store.control(identifier, 'cleanup')
     return True
@@ -849,13 +937,32 @@ def run_loop(store: JobStore, identifier: str, lease_id: str | None = None) -> N
                          gpu_candidates=max(state.get("gpu_candidates", 0), progress.get("gpu_candidates", 0)), error=None)
             if progress.get("finished"):
                 store.update(identifier, status="collecting")
-                connection.collect(True, timeout=max(1, min(180, int(remaining - 15))))
+                def final_remaining():
+                    """Preserve the rental reserve even after waiting for Snapshot."""
+                    current_intent = effective_intent(store, lease_id or identifier, original_intent)
+                    seconds = current_intent['deadline'] - time.time() - 15
+                    if seconds <= 0:
+                        raise VastError('Rental collection deadline reached; last verified results retained')
+                    return min(180, seconds)
+                with snapshot(store, identifier, check=final_remaining):
+                    if not store.read(identifier).get('final_collected'):
+                        connection.collect(True, timeout=final_remaining())
                 continue
             if time.time() - last_backup >= 60 and progress.get("exact_completed", 0) > 0:
                 if state.get("downloaded_bytes", 0) < 1024**3:
-                    connection.collect(False, timeout=max(1, min(60, int(remaining - 180))))
-                    store.update(identifier, **import_results(store, identifier, partial=True))
-                    observe(store, identifier)
+                    def partial_remaining():
+                        """Recompute the effective reserve after every lock wait."""
+                        current_intent = effective_intent(store, lease_id or identifier, original_intent)
+                        seconds = current_intent['deadline'] - time.time() - 180
+                        if seconds <= 0:
+                            raise VastError('Partial backup reserve reached; final collection takes priority')
+                        return min(60, seconds)
+                    with snapshot(store, identifier, check=partial_remaining):
+                        current = store.read(identifier)
+                        if not current.get('final_collected') and current.get('downloaded_bytes', 0) < 1024**3:
+                            connection.collect(False, timeout=partial_remaining())
+                            store.update(identifier, **import_results(store, identifier, partial=True, check=partial_remaining))
+                            observe(store, identifier)
                 elif (store.read(identifier).get('convergence_config') or {}).get('convergence_enabled'):
                     from vast_convergence import observe_points
                     points = connection.convergence_snapshot()
@@ -907,7 +1014,7 @@ def main() -> None:
             return
         store.update(identifier, **{'supervisor_' + mode: {
             'pid': os.getpid(), 'created_at': psutil.Process().create_time(),
-            'code_serial': RUNNER_CODE_SERIAL}})
+            'code_serial': RUNNER_CODE_SERIAL, **({'snapshot_transaction': 1} if mode == 'run' else {})}})
         if mode == "guard":
             guard_loop(store, identifier)
         else:

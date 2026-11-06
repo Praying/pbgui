@@ -1,5 +1,11 @@
 # Unreleased
 
+## 合并 main v2.10–v2.10.13 并同步 Vue3 适配
+
+- 合入远端 `main` 的 AI Claude/DeepSeek/OpenRouter 模型、PB8/Vast 运行能力、Storage 服务、OHLCV 起始日期查找和相关 API/测试更新；API serial 从上游 `3610` 递增至 `3613`，覆盖合并后新增的 API 适配修改。
+- 保留当前 Vue 3 + Tailwind CSS v4.3 页面作为生产入口，并同步 legacy fallback 的导航、Storage 路由、AI provider 发现和挂载安全行为；未将旧版页面替换为最终 Vue 页面。
+- 本次合并尚未创建 commit 或推送；前端 typecheck、Vitest、build 和离线 pytest 将在冲突解决及 Vue 适配完成后执行。
+
 ## 优化「信息 / 行情数据 / 设置」Tiingo 操作区布局
 
 - 将「获取 API 令牌」和「官方用量」收纳为一组紧凑的资源链接，并将「测试 Tiingo」提升为主要操作按钮，减少标题栏视觉竞争。

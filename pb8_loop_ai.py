@@ -175,6 +175,8 @@ def _transient_ai_error(exc):
         'ChatGPT response timed out',
         'AI provider is temporarily unavailable',
         'Selected AI model is currently unavailable',
+        'Claude request timed out',
+        'Claude request ended without a completed result',
     }
     if isinstance(exc, AIChatError) and (str(exc) in transient_messages
             or re.fullmatch(r'Research inactive for \d+(?:\.\d+)? seconds', str(exc))
@@ -365,14 +367,22 @@ class LoopAI:
     async def preflight(self, owner, settings, check_budget=True):
         """Check a pinned provider/model before any paid optimizer is scheduled."""
         chat = self.service()
-        if settings['provider'] not in {'chatgpt', 'opencode-go', 'opencode-zen'}:
-            raise ValueError('Choose a ChatGPT or OpenCode model; JEV is an optional decision model')
+        if settings['provider'] not in {'chatgpt', 'opencode-go', 'opencode-zen', 'claude-code', 'deepseek'}:
+            raise ValueError('Choose a ChatGPT, Claude, DeepSeek or OpenCode model; JEV is an optional decision model')
         metadata = dict(await chat._validate_provider_model(owner, settings['provider'], settings['model'], settings['profile']))
         chat._selected_reasoning_variant(metadata, settings.get('effort', ''))
         chat._validate_model_service_tier(metadata, settings['provider'], settings.get('service_tier', ''))
         if metadata.get('decision'):
             raise ValueError('The selected model cannot generate optimizer configurations')
-        if settings['provider'] != 'chatgpt' and metadata.get('protocol') not in {'chat', 'responses', 'messages'}:
+        if settings['provider'] == 'claude-code':
+            from ai_claude_code import ClaudeCodeError
+            from ai_chat import AIChatError
+            try:
+                metadata.update(await chat.claude.model_context(owner, settings['model']))
+            except ClaudeCodeError as exc:
+                raise AIChatError(str(exc)) from exc
+            metadata.update(protocol='claude-code', loop_tool_support=True)
+        if settings['provider'] not in {'chatgpt', 'claude-code'} and metadata.get('protocol') not in {'chat', 'responses', 'messages'}:
             raise ValueError('Model does not support native background decisions')
         if settings['provider'] == 'opencode-zen' and not metadata.get('free'):
             cost = metadata.get('cost') or {}
@@ -464,7 +474,8 @@ class LoopAI:
     async def jev(self, record, candidates):
         """Reuse typed JEV transport for one exact optimizer-run candidate comparison."""
         from pb8_loop_controller import owned_thread
-        from ai_openrouter import JEV_MODEL, check_jev_budget, prepare_user_jev_payload, _send_structured_jev_request
+        from ai_jev import JEV_MODEL, check_jev_budget, prepare_user_jev_payload, _send_structured_jev_request
+        from ai_openrouter import OpenRouterJevTransport
         chat = self.service()
         if len(candidates) < 2 or not chat.credentials.openrouter_configured(record['owner']):
             return None
@@ -483,10 +494,9 @@ class LoopAI:
                                       'criteria': {row['id']: 'Candidate ' + row['id'] + '; compare its goal metrics in state.candidates using state.rubric.'
                                                    for row in comparison}}}}
         request = prepare_user_jev_payload(JEV_MODEL, spec)
-        session = await chat._http_session()
-        key = chat.credentials.load_openrouter_key(record['owner'])
+        transport = OpenRouterJevTransport(await chat._http_session(), chat.credentials.load_openrouter_key(record['owner']))
         estimate = min(record['settings'].get('jev_max_cost_usd', 0.01), remaining)
-        await check_jev_budget(session, key, [request], estimate)
+        await check_jev_budget(transport, [request], estimate)
         def reserve(current):
             if current['status'] != 'running' or current['control_generation'] != record['control_generation']:
                 raise ValueError('Loop was paused or stopped')
@@ -494,4 +504,4 @@ class LoopAI:
                 raise ValueError('JEV budget reached')
             current['jev_usd_reserved'] += estimate
         await owned_thread(self.store.update, record['owner'], record['id'], reserve)
-        return await _send_structured_jev_request(session, key, request)
+        return await _send_structured_jev_request(transport, request)

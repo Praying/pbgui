@@ -36,7 +36,8 @@ scripts/*
 tools/bench_msgpack_decode.py
 
 # Local tools/scripts (do not commit)
-tools/
+tools/*
+!tools/code_impact.py
 
 # Copilot instructions (keep local edits out of commits)
 .github/copilot-instructions.md
@@ -48,7 +49,6 @@ live_bt_diagnose.py
 .local-work/
 .worktrees/
 backup/
-.gitnexus/
 .claude/
 .opencode/
 .cursor/

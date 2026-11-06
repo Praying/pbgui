@@ -3,7 +3,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
-from playwright.sync_api import sync_playwright, expect
+from browser_driver import sync_browser, expect
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -20,16 +20,39 @@ def review_page(request):
         'preview': {'action': 'reviewed_config_change', 'name': 'test', 'version': 'v8', 'kind': 'backtest',
             'mode': 'save', 'effect': 'Save config only', 'changed_count': 1,
             'changes': [{'path': 'live.approved_coins.long', 'kind': 'removed', 'before': 'ETH'}]}}
-    if getattr(request, 'param', '') == 'loop':
+    if getattr(request, 'param', '') in {'loop', 'loop_run'}:
         proposal['preview'] = {'action': 'save_ai_loop_config', 'name': 'HYPE_loop',
             'effect': 'Save an owned AI Loop definition only. No jobs or rentals are started.',
             'changed_count': 3, 'changes': [
                 {'path': 'max_runs', 'kind': 'added', 'after': 25},
                 {'path': 'run_proxy', 'kind': 'added', 'after': 100000},
                 {'path': 'goals', 'kind': 'added', 'after': {'text': 'Keep exact_gain and HSL unchanged. ' * 40}}]}
+        if request.param == 'loop_run':
+            proposal['preview'].update(action='run_ai_loop', effect='Start the saved Loop within the reviewed limits.')
+    if getattr(request, 'param', '') == 'rebacktest':
+        conversation['analysis_only'] = False
+        proposal['preview'] = {
+            'action': 'queue_backtests', 'name': 'rebacktest_fixture',
+            'source_resource': 'pbgui://backtest/v8/' + 'c' * 32,
+            'source_name': 'loop_original_holdout', 'start_date': '2024-12-05', 'end_date': '2026-10-30',
+            'exchanges': ['bybit', 'hyperliquid'], 'job_count': 2, 'may_start_immediately': True,
+            'changes': [{'path': 'backtests', 'kind': 'added', 'after': {
+                'source_name': 'loop_original_holdout', 'start_date': '2024-12-05', 'end_date': '2026-10-30',
+                'exchanges': ['bybit', 'hyperliquid'], 'jobs': 2,
+                'strategy_parameters': 'Unchanged from source result', 'coin_override_files': ['HYPE.json']}}]}
+    if getattr(request, 'param', '') == 'vast_optimizer':
+        conversation['analysis_only'] = False
+        proposal['preview'] = {
+            'action': 'run_vast_optimizer', 'name': 'hype_vast_20M', 'execution': 'vast',
+            'iterations': 20000000, 'gpu_name': 'RTX 3060', 'max_price_per_hour': .3,
+            'budget': 5, 'hours': 24, 'job_count': 1, 'convergence': {'convergence_enabled': True},
+            'effect': 'Run one normal optimizer on Vast.ai. Approval authorizes one paid rental within these limits and automatic cleanup after this job. No AI Loop; global Auto rent and shared preferences stay unchanged.',
+            'changes': [{'path': 'convergence', 'kind': 'added', 'after': {
+                'convergence_enabled': True, 'convergence_min_exact': 512,
+                'convergence_patience': 512, 'convergence_tolerance_pct': .2}}]}
     pending = [proposal]
     calls, errors = [], []
-    with sync_playwright() as driver:
+    with sync_browser() as driver:
         browser = driver.chromium.launch()
         page = browser.new_page(viewport={'width': 1450, 'height': 1000})
         page.set_default_timeout(5000)
@@ -79,6 +102,24 @@ def review_page(request):
         yield page, calls
         assert not errors
         browser.close()
+
+
+@pytest.mark.parametrize('review_page', ['rebacktest'], indirect=True)
+@pytest.mark.parametrize('surface', ['drawer', 'page'])
+def test_result_rerun_review_shows_source_dates_and_separate_exchange_jobs(review_page, surface):
+    """Both production chat surfaces explain the complete batch before any approval."""
+    page, calls = review_page
+    if surface == 'page':
+        page.locator('.nav-group-btn', has_text='Information').click()
+        page.locator('.nav-item[data-page="info_ai_chat"]').click()
+    page.locator('#pbgui-ai-btn').click()
+    page.get_by_role('button', name='Review changes', exact=True).click()
+    dialog = page.locator('.pai-review-dialog')
+    for text in ('Queue PB8 backtests', 'loop_original_holdout', '2024-12-05', '2026-10-30',
+                 '2 separate jobs', 'bybit', 'hyperliquid', 'may start immediately',
+                 'Unchanged from source result', 'HYPE.json'):
+        expect(dialog).to_contain_text(text)
+    assert calls == [], 'Opening review must not queue or approve anything'
 
 
 @pytest.mark.parametrize('surface', ['drawer', 'page'])
@@ -134,3 +175,80 @@ def test_loop_review_names_settings_and_save_effect(review_page, surface):
     dialog.get_by_text('Show full text', exact=True).click()
     expect(dialog.locator('.pai-change-value').filter(has_text='Keep exact_gain').last).to_be_visible()
     assert calls == []
+
+
+@pytest.mark.parametrize('review_page', ['loop_run'], indirect=True)
+@pytest.mark.parametrize('surface', ['drawer', 'page'])
+@pytest.mark.parametrize('outcome', ['executed', 'failed'])
+def test_confirmed_review_hides_while_approval_response_is_pending(review_page, surface, outcome):
+    """Real CSS must hide confirmed cards before a delayed native response, and recover failures."""
+    page, calls = review_page
+    pending_requests = []
+    page.route('**/api/ai/proposals/*/approve', lambda route: pending_requests.append(route))
+    if surface == 'page':
+        page.locator('.nav-group-btn', has_text='Information').click()
+        page.locator('.nav-item[data-page="info_ai_chat"]').click()
+    page.locator('#pbgui-ai-btn').click()
+    page.locator('.pai-compose textarea').fill('Keep this draft')
+    page.get_by_role('button', name='Review changes', exact=True).click()
+    page.locator('.pai-review-dialog').get_by_role('button', name='Approve', exact=True).click()
+    confirm = page.locator('#pbgui-dialog-ovl')
+    expect(confirm).to_be_visible()
+    confirm.get_by_role('button', name='Approve', exact=True).click()
+    expect(confirm).not_to_be_visible()
+    expect(page.locator('.pai-status')).to_have_text('Applying approved action...')
+    assert len(pending_requests) == 1
+    # This check runs while the POST is deliberately held, not after its reply.
+    expect(page.get_by_role('button', name='Review changes', exact=True)).not_to_be_visible()
+    expect(page.locator('.pai-proposal')).not_to_be_visible()
+    expect(page.locator('.pai-compose textarea')).to_have_value('Keep this draft')
+    assert page.locator('link[href$="/app/css/ai_drawer.css?v=30"]').count() == 1
+    if outcome == 'executed':
+        page.route('**/api/ai/proposals?**', lambda route: route.fulfill(json={'proposals': []}))
+        pending_requests[0].fulfill(json={'status': 'executed', 'action': 'run_ai_loop'})
+        expect(page.locator('.pai-status')).to_have_text('Approved action completed.')
+        expect(page.get_by_role('button', name='Review changes', exact=True)).to_have_count(0)
+    else:
+        pending_requests[0].fulfill(status=409, json={'detail': 'Loop definition changed since review'})
+        expect(page.locator('.pai-status')).to_contain_text('Loop definition changed since review')
+        expect(page.get_by_role('button', name='Review changes', exact=True)).to_be_visible()
+        expect(page.get_by_role('button', name='Review changes', exact=True)).to_be_enabled()
+    assert len(pending_requests) == 1 and calls == []
+
+
+@pytest.mark.parametrize('review_page', ['loop_run'], indirect=True)
+def test_cancelled_confirmation_restores_the_pending_review(review_page):
+    """Cancelling the confirmation restores its card without any approval request."""
+    page, calls = review_page
+    page.locator('#pbgui-ai-btn').click()
+    page.get_by_role('button', name='Review changes', exact=True).click()
+    page.locator('.pai-review-dialog').get_by_role('button', name='Approve', exact=True).click()
+    page.locator('#pbgui-dialog-ovl').get_by_role('button', name='Cancel', exact=True).click()
+    expect(page.get_by_role('button', name='Review changes', exact=True)).to_be_visible()
+    expect(page.get_by_role('button', name='Review changes', exact=True)).to_be_enabled()
+    assert calls == []
+
+
+@pytest.mark.parametrize('review_page', ['vast_optimizer'], indirect=True)
+@pytest.mark.parametrize('surface', ['drawer', 'page'])
+def test_normal_vast_review_shows_paid_single_job_limits(review_page, surface):
+    """The actual shared review clearly distinguishes cloud execution and costs."""
+    page, calls = review_page
+    if surface == 'page':
+        page.locator('.nav-group-btn', has_text='Information').click()
+        page.locator('.nav-item[data-page="info_ai_chat"]').click()
+    page.locator('#pbgui-ai-btn').click()
+    page.get_by_role('button', name='Review changes', exact=True).click()
+    dialog = page.locator('.pai-review-dialog')
+    for value in ('Run normal Vast.ai optimizer', '20000000 iterations', 'RTX 3060',
+                  'USD 0.3/h', 'USD 5 budget', '24 hours maximum', 'stop when no improvement',
+                  'paid rental and automatic cleanup; no AI Loop', 'convergence_min_exact'):
+        expect(dialog).to_contain_text(value)
+    assert calls == []
+    dialog.get_by_role('button', name='Approve', exact=True).click()
+    confirm = page.locator('#pbgui-dialog-ovl')
+    expect(confirm).to_contain_text('Approval authorizes one paid rental')
+    expect(confirm).to_contain_text('global Auto rent and shared preferences stay unchanged')
+    assert calls == []
+    confirm.get_by_role('button', name='Cancel', exact=True).click()
+    expect(page.get_by_role('button', name='Review changes', exact=True)).to_be_visible()

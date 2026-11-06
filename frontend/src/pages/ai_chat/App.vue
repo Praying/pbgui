@@ -123,6 +123,8 @@ function onQuickReply(actionId: string, value: string): void {
           :chatgpt="store.chatgpt.value"
           :go="store.go.value"
           :openrouter="store.openrouter.value"
+          :claude="store.claude.value"
+          :deepseek="store.deepseek.value"
           :transitioning="store.transitioning.value"
           :login-visible="store.loginBox.value.visible"
           :login-instructions="store.loginBox.value.instructions"
@@ -135,6 +137,7 @@ function onQuickReply(actionId: string, value: string): void {
           :openrouter-usage="store.openrouterUsage.value"
           :go-key="store.goKey.value"
           :openrouter-key="store.openrouterKey.value"
+          :deepseek-key="store.deepseekKey.value"
           @update:go-key="store.goKey.value = $event"
           @update:openrouter-key="store.openrouterKey.value = $event"
           @chatgpt-login="store.startChatgptLogin"
@@ -145,6 +148,10 @@ function onQuickReply(actionId: string, value: string): void {
           @go-disconnect="store.disconnectGo"
           @openrouter-connect="store.connectOpenrouter"
           @openrouter-disconnect="store.disconnectOpenrouter"
+          @claude-connect="store.connectClaude"
+          @claude-disconnect="store.disconnectClaude"
+          @deepseek-connect="store.connectDeepseek"
+          @deepseek-disconnect="store.disconnectDeepseek"
         />
         <CustomModelPanel
           class="mt-4"

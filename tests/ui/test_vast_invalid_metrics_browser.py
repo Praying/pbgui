@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_invalid_metrics_do_not_abort_vast_renderers():
     """Offers, selected jobs, rental dashboards and observed runs remain usable."""
-    playwright = pytest.importorskip('playwright.sync_api')
+    browser_api = __import__('browser_driver')
     source = (ROOT / 'frontend/js/vast.js').read_text()
     optimizer = (ROOT / 'frontend/v7_optimize.html').read_text()
     helpers = optimizer[optimizer.index('function formatBytesCompact('):
@@ -39,6 +39,7 @@ def test_invalid_metrics_do_not_abort_vast_renderers():
     ''' + log_markup + '''<div id="log-viewer-target"></div>
       <script>
         window.OPTIMIZE_VERSION='v8'; window.API_BASE='/api/optimize-v8';
+        window.optimizeEditorAdapter={isV8:true};
         window.state={}; const el=id=>document.getElementById(id);
       </script><script>''' + helpers + '''</script>
       <script src="/app/js/vast.js"></script>'''
@@ -59,7 +60,7 @@ def test_invalid_metrics_do_not_abort_vast_renderers():
                        'hosts': [], 'profiles': [], 'supervision_available': True}
             route.fulfill(content_type='application/json', body=json.dumps(payload))
 
-    with playwright.sync_playwright() as engine:
+    with browser_api.sync_browser() as engine:
         browser = engine.chromium.launch(headless=True)
         try:
             page = browser.new_page()

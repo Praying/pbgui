@@ -1,6 +1,8 @@
 """Offline named AI Loop config, source, queue and immutable history contracts."""
 from __future__ import annotations
 
+from javascript_checks import run_javascript
+
 import asyncio
 import copy
 import fcntl
@@ -374,7 +376,9 @@ def test_native_optimizer_log_target_checks_real_job_ownership(workflow,monkeypa
         monkeypatch.setattr(optimize_v8,'_read_runner_state',lambda key:{})
     endpoint='/loops/'+loop_id+'/log-target?operation='+operation
     assert client.get('/loops/'+loop_id).json()['jobs'][0]['log_available'] is True
-    response=client.get(endpoint)
+    with monkeypatch.context() as target_patch:
+        target_patch.setattr(controller.store, 'read', lambda *a, **k: pytest.fail('Target loaded full history'))
+        response=client.get(endpoint)
     assert response.status_code==200,response.text
     assert response.json()=={'id':native_id,'cloud':execution=='vast','name':'Actual optimizer run','kind':'optimizer'}
     assert response.headers['cache-control']=='no-store'
@@ -572,7 +576,7 @@ def test_queue_double_click_and_late_response_preserve_new_navigation():
     import subprocess
     from pathlib import Path
     script=r"""
-const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const assert=browserAssert,fs=testSources,vm=browserScope;
 const source=fs.readFileSync('frontend/js/pb8_loop_optimizer.js','utf8');
 const body=source.match(/  async function queueDefinitions\([\s\S]*?\n  \}/)[0];
 let releaseSelection,releaseQueue,requests=0,polls=0;
@@ -591,14 +595,16 @@ vm.runInContext(body,context);
  context.state.navigationSeq=2;context.selected='new-selection';releaseQueue({id:'a'.repeat(32)});
  await Promise.all([first,duplicate]);assert.equal(requests,1);assert.equal(context.queueing,false);
  assert.equal(context.selected,'new-selection');assert.equal(polls,1);
-})().catch(error=>{console.error(error);process.exitCode=1;});
+})().catch(error=>{console.error(error);testResult.exitCode=1;});
 """
-    result=subprocess.run(['node','-e',script],cwd=Path(__file__).resolve().parents[1],capture_output=True,text=True,timeout=10)
+    result=run_javascript(['-e',script],cwd=Path(__file__).resolve().parents[1],capture_output=True,text=True,timeout=10)
     assert result.returncode==0,result.stdout+result.stderr
 
 
-@pytest.mark.parametrize('selected_round,extra,evaluated', [(None, 10, True), (0, 5, True), (1, 20, False)])
-def test_continue_from_best_or_exact_previous_round_keeps_provenance(workflow, monkeypatch, selected_round, extra, evaluated):
+@pytest.mark.parametrize('selected_round,extra,evaluated,hours', [(None, 10, True, None), (0, 5, True, 12),
+                                                             (0, 25, True, 48), (0, 5, True, .25),
+                                                             (1, 20, False, None)])
+def test_continue_from_best_or_exact_previous_round_keeps_provenance(workflow, monkeypatch, selected_round, extra, evaluated, hours):
     """Continue starts a separate bounded run with winner parameters and optimizer settings."""
     from pb8_loop_store import evaluate
     client, controller, source, session, _ = workflow
@@ -629,7 +635,10 @@ def test_continue_from_best_or_exact_previous_round_keeps_provenance(workflow, m
     controller.store.update(OWNER, loop_id, lambda row: row.update(ai_model_profile={'context': 4_000_000, 'page_tokens': 1500, 'output_tokens': 1000}))
     parent = controller.store.update(OWNER, loop_id, completed)
     monkeypatch.setattr(controller.backend, 'observations', lambda row, job: next(item for item in checkpoints if item['operation'] == job['operation']), raising=False)
-    response = client.post('/loops/' + loop_id + '/continue', json={'round': selected_round, 'rounds': extra, 'selection': {'provider': 'chatgpt', 'model': 'shared-current'}, 'authorization': True})
+    payload = {'round': selected_round, 'rounds': extra, 'selection': {'provider': 'chatgpt', 'model': 'shared-current'}, 'authorization': True}
+    if hours is not None:
+        payload['hours'] = hours
+    response = client.post('/loops/' + loop_id + '/continue', json=payload)
     if not evaluated:
         assert response.status_code == 422
         assert 'AI-selected checkpoint' in response.json()['detail']
@@ -637,6 +646,9 @@ def test_continue_from_best_or_exact_previous_round_keeps_provenance(workflow, m
     assert response.status_code == 201, response.text
     result = response.json(); assert result['id'] != loop_id and result['status'] == 'running'
     child = controller.store.read(OWNER, result['id']); index = 1 if selected_round is None else selected_round
+    expected_hours = parent['settings']['hours'] if hours is None else hours
+    assert child['settings']['hours'] == expected_hours
+    assert child['deadline'] - child['created_at'] == pytest.approx(expected_hours * 3600, abs=2)
     assert child['settings']['max_runs'] == extra and child['settings']['max_validations'] >= extra
     assert child['required_rounds'] == extra
     assert child['initial_config']['bot']['long']['risk']['total_wallet_exposure_limit'] == .1 + index
@@ -733,7 +745,9 @@ def test_user_evaluation_log_target_is_native_and_owner_scoped(workflow,monkeypa
     controller.backend.poll=forbidden
     endpoint='/loops/'+loop_id+'/log-target?operation='+operation
     assert client.get('/loops/'+loop_id).json()['jobs']==[]
-    response=client.get(endpoint)
+    with monkeypatch.context() as target_patch:
+        target_patch.setattr(controller.store, 'read', forbidden)
+        response=client.get(endpoint)
     assert response.status_code==200,response.text
     assert response.json()=={'id':native_id,'cloud':execution=='vast','name':'User evaluation','kind':kind}
     native['loop_owner']=OTHER
@@ -764,7 +778,7 @@ def test_changes_comparison_reuses_requests_and_rejects_stale_responses():
     import subprocess
     from pathlib import Path
     script = r"""
-const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const assert=browserAssert,fs=testSources,vm=browserScope;
 const source=fs.readFileSync('frontend/js/pb8_loop_optimizer.js','utf8');
 class Node {
  constructor(tag,text){this.tag=tag;this.textContent=text;this.children=[];this.dataset={};this.value='';this.scrollTop=123;this.classList={contains:()=>true,toggle(){}};}
@@ -772,19 +786,19 @@ class Node {
  replaceChildren(...nodes){this.children.forEach(node=>node.parent=null);this.children=[];nodes.forEach(node=>this.appendChild(node));}
  remove(){if(this.parent)this.parent.children=this.parent.children.filter(node=>node!==this);this.parent=null;}
  prepend(node){node.remove();this.children.unshift(node);node.parent=this;}
- get firstElementChild(){return this.children[0];} get lastElementChild(){return this.children.at(-1);}
+ get childNodes(){return this.children;} get firstElementChild(){return this.children[0];} get lastElementChild(){return this.children.at(-1);}
  addEventListener(name,fn){this[name]=fn;} setAttribute(){} querySelector(){return null;} querySelectorAll(){return [];}
  focus(){document.activeElement=this;}
 }
 const body=new Node('body'),problem=new Node('button'),overlay=new Node('overlay'),pending=[];
 const find=(node,id)=>node.id===id?node:node.children.map(child=>find(child,id)).find(Boolean);
-const document={activeElement:null,getElementById:id=>id==='loop-report-problem'?problem:find(body,id)};
+const document={activeElement:null,documentElement:{hasAttribute:()=>true},getElementById:id=>id==='loop-report-problem'?problem:find(body,id)};
 const run={id:'a',status:'running',jobs:[{kind:'optimizer',round:0,operation:'first',name:'First',snapshot_digest:'one'},
  {kind:'optimizer',round:1,operation:'second',name:'Second',snapshot_digest:'two'}],cycles:[{round:1,status:'validated'}],initial_snapshot_digest:'start'};
 const context=vm.createContext({AbortController,JSON,document,base:'/loops',rows:[run],selected:'a',reportView:'cycle',reportRound:1,reportTab:'changes',
  reportSuspended:false,reportSignature:'',diffState:null,diffRequest:null,diffGeneration:0,diffOperation:'',diffBaseline:'',
  reportBody:body,reportDialog:{contains:()=>true},reportOverlay:overlay,reportTitle:new Node('h3'),reportTabs:new Node('tabs'),
- element:(tag,text)=>new Node(tag,text),cycleRows:row=>row.cycles,canContinueRound:()=>false,reportNavigation(){},
+ element:(tag,text)=>new Node(tag,text),cycleRows:row=>row.cycles,canContinueRound:()=>false,reportNavigation(){},navigationTiming(){},
  reportTable(parent,headers,values){const table=new Node('table',JSON.stringify(values));parent.appendChild(table);},
  fetch(url,options){return new Promise(resolve=>pending.push({url,options,resolve}));}});
 vm.runInContext(source.slice(source.indexOf('  function resetDiff('),source.indexOf('  function backtestButton(')),context);
@@ -823,8 +837,8 @@ const update=()=>context.updateReport();
  context.reportView='cycle';context.reportTab='changes';update();assert.equal(pending.length,10);
  const closed=context.diffState;context.resetDiff();context.reportView='';await reply(9,'after-close');
  assert.equal(closed.status,'pending');assert.equal(context.diffState,null);
-}finally{context.resetDiff();}})().catch(error=>{console.error(error);process.exitCode=1;});
+}finally{context.resetDiff();}})().catch(error=>{console.error(error);testResult.exitCode=1;});
 """
-    result = subprocess.run(['node', '-e', script], cwd=Path(__file__).resolve().parents[1],
+    result = run_javascript(['-e', script], cwd=Path(__file__).resolve().parents[1],
                             capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, result.stdout + result.stderr

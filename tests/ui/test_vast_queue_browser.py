@@ -13,10 +13,10 @@ def test_vast_controls_from_real_menu_preserve_shell_and_guide():
     """Follow the real PBv8 menu into the full Optimize template with isolated API responses."""
     import mimetypes
     from urllib.parse import urlsplit
-    playwright = pytest.importorskip('playwright.sync_api')
+    browser_api = __import__('browser_driver')
     calls, errors = [], []
     job = dict(id='a'*32, config_name='isolated-test', status='running', has_log=True,
-               workers=4, iterations=100, rental_state='none', created_at=1)
+               workers=4, iterations=100, rental_state='none', created_at=1, uploaded=True, collect_available=True)
     template = (ROOT / 'frontend/v7_optimize.html').read_text()
     for key, value in {
         'API_BASE':'/api/optimize-v8', 'BASE_PREFIX':'', 'LIMITS_META':'{}',
@@ -57,7 +57,7 @@ def test_vast_controls_from_real_menu_preserve_shell_and_guide():
         else:
             route.fulfill(json={})
 
-    with playwright.sync_playwright() as runner:
+    with browser_api.sync_browser() as runner:
         browser = runner.chromium.launch(headless=True)
         try:
             page = browser.new_page(viewport=dict(width=1280, height=900))
@@ -77,7 +77,12 @@ def test_vast_controls_from_real_menu_preserve_shell_and_guide():
             assert page.locator('#pbgui-dialog-title').inner_text() == 'Stop optimizer?'
             page.locator('#pbgui-dialog-cancel').click()
             page.wait_for_function("!document.getElementById('stop-job').disabled")
-            assert any('/app/js/vast.js?v=175' in url for _, url in calls)
+            assert page.locator('#collect-job').is_enabled()
+            assert page.locator('#stop-job').evaluate("node=>node.nextElementSibling.id") == 'collect-job'
+            page.locator('#collect-job').click()
+            page.wait_for_function("document.getElementById('queue-message').textContent.includes('Pareto results collected')")
+            assert sum(method == 'POST' and url.endswith('/collect') for method, url in calls) == 1
+            assert any('/app/js/vast.js?v=181' in url for _, url in calls)
             location_before = page.url
             page.locator('#pbgui-guide-btn').click()
             page.wait_for_function("document.getElementById('pbgui-shared-help-ovl')?.getAttribute('aria-hidden')==='false'")
@@ -104,7 +109,7 @@ def test_vast_controls_from_real_menu_preserve_shell_and_guide():
 
 def test_cloud_setup_editor_selection_and_queue(tmp_path):
     """Keep GPU preferences in Settings and queueing free of rental calls."""
-    playwright = pytest.importorskip('playwright.sync_api')
+    browser_api = __import__('browser_driver')
     calls = []
     jobs = []
     starts = []
@@ -176,7 +181,11 @@ def test_cloud_setup_editor_selection_and_queue(tmp_path):
                 data = dict(preferences)
             elif self.path == '/api/vast/credentials':
                 data = {'configured':True}
-            elif self.path == '/api/vast/queue/start':
+            elif self.path.endswith('/start-preview'):
+                data = dict(review_id='e'*32, payload_digest='f'*64, name='Selected optimizer',
+                            iterations=20000000, gpu_name='RTX 3060', max_price_per_hour=.3,
+                            hours=24, budget=5, exchanges=['bybit'], convergence={'convergence_enabled':False})
+            elif self.path == '/api/vast/queue/start' or (self.path.startswith('/api/vast/jobs/') and self.path.endswith('/start')):
                 starts.append(payload)
                 release_start.wait(timeout=5)
                 data = {'id':'mock-worker'}
@@ -204,7 +213,7 @@ def test_cloud_setup_editor_selection_and_queue(tmp_path):
     server = ThreadingHTTPServer(('127.0.0.1',0),Handler)
     thread = threading.Thread(target=server.serve_forever,daemon=True); thread.start()
     try:
-        with playwright.sync_playwright() as engine:
+        with browser_api.sync_browser() as engine:
             browser = engine.chromium.launch(headless=True)
             try:
                 page = browser.new_page()
@@ -417,7 +426,7 @@ def test_cloud_setup_editor_selection_and_queue(tmp_path):
                 page.evaluate('PBGuiVast.hideSettings()')
                 assert page.locator('#api-key').input_value() == ''
                 assert not any('/start' in call for call in calls)
-                page.evaluate("window.PBGuiDialogs = {confirm: async () => {throw new Error('Unexpected confirmation');}}")
+                page.evaluate("window.PBGuiDialogs = {confirm: async options => {if(options.title !== 'Start this Vast optimizer?') throw new Error('Wrong start review'); return true;}}")
                 page.locator('[data-vast-view=offers]').click()
                 page.locator('#gpu-model').fill('unsaved-other-type')
                 row.locator('button[title="Start"]').click()
@@ -427,9 +436,9 @@ def test_cloud_setup_editor_selection_and_queue(tmp_path):
                 assert row.locator('td').nth(3).inner_text() == 'Starting…'
                 assert row.locator('button[title="Start"]').is_disabled()
                 release_start.set()
-                page.wait_for_function("document.getElementById('message').textContent === ''")
+                page.wait_for_function("document.getElementById('message').textContent.includes('rental authorized')")
                 assert len(starts) == 1
-                assert starts[0] == {'use_saved_settings':True,'accept_rental_and_cleanup':True}
+                assert starts[0] == {'review_id':'e'*32, 'payload_digest':'f'*64, 'accept_rental_and_cleanup':True}
                 assert page.locator('#log-panel').is_hidden()
                 assert page.locator('#queue #vast-jobs').count() == 0
                 assert page.locator('#cloud-rental-controls').count() == 0
@@ -509,7 +518,6 @@ def test_cloud_setup_editor_selection_and_queue(tmp_path):
                 assert page.evaluate('state.selectedQueue.size') == 0
                 assert '/api/vast/jobs/' + 'a'*32 + '/requeue' in calls
                 assert not errors
-                page.screenshot(path=str(tmp_path/'vast-queue.png'),full_page=True)
             finally:
                 browser.close()
     finally:
@@ -519,7 +527,7 @@ def test_cloud_setup_editor_selection_and_queue(tmp_path):
 def test_optimizer_settings_main_area():
     """Exercise real page layout and navigation without production API access."""
     import re
-    playwright = pytest.importorskip('playwright.sync_api')
+    browser_api = __import__('browser_driver')
     source = (ROOT / 'frontend/v7_optimize.html').read_text()
     markup = re.sub(r'<script\b[^>]*>.*?</script>', '', source, flags=re.S)
     functions = []
@@ -534,7 +542,7 @@ def test_optimizer_settings_main_area():
         start = source.index(marker)
         end = source.index('\n}\n', start) + 2
         functions.append(source[start:end])
-    with playwright.sync_playwright() as engine:
+    with browser_api.sync_browser() as engine:
         browser = engine.chromium.launch(headless=True)
         try:
             page = browser.new_page(viewport={'width':1440, 'height':1000})
@@ -555,6 +563,7 @@ def test_optimizer_settings_main_area():
                 window.handlePb8RuntimeUnavailable = () => false;
                 window.refreshLiveResultsDuringRun = async () => {};
                 window.restoreSelectedOptimizeResultWhenReady = async () => {};
+                window.scheduleOptimizeConfigs = () => {};
                 window.handleError = error => { throw error; };
                 window.normalizeOptimizePositiveInteger = value => Number(value);
                 window.toast = () => {};
@@ -644,13 +653,13 @@ def test_optimizer_settings_main_area():
 def test_convergence_dashboard_progress_and_completion():
     """Render persisted detection progress and hide it for jobs without opt-in."""
     import re
-    playwright = pytest.importorskip('playwright.sync_api')
+    browser_api = __import__('browser_driver')
     source = (ROOT / 'frontend/js/vast.js').read_text()
     function = source[source.index('  function renderUtilization(job)'):source.index('  function openCloudLog(job)')]
     shell = (ROOT / 'frontend/v7_optimize.html').read_text()
     shell = re.sub(r'<script\b[^>]*>.*?</script>', '', shell, flags=re.S | re.I)
     component = (ROOT / 'frontend/vast.html').read_text()
-    with playwright.sync_playwright() as runner:
+    with browser_api.sync_browser() as runner:
         browser = runner.chromium.launch(headless=True)
         try:
             page = browser.new_page()
@@ -751,13 +760,13 @@ def test_convergence_dashboard_progress_and_completion():
 
 def test_completed_calibration_remains_visible_and_acceptable():
     """Render persisted case evidence and its pending acceptance after reload."""
-    playwright = pytest.importorskip('playwright.sync_api')
+    browser_api = __import__('browser_driver')
     source = (ROOT / 'frontend/js/vast.js').read_text()
     functions = source[
         source.index('  function formatElapsedSeconds(value)'):
         source.index('  function hostStatus(profile)')
     ]
-    with playwright.sync_playwright() as runner:
+    with browser_api.sync_browser() as runner:
         browser = runner.chromium.launch(headless=True)
         try:
             page = browser.new_page()
@@ -868,10 +877,10 @@ def test_completed_calibration_remains_visible_and_acceptable():
 
 def test_vast_result_snapshots_trigger_refresh_without_local_runs():
     """Each newly published snapshot refreshes results once, including completion."""
-    playwright = pytest.importorskip('playwright.sync_api')
+    browser_api = __import__('browser_driver')
     source = (ROOT / 'frontend/js/vast.js').read_text()
     function = source[source.index('  async function refreshJobs(preferred'):source.index('  async function pollJobs()')]
-    with playwright.sync_playwright() as runner:
+    with browser_api.sync_browser() as runner:
         browser = runner.chromium.launch(headless=True)
         try:
             page = browser.new_page()
@@ -907,12 +916,12 @@ def test_vast_result_snapshots_trigger_refresh_without_local_runs():
 
 def test_pool_summary_and_explicit_start_consent():
     """Display all leases and gate pool activation behind the aggregate budget consent."""
-    playwright = pytest.importorskip('playwright.sync_api')
+    browser_api = __import__('browser_driver')
     source = (ROOT / 'frontend/js/vast.js').read_text()
     activity = source[source.index('  function uploadProgressMetrics(job)'):source.index('  function renderJob()')]
     overview = source[source.index('  function openCloudResults(job)'):source.index('  async function refreshJobs(preferred')]
     start = source[source.index('  async function startCloudQueue(job)'):source.index("  el('rent-offer').addEventListener")]
-    with playwright.sync_playwright() as runner:
+    with browser_api.sync_browser() as runner:
         browser = runner.chromium.launch(headless=True)
         try:
             page = browser.new_page()

@@ -1,5 +1,19 @@
 # Vast.ai GPU queue
 
+## Collect Pareto
+
+A completed publication is also loaded automatically when returning from a hidden browser tab. The selected Results/Paretos context is retained, even without active local optimizer runs; no browser reload or repeated Collect is needed.
+
+Open **PBv8 → Optimize → Queue → Open log**. **Collect Pareto**, next to **Stop & collect**, publishes the current immutable Pareto snapshot without stopping the optimizer, requesting rental cleanup or running convergence/finalization. Repeated collection updates the same result. Results and Pareto Explorer update automatically; the selected job and page context stay in place. Stop remains available during collection.
+
+Remote collection requires the current run supervisor's snapshot-transaction support and an already verified worker connection. An outdated supervisor must be restarted explicitly through the existing supervisor controls; Collect never restarts it. Stop/final collection takes priority. The manual partial allowance is 1 GiB including the new archive; rental deadlines, the final collection reserve, budgets and idle cleanup still apply. Collect is not a rental keep-alive. Missing Pareto data or unavailable instances retain the previous published result. A browser timeout leaves the outcome unconfirmed; job status continues updating automatically, without repeating the POST.
+
+When Collect is unavailable, its reason appears beside the log actions, including the instruction to restart an outdated run supervisor. Successful collection explicitly updates the current Results/Paretos view after publication, even if a job update arrived during import. Snapshot locks retain their shared identity through symlinked ancestors such as `data`. Existing job-store and credential path checks still apply: the store root itself must be a regular directory or be configured using its canonical path. Lock-file symlinks and directory changes during collection are rejected.
+
+Verified final data can be published locally after the rental has ended, without contacting Vast. Collect does not decide the execution outcome. If finalization remains pending, **Retry result import** stays available even after the complete result has been published. It performs the normal local finalization; completed terminal outcomes are not offered an unnecessary retry.
+
+Waiting for local job metadata uses the same collection time limit and shutdown cancellation. Before publication, interruption preserves the previous result. Once publication commits, its matching job metadata is completed before the request finishes.
+
 ## Verified host exclusions in AI Chat
 
 Unreadable local host metadata or damaged execution evidence is reported as a failure or unconfirmed outcome. It never proves a successful block and never authorizes another write. The read-only outcome lookup validates the receipt against the reviewed job, lease, machine, Boolean and revision before reporting historical success.
@@ -276,9 +290,15 @@ in this cloud profile. A historical traceback path such as `/opt/passivbot`, or 
 line number, does not identify the image or execution host. Without the original
 config and rental intent, the historical FET failure cannot be reconstructed.
 
+## Start one prepared optimizer
+
+Open **PBv8 → Optimize → Queue** and click **▶ Start** on the prepared cloud job, or **Open log → Start**. The review names that exact frozen job, exchanges/dates, iterations, GPU requirements, maximum hourly price, budget, hours and stagnation rule. **Start job** authorizes one GPU rental for that job, with automatic cleanup afterward. **Cancel** does not rent or start anything.
+
+This also works for input already prepared by an AI request; no AI chat or model call is required. The shared queue can remain paused, and other jobs and global **Auto rent & start** stay unchanged. A later Pause/End or a change to the input, account or saved limits invalidates a pending review. Click Start again to review current values. Reviews expire after 15 minutes. Repeated confirmation of the same review cannot rent a second GPU. Existing rental capacity and cleanup checks still apply; an existing rental is never stopped implicitly.
+
 ## GPU pool and shared rentals
 
-Set **Max concurrent GPUs** in **Rental & Automation** (default **1**, maximum **16**). To avoid starting every queued job manually, set **Auto rent & start** to **On** and save. The confirmation explicitly authorizes the per-rental and simultaneous budget targets. From then on, **Save & Queue** is enough: as soon as input preparation finishes, PBGui rents up to the saved limit and starts one optimizer on each GPU. Compatible idle GPUs are reused first. Provisioning and cleanup rentals count toward the limit until deletion is confirmed. **Auto rent & start** also works with a limit of 1. With Auto rent off, **Start** rents only one GPU for the existing queue, even if Max concurrent GPUs is higher; adding another job cannot authorize another rental. For an additional explicit rental while other jobs run, select a different offer under **GPU & Offers** and click **Rent**. Start that reserved GPU from its own Queue card; only one manual reservation can await Start queue at a time.
+Set **Max concurrent GPUs** in **Rental & Automation** (default **1**, maximum **16**). To avoid starting every queued job manually, set **Auto rent & start** to **On** and save. The confirmation explicitly authorizes the per-rental and simultaneous budget targets. From then on, **Save & Queue** is enough: as soon as input preparation finishes, PBGui rents up to the saved limit and starts one optimizer on each GPU. Compatible idle GPUs are reused first. Provisioning and cleanup rentals count toward the limit until deletion is confirmed. **Auto rent & start** also works with a limit of 1. The job row’s **Start** always reviews only that selected job, independently of Auto rent. Adding another job does not authorize a manual rental. For an additional explicit rental while other jobs run, select a different offer under **GPU & Offers** and click **Rent**. Start that reserved GPU from its own Queue card; only one manual reservation can await Start queue at a time.
 
 Hours, budget and idle cleanup apply **per GPU rental**. The settings show the combined simultaneous budget targets. This is not a lifetime pool spending cap: while the pool is enabled and prepared jobs are waiting, it may rent replacement GPUs after earlier rentals end. Fresh offers must still satisfy your saved requirements and host exclusions. If none matches, the queue shows the reason and retries automatically.
 
@@ -286,10 +306,7 @@ Hours, budget and idle cleanup apply **per GPU rental**. The settings show the c
 
 When a later job needs more transfer allowance, a worker with the current budget-control guard can automatically move unused rental time into transfer reserve within the same authorized budget. PBGui waits for the worker to confirm the shorter deadline before dispatching the job. A pending adjustment prevents idle cleanup. Older guards or insufficient remaining budget show a reason to adjust **Transfer reserve/Budget** manually; PBGui does not spend an unconfirmed allowance or increase the budget automatically.
 
-In **Rental & Automation**, save maximum hours, budget target and idle cleanup independently of GPU requirements. The job row’s **Start** action uses these saved settings and finds a current matching offer. With the default limit of 1, PBGui
-creates one instance, establishes verified SSH access, starts the first job,
-imports its results and runs the next job on the same GPU. One optimizer runs
-at a time on each GPU; its CPU worker count comes from its configuration.
+In **Rental & Automation**, save maximum hours, budget target and idle cleanup independently of GPU requirements. Shared rentals started through **Auto rent & start**, or an explicitly rented GPU’s **Start queue**, establish verified SSH access and process compatible queued jobs sequentially on that GPU. One optimizer runs at a time on each GPU; its CPU worker count comes from its configuration. A job row’s **Start** instead uses the single-job review above and cleans up its dedicated rental after that job.
 
 Later compatible jobs also use this worker. Input data is cached by checksum,
 so subsequent jobs transfer only missing or changed market files. Each job has
@@ -333,6 +350,29 @@ PBGui shares request pacing across its local processes: a conservative five-seco
 Confirm **deletion_verified**;
 merely stopping a Vast instance can leave disk storage billable.
 
+### Large Pareto collections
+
+Manual collection shares one deadline across connection, transfer, verification
+and local publication. Its default is 120 seconds plus one second per Pareto
+JSON file (at least 120 seconds, at most 3600 seconds). PBGui uses the job's
+`pareto_count`, or a bounded remote filename listing when that count is absent.
+The rental's three-minute final-collection reserve still takes priority.
+
+Operators can set `[vast] collect_timeout_seconds` in `pbgui.ini`, or use the
+`PBGUI_COLLECT_TIMEOUT_SECONDS` environment variable. The INI setting wins;
+explicit positive budgets are not capped by the default's 3600-second limit.
+`[vast] collect_batch_files` controls the publication batch size (default 100
+Pareto JSON files; positive integer).
+
+Each batch is staged before publication. A timeout discards any uncommitted
+batch, reports **N/M files**, and retains previously committed files. Job metadata
+records `collection_incomplete` and `collection_progress` with `published_files`
+and `total_files`; each committed batch also updates `.pbgui_vast.json`.
+Retrying an unchanged verified snapshot resumes from its committed batch offset.
+Obsolete files from the preceding front are removed only after the last batch;
+until then a final snapshot is explicitly marked partial. Download verification
+is still all-or-nothing: interrupted downloads are not published.
+
 ## Limits and recovery
 
 Transient upload/SSH failures receive a 15-minute recovery window instead of a fixed two-attempt limit. PBGui retries after 15, 30, then at most 60 seconds and reuses partial files or verified chunks. New observed transfer progress renews that window; repeated retries without progress do not. The log shows the next retry and the original connection error. The separate 15-minute worker-setup timer stops applying once worker health is verified, so slow setup does not consume the upload's recovery time. Active transfers remain bounded by the rental deadline minus the three-minute collection reserve. Stop remains responsive during retry waits. Identity, integrity and disk-full errors still fail immediately; no deadline or budget is extended automatically.
@@ -342,7 +382,11 @@ controller and rental-guard services survive browser and API restarts. A remote
 guard attempts deletion at the fixed deadline independently. After a PBGui-host
 reboot, use **Resume supervision** to restore transient local services.
 
-Separate **Budget**, **Deadline** and **Transfer reserve** cards show the rental controls. Reserve inputs show four decimal places. The deadline adjustment field always defaults to 60 minutes. Adjustments accept whole minutes from 1 to 1,440, subject to the budget, 24-hour rental limit and cleanup margin. On an explicit deadline change, PBGui upgrades an older rental guard while the optimizer continues running. The new guard must first confirm the unchanged deadline; only then is the requested change sent. Failed handovers restore the old guard. Unconfirmed adjustments remain pending and do not extend the local deadline. API restart is blocked during the handover.
+Separate **Budget**, **Deadline** and **Transfer reserve** cards show the rental controls. Reserve inputs show four decimal places. The deadline adjustment field always defaults to 60 minutes. Adjustments accept whole minutes from 1 to 1,440, subject to the budget and cleanup margin. Multi-day rentals require a verified worker image with multi-day guard support; older images retain their 24-hour safety limit. The active image is unchanged until the candidate has been built, verified and published. On an explicit deadline change, PBGui upgrades an older rental guard while the optimizer continues running. The new guard must first confirm the unchanged deadline; only then is the requested change sent. Failed handovers restore the old guard. Unconfirmed adjustments remain pending and do not extend the local deadline. API restart is blocked during the handover.
+
+Updated multi-day workers support budget, deadline and transfer-reserve changes in Queue and the bound Loop. Automatic transfer-reserve increases still wait for worker acknowledgement and stay within the selected budget. A budget change does not extend the Loop allowance automatically.
+
+The maximum rental hours field takes its limit from the active worker image. Until a published multi-day image is activated, the API rejects new rental settings, starts and performance-test watches above 24 hours before any offer selection. Previously saved longer settings remain visible for correction; an unsupported waiting test is cancelled with an explanation instead of retried indefinitely.
 
 The active rental card lets you edit the **Budget target**. PBGui recalculates the
 deletion deadline and sends the change to the worker guard for acknowledgement;

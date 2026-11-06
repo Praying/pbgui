@@ -1,5 +1,10 @@
 # VPS Manager
 
+Installed systemd services count as migrated even when stopped or autostart is disabled. Use the existing Services Start/Stop and Enable/Disable controls to manage those states; they do not require another migration. Missing required units or remaining legacy startup files still require migration.
+
+Starting Update Linux or another VPS command saves its required settings locally; it does not implicitly apply firewall or swap changes. Only the explicit Apply/Save configuration action may start Apply VPS Config.
+
+
 **Guide** opens help above VPS Manager without changing the current view or unsaved inputs. If its topic or content request fails, a visible error alert replaces the loading state; details are logged in the browser console. After connectivity returns, select a topic again or close and reopen Guide.
 
 If the connection drops while **Read VPS settings** is running, the progress panel reports the interruption. After reconnecting, retry the read; it is not replayed automatically.

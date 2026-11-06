@@ -21,6 +21,116 @@ from api import backtest_v8
 from master_update_lock import acquire_master_update_lock
 
 
+@pytest.mark.parametrize('name,argument', [
+    ('start_ohlcv_start_date_lookup', {'config': {'backtest': {}}}),
+    ('get_ohlcv_start_date_lookup', 'owned-job'),
+    ('stop_ohlcv_start_date_lookup', 'owned-job'),
+])
+def test_start_date_shortcuts_reuse_optimize_handlers(monkeypatch, name, argument):
+    """Backtest forwards the exact request and session to the existing shared path."""
+    from api import optimize_v8
+    session = object()
+    received = []
+    result = {'status': 'completed'}
+
+    def shared(value, session):
+        """Record forwarding without invoking a runtime or starting a job."""
+        received.append((value, session))
+        return result
+
+    monkeypatch.setattr(optimize_v8, name, shared)
+    assert getattr(backtest_v8, name)(argument, session=session) is result
+    assert received == [(argument, session)]
+
+
+def test_start_date_shortcut_preserves_shared_http_error(monkeypatch):
+    """A missing shared job remains HTTP 404 rather than a success or generic error."""
+    from api import optimize_v8
+
+    def missing(job_id, session):
+        """Simulate the existing authenticated progress route's missing-job result."""
+        raise HTTPException(status_code=404, detail='OHLCV start-date lookup job not found')
+
+    monkeypatch.setattr(optimize_v8, 'get_ohlcv_start_date_lookup', missing)
+    with pytest.raises(HTTPException) as error:
+        backtest_v8.get_ohlcv_start_date_lookup('missing', session=None)
+    assert error.value.status_code == 404
+
+
+def test_start_date_lookup_requires_json_request_content_type(monkeypatch):
+    """Browser text/plain JSON fails body validation before any runtime job starts."""
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from api import optimize_v8
+    from api.auth import require_auth
+
+    app = FastAPI()
+    app.include_router(backtest_v8.router, prefix='/api/backtest-v8')
+    app.dependency_overrides[require_auth] = lambda: None
+    calls = []
+
+    def start(config):
+        """Record validated input without touching runtime data or a bot process."""
+        calls.append(config)
+        return {'job_id': 'synthetic', 'status': 'queued'}
+
+    monkeypatch.setattr(optimize_v8, 'start_pb8_ohlcv_start_date_job', start)
+    with TestClient(app) as client:
+        body = json.dumps({'config': {'backtest': {}}})
+        invalid = client.post('/api/backtest-v8/ohlcv-start-dates', content=body,
+                              headers={'Content-Type': 'text/plain;charset=UTF-8'})
+        assert invalid.status_code == 422
+        assert isinstance(invalid.json()['detail'], list)
+        assert calls == []
+        valid = client.post('/api/backtest-v8/ohlcv-start-dates', content=body,
+                            headers={'Content-Type': 'application/json'})
+        assert valid.status_code == 200
+        assert calls == [{'backtest': {}}]
+
+
+def test_result_pages_reuse_owned_discovery_and_new_load_sees_new_files(tmp_path, monkeypatch):
+    """Only one scan is needed per load; filters/owners and new arrivals remain isolated."""
+    root = tmp_path / 'results'
+    paths = []
+    for name in ('first', 'second'):
+        directory = root / name
+        directory.mkdir(parents=True)
+        path = directory / 'analysis.json'
+        path.write_text('{"gain": 1.1}')
+        paths.append(path)
+    scans = []
+
+    def scan(name=None):
+        """Return a detached discovery snapshot like the real filesystem scanner."""
+        scans.append(name)
+        return list(paths)
+
+    monkeypatch.setattr(backtest_v8, '_results_root', lambda: root)
+    monkeypatch.setattr(backtest_v8, '_result_analysis_paths', scan)
+    monkeypatch.setattr(backtest_v8, '_result_path_snapshots', backtest_v8.OrderedDict())
+    monkeypatch.setattr(backtest_result_index, 'PBGDIR', str(tmp_path))
+    owner = SimpleNamespace(user_id='fixture')
+    first = backtest_v8.get_results(offset=0, limit=1, session=owner, snapshot='new')
+    token = first['pagination']['snapshot']
+    paths.reverse()
+    second = backtest_v8.get_results(offset=1, limit=1, session=owner, snapshot=token)
+    assert [row['config_name'] for row in first['results'] + second['results']] == ['first', 'second']
+    assert scans == [None]
+    for wrong in ({'session': SimpleNamespace(user_id='other')}, {'name': 'other', 'session': owner}):
+        with pytest.raises(HTTPException) as denied:
+            backtest_v8.get_results(offset=1, limit=1, snapshot=token, **wrong)
+        assert denied.value.status_code == 409
+    fresh = backtest_v8.get_results(offset=0, limit=1, session=owner, snapshot='new')
+    assert fresh['results'][0]['config_name'] == 'second' and scans == [None, None]
+    backtest_v8._result_path_snapshots[token]['expires'] = 0
+    with pytest.raises(HTTPException) as expired:
+        backtest_v8.get_results(offset=1, limit=1, session=owner, snapshot=token)
+    assert expired.value.status_code == 409
+    with pytest.raises(HTTPException) as invalid:
+        backtest_v8.get_results(session=owner, snapshot='../escape')
+    assert invalid.value.status_code == 422
+
+
 def test_pb8_queue_websocket_has_canonical_and_legacy_routes() -> None:
     """New clients use bt8 while the historical bt7 path remains compatible."""
 
@@ -2080,12 +2190,127 @@ def test_pb8_cache_cleanup_respects_active_materialized_operation_lock(tmp_path,
     assert operation_lock.exists()
 
 
+@pytest.fixture
+def cached_queue(tmp_path, monkeypatch):
+    """Use only temporary queue sources and an isolated bounded summary cache."""
+    root = tmp_path / 'queue'
+    root.mkdir()
+    (root / 'state').mkdir()
+    path = root / 'job.json'
+    path.write_text(json.dumps({'filename': 'job', 'name': 'first', 'exchange': ['bybit'], 'started_at': 1}))
+    (root / 'state' / 'job.json').write_text('{"returncode": 0}')
+    monkeypatch.setattr(backtest_v8, '_queue_dir', lambda: root)
+    monkeypatch.setattr(backtest_v8, '_queue_item_cache', backtest_v8.OrderedDict())
+    monkeypatch.setattr(backtest_v8, '_queue_item_cache_size', 0)
+    return path
+
+
+def test_settled_queue_cache_reuses_unchanged_files_and_returns_independent_rows(cached_queue, monkeypatch):
+    """Avoid repeated completed-job JSON reads without hiding edits or sharing mutable lists."""
+    reads = []
+    original = backtest_v8._read_json
+
+    def read(path):
+        """Count actual source reads rather than timing filesystem-dependent work."""
+        reads.append(path)
+        return original(path)
+
+    monkeypatch.setattr(backtest_v8, '_read_json', read)
+    first = backtest_v8._queue_item(cached_queue)
+    count = len(reads)
+    first['exchange'].append('caller-only')
+    assert backtest_v8._queue_item(cached_queue)['exchange'] == ['bybit']
+    assert len(reads) == count
+    data = json.loads(cached_queue.read_text())
+    cached_queue.write_text(json.dumps({**data, 'name': 'other'}))
+    assert backtest_v8._queue_item(cached_queue)['name'] == 'other'
+    (cached_queue.parent / 'state' / 'job.json').write_text('{"returncode": 1}')
+    assert backtest_v8._queue_item(cached_queue)['status'] == 'error'
+
+
+def test_settled_queue_cache_rechecks_live_pids_and_new_process_records(cached_queue, monkeypatch):
+    """A changed PID record or a live cached PID always forces current ownership/status probes."""
+    assert backtest_v8._queue_item(cached_queue)['status'] == 'complete'
+    cached_queue.with_suffix('.pid').write_text('{"pid": 123, "create_time": 1}')
+    live = [False]
+    monkeypatch.setattr(backtest_v8.psutil, 'pid_exists', lambda _pid: live[0])
+    monkeypatch.setattr(backtest_v8, '_process_matches', lambda *_: live[0])
+    assert backtest_v8._queue_item(cached_queue)['pid'] == 123
+    live[0] = True
+    assert backtest_v8._queue_item(cached_queue)['status'] == 'running'
+    live[0] = False
+    assert backtest_v8._queue_item(cached_queue)['status'] == 'complete'
+
+
+@pytest.mark.parametrize('source', ['queue', 'pid', 'state', 'state_dir'])
+def test_settled_queue_cache_rejects_substituted_symlinks(cached_queue, monkeypatch, source):
+    """Cached summaries never bypass the filesystem boundary checks for any status source."""
+    backtest_v8._queue_item(cached_queue)
+    targets = {'queue': cached_queue, 'pid': cached_queue.with_suffix('.pid'),
+               'state': cached_queue.parent / 'state' / 'job.json', 'state_dir': cached_queue.parent / 'state'}
+    target = targets[source]
+    outside = cached_queue.parent.parent / 'outside'
+    if source == 'state_dir':
+        target.rename(outside)
+        target.symlink_to(outside, target_is_directory=True)
+    else:
+        target.unlink(missing_ok=True)
+        outside.write_text('{"untrusted": true}')
+        target.symlink_to(outside)
+    with pytest.raises(RuntimeError, match='symlink|regular file'):
+        backtest_v8._queue_item(cached_queue)
+
+
 def _reset_ws_snapshot(monkeypatch) -> None:
     import asyncio
     monkeypatch.setattr(backtest_v8, "_ws_snapshot_lock", asyncio.Lock())
     monkeypatch.setattr(backtest_v8, "_ws_snapshot", None)
     monkeypatch.setattr(backtest_v8, "_ws_snapshot_until", 0.0)
     monkeypatch.setattr(backtest_v8, "_ws_clients", set())
+
+
+def test_autostart_scan_keeps_api_responsive_and_shutdown_joins_read(monkeypatch) -> None:
+    """Slow queue inspection yields the event loop and cannot launch after shutdown."""
+    import asyncio
+    heartbeat, entered, release, finished = (threading.Event() for _ in range(4))
+    responsive, launches = [], []
+    worker = backtest_v8.BacktestV8Worker()
+
+    def scan():
+        """Require an API-loop heartbeat while the real scanner would still be busy."""
+        responsive.append(heartbeat.wait(2))
+        entered.set()
+        try:
+            assert release.wait(5)
+            return [{"filename": "queued-test", "status": "queued"}]
+        finally:
+            finished.set()
+
+    monkeypatch.setattr(backtest_v8, '_load_queue', scan)
+    monkeypatch.setattr(backtest_v8, 'load_ini_section', lambda *_: {'autostart': 'True'})
+    monkeypatch.setattr(backtest_v8, '_cpu_limit', lambda *_: 1)
+    monkeypatch.setattr(backtest_v8, '_log', lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(backtest_v8, 'claim_backtest_slot', lambda *_: launches.append('claim') or False)
+
+    async def exercise():
+        """Repeated stop requests wait for one owned read and never cancel its worker."""
+        worker.start()
+        asyncio.get_running_loop().call_soon(heartbeat.set)
+        try:
+            assert await asyncio.to_thread(entered.wait, 4)
+            assert responsive == [True], 'queue scan blocked the API heartbeat'
+            stopping = asyncio.create_task(worker.stop())
+            await asyncio.sleep(0)
+            again = asyncio.create_task(worker.stop())
+            await asyncio.sleep(0)
+            assert not stopping.done() and not finished.is_set()
+        finally:
+            release.set()
+            await worker.stop()
+        await asyncio.gather(stopping, again)
+        assert finished.is_set() and launches == [] and worker._task is None
+
+    asyncio.run(exercise())
 
 
 def test_queue_websocket_clients_share_one_scan_and_refresh_forces_rescan(monkeypatch) -> None:
@@ -2163,3 +2388,56 @@ def test_queue_websocket_suppresses_unchanged_frames_and_pauses_when_hidden(monk
                         backtest_v8._WS_IDLE_INTERVAL_S, backtest_v8._WS_IDLE_INTERVAL_S]
     assert len(scans) == 4
     assert backtest_v8._ws_clients == set()
+
+
+@pytest.mark.parametrize("suffix", ["", "T00:00:00", " 00:00:00", "T23:30:00-05:00"])
+def test_save_datetime_dates_through_shared_helper(tmp_path, monkeypatch, suffix):
+    """Real backtest_v8 staging and validation persist date-only bounds for thirty scenarios."""
+    from collections import OrderedDict
+    import pb8_config
+    import pb8_config_helper
+
+    configs = tmp_path / "configs"
+    monkeypatch.setattr(backtest_v8, "_configs_dir", lambda: configs)
+    monkeypatch.setattr(backtest_v8, "PBGDIR", str(tmp_path))
+    monkeypatch.setattr(pb8_config, "_runtime_fingerprint", lambda: ("isolated",))
+    monkeypatch.setattr(pb8_config, "_config_cache", OrderedDict())
+    operations, validated = [], []
+
+    def load_native(path, **_kwargs):
+        """Replace only the external native file loader with isolated JSON input."""
+        value = json.loads(Path(path).read_text(encoding="utf-8"))
+        validated.append(copy.deepcopy(value))
+        return value
+
+    modules = {"prepare_config": lambda config, **_kwargs: config,
+               "sanitize": lambda value: value,
+               "load_prepared_config": load_native,
+               "parse_overrides": lambda *_args, **_kwargs: None,
+               "apply_optimizer_overrides": lambda _overrides, config, _side: config}
+    monkeypatch.setattr(pb8_config_helper, "_load_pb8_modules", lambda _root: modules)
+
+    def call_helper(operation, **payload):
+        """Keep the actual dispatcher while replacing the native process transport."""
+        operations.append(operation)
+        return pb8_config_helper.handle(copy.deepcopy({"operation": operation,
+            "pb8_dir": str(tmp_path), **payload}))
+
+    monkeypatch.setattr(pb8_config, "_call_helper", call_helper)
+    config = {"backtest": {"start_date": "2019-10-04" + suffix,
+        "end_date": "2020-01-01" + suffix, "suite_enabled": True,
+        "scenarios": [{"label": f"train_{index}", "start_date": "2019-10-04" + suffix,
+                       "end_date": "2019-12-31" + suffix} for index in range(30)]}}
+    before = copy.deepcopy(config)
+    response = backtest_v8.save_config("calendar_dates", config, session=None)
+    saved = json.loads((configs / "calendar_dates" / "backtest.json").read_text(encoding="utf-8"))
+    expected = copy.deepcopy(saved)
+    expected["backtest"].update(start_date="2019-10-04", end_date="2020-01-01")
+    expected["backtest"]["scenarios"] = [{"label": f"train_{index}",
+        "start_date": "2019-10-04", "end_date": "2019-12-31"} for index in range(30)]
+    assert config == before
+    assert response["ok"] is True
+    assert response["config"] == saved == expected
+    assert validated == [expected]
+    assert "prepare" in operations and "validate_overrides" in operations
+    assert not list(configs.glob(".calendar_dates.*"))

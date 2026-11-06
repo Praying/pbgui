@@ -1,4 +1,6 @@
 """Offline same-Loop infrastructure replacement with real temporary durable stores."""
+
+from javascript_checks import run_javascript
 import asyncio
 import copy
 import json
@@ -1536,7 +1538,7 @@ def test_browser_review_helper_suppresses_duplicate_and_stale_execution():
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
     script = r'''
-const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+const vm=browserScope,fs=testSources,assert=browserAssert;
 let calls=[],release,current=true,accept=true,reviews=0;
 const context={window:{PBGuiDialogs:{confirm:async()=>{reviews++;return accept;}}},
  Set,AbortController,setTimeout,clearTimeout,Date,Number,encodeURIComponent,
@@ -1557,9 +1559,9 @@ const options={base:'/mounted/api/optimize-v8/loops',loop_id:'a'.repeat(32),work
  assert.equal(calls.length,4);assert.ok(calls[3][0].startsWith(options.base));
  assert.equal(calls[3][1].expected_generation,3);assert.equal(calls[3][1].authorization,true);
  assert.equal(calls[3][1].operation_id,'e'.repeat(32));
-})().catch(error=>{console.error(error);process.exitCode=1;});
+})().catch(error=>{console.error(error);testResult.exitCode=1;});
 '''
-    result = subprocess.run(['node', '-e', script], cwd=root, capture_output=True, text=True, timeout=10)
+    result = run_javascript(['-e', script], cwd=root, capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, result.stdout + result.stderr
 
 
@@ -1579,9 +1581,10 @@ def test_stop_collection_has_shared_deadline_and_retains_available_artifacts(env
             operations.append((action, timeout))
             clock[0] += timeout
             return {}
-        def collect(self, final, timeout):
+        def collect(self, final, timeout, ignore_quota=False):
             """Partial metadata/download cannot obtain a second collection allowance."""
             assert not final
+            assert ignore_quota is True
             collections.append(timeout)
             clock[0] += timeout
             raise VastError('Transfer deadline reached')
@@ -1628,14 +1631,16 @@ def test_stop_publishes_last_verified_results_without_hiding_execution_failure(e
             """A running partial snapshot exhausts only the existing Stop wait."""
             clock[0] += timeout
             return {'finished': outcome != 'partial'}
-        def collect(self, final, timeout):
+        def collect(self, final, timeout, ignore_quota=False):
             """Model the verified output contract of WorkerConnection.collect."""
             collections.append(final)
+            assert ignore_quota is True
             assert final is (outcome != 'partial')
             root = directory / ('final-results' if final else 'partial-results')
             source = root / 'optimize_results/fixture'
             source.mkdir(parents=True)
             (source / 'all_results.bin').write_bytes(msgpack.packb({'metrics': {'gain': 1}}))
+            write_json(source / 'pareto/fixture.json', {'metrics': {'gain': 1}})
             if final:
                 write_json(root / 'finished.json', dict(cancelled=outcome == 'cancelled',
                     exit_code=1 if outcome == 'failed' else 130 if outcome == 'cancelled' else 0))

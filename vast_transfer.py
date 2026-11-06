@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
+from contextlib import contextmanager
 import threading
 from functools import wraps
 import gzip
@@ -26,12 +27,14 @@ import urllib.parse
 import urllib.request
 
 from file_lock import advisory_file_lock
+from vast_snapshot import bounded_lock, snapshot_method, snapshot_import, check_work
 from secure_files import atomic_write_private_text, ensure_private_directory
 from vast_jobs import PROJECT, JobStore, digest, write_json, job_id
 from vast_provider import NoRedirect, VastClient, VastError, positive_id
 from setup.vast_gpu_benchmark.cloud_worker import safe_path
 
 from vast_exchanges import SUPPORTED_EXCHANGES
+from vast_collection_config import collection_setting
 
 SERVICE = "VastRunner"
 WORKER = "/usr/local/bin/python /work/pbgui/worker.py "
@@ -197,6 +200,7 @@ class WorkerConnection:
         process = None
         try:
             WorkerConnection.check_upload(self)
+            check_work()
             process = subprocess.Popen(args, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
             deadline = time.monotonic() + max(1, timeout)
             last_progress = 0.0
@@ -209,6 +213,7 @@ class WorkerConnection:
                 # both streams and checking cancellation until it really exits.
                 while selector.get_map() or process.poll() is None:
                     WorkerConnection.check_upload(self)
+                    check_work()
                     if cancel_event is not None and cancel_event.is_set():
                         raise VastError("SSH upload cancelled after another chunk failed", 422)
                     if progress is not None and time.monotonic() - last_progress >= 2:
@@ -292,6 +297,20 @@ class WorkerConnection:
             return value
         except ValueError:
             raise VastError("Invalid worker response") from None
+
+    def pareto_file_count(self, *, timeout):
+        """Estimate collection work with a bounded remote filename listing only."""
+        script = ('import pathlib; root=pathlib.Path(' + repr(self.remote_root) + ') / "output"; '
+                  'print(sum(1 for _ in root.glob("optimize_results/*/pareto/*.json")))')
+        raw = self.command('/usr/local/bin/python -c ' + shlex.quote(script),
+                           timeout=min(30, timeout), max_output=128)
+        try:
+            count = int(raw)
+            if not 0 <= count <= 100_000:
+                raise ValueError
+            return count
+        except ValueError:
+            raise VastError('Invalid remote Pareto file count', 409) from None
 
     def convergence_snapshot(self) -> list[list[float]]:
         """Read only bounded feasible Pareto objectives after full backups stop."""
@@ -640,21 +659,45 @@ class WorkerConnection:
                 self.command('/usr/local/bin/python -c ' + shlex.quote(script), stdin=stream, timeout=30)
         self.command("mkdir -p " + self.remote_root + " && " + "PBGUI_WORKDIR=" + self.remote_root + " nohup " + WORKER + "run > " + self.remote_root + "/runner.log 2>&1 < /dev/null &", timeout=15)
 
-    def collect(self, final: bool, timeout: int) -> Path:
+    @contextmanager
+    def _collection_state_lock(self):
+        """Bound manual state waits without changing independent supervisor writes."""
+        if check_work() is None:
+            yield
+        else:
+            with bounded_lock(self.directory / '.state-lock'):
+                yield
+
+    @snapshot_method
+    def collect(self, final: bool, timeout: int, *, ignore_quota: bool = False) -> Path:
         """Download and verify a bounded snapshot before replacing the last copy."""
+        state = self.store.read(self.identifier)
+        if state.get('final_collected'):
+            return self.directory / 'final-results'
         deadline = time.monotonic() + timeout
         def remaining():
             """Metadata, download, verification and extraction share one deadline."""
-            seconds = deadline - time.monotonic()
+            manual = check_work()
+            seconds = min(deadline - time.monotonic(), manual) if manual is not None else deadline - time.monotonic()
             if seconds <= 0:
                 raise VastError('Result collection deadline reached; last verified snapshot retained')
             return seconds
         action = "final" if final else "partial"
+        from vast_worker_capabilities import supports
+        skip = set() if final else self._existing_pareto_names()
+        if skip:
+            image = self.store.read(self.identifier, 'intent.json').get('image', '')
+            if not supports(image, 'pareto_delta'):
+                skip = set()
+        if skip:
+            self._request_pareto_delta(skip, remaining)
         metadata = self.operation(action, timeout=remaining())
         size = metadata.get("bytes")
         if type(size) is not int or not 0 < size <= 2 * 1024**3 or not re.fullmatch(r"[0-9a-f]{64}", str(metadata.get("sha256"))):
             raise VastError("Invalid result snapshot metadata")
         state = self.store.read(self.identifier)
+        if check_work() is not None and not final and not ignore_quota and int(state.get("downloaded_bytes", 0)) + size > 1024**3:
+            raise VastError('Partial transfer allowance reached; final collection reserve retained', 409)
         if int(state.get("downloaded_bytes", 0)) + size > 2 * 1024**3:
             raise VastError("Job transfer limit reached; collection cannot exceed 2 GB")
         destination = self.directory / (action + ".tar.gz")
@@ -664,13 +707,16 @@ class WorkerConnection:
                 temporary.chmod(0o600)
                 self.command(f"head -c {size + 1} {self.remote_root}/{action}.tar.gz", stdout=stream,
                              timeout=remaining(), max_output=size + 1)
-            if temporary.stat().st_size != size or checked_digest(temporary, remaining) != metadata["sha256"]:
-                raise VastError("Result archive checksum mismatch")
-            os.replace(temporary, destination)
+            # Network work has finished. Admit the local verification/accounting
+            # transaction before accepting this archive, using the manual budget.
+            with self._collection_state_lock():
+                if temporary.stat().st_size != size or checked_digest(temporary, remaining) != metadata["sha256"]:
+                    raise VastError("Result archive checksum mismatch")
+                os.replace(temporary, destination)
+                self.store.update(self.identifier, downloaded_bytes=int(state.get("downloaded_bytes", 0)) + size)
         finally:
             temporary.unlink(missing_ok=True)
-        self.store.update(self.identifier, downloaded_bytes=int(state.get("downloaded_bytes", 0)) + size)
-        extracted = extract_results(destination, self.directory, action, check=remaining)
+        extracted = extract_results(destination, self.directory, action, check=remaining, merge=bool(skip))
         log = extracted / "optimizer.log"
         if log.is_file():
             log_root = ensure_private_directory(PROJECT / "data/logs/optimizes_v8")
@@ -678,11 +724,26 @@ class WorkerConnection:
                 stream.seek(max(0, log.stat().st_size - 1024 * 1024))
                 text = stream.read(1024 * 1024).decode("utf-8", errors="replace")
             atomic_write_private_text(log_root / ("vast_" + self.identifier + ".log"), text)
-        self.store.update(self.identifier, last_backup_at=time.time(), final_collected=final or state.get("final_collected", False))
+        with self._collection_state_lock():
+            self.store.update(self.identifier, last_backup_at=time.time(), final_collected=final or state.get("final_collected", False))
         return extracted
 
+    def _existing_pareto_names(self) -> set[str]:
+        """Names of Pareto files already verified in the local partial snapshot."""
+        root = self.directory / 'partial-results' / 'optimize_results'
+        return {path.name for path in root.glob('*/pareto/*.json')
+                if path.is_file() and not path.is_symlink()}
 
-def extract_results(archive_path: Path, directory: Path, name: str, *, check=lambda: None) -> Path:
+    def _request_pareto_delta(self, names: set[str], remaining) -> None:
+        """Ask the worker to skip already-present Pareto files for a partial sync."""
+        request = {'skip': sorted(names)}
+        with tempfile.TemporaryFile() as source:
+            source.write(json.dumps(request).encode()); source.seek(0)
+            self.command('mkdir -p ' + self.remote_root + ' && cat > ' + self.remote_root + '/partial-skip.json',
+                         stdin=source, stdout=subprocess.DEVNULL, timeout=remaining())
+
+
+def extract_results(archive_path: Path, directory: Path, name: str, *, check=lambda: None, merge: bool = False) -> Path:
     """Extract only regular expected result files and validate their manifest."""
     destination = directory / (name + "-results")
     with tempfile.TemporaryDirectory(dir=directory) as temporary:
@@ -721,9 +782,18 @@ def extract_results(archive_path: Path, directory: Path, name: str, *, check=lam
             raise VastError("Result manifest does not match the archive")
         if destination.is_symlink():
             raise VastError("Invalid snapshot destination")
-        if destination.exists():
-            shutil.rmtree(destination)  # Only the owned replaceable snapshot cache.
-        os.replace(stage, destination)
+        if merge:
+            # Delta sync: keep the previously verified Pareto cache and add only
+            # the files this snapshot actually transferred.
+            for path in stage.rglob('*'):
+                if path.is_file() and not path.is_symlink():
+                    target = destination / path.relative_to(stage)
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    os.replace(path, target)
+        else:
+            if destination.exists():
+                shutil.rmtree(destination)  # Only the owned replaceable snapshot cache.
+            os.replace(stage, destination)
     return destination
 
 
@@ -793,6 +863,155 @@ def execution_input(store: JobStore, identifier: str) -> Path:
     return target
 
 
+def _result_metadata(target, partial, count, *, published=None, total=None):
+    """Describe only committed files; progress counts this snapshot's Pareto JSONs."""
+    result = {"result_path": str(target), "result_partial": partial, "evaluations": count,
+              "pareto_count": len(list((target / 'pareto').glob('*.json')))}
+    if published is not None:
+        result.update(collection_incomplete=published < total, collection_error=None,
+                      collection_progress={'published_files': published, 'total_files': total})
+    return result
+
+
+def _publish_result_batch(root, source, target, files, stale, provenance, copy_checked, check):
+    """Stage a whole batch and rollback copies, then commit without cancellation.
+
+    Obsolete Pareto files are removed only with the last batch, so an interrupted
+    refresh never deletes the preceding publication's unprocessed files.
+    """
+    with tempfile.TemporaryDirectory(prefix='.vast-batch-', dir=root) as temporary:
+        stage = Path(temporary)
+        replacements, backups, created = [], [], []
+        affected = {target / path.relative_to(source) for path in files} | set(stale)
+        provenance_path = target / '.pbgui_vast.json'
+        affected.add(provenance_path)
+        for index, destination in enumerate(sorted(affected)):
+            check()
+            if destination.is_symlink() or destination.parent.is_symlink():
+                raise VastError('Invalid result destination')
+            if destination.exists():
+                backup = stage / ('backup-' + str(index))
+                copy_checked(destination, backup)
+                backups.append((backup, destination))
+            else:
+                created.append(destination)
+        for index, source_file in enumerate(files):
+            prepared = stage / ('new-' + str(index))
+            copy_checked(source_file, prepared)
+            replacements.append((prepared, target / source_file.relative_to(source)))
+        write_json(stage / 'provenance', provenance)
+        check()
+        try:
+            for prepared, destination in replacements:
+                destination.parent.mkdir(exist_ok=True, mode=0o700)
+                os.replace(prepared, destination)
+            for old in stale:
+                old.unlink()
+            os.replace(stage / 'provenance', provenance_path)
+        except BaseException:
+            for backup, destination in backups:
+                os.replace(backup, destination)
+            for destination in created:
+                destination.unlink(missing_ok=True)
+            raise
+
+
+def _import_result_batches(store, identifier, source, target, intent, partial, count,
+                           pareto, batch_files, copy_checked, check):
+    """Publish resumable batches while State, Snapshot and publication are owned.
+
+    The verified archive manifest identifies an unchanged snapshot on retries.
+    Direct/local import callers without an archive use source file identities.
+    Final results remain marked partial until *all* batches and pruning commit.
+    """
+    binary = source / 'all_results.bin'
+    manifest = source.parent.parent / 'manifest.json'
+    if manifest.is_file():
+        # The extractor has already verified these entries against file contents.
+        entries = json.loads(manifest.read_text())['files']
+        prefix = source.relative_to(source.parent.parent).as_posix() + '/'
+        identity = sorted((entry['path'], entry['bytes'], entry['sha256'])
+                          for entry in entries if entry['path'].startswith(prefix)
+                          and not entry['path'].endswith('/checkpoint.pkl'))
+    else:
+        identity = [(path.name, path.stat().st_size, path.stat().st_mtime_ns)
+                    for path in ([binary] if binary.is_file() else []) + pareto]
+    signature = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+    provenance = (json.loads((target / '.pbgui_vast.json').read_text()) if target.exists() else
+                  {'job_id': identifier, 'image': intent['image'],
+                   'source_config_sha256': intent['source_config_sha256'], 'pb8_revision': intent['pb8_revision']})
+    total, published = len(pareto), 0
+    if provenance.get('collection_incomplete') and provenance.get('collection_snapshot') == signature:
+        offset = (provenance.get('collection_progress') or {}).get('published_files', 0)
+        if type(offset) is int and 0 <= offset < total and all(
+                (target / 'pareto' / path.name).is_file() and not (target / 'pareto' / path.name).is_symlink()
+                for path in pareto[:offset]):
+            published = offset
+    try:
+        while published < total:
+            # No batch starts after the deadline; cancellation during preparation
+            # also discards only that uncommitted batch, never previous commits.
+            check()
+            end = min(total, published + batch_files)
+            last = end == total
+            batch = pareto[published:end]
+            next_provenance = dict(provenance, partial=partial or not last, evaluations=count,
+                collection_snapshot=signature, collection_incomplete=not last,
+                collection_progress={'published_files': end, 'total_files': total})
+            if not target.exists():
+                with tempfile.TemporaryDirectory(prefix='.vast-import-', dir=target.parent) as temporary:
+                    stage = Path(temporary) / 'result'
+                    selected = {path.name for path in batch}
+                    def ignore(folder, names):
+                        """Keep native metadata but only this batch of Pareto JSONs."""
+                        return [name for name in names if name == 'checkpoint.pkl' or
+                                (Path(folder) == source / 'pareto' and name not in selected)]
+                    shutil.copytree(source, stage, ignore=ignore, copy_function=copy_checked)
+                    _write_result_plans(store, identifier, stage)
+                    write_json(stage / '.pbgui_vast.json', next_provenance)
+                    for path in [stage, *stage.rglob('*')]:
+                        check()
+                        path.chmod(0o700 if path.is_dir() else 0o600)
+                    check()
+                    os.replace(stage, target)
+            else:
+                files = ([binary] if published == 0 and binary.is_file() else []) + batch
+                stale = [path for path in (target / 'pareto').glob('*.json')
+                         if not (source / 'pareto' / path.name).exists()] if last else []
+                _publish_result_batch(target.parent, source, target, files, stale,
+                                      next_provenance, copy_checked, check)
+            published = end
+            provenance = next_provenance
+            # No cancellation point between the batch commit and its metadata.
+            store.update(identifier, **_result_metadata(target, partial or not last, count,
+                         published=published, total=total))
+    except VastError as exc:
+        message, status = str(exc), exc.status
+        if 'timed out' in message.lower() or 'deadline' in message.lower():
+            message = f'Pareto collection timed out after {published}/{total} files; published files retained'
+            status = 409
+        changes = dict(collection_incomplete=True, collection_error=message,
+                       collection_progress={'published_files': published, 'total_files': total})
+        if published:
+            changes.update(_result_metadata(target, True, count))
+        store.update(identifier, **changes)
+        raise VastError(message, status) from exc
+    return _result_metadata(target, partial, count, published=published, total=total)
+
+
+def _write_result_plans(store, identifier, stage):
+    """Retain distributed validation and sweep metadata on initial publication."""
+    manifest = store.read(identifier, 'input/manifest.json')
+    if manifest.get('validation_plan'):
+        from scenario_windows import build_validation_plan, VALIDATION_PLAN_FILENAME
+        plan = build_validation_plan({'pbgui': {'scenario_template': manifest['validation_plan']}})
+        if plan is not None:
+            write_json(stage / VALIDATION_PLAN_FILENAME, plan)
+    if manifest.get('sweep_plan'):
+        write_json(stage / '.pbgui_sweep_cycles.json', manifest['sweep_plan'])
+
+
+@snapshot_import
 def import_results(store: JobStore, identifier: str, *, partial: bool = False, check=lambda: None) -> dict:
     """Import verified native results idempotently, never unpickle a checkpoint."""
     import msgpack
@@ -813,6 +1032,8 @@ def import_results(store: JobStore, identifier: str, *, partial: bool = False, c
         raise VastError("No single complete native result directory found")
     source = sources[0]
     binary = source / "all_results.bin"
+    if partial and not list((source / 'pareto').glob('*.json')):
+        raise VastError('No Pareto results are ready yet; previous results are retained', 409)
     count, complete = 0, 0
     if binary.is_file():
         with binary.open("rb") as stream:
@@ -836,7 +1057,11 @@ def import_results(store: JobStore, identifier: str, *, partial: bool = False, c
         raise VastError("Invalid configured optimizer result root")
     root.mkdir(parents=True, exist_ok=True)
     target = root / (source.name + "_vast_" + identifier[:12])
-    with advisory_file_lock(root / ".vast-import"):
+    pareto = sorted((source / 'pareto').glob('*.json'))
+    batch_files = collection_setting('collect_batch_files', integer=True) or 100
+    # State precedes publication even for supervisor/direct callers: persistence
+    # following a file commit must not enter an unbounded lock wait.
+    with bounded_lock(directory / '.state-lock', check=check), bounded_lock(root / ".vast-import", check=check):
         check()
         if target.is_symlink():
             raise VastError("Invalid existing result destination")
@@ -847,40 +1072,67 @@ def import_results(store: JobStore, identifier: str, *, partial: bool = False, c
             if provenance.get("partial"):
                 if count < int(provenance.get("evaluations", 0)):
                     raise VastError("Result snapshot is older than the published results")
-                # Replace individual files atomically so open readers retain a valid
-                # previous file while new readers see the latest complete snapshot.
-                for source_file in ([binary] if binary.is_file() else []) + sorted((source / "pareto").glob("*.json")):
-                    destination = target / source_file.relative_to(source)
-                    destination.parent.mkdir(exist_ok=True, mode=0o700)
-                    if destination.is_symlink() or destination.parent.is_symlink():
-                        raise VastError("Invalid result destination")
-                    with tempfile.NamedTemporaryFile(dir=destination.parent, delete=False) as stream:
-                        temporary = Path(stream.name)
-                        try:
-                            stream.close()
-                            copy_checked(source_file, temporary)
-                            os.replace(temporary, destination)
-                        finally:
-                            temporary.unlink(missing_ok=True)
-                for old in (target / "pareto").glob("*.json"):
-                    if not (source / "pareto" / old.name).exists():
-                        old.unlink()
-                provenance.update(partial=partial, evaluations=count)
-                write_json(target / ".pbgui_vast.json", provenance)
+                if len(pareto) > batch_files:
+                    return _import_result_batches(store, identifier, source, target, intent, partial, count,
+                                                  pareto, batch_files, copy_checked, check)
+                # Prepare every new file and every rollback copy before changing
+                # the publication. Cancellation is allowed only before commit.
+                with tempfile.TemporaryDirectory(prefix='.vast-update-', dir=root) as temporary:
+                    stage = Path(temporary)
+                    files = ([binary] if binary.is_file() else []) + sorted((source / 'pareto').glob('*.json'))
+                    replacements, backups, created = [], [], []
+                    old_files = list((target / 'pareto').glob('*.json'))
+                    affected = {target / item.relative_to(source) for item in files} | set(old_files)
+                    provenance_path = target / '.pbgui_vast.json'
+                    affected.add(provenance_path)
+                    for index, destination in enumerate(sorted(affected)):
+                        check()
+                        if destination.is_symlink() or destination.parent.is_symlink():
+                            raise VastError('Invalid result destination')
+                        if destination.exists():
+                            backup = stage / ('backup-' + str(index))
+                            copy_checked(destination, backup)
+                            backups.append((backup, destination))
+                        else:
+                            created.append(destination)
+                    for index, source_file in enumerate(files):
+                        prepared = stage / ('new-' + str(index))
+                        copy_checked(source_file, prepared)
+                        replacements.append((prepared, target / source_file.relative_to(source)))
+                    provenance.update(partial=partial, evaluations=count)
+                    if 'collection_progress' in provenance:
+                        provenance.update(collection_incomplete=False,
+                            collection_progress={'published_files': len(pareto), 'total_files': len(pareto)})
+                    write_json(stage / 'provenance', provenance)
+                    check()
+                    try:
+                        for prepared, destination in replacements:
+                            destination.parent.mkdir(exist_ok=True, mode=0o700)
+                            os.replace(prepared, destination)
+                        for old in old_files:
+                            if not (source / 'pareto' / old.name).exists():
+                                old.unlink()
+                        os.replace(stage / 'provenance', provenance_path)
+                    except BaseException:
+                        for backup, destination in backups:
+                            os.replace(backup, destination)
+                        for destination in created:
+                            destination.unlink(missing_ok=True)
+                        raise
+            elif partial:
+                return {"result_path": str(target), "result_partial": False,
+                        "evaluations": provenance.get('evaluations', 0),
+                        "pareto_count": len(list((target / 'pareto').glob('*.json')))}
             elif checked_digest(target / "all_results.bin", check) != checked_digest(binary, check):
                 raise VastError("Existing result belongs to another import")
         else:
+            if len(pareto) > batch_files:
+                return _import_result_batches(store, identifier, source, target, intent, partial, count,
+                                              pareto, batch_files, copy_checked, check)
             with tempfile.TemporaryDirectory(prefix=".vast-import-", dir=root) as temporary:
                 stage = Path(temporary) / "result"
                 shutil.copytree(source, stage, ignore=shutil.ignore_patterns("checkpoint.pkl"), copy_function=copy_checked)
-                manifest = store.read(identifier, "input/manifest.json")
-                if manifest.get('validation_plan'):
-                    from scenario_windows import build_validation_plan, VALIDATION_PLAN_FILENAME
-                    plan = build_validation_plan({'pbgui': {'scenario_template': manifest['validation_plan']}})
-                    if plan is not None:
-                        write_json(stage / VALIDATION_PLAN_FILENAME, plan)
-                if manifest.get("sweep_plan"):
-                    write_json(stage / ".pbgui_sweep_cycles.json", manifest["sweep_plan"])
+                _write_result_plans(store, identifier, stage)
                 write_json(stage / ".pbgui_vast.json", {"job_id": identifier, "image": intent["image"],
                            "source_config_sha256": intent["source_config_sha256"], "pb8_revision": intent["pb8_revision"],
                            "partial": partial, "evaluations": count})
@@ -889,4 +1141,5 @@ def import_results(store: JobStore, identifier: str, *, partial: bool = False, c
                     path.chmod(0o700 if path.is_dir() else 0o600)
                 check()
                 os.replace(stage, target)
-    return {"result_path": str(target), "result_partial": partial, "evaluations": count, "pareto_count": len(list((target / "pareto").glob("*.json")))}
+    progress = len(pareto) > batch_files or 'collection_progress' in store.read(identifier)
+    return _result_metadata(target, partial, count, published=len(pareto) if progress else None, total=len(pareto))

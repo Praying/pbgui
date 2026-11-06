@@ -26,7 +26,7 @@ Top navigation (#topnav)
 - **Help distinction:** **Information → Help** opens a full page with a topic sidebar. **Guide** opens a floating help window while retaining the current page, including when clicked on Help itself. Test these as two separate paths.
 - Do not add outside-click dismissal to dialogs. Retain explicit close actions.
 - The shared AI drawer message input resizes vertically using the separator along its top edge. Drag upward to enlarge; Arrow Up/Down and Home/End provide keyboard control. Persist only its browser-local height, clamp it to the viewport, and preserve the draft while resizing. The drawer's side handle remains responsible for width.
-- The AI drawer shows activity and streamed ChatGPT assistant text inline in chronological order after the current turn’s last visible message while working (after the previous assistant answer for approval continuations), then collapses it into an expandable history after completion. Its header shows elapsed work time and a compact context usage ring based on provider telemetry; unavailable usage is shown explicitly rather than estimated.
+- The AI drawer shows activity and streamed ChatGPT/Claude assistant text inline in chronological order after the current turn’s last visible message while working (after the previous assistant answer for approval continuations), then collapses it into an expandable history after completion. Its header shows elapsed work time and a compact context usage ring based on provider telemetry; unavailable usage is shown explicitly rather than estimated.
 - Information → AI Setup owns provider/model configuration, isolated connection tests and GitHub credentials. The global AI drawer owns conversations and issue reviews; do not place credential panels above its messages. The Setup header action opens the stable setup destination. Native support proposals use the existing chat review overlay to show exact public title/body, account, repository and encrypted-attachment destination. The final Publish issue action is the publication approval; do not add a second generic confirmation. Source investigation and English issue drafting remain in the conversation without redirecting to Debug export.
 - Embedded components, such as an internal LogViewerPanel sidebar, keep their component layout. Do not give them duplicate page-shell IDs or the global page-sidebar width.
 
@@ -252,6 +252,8 @@ Minimal detail-window shell (opened by adding `.is-open` and setting `aria-hidde
 
 ## 7. Cache and delivery
 
+- The `/app` mount disables directory index pages and serves HTML only from an exact relative-path allowlist: `help.html` and `jobs_monitor.html`. Other HTML templates must be opened through their rendering API routes. Static pages must resolve raw API/WebSocket URL placeholders to same-origin URLs using their application mount prefix before shared navigation starts; retain already injected values.
+
 - Bump `?v=` references for changed shared JS/CSS consumers, including dynamically loaded assets.
 - For versioned static HTML destinations, also bump the URL in `FASTAPI_PAGES`. Changing `help.html` while keeping the old menu URL can leave users on a cached dialog page.
 - Check static-page navigation-script versions as well as server-rendered `%%NAV_HASH%%` references.
@@ -274,3 +276,15 @@ Use isolated data and intercept browser requests; never run production actions m
 10. **Finish:** update EN/DE user guides and `releases/unreleased.md`; report changed areas and tests actually performed. Do not claim that an isolated component test proves the real menu works.
 
 Relevant test entry points include `tests/ui/test_sidebar_shared.py`, `tests/ui/test_help_sidebar_browser.py`, `tests/ui/test_help_request_generations.py` and `tests/test_help_coverage.py`. Extend focused tests for the affected page; observe the full-suite gate in AGENTS.md.
+
+PB8 Backtest and Optimize use `frontend/js/ohlcv_start_dates.js` for the shared start-date field and lookup lifecycle (start, progress polling, stop, timeout and stale-response cleanup). Pages supply only their editor collection, status and result-application adapters; keep the existing earliest/common-start semantics shared.
+
+### AI model catalogs
+
+`frontend/js/ai_model_search.js` and `frontend/css/ai_model_search.css` own the shared OpenRouter model browser. Follow the reference catalog structure: one search/sort/variant/pinned/view toolbar, separate type tabs, full-width descriptive list rows or a sticky-header comparison table. Keep internal PBGui tool-validation states out of catalog categories. Use API descriptions, creation timestamps, prices and context; omit unsupported popularity/traffic metrics. List and table share selection, pins, filters and reload state. Show only variants present in the supported catalog. Setup shows the catalog inline; Chat opens it through Browse models and keeps its composer accessible at short viewport heights. Other providers retain their existing selectors. Hidden search fields must never filter those selectors.
+
+The AI drawer keeps provider selection and New in one dedicated row above model browsing. Successful Setup tests prepare that exact selection for an empty chat or the next New chat; never switch an existing conversation or draft implicitly, create a conversation just for a test, or change the saved default.
+
+Model table headers are keyboard-accessible sort buttons with direction indicators and `aria-sort`. Header clicks and the sort menu share one persisted ordering across List/Table; numeric values sort numerically and unknowns stay last in both directions. Sorting preserves the selected model and filters.
+
+Model catalogs do not run background privacy probes or display inferred privacy classifications. An explicit privacy-policy rejection during a model test may offer model-scoped consent through the shared confirmation dialog and one retry; never relax the policy automatically.

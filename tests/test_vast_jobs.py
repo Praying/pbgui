@@ -99,7 +99,7 @@ def test_finalization_waiter_reads_completed_state_before_expired_budget(job, mo
     store, identifier, intent = job
     final_result_fixture(store, identifier)
     entered, release, waiting = threading.Event(), threading.Event(), threading.Event()
-    original_import, original_lock = runner.import_results, runner.advisory_file_lock
+    original_import, original_lock = runner.import_results, runner.bounded_lock
     count = []
 
     def held_import(*args, **kwargs):
@@ -110,16 +110,16 @@ def test_finalization_waiter_reads_completed_state_before_expired_budget(job, mo
         return original_import(*args, **kwargs)
 
     @contextmanager
-    def tracked_lock(target):
+    def tracked_lock(target, **kwargs):
         """Observe the waiter before it blocks, without replacing the real lock."""
         if Path(target).name == '.finalize-lock' and threading.current_thread().name.endswith('_1'):
             waiting.set()
-        with original_lock(target):
+        with original_lock(target, **kwargs):
             yield
 
     def expired():
-        """A completed outcome must bypass a now-expired cooperative deadline."""
-        pytest.fail('Completed finalization re-entered its expired import budget')
+        """Allow bounded lock waiting; duplicate import is detected by count below."""
+        return 5
 
     def waiter():
         """Exercise the actual public callers while the first import is held."""
@@ -133,7 +133,7 @@ def test_finalization_waiter_reads_completed_state_before_expired_budget(job, mo
         return store.read(identifier)
 
     monkeypatch.setattr(runner, 'import_results', held_import)
-    monkeypatch.setattr(runner, 'advisory_file_lock', tracked_lock)
+    monkeypatch.setattr(runner, 'bounded_lock', tracked_lock)
     with ThreadPoolExecutor(max_workers=2) as executor:
         first = executor.submit(runner.finalize_collected_results, store, identifier)
         try:
@@ -143,7 +143,11 @@ def test_finalization_waiter_reads_completed_state_before_expired_budget(job, mo
         finally:
             release.set()
         assert first.result(timeout=5)['status'] == 'completed'
-        assert second.result(timeout=5)['status'] == 'completed'
+        second_state = second.result(timeout=5)
+        if caller != 'stop':
+            assert second_state['status'] == 'completed'
+        # An expired Stop does not wait for the other publisher or rewrite it.
+        assert store.read(identifier)['status'] == 'completed'
     assert count == [1]
     assert store.read(identifier)['error'] is None
 
@@ -227,21 +231,21 @@ def test_finalization_process_serialization(job, monkeypatch):
     parent, child = ctx.Pipe()
     process = ctx.Process(target=_process_finalizer, args=(store.root, identifier, child))
     waiting = threading.Event()
-    original_lock = runner.advisory_file_lock
+    original_lock = runner.bounded_lock
 
     @contextmanager
-    def tracked_lock(target):
+    def tracked_lock(target, **kwargs):
         """Observe the parent waiter while retaining the production file lock."""
         if Path(target).name == '.finalize-lock':
             waiting.set()
-        with original_lock(target):
+        with original_lock(target, **kwargs):
             yield
 
     process.start()
     child.close()
     try:
         assert parent.poll(8) and parent.recv() == 'import'
-        monkeypatch.setattr(runner, 'advisory_file_lock', tracked_lock)
+        monkeypatch.setattr(runner, 'bounded_lock', tracked_lock)
         with ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(runner.finalize_collected_results, store, identifier)
             try:
@@ -852,6 +856,132 @@ def test_create_preparation_publishes_pending_job_before_snapshot_work(tmp_path)
     assert store.read(state['id'], 'control.json') == {'stop': False, 'cleanup': False}
 
 
+def test_single_job_account_change_is_rejected_before_account_or_rental_access(job, monkeypatch):
+    """A credential change after preflight cannot charge a different account."""
+    from types import SimpleNamespace
+    import vast_jobs
+    store, identifier, intent = job
+    store.update(identifier, kind='worker', status='ready', rental_state='none', workers=4)
+    intent['job_authorization'] = {'credential_generation': 1}
+    write_json(store.directory(identifier) / 'intent.json', intent)
+    monkeypatch.setattr(vast_jobs, 'services_available', lambda: True)
+    monkeypatch.setattr('vast_image.require_public_image', lambda image: None)
+    monkeypatch.setattr(vast_jobs, 'VastCredentialStore', lambda root: SimpleNamespace(
+        secrets=lambda: {'generation': 2, 'api_key': 'isolated-placeholder'}))
+    monkeypatch.setattr(vast_jobs, 'VastClient', lambda key: pytest.fail('No account access after account changed'))
+    offer = {'id': 123, 'price_hour_usd': .1, 'cuda_max_good': 13, 'disk_gb': 40, 'cpu_cores': 4}
+    with pytest.raises(VastError, match='credentials changed after single-job approval'):
+        store.start(identifier, offer, 1, 1)
+    assert store.read(identifier)['rental_state'] == 'none'
+
+
+@pytest.mark.parametrize('scoped', [False, True])
+def test_single_job_current_account_consent_is_independent_of_stale_pool_consent(job, monkeypatch, scoped):
+    """A single-job review owns its account; ordinary pool rentals retain their own gate."""
+    from types import SimpleNamespace
+    from vast_queue import CloudQueue
+    import vast_jobs
+    store, identifier, intent = job
+    store.update(identifier, kind='worker', status='ready', rental_state='none', workers=4)
+    CloudQueue(store).update(pool_enabled=True, pool_authorization={'credential_generation': 0})
+    if scoped:
+        intent['job_authorization'] = {'credential_generation': 1}
+    write_json(store.directory(identifier) / 'intent.json', intent)
+    monkeypatch.setattr(vast_jobs, 'services_available', lambda: True)
+    monkeypatch.setattr('vast_image.require_public_image', lambda image: None)
+    monkeypatch.setattr(vast_jobs, 'VastCredentialStore', lambda root: SimpleNamespace(
+        secrets=lambda: {'generation': 1, 'api_key': 'isolated-placeholder'}))
+
+    def account():
+        """Stop at the mocked account boundary before any rental side effect."""
+        raise RuntimeError('reached native account validation')
+
+    monkeypatch.setattr(vast_jobs, 'VastClient', lambda key: SimpleNamespace(account=account))
+    offer = {'id': 123, 'price_hour_usd': .1, 'cuda_max_good': 13, 'disk_gb': 40, 'cpu_cores': 4}
+    with pytest.raises(RuntimeError if scoped else VastError,
+                       match='native account validation' if scoped else 'start the GPU pool again'):
+        store.start(identifier, offer, 1, 1)
+    assert store.read(identifier)['rental_state'] == 'none'
+
+
+@pytest.mark.parametrize('change', ['stop', 'cleanup', 'reassigned', 'leased', 'unchanged'])
+def test_single_job_rechecks_child_after_account_preflight(job, monkeypatch, change):
+    """A stop or changed owner during slow account checks cannot commit a rental."""
+    from types import SimpleNamespace
+    import vast_jobs
+    store, identifier, intent = job
+    child_id = store.create_preparation('manual_child', 512, 4, False)['id']
+    authorization_id = 'b' * 32
+    store.update(child_id, status='ready', rental_authorization_id=authorization_id)
+    store.update(identifier, kind='worker', status='ready', rental_state='none', workers=4)
+    intent.pop('accepted_at')
+    intent.update(bundle_bytes=100, job_authorization={
+        'id': authorization_id, 'job_id': child_id, 'credential_generation': 1})
+    write_json(store.directory(identifier) / 'intent.json', intent)
+    monkeypatch.setattr(vast_jobs, 'services_available', lambda: True)
+    monkeypatch.setattr('vast_image.require_public_image', lambda image: None)
+    monkeypatch.setattr(vast_jobs, 'VastCredentialStore', lambda root: SimpleNamespace(
+        secrets=lambda: {'generation': 1, 'api_key': 'isolated-placeholder'}))
+    launched = []
+    monkeypatch.setattr(store, 'launch_service', lambda identifier, mode: launched.append(mode))
+
+    def account():
+        """Simulate another action completing while the account request is in flight."""
+        if change in {'stop', 'cleanup'}:
+            store.control(child_id, change)
+        elif change == 'reassigned':
+            store.update(child_id, rental_authorization_id='c' * 32)
+        elif change == 'leased':
+            store.update(child_id, lease_id='d' * 32)
+        return {'balance_usd': 100}
+
+    monkeypatch.setattr(vast_jobs, 'VastClient', lambda key: SimpleNamespace(account=account))
+    offer = {'id': 123, 'price_hour_usd': .1, 'cuda_max_good': 13, 'disk_gb': 40,
+             'cpu_cores': 4, 'download_gb_usd': 0, 'upload_gb_usd': 0}
+    if change == 'unchanged':
+        assert store.start(identifier, offer, 1, 1)['rental_state'] == 'creation_pending'
+        assert launched == ['run', 'guard']
+    else:
+        with pytest.raises(VastError, match='changed or was stopped before rental'):
+            store.start(identifier, offer, 1, 1)
+        assert store.read(identifier)['rental_state'] == 'none'
+        assert 'accepted_at' not in store.read(identifier, 'intent.json')
+        assert launched == []
+
+
+@pytest.mark.parametrize('supported', [False, True])
+def test_multi_day_start_requires_published_capability_and_keeps_budget(job, monkeypatch, supported):
+    """Long rental approval reaches durable start only on a verified capable image."""
+    from types import SimpleNamespace
+    import vast_jobs
+    store, identifier, intent = job
+    store.update(identifier, kind='worker', status='ready', rental_state='none', workers=4)
+    intent.pop('accepted_at')
+    intent.update(bundle_bytes=100)
+    write_json(store.directory(identifier) / 'intent.json', intent)
+    monkeypatch.setattr(vast_jobs, 'services_available', lambda: True)
+    monkeypatch.setattr('vast_worker_capabilities.supports', lambda *args: supported)
+    monkeypatch.setattr('vast_image.require_public_image', lambda image: None)
+    monkeypatch.setattr(vast_jobs, 'VastCredentialStore', lambda root: SimpleNamespace(
+        secrets=lambda: {'generation': 1, 'api_key': 'isolated-placeholder'}))
+    monkeypatch.setattr(vast_jobs, 'VastClient', lambda key: SimpleNamespace(
+        account=lambda: {'balance_usd': 100}))
+    launched = []
+    monkeypatch.setattr(store, 'launch_service', lambda identifier, mode: launched.append(mode))
+    offer = {'id': 123, 'price_hour_usd': .01, 'cuda_max_good': 13, 'disk_gb': 40,
+             'cpu_cores': 4, 'download_gb_usd': 0, 'upload_gb_usd': 0}
+    if not supported:
+        with pytest.raises(VastError, match='verified multi-day worker image'):
+            store.start(identifier, offer, 120, 2)
+        assert launched == [] and store.read(identifier)['rental_state'] == 'none'
+    else:
+        store.start(identifier, offer, 120, 2)
+        saved = store.read(identifier, 'intent.json')
+        assert saved['deadline'] - saved['accepted_at'] == 120 * 3600
+        assert saved['budget_usd'] == 2 and saved['transfer_reserve_usd'] >= .05
+        assert launched == ['run', 'guard']
+
+
 def test_large_input_manifest_keeps_control_record_limit(tmp_path):
     """Large shard manifests remain readable without widening mutable state records."""
     store = JobStore(tmp_path / 'vast')
@@ -1401,6 +1531,97 @@ def test_pareto_only_live_snapshot_is_published(job):
     assert import_results(store, identifier, partial=True) == result
 
 
+@pytest.mark.parametrize('final', [False, True])
+def test_symlinked_data_root_supports_automatic_publication(job, tmp_path, final):
+    """Automatic Snapshot/import/observe and Finalize accept a linked data/vast root."""
+    from file_lock import advisory_file_lock
+    from vast_snapshot import snapshot
+    from vast_convergence import observe
+    from vast_job_runner import finalize_collected_results
+    store, identifier, _ = job
+    alias = tmp_path / 'data'
+    alias.symlink_to(store.root.parent, target_is_directory=True)
+    store.root = alias / 'vast'
+    if final:
+        final_result_fixture(store, identifier)
+        assert finalize_collected_results(store, identifier)['status'] == 'completed'
+    else:
+        native = ensure_private_directory(store.directory(identifier) / 'partial-results/optimize_results/run/pareto')
+        write_json(native / 'candidate.json', {'config': {}})
+        write_json(ensure_private_directory(store.directory(identifier) / 'input') / 'manifest.json', {})
+        # This is the same outer transaction and nested legacy state lock as run_loop.
+        with snapshot(store, identifier), advisory_file_lock(store.directory(identifier) / '.snapshot-lock'):
+            store.update(identifier, **import_results(store, identifier, partial=True))
+            observe(store, identifier)
+        assert store.read(identifier)['pareto_count'] == 1
+
+
+def test_archive_conflict_after_interrupted_collect_is_retryable(job, monkeypatch):
+    """Interrupted SSH followed by a worker archive conflict never enters upload failure cleanup."""
+    import subprocess
+    import sys
+    from types import SimpleNamespace
+    import vast_job_runner as runner
+    from vast_transfer import WorkerConnection
+    from vast_snapshot import work_boundary
+    store, identifier, _ = job
+    native = ensure_private_directory(store.directory(identifier) / 'partial-results/optimize_results/run/pareto')
+    write_json(native / 'candidate.json', {'config': {}})
+    write_json(ensure_private_directory(store.directory(identifier) / 'input') / 'manifest.json', {})
+    published = import_results(store, identifier, partial=True)
+    store.update(identifier, **published, uploaded=True, worker_ready=True, started_at=1050,
+                 status='running', rental_state='active', downloaded_bytes=4, exact_completed=12)
+    before = {str(p.relative_to(Path(published['result_path']))): p.read_bytes()
+              for p in Path(published['result_path']).rglob('*') if p.is_file()}
+    row = dict(id=123, actual_status='running', public_ipaddr='8.8.8.8', ports={'22/tcp': [{'HostPort': '2222'}]})
+    children = []
+    real_popen = subprocess.Popen
+    def spawn(_args, **kwargs):
+        """Represent SSH loss then the surviving remote writer's fixed-name archive conflict locally."""
+        diagnostic = b'connection reset' if not children else b'tar: partial.tar.tmp: Cannot stat: No such file'
+        process = real_popen([sys.executable, '-c',
+            'import os; os.write(2, ' + repr(diagnostic) + '); os._exit(1)'], **kwargs)
+        children.append(process)
+        return process
+    monkeypatch.setattr('vast_transfer.subprocess.Popen', spawn)
+    monkeypatch.setattr(WorkerConnection, 'bootstrap', lambda *_args: None)
+    original_operation = WorkerConnection.operation
+    def operation(connection, action, **kwargs):
+        """Only the status is mocked; partial uses the production SSH error classification."""
+        if action == 'status':
+            return dict(started=True, finished=False, exact_completed=12)
+        assert action == 'partial'
+        return original_operation(connection, action, **kwargs)
+    monkeypatch.setattr(WorkerConnection, 'operation', operation)
+    with work_boundary(lambda: 30), pytest.raises(VastError) as interrupted:
+        WorkerConnection(store, identifier, row).collect(False, timeout=30)
+    assert interrupted.value.status != 422 and 'upload' not in str(interrupted.value).lower()
+    monkeypatch.setattr(runner, 'VastClient', lambda *_args: object())
+    monkeypatch.setattr(runner, 'VastCredentialStore', lambda *_args: SimpleNamespace(secrets=lambda: {'api_key': 'isolated'}))
+    monkeypatch.setattr(runner, 'owned_instance', lambda *_args, **_kwargs: row)
+    monkeypatch.setattr(runner, 'sync_optimizer_log', lambda *_args: None)
+    monkeypatch.setattr('vast_runtime_metrics.sample_metrics', lambda *_args: None)
+    monkeypatch.setattr(runner, '_log', lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(runner.time, 'time', lambda: 1100)
+    class TickFinished(Exception):
+        """End after the supervisor's first ordinary retry boundary."""
+    def finish_tick(_seconds):
+        """Never retry indefinitely or perform provider work in this isolated test."""
+        raise TickFinished()
+    monkeypatch.setattr(runner.time, 'sleep', finish_tick)
+    with pytest.raises(TickFinished):
+        runner.run_loop(store, identifier)
+    current = store.read(identifier)
+    assert current['status'] == 'running' and current['downloaded_bytes'] == 4
+    assert current['result_path'] == published['result_path']
+    assert 'SSH worker operation failed' in current['error'] and 'upload' not in current['error'].lower()
+    assert store.read(identifier, 'control.json') == {'stop': False, 'cleanup': False}
+    assert before == {str(p.relative_to(Path(published['result_path']))): p.read_bytes()
+                      for p in Path(published['result_path']).rglob('*') if p.is_file()}
+    assert len(children) == 2
+    assert all(p.poll() is not None and p.stdout.closed and p.stderr.closed for p in children)
+
+
 @pytest.mark.parametrize('exit_code,expected', [(0, 'completed'), (-2, 'completed'), (1, 'cancelled')])
 def test_convergence_completion_keeps_final_results_and_reason(job, monkeypatch, exit_code, expected):
     """Only a successful graceful stop is labeled as convergence completion."""
@@ -1657,3 +1878,142 @@ def test_gpu_constraint_safety_failure_explains_completion_boundary(tmp_path):
     assert 'Passivbot safety check' in row['error']
     assert 'strict completion limit 1.0' in row['error']
     assert 'secret' not in row['error']
+
+def test_guard_defers_destroy_while_collection_outstanding(job, monkeypatch):
+    """Teardown waits for an in-flight final collection instead of racing it."""
+    store, identifier, intent = job
+    store.update(identifier, status='collecting', rental_state='active', instance_id=123,
+                 uploaded=True, final_collection_at=1999.0, provider_seen_at=1990.0)
+    client = Provider([{'id': 123, 'label': intent['label']}])
+    monkeypatch.setattr('vast_job_runner.owned_instance',
+                        lambda _client, _intent, *, fresh=False, expected_id=None: {'id': 123, 'label': intent['label']})
+    assert not guard_step(store, identifier, client, intent, '', now=2001)
+    assert client.calls == []
+    assert store.read(identifier)['rental_state'] == 'active'
+
+
+def test_guard_destroys_after_collection_grace_timeout(job, monkeypatch):
+    """A hung collection cannot leak the rental beyond its bounded allowance."""
+    from vast_job_runner import COLLECT_TEARDOWN_GRACE_SECONDS
+    store, identifier, intent = job
+    store.update(identifier, status='collecting', rental_state='active', instance_id=123,
+                 uploaded=True, final_collection_at=2001.0 - COLLECT_TEARDOWN_GRACE_SECONDS - 10,
+                 provider_seen_at=1990.0, destroy_requested_at=2001.0)
+    client = Provider([{'id': 123, 'label': intent['label']}])
+    monkeypatch.setattr('vast_job_runner.owned_instance',
+                        lambda _client, _intent, *, fresh=False, expected_id=None: {'id': 123, 'label': intent['label']})
+    assert not guard_step(store, identifier, client, intent, '', now=2001)
+    assert store.read(identifier)['rental_state'] == 'destroy_pending'
+    assert client.calls == []
+
+
+def _publish_worker_with_job(store, worker_id, job_id, *, job_status='collecting',
+                             final_collection_at=None, stop_rpc_at=None,
+                             final_collected=False, **job_extra):
+    """Create a worker/lease record bound to a job record for teardown-race tests."""
+    intent = {'id': worker_id, 'image': IMAGE, 'pb8_revision': REVISION,
+              'label': 'pbgui-vast-' + worker_id, 'accepted_at': 1000, 'deadline': 2000,
+              'budget_usd': 1, 'offer': {'id': 42, 'disk_gb': 40},
+              'results_root': 'unused', 'source_config_sha256': 'source'}
+    worker_dir = ensure_private_directory(store.root / 'jobs' / worker_id)
+    write_json(worker_dir / 'intent.json', intent)
+    write_json(worker_dir / 'control.json', {'stop': False, 'cleanup': False})
+    write_json(worker_dir / 'state.json', {'id': worker_id, 'kind': 'worker', 'status': 'ready',
+                                           'rental_state': 'active', 'active_job': job_id,
+                                           'instance_id': 123})
+    job_state = {'id': job_id, 'status': job_status, 'lease_id': worker_id}
+    if final_collected:
+        job_state['final_collected'] = True
+    if final_collection_at is not None:
+        job_state['final_collection_at'] = final_collection_at
+    if stop_rpc_at is not None:
+        job_state['stop_rpc_at'] = stop_rpc_at
+    job_state.update(job_extra)
+    job_dir = ensure_private_directory(store.root / 'jobs' / job_id)
+    write_json(job_dir / 'state.json', job_state)
+    return intent
+
+
+def test_guard_defers_worker_destroy_while_bound_job_collecting(job, monkeypatch):
+    """The lease teardown must consult its bound jobs, not its own absent collection state."""
+    store, _, _ = job
+    worker_id, job_id = 'b' * 32, 'c' * 32
+    intent = _publish_worker_with_job(store, worker_id, job_id, job_status='collecting',
+                                      final_collection_at=1999.0)
+    client = Provider([{'id': 123, 'label': intent['label']}])
+    monkeypatch.setattr('vast_job_runner.owned_instance',
+                        lambda _client, _intent, *, fresh=False, expected_id=None: {'id': 123, 'label': intent['label']})
+    assert not guard_step(store, worker_id, client, intent, '', now=2001)
+    assert client.calls == []
+    assert store.read(worker_id)['rental_state'] == 'active'
+
+
+def test_guard_destroys_worker_after_bound_job_collected(job, monkeypatch):
+    """A finished collection releases the lease teardown immediately."""
+    store, _, _ = job
+    worker_id, job_id = 'b' * 32, 'c' * 32
+    intent = _publish_worker_with_job(store, worker_id, job_id, job_status='completed',
+                                      final_collected=True)
+    store.update(worker_id, destroy_requested_at=2001.0)
+    client = Provider([{'id': 123, 'label': intent['label']}])
+    monkeypatch.setattr('vast_job_runner.owned_instance',
+                        lambda _client, _intent, *, fresh=False, expected_id=None: {'id': 123, 'label': intent['label']})
+    assert not guard_step(store, worker_id, client, intent, '', now=2001)
+    assert store.read(worker_id)['rental_state'] == 'destroy_pending'
+    assert client.calls == []
+
+
+def test_guard_destroys_worker_after_bound_collection_grace_timeout(job, monkeypatch):
+    """A hung bound collection cannot leak the lease beyond its bounded allowance."""
+    from vast_job_runner import COLLECT_TEARDOWN_GRACE_SECONDS
+    store, _, _ = job
+    worker_id, job_id = 'b' * 32, 'c' * 32
+    intent = _publish_worker_with_job(store, worker_id, job_id, job_status='collecting',
+                                      final_collection_at=2001.0 - COLLECT_TEARDOWN_GRACE_SECONDS - 10)
+    store.update(worker_id, destroy_requested_at=2001.0)
+    client = Provider([{'id': 123, 'label': intent['label']}])
+    monkeypatch.setattr('vast_job_runner.owned_instance',
+                        lambda _client, _intent, *, fresh=False, expected_id=None: {'id': 123, 'label': intent['label']})
+    assert not guard_step(store, worker_id, client, intent, '', now=2001)
+    assert store.read(worker_id)['rental_state'] == 'destroy_pending'
+    assert client.calls == []
+
+
+def test_guard_defers_worker_destroy_for_cancelled_job_without_collection(job, monkeypatch):
+    """A cancel that precedes the final collection still blocks teardown within grace."""
+    store, _, _ = job
+    worker_id, job_id = 'b' * 32, 'c' * 32
+    intent = _publish_worker_with_job(store, worker_id, job_id, job_status='cancelled',
+                                      final_collection_at=1999.0, stop_rpc_at=1999.0)
+    client = Provider([{'id': 123, 'label': intent['label']}])
+    monkeypatch.setattr('vast_job_runner.owned_instance',
+                        lambda _client, _intent, *, fresh=False, expected_id=None: {'id': 123, 'label': intent['label']})
+    assert not guard_step(store, worker_id, client, intent, '', now=2001)
+    assert client.calls == []
+    assert store.read(worker_id)['rental_state'] == 'active'
+
+
+@pytest.mark.parametrize('bound_worker', [False, True])
+def test_collection_without_stop_anchor_has_persisted_teardown_limit(job, monkeypatch, bound_worker):
+    """Normal collecting state cannot postpone teardown forever after supervisor failure."""
+    from vast_job_runner import COLLECT_TEARDOWN_GRACE_SECONDS
+    store, identifier, intent = job
+    collected_id = identifier
+    if bound_worker:
+        identifier, collected_id = 'b' * 32, 'c' * 32
+        intent = _publish_worker_with_job(store, identifier, collected_id, job_status='collecting')
+    else:
+        store.update(identifier, status='collecting', rental_state='active', instance_id=123)
+    client = Provider([{'id': 123, 'label': intent['label']}])
+    monkeypatch.setattr('vast_job_runner.owned_instance',
+                        lambda *args, **kwargs: {'id': 123, 'label': intent['label']})
+    assert not guard_step(store, identifier, client, intent, '', now=2001)
+    assert store.read(collected_id)['collection_teardown_started_at'] == 2001
+    # Status writes and a reconstructed guard must not renew the allowance.
+    store.update(collected_id, status='collecting')
+    assert not guard_step(store, identifier, client, intent, '', now=2002)
+    assert store.read(collected_id)['collection_teardown_started_at'] == 2001
+    store.update(identifier, destroy_requested_at=2001 + COLLECT_TEARDOWN_GRACE_SECONDS + 1)
+    assert not guard_step(store, identifier, client, intent, '',
+                          now=2001 + COLLECT_TEARDOWN_GRACE_SECONDS + 1)
+    assert store.read(identifier)['rental_state'] == 'destroy_pending'

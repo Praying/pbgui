@@ -146,6 +146,7 @@
     var provider = el('select');
     provider.id = 'pai-provider';
     provider.addEventListener('change', function () {
+      state.pendingSetupSelection = null;delete window.PBGuiAI.pendingTestedSelection;
       var profile = selectedProfile();
       if (selectedProvider() === 'chatgpt' && profile !== state.profile) {
         stopPoll();
@@ -159,10 +160,18 @@
       selectionReady = loadModels().then(function (loaded) { if (loaded) return persistSelection(); });
     });
     toolbar.appendChild(provider);
+    var modelFilter = el('input');
+    modelFilter.id = 'pai-model-search';
+    modelFilter.type = 'search';
+    modelFilter.placeholder = 'Search models';
+    modelFilter.setAttribute('aria-label', 'Search models');
+    modelFilter.hidden = true;
+    toolbar.appendChild(modelFilter);
     var model = el('select');
     model.id = 'pai-model';
-    model.addEventListener('change', function () { state.selectionDirty = true; rebuildEfforts(); rebuildSpeeds(); persistSelection(); });
+    model.addEventListener('change', function () { state.pendingSetupSelection = null;delete window.PBGuiAI.pendingTestedSelection;state.selectionDirty = true; rebuildEfforts(); rebuildSpeeds(); persistSelection(); });
     toolbar.appendChild(model);
+    if (window.PBGuiAIModelSearch) state.modelSearch = window.PBGuiAIModelSearch.attach(model, modelFilter, 'pbgui.ai.modelSearch');
     var effort = el('select');
     effort.id = 'pai-effort';
     effort.addEventListener('change', function () { state.selectionDirty = true; persistSelection(); });
@@ -177,11 +186,16 @@
     var fresh = el('button', 'pai-new', 'New');
     fresh.type = 'button';
     fresh.addEventListener('click', newConversation);
-    toolbar.appendChild(fresh);
+    var providerRow = el('div', 'pai-provider-row');
+    providerRow.append(provider, fresh);
+    toolbar.prepend(providerRow);
     root.appendChild(toolbar);
+    var price = el('div', 'pai-usage');price.id='pai-model-cost';price.hidden=true;root.appendChild(price);
     var usage = el('div', 'pai-usage');
     usage.id = 'pai-usage';
     root.appendChild(usage);
+    var tokens = el('div', 'pai-usage');tokens.id='pai-token-usage';tokens.hidden=true;
+    root.appendChild(tokens);
 
     var context = el('div', 'pai-context');
     var contextToggle = el('label', 'pai-context-toggle');
@@ -261,7 +275,11 @@
     document.body.appendChild(root);
     document.body.appendChild(buildReviewOverlay());
     renderContext(collectDisplayContext());
-    selectionReady = refreshAll();
+    if (window.PBGuiAI.pendingTestedSelection) state.pendingSetupSelection = window.PBGuiAI.pendingTestedSelection;
+    selectionReady = refreshAll().then(function () {
+      if (emptyChatForTestSelection()) return applyPendingSetupSelection();
+      if (state.pendingSetupSelection) setStatus('Tested model is ready for New chat.', false);
+    });
   }
 
   function readChatImage(file) {
@@ -275,7 +293,9 @@
 
   function addChatImages(files) {
     if (state.busy || state.sending) { setStatus('Wait for this response before adding images.', true); return; }
-    if (selectedProvider() === 'openrouter') { setStatus('Jev does not accept images. Select ChatGPT or an image-capable OpenCode model.', true); return; }
+    var imageModel = selectedModelInfo();
+    if (imageModel.decision) { setStatus('Jev does not accept images. Select ChatGPT or an image-capable OpenCode model.', true); return; }
+    if (imageModel.provider === 'openrouter' && !imageModel.image_input) { setStatus('Selected OpenRouter model does not accept images. Select an image-capable model.', true); return; }
     var key = state.current, epoch = state.imageEpochs[key] || 0;
     state.imageReads = state.imageReads.then(async function () {
       if ((state.imageEpochs[key] || 0) !== epoch) return;
@@ -447,6 +467,8 @@
       if (signature !== state.usageSignature) {
         state.usageSignature = signature;
         if (provider === 'openrouter') window.PBGuiAIUsage.renderOpenRouter(container, usage);
+        else if (provider === 'deepseek') window.PBGuiAIUsage.renderDeepSeek(container, usage);
+        else if (provider === 'claude-code') container.textContent = 'Subscription usage limits unavailable';
         else window.PBGuiAIUsage.render(container, usage);
       }
     } catch (error) {
@@ -457,13 +479,28 @@
     } finally {
       if (generation === state.usageGeneration && state.open) {
         updateJevAvailability(provider, container);
-        if (provider !== 'openrouter') {
-          api('/status').then(function (status) {
-            if (generation !== state.usageGeneration || !state.open || provider !== selectedProvider()) return;
-            state.providers = status.providers || {};
-            updateJevAvailability(provider, container);
-          }).catch(function () {});
-        }
+        api('/status').then(function (status) {
+          if (generation !== state.usageGeneration || !state.open || provider !== selectedProvider()) return;
+          var previous = state.providers['claude-code'] || {};
+          state.providers = status.providers || {};
+          updateJevAvailability(provider, container);
+          var current = state.providers['claude-code'] || {};
+          if (JSON.stringify([previous.available,previous.connected,previous.catalog]) !== JSON.stringify([current.available,current.connected,current.catalog])) state.claudeInventoryPending = true;
+          if (!state.busy && state.claudeInventoryPending) {
+            state.claudeInventoryPending = false;
+            var selected = root.querySelector('#pai-provider').value;
+            var model = root.querySelector('#pai-model').value;
+            var effort = root.querySelector('#pai-effort').value;
+            var speed = root.querySelector('#pai-speed').value;
+            var rebuilding = rebuildProviders(selected, model, true);
+            var catalogGeneration = state.modelGeneration;
+            rebuilding.then(function (loaded) {
+              if (loaded && catalogGeneration === state.modelGeneration && selected === root.querySelector('#pai-provider').value && model === root.querySelector('#pai-model').value) {
+                rebuildEfforts(effort); rebuildSpeeds(speed);
+              }
+            });
+          }
+        }).catch(function () {});
         state.usageTimer = setTimeout(refreshUsage, 30000);
       }
     }
@@ -516,9 +553,20 @@
   }
 
   function setBusy(busy, conversation) {
+    var finished = state.busy && !busy;
     state.busy = !!busy;
+    if (finished && state.open && selectedProvider() === 'deepseek') refreshUsage();
+    var claudeBlocked = selectedProvider() === 'claude-code' && !(state.providers['claude-code'] || {}).connected;
     updateWorkingIndicator(conversation);
-    var usage = (conversation || {}).context_usage;
+    if (conversation) state.lastUsage = {
+      key: conversation.conversation_id + '|' + conversation.provider + '|' + conversation.model,
+      context_usage: conversation.context_usage, token_usage: conversation.token_usage
+    };
+    var usageKey = state.current + '|' + selectedProvider() + '|' + root.querySelector('#pai-model').value;
+    var reported = state.lastUsage && state.lastUsage.key === usageKey ? state.lastUsage : {};
+    var usage = reported.context_usage;
+    var tokens = root.querySelector('#pai-token-usage');
+    if (tokens && window.PBGuiAIUsage.renderTokens) window.PBGuiAIUsage.renderTokens(tokens, reported.token_usage);
     var meter = root.querySelector('.pai-context-meter');
     var available = usage && Number.isFinite(usage.used_tokens) && usage.used_tokens >= 0 && Number.isFinite(usage.limit_tokens) && usage.limit_tokens > 0;
     var percent = available ? Math.min(100, Math.round(100 * usage.used_tokens / usage.limit_tokens)) : null;
@@ -528,16 +576,16 @@
     meter.title = available ? 'Context: ' + usage.used_tokens.toLocaleString() + ' / ' + usage.limit_tokens.toLocaleString() + ' tokens (last reported)' : 'Context usage unavailable from this provider';
     meter.setAttribute('aria-label', meter.title);
     root.querySelector('.primary').hidden = busy;
-    root.querySelector('.primary').disabled = !busy && state.sending;
+    root.querySelector('.primary').disabled = !busy && (state.sending || claudeBlocked || state.modelsLoading);
     root.querySelector('.danger').hidden = !busy;
     root.querySelector('textarea').disabled = busy;
     renderChatImageDrafts();
-    root.querySelector('.pai-retry').disabled = busy;
+    root.querySelector('.pai-retry').disabled = busy || claudeBlocked;
     root.querySelector('#pai-provider').disabled = busy || !root.querySelector('#pai-provider').options.length;
     root.querySelector('#pai-model').disabled = busy || state.modelsLoading || !Object.keys(state.models).length;
     root.querySelector('#pai-effort').disabled = busy || state.modelsLoading || root.querySelector('#pai-effort').hidden;
     root.querySelector('#pai-speed').disabled = busy || state.modelsLoading || root.querySelector('#pai-speed').hidden;
-    root.querySelector('.pai-new').disabled = busy;
+    root.querySelector('.pai-new').disabled = busy || claudeBlocked || state.modelsLoading;
   }
 
   async function refreshAll() {
@@ -705,7 +753,7 @@
       option.value = 'chatgpt:' + profile.id;
       select.appendChild(option);
     });
-    [ ['opencode-zen', 'OpenCode Zen'], ['opencode-go', 'OpenCode Go'], ['openrouter', 'OpenRouter'], ['custom', 'Custom (BYOK)'] ].forEach(function (provider) {
+    [ ['opencode-zen', 'OpenCode Zen'], ['opencode-go', 'OpenCode Go'], ['claude-code', 'Claude Agent'], ['openrouter', 'OpenRouter'], ['deepseek', 'DeepSeek'], ['custom', 'Custom (BYOK)'] ].forEach(function (provider) {
       if (!(state.providers[provider[0]] || {}).connected) return;
       var option = el('option', '', provider[1]);
       option.value = provider[0];
@@ -723,9 +771,6 @@
   async function loadModels(preferred, strictModel) {
     var provider = selectedProvider();
     var profile = selectedProfile();
-    root.querySelector('.pai-compose textarea').placeholder = provider === 'openrouter'
-      ? 'Ask Jev to choose, rate, or judge yes/no from supplied data.'
-      : 'Type a message, paste an image, or drop images here...';
     refreshUsage();
     var select = root.querySelector('#pai-model');
     var current = preferred || select.value;
@@ -744,6 +789,15 @@
     effort.disabled = true;
     speed.hidden = true;
     speed.disabled = true;
+    if (provider === 'claude-code' && !(state.providers[provider] || {}).connected) {
+      select.replaceChildren();
+      var historical = el('option', '', (current || 'Model') + ' · unavailable');
+      historical.value = current || '';
+      select.appendChild(historical);
+      state.modelsLoading = false;
+      setBusy(state.busy);
+      return;
+    }
     if (!provider) {
       state.modelsLoading = false;
       setBusy(state.busy);
@@ -756,7 +810,7 @@
       (data.models || []).forEach(function (model) {
         state.models[model.id] = model;
         var healthStatus = model.health && model.health.status ? ' - ' + String(model.health.status).replace(/_/g, ' ') : '';
-        var option = el('option', '', model.name + (model.decision ? ' - Decision' : model.tools ? ' - PBGui tools' : ' - Chat only') + healthStatus);
+        var option = el('option', '', model.name + (model.free ? ' - Free' : '') + (model.decision ? ' - Decision' : '') + (model.provider === 'openrouter' && model.image_input ? ' - Images' : '') + healthStatus);
         option.value = model.id;
         if (model.default) option.selected = true;
         select.appendChild(option);
@@ -768,7 +822,7 @@
         select.appendChild(empty);
       }
       if (current && Array.from(select.options).some(function (option) { return option.value === current; })) select.value = current;
-      else if (strictModel && current) {
+      else if (current && (strictModel || (provider === 'openrouter' && preferred))) {
         var missing = el('option', '', 'Unavailable model: ' + current);
         missing.value = current;
         select.appendChild(missing);
@@ -779,6 +833,8 @@
       rebuildSpeeds();
       state.modelsLoading = false;
       setBusy(state.busy);
+      var catalogProblem = (data.models || []).find(function (model) { return model.catalog_error; });
+      if (catalogProblem) setStatus(catalogProblem.catalog_error, true);
       return true;
     } catch (error) {
       if (generation !== state.modelGeneration || provider !== selectedProvider() || profile !== selectedProfile()) return;
@@ -794,8 +850,19 @@
     }
   }
 
+  function selectedModelInfo() {
+    return state.models[root.querySelector('#pai-model').value] || {};
+  }
+
   function rebuildEfforts(preferred) {
-    var model = state.models[root.querySelector('#pai-model').value] || {};
+    var model = selectedModelInfo();
+    var price = root.querySelector('#pai-model-cost');
+    if (state.modelSearch) state.modelSearch.refresh(state.models);
+    price.hidden = selectedProvider() !== 'openrouter' || root.querySelector('#pai-model').hidden;
+    price.textContent = selectedProvider() === 'openrouter' ? window.PBGuiAIModelSearch.priceText(model) : '';
+    root.querySelector('.pai-compose textarea').placeholder = model.decision
+      ? 'Ask Jev to choose, rate, or judge yes/no from supplied data.'
+      : 'Type a message, paste an image, or drop images here...';
     var select = root.querySelector('#pai-effort');
     var current = preferred == null ? select.value : preferred;
     select.textContent = '';
@@ -923,7 +990,7 @@
         state.profile = conversation.chatgpt_profile || 'default';
         var providerValue = conversation.provider === 'chatgpt' ? 'chatgpt:' + state.profile : conversation.provider;
         if (root.querySelector('#pai-provider').value !== providerValue) {
-          await rebuildProviders(providerValue, conversation.model);
+          await rebuildProviders(providerValue, conversation.model, true);
         } else if (root.querySelector('#pai-model').value !== conversation.model) {
           await loadModels(conversation.model);
         }
@@ -1161,6 +1228,7 @@
     if (action === 'publish_github_issue') return 'Publish GitHub issue';
     if (action === 'save_ai_loop_config') return 'Save AI Loop definition';
     if (action === 'run_ai_loop') return 'Run AI Loop';
+    if (action === 'run_vast_optimizer') return 'Run normal Vast.ai optimizer';
     if (action === 'replace_ai_loop_gpu') return 'Replace GPU and continue loop';
     if (action === 'save_vast_preferences') return 'Change Vast.ai rental preferences';
     if (action === 'vast_host_block') return 'Change Vast.ai host exclusion';
@@ -1168,8 +1236,8 @@
     if (action === 'save') return 'Save PB8 optimizer config';
     if (action === 'save_and_queue') return 'Save PB8 config and add to queue';
     if (action === 'queue') return 'Add PB8 config to optimizer queue';
-    if (action === 'start_optimize_queue') return 'Start PB8 optimizer queue jobs';
-    if (action === 'queue_backtests') return 'Queue PB8 Pareto backtests';
+    if (action === 'start_optimize_queue') return 'Start local PB8 optimizer queue jobs';
+    if (action === 'queue_backtests') return 'Queue PB8 backtests';
     if (action === 'create_dashboard') return 'Create PBGui dashboard';
     if (action === 'save_dashboard_layout') return 'Save PBGui dashboard layout';
     if (action === 'python_analysis') return 'Run sandboxed Python analysis';
@@ -1178,6 +1246,7 @@
   }
 
   function proposalDetail(preview) {
+    if (preview.action === 'run_vast_optimizer') return 'Vast.ai · 1 normal optimizer · ' + String(preview.iterations || '') + ' iterations · ' + String(preview.gpu_name || '') + ' · up to USD ' + String(preview.max_price_per_hour) + '/h · USD ' + String(preview.budget) + ' budget · ' + String(preview.hours) + ' hours maximum · ' + ((preview.convergence || {}).convergence_enabled ? 'stop when no improvement' : 'iteration limit') + ' · paid rental and automatic cleanup; no AI Loop';
     if (preview.action === 'vast_host_block') return 'Machine ' + String(preview.machine_id) + ' · Job ' + String(preview.job_id) + ' · ' + String(preview.effect || '');
     if (preview.action === 'publish_github_issue') return String(preview.target || '') + ' · ' + String(preview.login || '') + (preview.encrypted_attachment ? ' · encrypted diagnostic attachment' : '') + (preview.reconcile_only ? ' · check previous publication only' : ' · public');
     if (['save_ai_loop_config', 'run_ai_loop', 'save_vast_preferences', 'replace_ai_loop_gpu'].includes(preview.action)) return String(preview.effect || '') + ' · ' + String(preview.changed_count || 0) + ' changes';
@@ -1185,11 +1254,15 @@
     if (preview.action === 'jev_analysis') return String(preview.version || '') + ' ' + String(preview.run_name || '') + ' - ' + String(preview.candidate_count || 0) + ' candidates assessed - ' + (preview.max_candidates == null ? 'Jev decides how many to mark' : 'mark at most ' + String(preview.max_candidates)) + ' - USD ' + String(preview.max_cost_usd || '') + ' maximum';
     if (preview.action === 'python_analysis') return String(preview.code_bytes || 0) + ' bytes of code - ' + String((preview.input_summary || {}).bytes || 0) + ' bytes of sanitized JSON input';
     if (preview.action === 'queue_backtests') {
+      if (preview.source_resource) return String(preview.source_name || 'Backtest result') + ' · ' +
+        String(preview.start_date || '') + ' → ' + String(preview.end_date || '') + ' · ' +
+        String(preview.job_count || 0) + ' separate jobs · ' + (preview.exchanges || []).join(', ') +
+        (preview.may_start_immediately ? ' - may start immediately' : '');
       var validationMode = String(preview.validation_mode || 'configured');
       if (validationMode !== 'configured') return String(preview.job_count || 0) + ' ' + validationMode.replace(/_/g, ' ') + ' validation jobs' + (preview.may_start_immediately ? ' - may start immediately' : '');
       return String(preview.job_count || 0) + ' backtest jobs across ' + String((preview.exchanges || []).length) + ' exchanges' + (preview.may_start_immediately ? ' - may start immediately' : '');
     }
-    if (preview.action === 'start_optimize_queue') return String(preview.job_count || 0) + ' exact queued PB8 optimizer jobs - starts immediately';
+    if (preview.action === 'start_optimize_queue') return 'Local PBGui host · ' + String(preview.job_count || 0) + ' exact queued PB8 optimizer jobs - starts immediately';
     if (preview.action === 'create_dashboard') return 'Create from template ' + String(preview.template || '');
     if (preview.action === 'save_dashboard_layout') return String((preview.layout || {}).rows || 0) + ' rows x ' + String((preview.layout || {}).columns || 0) + ' columns - ' + String(preview.changed_count || 0) + ' changes';
     return String(preview.changed_count || 0) + ' changes' + (preview.may_start_immediately ? ' - may start immediately' : '');
@@ -1411,7 +1484,7 @@
     state.resolvingProposalIds.add(proposalId);
     card.hidden = true;
     if (approve && preview.action !== 'publish_github_issue') {
-      var approvalDetail = ['save_ai_loop_config', 'run_ai_loop', 'save_vast_preferences', 'replace_ai_loop_gpu', 'vast_host_block'].includes(preview.action)
+      var approvalDetail = ['save_ai_loop_config', 'run_ai_loop', 'run_vast_optimizer', 'save_vast_preferences', 'replace_ai_loop_gpu', 'vast_host_block'].includes(preview.action)
         ? String(preview.effect || '')
         : preview.action === 'reviewed_config_change'
         ? String(preview.effect || '') + '. This approval applies only to the displayed changes; the chat remains analysis-only.'
@@ -1504,17 +1577,31 @@
     }
   }
 
+  function emptyChatForTestSelection() {
+    return root && !state.busy && !state.sending && !root.querySelector('.pai-messages .pai-message') &&
+      !root.querySelector('textarea').value.trim() && !(state.imageDrafts[state.current || ''] || []).length;
+  }
+
+  async function applyPendingSetupSelection() {
+    var setup = state.pendingSetupSelection;
+    if (!setup) return true;
+    state.profile = setup.profile || 'default';state.selectionDirty = true;
+    var loaded = await rebuildProviders(setup.provider === 'chatgpt' ? 'chatgpt:' + state.profile : setup.provider, setup.model, true);
+    if (!loaded || setup !== state.pendingSetupSelection) return false;
+    if (!state.models[setup.model]) { setStatus('The tested model is no longer available. Select another model.', true);return false; }
+    rebuildEfforts(setup.effort || '');rebuildSpeeds(setup.service_tier || '');
+    state.pendingSetupSelection = null;
+    if (window.PBGuiAI.pendingTestedSelection === setup) delete window.PBGuiAI.pendingTestedSelection;
+    return true;
+  }
+
   async function newConversation(sendGeneration) {
     if (typeof sendGeneration !== 'number') sendGeneration = null;
-    if (state.pendingSetupSelection) {
-      var setup = state.pendingSetupSelection; state.pendingSetupSelection = null;
-      state.profile = setup.profile || 'default'; state.selectionDirty = true;
-      await rebuildProviders(setup.provider === 'chatgpt' ? 'chatgpt:' + state.profile : setup.provider, setup.model);
-      rebuildEfforts(setup.effort || ''); rebuildSpeeds(setup.service_tier || '');
-    }
+    if (sendGeneration == null && state.pendingSetupSelection && !await applyPendingSetupSelection()) return;
     var provider = selectedProvider();
     var profile = selectedProfile();
     var model = root.querySelector('#pai-model').value;
+    if (provider === 'claude-code' && !(state.providers[provider] || {}).connected) { setStatus('Claude is not connected', true); return; }
     if (!provider || !model) return;
     try {
       var context = root.querySelector('#pai-context-toggle').checked ? collectContext() : null;
@@ -1536,7 +1623,8 @@
   }
 
   async function sendMessage(override, retryImages) {
-    if (state.busy || state.sending) return;
+    if (state.busy || state.sending || state.modelsLoading) return;
+    if (selectedProvider() === 'claude-code' && !(state.providers['claude-code'] || {}).connected) { setStatus('Claude is not connected', true); return; }
     state.sending = true;
     var sendGeneration = ++state.sendGeneration, submitted = false;
     state.sendOwner = sendGeneration;
@@ -1597,10 +1685,10 @@
     setStatus('Starting model...', false);
     var jevPreviewId = '';
     try {
-      if (turnProvider === 'openrouter' && window.PBGuiJevTransferPreview) {
+      if ((state.models[turnModel] || {}).decision && window.PBGuiJevTransferPreview) {
         var review = await window.PBGuiJevTransferPreview.review({
           api: api, confirm: confirmAction, conversationId: conversationId,
-          provider: turnProvider, model: turnModel, message: message
+          provider: turnProvider, model: turnModel, message: message, decision: true
         });
         if (review.cancelled) {
           if (conversationId === state.current) {
@@ -1783,6 +1871,26 @@
   facade.close = closeDrawer;
   facade.toggle = function () { state.open ? closeDrawer() : openDrawer(); };
   window.PBGuiAI = facade;
+  window.addEventListener('pbgui:ai-models-changed', function () {
+    if (!root || selectedProvider() !== 'openrouter' || state.busy) return;
+    var selectedModel = root.querySelector('#pai-model').value;
+    var selectedEffort = root.querySelector('#pai-effort').value;
+    loadModels(selectedModel).then(function (loaded) { if (loaded) rebuildEfforts(selectedEffort); });
+  });
+
+  window.addEventListener('pbgui:ai-model-tested', function (event) {
+    var value = event.detail;
+    if (!value || typeof value.provider !== 'string' || typeof value.model !== 'string') return;
+    state.pendingSetupSelection = value;
+    if (!root) return;
+    selectionReady = selectionReady.then(async function () {
+      if (value !== state.pendingSetupSelection) return;
+      if (emptyChatForTestSelection()) {
+        await applyPendingSetupSelection();
+      } else setStatus('Tested model is ready for New chat.', false);
+    }).catch(function (error) { setStatus(error.message, true); });
+  });
+
   window.addEventListener('pbgui:ai-setup-saved', function (event) {
     var value = event.detail;
     if (value && typeof value.provider === 'string' && typeof value.model === 'string') state.pendingSetupSelection = Object.assign({}, value);

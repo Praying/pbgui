@@ -1,7 +1,8 @@
 """Static contracts for explicitly registered, non-sensitive AI page context."""
 
+from javascript_checks import run_javascript
+
 from pathlib import Path
-import subprocess
 import textwrap
 
 
@@ -59,7 +60,9 @@ def test_shared_context_boundary_projects_only_the_backend_schema() -> None:
     assert "tryLocalCommand" in NAV
     assert "descriptor.context ? 0 : 1" in NAV
     assert "candidates.slice(0, 2048)" in NAV
-    assert "JSON.stringify(context).length > 256 * 1024" in NAV
+    assert "var byteLimit = 256 * 1024" in NAV
+    assert "new TextEncoder()" in NAV
+    assert "encoder.encode(JSON.stringify(context)).byteLength" in NAV
     assert "rect.bottom >= 0" not in NAV
     assert "descriptor.name = controlContext ? controlContext + ' :: ' + label : label" in NAV
     assert "var selector = 'body *'" in NAV
@@ -88,7 +91,7 @@ def test_ai_page_navigation_is_attempted_only_once_per_pending_action() -> None:
     functions = NAV.split("var _aiActionNavigationStorageKey", 1)[1].split("function aiControlVisible", 1)[0]
     script = textwrap.dedent(
         f"""
-        const assert = require('node:assert/strict');
+        const assert = browserAssert;
         const stored = new Map();
         const assigned = [];
         const window = {{
@@ -120,7 +123,7 @@ def test_ai_page_navigation_is_attempted_only_once_per_pending_action() -> None:
         assert.equal(stored.has('pbgui.ai.pending-navigation'), false);
         """
     )
-    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    completed = run_javascript(["-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
     assert completed.returncode == 0, completed.stderr or completed.stdout
 
 

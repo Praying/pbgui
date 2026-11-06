@@ -78,6 +78,7 @@ const store = useWelcome({ t: (key, params) => t(key, params ?? {}) });
 const metaVersion = computed(() => String(store.bootstrap.value?.version || bootVersion() || ''));
 const metaSerial = computed(() => String(store.bootstrap.value?.serial || bootSerial() || ''));
 const apiOriginText = apiOrigin();
+let systemSummaryTimer: ReturnType<typeof setInterval> | undefined;
 
 /* Page sections live in the rail (accordion under the active page).
    Password stays listed but inert until the session authenticates —
@@ -150,11 +151,14 @@ onMounted(() => {
   (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = openWelcomeHelp;
   document.addEventListener('keydown', onKeydown);
   void store.loadBootstrap();
+  void store.loadSystemSummary();
+  systemSummaryTimer = setInterval(() => void store.loadSystemSummary(), 5000);
 });
 
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown);
+  if (systemSummaryTimer) clearInterval(systemSummaryTimer);
   delete (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER;
 });
 </script>
@@ -230,6 +234,28 @@ onBeforeUnmount(() => {
               <strong id="summary-identity" :title="store.summaryView.value.identity" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.identity }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-role">{{ store.summaryView.value.roleText }}</p>
             </div>
+          </div>
+          <div v-if="store.systemSummary.value" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="System summary">
+            <a href="/api/storage/main_page#system" class="rounded-lg border border-secondary/14 bg-page/44 p-3 no-underline transition-colors hover:border-accent">
+              <span class="block text-xs font-bold uppercase tracking-label text-secondary">CPU</span>
+              <strong class="mt-1 block text-lg text-primary">{{ Math.round(Number((store.systemSummary.value.system as Record<string, unknown> | undefined)?.cpu_percent || 0)) }}%</strong>
+              <span class="text-xs text-secondary">System load</span>
+            </a>
+            <a href="/api/storage/main_page#system" class="rounded-lg border border-secondary/14 bg-page/44 p-3 no-underline transition-colors hover:border-accent">
+              <span class="block text-xs font-bold uppercase tracking-label text-secondary">Memory</span>
+              <strong class="mt-1 block text-lg text-primary">{{ Math.round(Number(((store.systemSummary.value.system as Record<string, unknown> | undefined)?.memory as Record<string, unknown> | undefined)?.percent || 0)) }}%</strong>
+              <span class="text-xs text-secondary">PBGui system memory</span>
+            </a>
+            <a href="/api/storage/main_page#overview" class="rounded-lg border border-secondary/14 bg-page/44 p-3 no-underline transition-colors hover:border-accent">
+              <span class="block text-xs font-bold uppercase tracking-label text-secondary">Disk</span>
+              <strong class="mt-1 block text-lg text-primary">{{ Math.round(Number((store.systemSummary.value.disk as Record<string, unknown> | undefined)?.percent || 0)) }}%</strong>
+              <span class="text-xs text-secondary">Storage usage</span>
+            </a>
+            <a href="/api/storage/main_page#overview" class="rounded-lg border border-secondary/14 bg-page/44 p-3 no-underline transition-colors hover:border-accent">
+              <span class="block text-xs font-bold uppercase tracking-label text-secondary">Cleanup</span>
+              <strong class="mt-1 block text-lg text-primary">{{ Number((store.systemSummary.value.reclaimable as Record<string, unknown> | undefined)?.safe || 0) > 0 ? 'Available' : 'Up to date' }}</strong>
+              <span class="text-xs text-secondary">Automatic storage scan</span>
+            </a>
           </div>
         </div>
         <div class="section-heading flex flex-col gap-1 mb-2 px-0.5 pt-0.5 pb-0">

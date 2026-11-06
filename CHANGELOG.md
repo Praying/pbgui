@@ -1,5 +1,33 @@
 # Changelog
 
+- [v2.10.13](releases/v2.10.13.md)
+
+- [v2.10.12](releases/v2.10.12.md)
+
+- [v2.10.11](releases/v2.10.11.md)
+
+- [v2.10.10](releases/v2.10.10.md)
+
+- [v2.10.9](releases/v2.10.9.md)
+
+- [v2.10.8](releases/v2.10.8.md)
+
+- [v2.10.7](releases/v2.10.7.md)
+
+- [v2.10.6](releases/v2.10.6.md)
+
+- [v2.10.5](releases/v2.10.5.md)
+
+- [v2.10.4](releases/v2.10.4.md)
+
+- [v2.10.3](releases/v2.10.3.md)
+
+- [v2.10.2](releases/v2.10.2.md)
+
+- [v2.10.1](releases/v2.10.1.md)
+
+- [v2.10](releases/v2.10.md)
+
 - [v2.09.14](releases/v2.09.14.md)
 
 - [v2.09.13](releases/v2.09.13.md)

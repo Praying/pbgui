@@ -82,6 +82,7 @@ export interface UseWelcome {
   banner: Ref<{ message: string; kind: BannerKind }>;
   activeSection: Ref<'overview' | 'setup' | 'password'>;
   bootstrap: Ref<Record<string, any> | null>;
+  systemSummary: Ref<Record<string, any> | null>;
   pb7dir: Ref<string>;
   pb7venv: Ref<string>;
   pb8dir: Ref<string>;
@@ -106,6 +107,7 @@ export interface UseWelcome {
   canSave: ComputedRef<boolean>;
   authDisabled: ComputedRef<boolean>;
   loadBootstrap(message?: string, kind?: BannerKind): Promise<void>;
+  loadSystemSummary(): Promise<void>;
   saveSetup(): Promise<void>;
   changePassword(): Promise<void>;
   disableAuthentication(confirmDialog: (options: Record<string, unknown>) => Promise<boolean>): Promise<void>;
@@ -132,6 +134,7 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
   const banner = ref<{ message: string; kind: BannerKind }>({ message: '', kind: 'info' });
   const activeSection = ref<'overview' | 'setup' | 'password'>('overview');
   const bootstrap = ref<Record<string, any> | null>(null);
+  const systemSummary = ref<Record<string, any> | null>(null);
   const pb7dir = ref('');
   const pb7venv = ref('');
   const pb8dir = ref('');
@@ -360,6 +363,14 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
     }
   }
 
+  async function loadSystemSummary(): Promise<void> {
+    try {
+      systemSummary.value = await fetchJson(`${apiOrigin()}/api/storage/summary`);
+    } catch {
+      // Storage is optional during startup; the rest of Welcome remains usable.
+    }
+  }
+
   async function saveSetup(): Promise<void> {
     try {
       const data = await fetchJson(
@@ -512,6 +523,7 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
     banner,
     activeSection,
     bootstrap,
+    systemSummary,
     pb7dir,
     pb7venv,
     pb8dir,
@@ -528,6 +540,7 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
     canSave,
     authDisabled,
     loadBootstrap,
+    loadSystemSummary,
     saveSetup,
     changePassword,
     disableAuthentication,

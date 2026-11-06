@@ -2611,6 +2611,7 @@
   "nav.page.system_api_keys": "API-Keys",
   "nav.page.system_cluster": "Cluster Sync",
   "nav.page.system_db_tools": "DB Tools",
+  "nav.page.system_storage": "Storage",
   "nav.page.system_logging": "Logging",
   "nav.page.system_profit_sweep": "Profit Sweep",
   "nav.page.system_transfers": "Internal Transfers",

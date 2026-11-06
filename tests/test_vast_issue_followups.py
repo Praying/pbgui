@@ -14,6 +14,7 @@ import vast_job_runner as runner
 import vast_market_cache
 from vast_jobs import IMAGE, REVISION, JobStore, write_json
 from vast_direction_fixtures import complete_direction, direction_config
+from vast_integrity_fixtures import freeze_test_proof
 from vast_provider import VastError
 from vast_queue import CloudQueue, worker_step
 from vast_transfer import WorkerConnection
@@ -39,15 +40,19 @@ def queue(tmp_path):
 
 
 @pytest.fixture
-def reserve_queue(queue):
+def reserve_queue(queue, monkeypatch):
     """Add a valid frozen GPU input only for transfer-reserve scheduling tests."""
+    monkeypatch.setattr(time, 'time', lambda: 1000)
     write_json(queue.store.directory('b'*32) / 'input/optimize.json', complete_direction(direction_config()))
+    freeze_test_proof(queue.store, 'b'*32)
     return queue
 
 
-def test_reserve_rebalance_waits_for_guard_acknowledgement(reserve_queue, monkeypatch):
+@pytest.mark.parametrize('protocol', [2, 3])
+def test_reserve_rebalance_waits_for_guard_acknowledgement(reserve_queue, monkeypatch, protocol):
     """A later job can use unused time budget only after a shorter deadline is confirmed."""
     queue = reserve_queue
+    queue.store.update('a'*32, deadline_protocol=protocol)
     monkeypatch.setattr('vast_deadline.time.time', lambda: 1000)
     assert worker_step(queue, 'a'*32, now=1000) is None
     worker = queue.store.read('a'*32)
@@ -75,9 +80,11 @@ def test_old_guard_does_not_spend_unacknowledged_reserve(reserve_queue, protocol
     assert queue.store.read('b'*32)['status'] == 'ready'
 
 
-def test_rejected_auto_reserve_is_not_resubmitted_forever(reserve_queue, monkeypatch):
+@pytest.mark.parametrize('protocol', [2, 3])
+def test_rejected_auto_reserve_is_not_resubmitted_forever(reserve_queue, monkeypatch, protocol):
     """An explicit worker rejection remains actionable instead of resetting idle forever."""
     queue = reserve_queue
+    queue.store.update('a'*32, deadline_protocol=protocol)
     monkeypatch.setattr('vast_deadline.time.time', lambda: 1000)
     worker_step(queue, 'a'*32, now=1000)
     queue.store.update('a'*32, deadline_request=None, deadline_error='Worker rejected the deadline change')
@@ -280,7 +287,7 @@ def test_incomplete_or_expired_market_metadata_never_reaches_worker(monkeypatch,
         """Return an invalid local snapshot."""
         return snapshot
     monkeypatch.setattr(vast_market_cache, 'fetch_markets', fetch)
-    connection = SimpleNamespace(identifier='test', store=SimpleNamespace(read=lambda _: {'exchanges': ['bybit']}))
+    connection = SimpleNamespace(identifier='test', store=SimpleNamespace(read=lambda _, relative='state.json': {'exchanges': ['bybit']} if relative=='state.json' else {}))
     with pytest.raises(VastError) as error:
         vast_market_cache.stage_public_markets(connection)
     assert error.value.status == 422

@@ -17,7 +17,7 @@ from pb8_loop_evidence import LoopAIPause, BootstrapWithoutAdvice
 from pb8_loop_exploration import evaluated_stagnation, validate_exploration
 from pb8_loop_backend import LoopBackend
 from pb8_loop_storage import LoopStorageError
-from pb8_loop_observer import ObserverJobs
+from pb8_loop_observer import ObserverJobs, FINISHED as OBSERVER_FINISHED, needs_observer_report
 
 SERVICE = 'PB8Loop'
 JOB_FINISHED = {'completed', 'complete', 'failed', 'error', 'cancelled', 'stopped'}
@@ -63,6 +63,7 @@ class LoopController:
         self._closing = False
         self._active_decisions = set()
         self._evidence_retention_at = 0
+        self._idle_paused = {}
         self.restart_pending = lambda: False
 
     def start(self):
@@ -76,6 +77,7 @@ class LoopController:
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
+        self._idle_paused.clear()
         self._steps.clear()
         self._task = None
 
@@ -165,6 +167,14 @@ class LoopController:
                     if task is None or task.done():
                         if task and not task.cancelled():
                             task.exception()
+                        idle_key = (record['owner'], key)
+                        idle_stamp = self._idle_paused.get(idle_key)
+                        if (record['status'] == 'paused' and idle_stamp is not None
+                                and time.time() < record.get('deadline', 0) - 60):
+                            path = self.store.path(record['owner'], key)
+                            if await owned_thread(self.store._read_stamp, path) == idle_stamp:
+                                continue
+                        self._idle_paused.pop(idle_key, None)
                         self._steps[key] = asyncio.create_task(self.tick(record['owner'], key), name='pb8-loop-' + key)
                 for key in list(self._steps):
                     if self._steps[key].done():
@@ -198,6 +208,7 @@ class LoopController:
             except BlockingIOError:
                 return
             try:
+                read_stamp = await owned_thread(self.store._read_stamp, self.store.path(owner, loop_id))
                 record = await owned_thread(self.store.read, owner, loop_id)
             except FileNotFoundError:
                 # A queued/finished run may have been deleted after the scan.
@@ -206,6 +217,7 @@ class LoopController:
                 await owned_thread(self.store.pause_storage, owner, loop_id, exc)
                 _log(SERVICE, f'Loop {loop_id} archive cannot be read: {exc}', level='ERROR')
                 return
+            phase_before = record.get('phase')
             try:
                 await self._tick(record)
             except asyncio.CancelledError:
@@ -260,15 +272,46 @@ class LoopController:
                      meta={'failure': updated.get('failure'), 'traceback': traceback.format_exc()})
             # Separate failure boundary: user-only diagnostics never change the Loop's decisions/errors.
             try:
-                await self.observers.tick(await owned_thread(self.store.read, owner, loop_id))
+                current = await owned_thread(self.store.read, owner, loop_id)
+                if (phase_before != 'optimize' and current.get('phase') == 'optimize'
+                        and current['status'] in ACTIVE):
+                    # Release this transition's controller claim first. The next
+                    # tick prepares/starts training before expensive report work;
+                    # its normal observer pass still runs after training launch.
+                    return
+                await self.observers.tick(current)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
                 _log(SERVICE, f'User-only evaluation for {loop_id}: {type(exc).__name__}', level='WARNING',
                      meta={'traceback': traceback.format_exc()})
+            else:
+                if self._can_idle_paused(record):
+                    stamp = await owned_thread(self.store._read_stamp, self.store.path(owner, loop_id))
+                    if stamp == read_stamp:
+                        if len(self._idle_paused) >= 128:
+                            self._idle_paused.pop(next(iter(self._idle_paused)))
+                        self._idle_paused[(owner, loop_id)] = stamp
         finally:
             fcntl.flock(fd, fcntl.LOCK_UN)
             os.close(fd)
+
+    @staticmethod
+    def _can_idle_paused(record):
+        """Only unchanged paused runs without collectable work may skip repeated hydration."""
+        from pb8_loop_gpu_replacement import open_replacement
+        # A paused reservation is durable bookkeeping, not an active request. The
+        # inventory loop separately cancels/joins active decisions before another tick.
+        if (record['status'] != 'paused' or record.get('rental_extension')
+                or (record.get('rental_handover') or {}).get('status') == 'collecting'
+                or open_replacement(record)):
+            return False
+        if any(job['status'] not in JOB_FINISHED and (job.get('backend') or job.get('started'))
+               for job in record.get('jobs', [])):
+            return False
+        return not any(needs_observer_report(job) or (
+            job['status'] not in OBSERVER_FINISHED and (job.get('backend') or job.get('started')))
+            for job in record.get('observer_jobs', []))
 
     def commit(self, record, function):
         """Reject decisions made before a newer user pause/stop action."""
@@ -525,7 +568,7 @@ class LoopController:
                         answer = await self.ai.jev(await owned_thread(self.store.read, record['owner'], record['id']),
                                                    [{'id': row['id'], 'metrics': row['metrics']} for row in record['bootstrap_candidates']])
                     except Exception as exc:
-                        from ai_openrouter import OpenRouterDecisionError
+                        from ai_jev import OpenRouterDecisionError
                         detail = str(exc)[:500] if isinstance(exc, OpenRouterDecisionError) else type(exc).__name__
                         _log(SERVICE, f'Optional initial JEV failed: {detail}', level='WARNING')
                         answer = 'JEV request failed: ' + detail + '; primary model continues'
@@ -676,7 +719,7 @@ class LoopController:
                         if answer:
                             jev_answers.append(answer)
                     except Exception as exc:
-                        from ai_openrouter import OpenRouterDecisionError
+                        from ai_jev import OpenRouterDecisionError
                         detail = str(exc)[:500] if isinstance(exc, OpenRouterDecisionError) else type(exc).__name__
                         _log(SERVICE, f'Optional JEV failed: {detail}', level='WARNING')
                         jev_answers.append('JEV request failed: ' + detail + '; primary model continues')

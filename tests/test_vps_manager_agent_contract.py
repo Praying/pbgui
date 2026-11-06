@@ -717,3 +717,23 @@ def test_unknown_credential_capability_remains_none_in_playbook_vars() -> None:
     assert "credential_active" in result
     assert result["credential_active"] is None
     assert '"credential_active": null' in json.dumps(result, sort_keys=True)
+
+
+@pytest.mark.parametrize('intent', [None, False, True])
+def test_config_websocket_requires_explicit_remote_apply(monkeypatch,intent):
+    """The real websocket defaults legacy/implicit saves to local persistence only."""
+    import api.vps_manager as api
+    message={'cmd':'save_vps_config','hostname':'fixture','form':{'swap':'0'}}
+    if intent is not None:message['apply_remote']=intent
+    class Socket:
+        """One authenticated isolated command."""
+        send_json=AsyncMock()
+        async def iter_text(self):
+            """Emit only the fixed local test message."""
+            yield json.dumps(message)
+    save=Mock(return_value={'remote_apply':{'started':False}})
+    monkeypatch.setattr(api,'authenticate_websocket',AsyncMock(return_value=SimpleNamespace(token='fixture-token')))
+    monkeypatch.setattr(api,'_get_service',lambda:SimpleNamespace(save_vps_config=save))
+    monkeypatch.setattr(api,'_push_loop',AsyncMock())
+    asyncio.run(api.ws_vps_manager(Socket()))
+    save.assert_called_once_with('fixture-token','fixture',{'swap':'0'},apply_remote=(intent is True))

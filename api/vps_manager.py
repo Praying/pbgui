@@ -897,6 +897,7 @@ async def ws_vps_manager(websocket: WebSocket):
                         token,
                         str(msg.get("hostname") or ""),
                         msg.get("form") or {},
+                        apply_remote=msg.get("apply_remote", False),
                     )
                     await websocket.send_json({"type": "result", "cmd": cmd, "success": True, "data": data})
                 elif cmd == "probe_vps_host_key":

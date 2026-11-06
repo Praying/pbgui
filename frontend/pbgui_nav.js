@@ -51,6 +51,14 @@
       name: aiContextText(value.name, 128)
     };
     if (!entity.kind || !entity.name || aiContextSensitiveName(entity.kind)) return null;
+    if (entity.kind === 'optimizer_run') {
+      var resultId = aiContextText(value.result_id, 200);
+      if (/^[A-Za-z0-9_.-]{1,200}$/.test(resultId)) entity.result_id = resultId;
+    }
+    if (entity.kind === 'backtest_result' && /^(v7|v8)$/.test(entity.version)) {
+      var resource = String(value.resource || '');
+      if (new RegExp('^pbgui://backtest/' + entity.version + '/[0-9a-f]{32}$').test(resource)) entity.resource = resource;
+    }
     return entity;
   }
 
@@ -466,8 +474,24 @@
       } catch (_) {}
     });
     context.entities = context.entities.slice(0, 8);
-    context.evidence = context.evidence.slice(0, 2);
-    while (context.controls.length && JSON.stringify(context).length > 256 * 1024) context.controls.pop();
+    // Match the backend's compact UTF-8 JSON budget. Counting JS characters
+    // underestimates Unicode, while ASCII-escaped JSON overestimates it.
+    var encoder = new TextEncoder();
+    var byteLimit = 256 * 1024;
+    var candidates = context.controls;
+    context.controls = [];
+    var byteSize = encoder.encode(JSON.stringify(context)).byteLength;
+    for (var index = 0; index < candidates.length; index += 1) {
+      var controlBytes = encoder.encode(JSON.stringify(candidates[index])).byteLength
+        + (context.controls.length ? 1 : 0);
+      if (byteSize + controlBytes > byteLimit) break;
+      context.controls.push(candidates[index]);
+      byteSize += controlBytes;
+    }
+    while (context.evidence.length && byteSize > byteLimit) {
+      context.evidence.shift();
+      byteSize = encoder.encode(JSON.stringify(context)).byteLength;
+    }
     return context;
   }
 
@@ -698,6 +722,7 @@
       { page: 'system_cluster',       icon: 'arrows-clockwise', label: 'Cluster Sync'      },
       { page: 'system_services',      icon: 'wrench',           label: 'PBGUI Services'    },
       { page: 'system_db_tools',      icon: 'database',         label: 'DB Tools'          },
+      { page: 'system_storage',       icon: 'database',         label: 'Storage'           },
       { page: 'system_vps_manager_fastapi', icon: 'desktop',    label: 'VPS Manager'       },
       { page: 'system_vps_monitor',   icon: 'chart-bar',        label: 'VPS Monitor'       },
       { page: 'system_logging',       icon: 'file-text',        label: 'Logging'           }
@@ -1840,6 +1865,7 @@
     'system_services':    '/api/services/main_page',
     'system_db_tools':    '/api/db-tools/main_page',
     'help':               '/api/help/main_page',
+    'system_storage':     '/api/storage/main_page',
     'v7_run':             '/api/v7/main_page',
     'v7_backtest':        '/api/backtest-v7/main_page',
     'v7_optimize':        '/api/optimize-v7/main_page',
@@ -1871,6 +1897,7 @@
     'system_vps_monitor':          '29_vps_monitor',
     'system_services':             '23_services_overview',
     'system_db_tools':             '41_db_tools',
+    'system_storage':              '51_storage',
     'help':                        '00_overview',
     'v7_run':                      '34_pbv7_run',
     'v7_backtest':                 '35_pbv7_backtest',
@@ -2167,7 +2194,7 @@
       _aiDrawerLoading = true;
       var link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = _appPath('/app/css/ai_drawer.css?v=27');
+      link.href = _appPath('/app/css/ai_drawer.css?v=30');
       document.head.appendChild(link);
       function loadDrawerScript() {
         var dependencies = [
@@ -2194,22 +2221,30 @@
         }
         if (!window.PBGuiAIUsage) {
           var usage = document.createElement('script');
-          usage.src = _appPath('/app/js/ai_usage.js?v=2');
+          usage.src = _appPath('/app/js/ai_usage.js?v=3');
           usage.onload = loadDrawerScript;
           usage.onerror = function () { _aiDrawerLoading = false; };
           document.head.appendChild(usage);
           return;
         }
         if (!window.PBGuiJevTransferPreview) {
-          var transferPreview = document.createElement('script');
-          transferPreview.src = _appPath('/app/js/jev_transfer_preview.js?v=1');
-          transferPreview.onload = loadDrawerScript;
-          transferPreview.onerror = function () { _aiDrawerLoading = false; };
-          document.head.appendChild(transferPreview);
+          var transfer = document.createElement('script');
+          transfer.src = _appPath('/app/js/jev_transfer_preview.js?v=2');
+          transfer.onload = loadDrawerScript;
+          transfer.onerror = function () { _aiDrawerLoading = false; };
+          document.head.appendChild(transfer);
+          return;
+        }
+        if (!window.PBGuiAIModelSearch) {
+          var modelSearch = document.createElement('script');
+          modelSearch.src = _appPath('/app/js/ai_model_search.js?v=15');
+          modelSearch.onload = loadDrawerScript;
+          modelSearch.onerror = function () { _aiDrawerLoading = false; };
+          document.head.appendChild(modelSearch);
           return;
         }
         var script = document.createElement('script');
-        script.src = _appPath('/app/js/ai_drawer.js?v=80');
+        script.src = _appPath('/app/js/ai_drawer.js?v=101');
         script.onload = function () { _aiDrawerLoading = false; if (show && window.PBGuiAI && window.PBGuiAI.open) window.PBGuiAI.open(); window.dispatchEvent(new Event('pbgui:ai-ready')); };
         script.onerror = function () { _aiDrawerLoading = false; };
         document.head.appendChild(script);

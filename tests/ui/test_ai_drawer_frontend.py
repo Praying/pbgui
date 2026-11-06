@@ -1,8 +1,9 @@
 """Static security and lifecycle contracts for the global AI drawer."""
 
+from javascript_checks import run_javascript
+
 from pathlib import Path
 import json
-import subprocess
 
 import pytest
 
@@ -28,10 +29,10 @@ def test_lost_host_approval_uses_only_owned_status_get(outcome):
 
 
 def _run_host_resolution(result, lost):
-    """Execute the production function in Node with bounded fake DOM/API dependencies."""
+    """Execute the production function in the browser with bounded fake DOM/API dependencies."""
     function = 'async function resolveProposal' + DRAWER.split('async function resolveProposal', 1)[1].split('\n  async function newConversation', 1)[0]
     script = '''
-    const assert = require('node:assert/strict');
+    const assert = browserAssert;
     const result = RESULT, lost = LOST;
     const requests = [], messages = [], events = [];
     const state = {current:'chat', resolvingProposalIds:new Set()};
@@ -67,21 +68,21 @@ def _run_host_resolution(result, lost):
         assert.ok(!messages.some(x=>x.text.includes('Approved action completed')));
         assert.equal(events.length,0);
       }
-    })().catch(error=>{console.error(error);process.exitCode=1;});
+    })().catch(error=>{console.error(error);testResult.exitCode=1;});
     '''.replace('RESULT', json.dumps(result)).replace('LOST', str(lost).lower()).replace('FUNCTION', function)
-    completed = subprocess.run(['node', '-e', script], cwd=ROOT, text=True, capture_output=True, check=False, timeout=10)
+    completed = run_javascript(['-e', script], cwd=ROOT, text=True, capture_output=True, check=False, timeout=10)
     assert completed.returncode == 0, completed.stderr
 
 
 def test_nav_lazy_loads_the_versioned_global_ai_drawer() -> None:
     """Every authenticated top-level page should receive one isolated drawer loader."""
     assert 'id="pbgui-ai-btn"' in NAV
-    assert "/app/js/ai_drawer.js?v=80" in NAV
-    assert "/app/js/ai_usage.js?v=2" in NAV
-    assert "/app/js/jev_transfer_preview.js?v=1" in NAV
+    assert "/app/js/ai_drawer.js?v=101" in NAV
+    assert "/app/js/ai_usage.js?v=3" in NAV
+    assert "/app/js/jev_transfer_preview.js?v=2" in NAV
     assert "jev_preview_id: jevPreviewId || null" in DRAWER
     assert "PBGuiAIUsage.renderOpenRouter(container, usage)" in DRAWER
-    assert "/app/css/ai_drawer.css?v=27" in NAV
+    assert "/app/css/ai_drawer.css?v=30" in NAV
     assert "/app/js/pbgui_dialogs.js?v=12" in NAV
     loader = NAV.split("function loadDrawerScript", 1)[1].split("var pendingAIAction", 1)[0]
     assert loader.index("pbgui_dialogs.js?v=12") < loader.index("dialogs.onload = loadDrawerScript")
@@ -128,7 +129,7 @@ def test_drawer_uses_cookie_auth_persistent_history_and_detached_turns() -> None
     assert "state.selectionDirty = true;" in DRAWER
     assert "state.selectionDirty = true; rebuildEfforts();" in DRAWER
     assert "if (!state.selectionDirty && !state.savedSelection)" in DRAWER
-    assert "await rebuildProviders(providerValue, conversation.model)" in DRAWER
+    assert "await rebuildProviders(providerValue, conversation.model, true)" in DRAWER
     assert "Loading models..." in DRAWER
     assert "Models unavailable" in DRAWER
     assert "state.modelsLoading" in DRAWER
@@ -199,7 +200,8 @@ def test_drawer_uses_cookie_auth_persistent_history_and_detached_turns() -> None
     assert "preview.input_data" in DRAWER
     assert "preview.input_resource" in DRAWER
     assert "appendAnalysisResult" in DRAWER
-    assert "Start PB8 optimizer queue jobs" in DRAWER
+    assert "Start local PB8 optimizer queue jobs" in DRAWER
+    assert "Run normal Vast.ai optimizer" in DRAWER
     assert "exact reviewed PB8 optimizer queue jobs immediately" in DRAWER
     resolve = DRAWER.split("async function resolveProposal", 1)[1].split("async function newConversation", 1)[0]
     assert resolve.index("card.hidden = true") < resolve.index("await api('/proposals/")

@@ -7,7 +7,24 @@ import os
 import sqlite3
 from pathlib import Path
 
+import pytest
 import backtest_result_index
+
+
+@pytest.mark.parametrize('kind', ['file', 'directory', 'symlink', 'missing'])
+def test_file_signature_uses_one_regular_file_identity(tmp_path, kind):
+    """Signature checks retain the no-symlink boundary without repeated filesystem stats."""
+    target = tmp_path / 'target'
+    target.write_text('fixture')
+    path = tmp_path / 'entry'
+    if kind == 'file':
+        path.write_text('result')
+    elif kind == 'directory':
+        path.mkdir()
+    elif kind == 'symlink':
+        path.symlink_to(target)
+    signature = backtest_result_index._file_signature(path)
+    assert bool(signature != (0, 0, 0)) is (kind == 'file')
 
 
 def _result(tmp_path: Path, name: str, gain: float) -> Path:
@@ -57,6 +74,46 @@ def test_index_rebuilds_only_new_or_changed_results(tmp_path: Path, monkeypatch)
     assert first == second
     assert [item["gain"] for item in third] == [1.3, 1.1]
     assert oct(backtest_result_index._db_path().stat().st_mode & 0o777) == "0o600"
+
+
+@pytest.mark.parametrize('version', ['v7', 'v8'])
+def test_result_resources_match_managed_ai_identity_on_every_read(tmp_path, monkeypatch, version):
+    """Cold, warm and fallback summaries identify exact results without disclosing paths."""
+    from ai_capabilities import AICapabilityService
+    monkeypatch.setattr(backtest_result_index, 'PBGDIR', str(tmp_path))
+    analysis = _result(tmp_path, 'same-display-name', 1.4)
+    expected = AICapabilityService._virtual_uri('backtest', version, str(analysis.parent))
+    builder = _builder([])
+    for _ in range(2):
+        rows = backtest_result_index.load_indexed_results(version, [analysis], builder)
+        assert rows[0]['resource'] == expected
+        assert str(tmp_path) not in rows[0]['resource']
+    monkeypatch.setattr(backtest_result_index, '_connect', lambda: (_ for _ in ()).throw(sqlite3.OperationalError('fixture')))
+    monkeypatch.setattr(backtest_result_index, '_log', lambda *args, **kwargs: None)
+    assert backtest_result_index.load_indexed_results(version, [analysis], builder)[0]['resource'] == expected
+
+
+def test_page_reads_only_its_index_rows(tmp_path, monkeypatch):
+    """A small page must not deserialize payloads for every unrelated result."""
+    monkeypatch.setattr(backtest_result_index, 'PBGDIR', str(tmp_path))
+    paths = [_result(tmp_path, str(index), 1.1) for index in range(250)]
+    builder = _builder([])
+    backtest_result_index.load_indexed_results('v8', paths, builder)
+    queries = []
+    connect = backtest_result_index._connect
+
+    def tracked_connection():
+        """Observe actual SQLite statements while keeping all data isolated."""
+        connection = connect()
+        connection.set_trace_callback(queries.append)
+        return connection
+
+    monkeypatch.setattr(backtest_result_index, '_connect', tracked_connection)
+    selected = backtest_result_index.load_indexed_results('v8', paths[:2], builder)
+    assert len(selected) == 2
+    payload_queries = [query for query in queries if query.startswith('SELECT result_path, signature, payload')]
+    assert len(payload_queries) == 1 and 'result_path IN (' in payload_queries[0]
+    assert str(paths[2].parent) not in payload_queries[0]
 
 
 def test_index_prunes_missing_rows_and_supports_explicit_invalidation(tmp_path: Path, monkeypatch) -> None:

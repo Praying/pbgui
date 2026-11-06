@@ -68,10 +68,12 @@ LOG_GROUPS: dict[str, str] = {
     'BacktestQueueAPI': 'PBGui',
     'Cluster':         'PBGui',
     'DbTools':         'PBGui',
+    'Storage':         'PBGui',
     'Auth':            'PBGui',
     'LiveSession':     'PBGui',
     'ApiKeyState':     'PBGui',
     'AIChat':          'PBGui',
+    'AIOpenRouterChat': 'PBGui',
     'AIResearch':      'PBGui',
     'User':            'PBGui',
 }

@@ -4,7 +4,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
-from playwright.sync_api import expect, sync_playwright
+from browser_driver import expect, sync_browser
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -20,7 +20,7 @@ def detail_manager(request):
         html = html.replace('%%' + key + '%%', value)
     html = html.replace('/app/', prefix + '/app/')
     fixture = {'prefix': prefix, 'mode': 'success', 'pending': [], 'posts': [], 'gets': []}
-    with sync_playwright() as driver:
+    with sync_browser() as driver:
         browser = driver.chromium.launch(headless=True)
         context = browser.new_context(viewport={'width': 1450, 'height': 1000})
         page = context.new_page()
@@ -253,7 +253,7 @@ def manager(request):
                        'VERSION': 'test', 'SERIAL': '1', 'NAV_HASH': 'test'}.items():
         html = html.replace('%%' + key + '%%', value)
     html = html.replace('/app/', '/prefix/app/')
-    with sync_playwright() as driver:
+    with sync_browser() as driver:
         browser = driver.chromium.launch(headless=True)
         context = browser.new_context(viewport={'width': 1450, 'height': 1000})
         page = context.new_page()
@@ -836,3 +836,30 @@ def test_all_deferred_updates_show_zero_counts_with_hover_details(manager, defer
     page.locator('#alertModalClose').click()
     publish_state(page, upgrades=5, deferred_updates=0, classification_complete=True, security_updates=3)
     expect(page.locator('[data-vps-action="package-updates"]')).to_have_text('3 / 2')
+
+
+def test_systemd_installed_disabled_services_are_complete_in_live_ui(detail_manager):
+    """Real menu, automatic status updates and preview agree that disabled units are migrated."""
+    page, fixture = detail_manager
+    migration = {'state': 'needed', 'migration_needed': True, 'migration_complete': False,
+                 'required_units': [{'unit': 'pbgui-pbdata.service', 'exists': 'no', 'enabled': 'disabled', 'active': 'inactive'}]}
+    fixture['detail']['status']['systemd_migration'] = migration
+    page.locator('[data-vps-action="select-vps"][data-host="test-host"]').click()
+    expect(page.locator('#sidebar-actions').get_by_role('button', name='Preview systemd migration', exact=True)).to_be_visible()
+    page.wait_for_function("store.detail && !store.detail.provisional")
+    migration.update(state='complete', migration_needed=False, migration_complete=True)
+    migration['required_units'][0]['exists'] = 'yes'
+    migration['units'] = migration['required_units']
+    page.evaluate('detail => handleMessage({type:"detail",context_generation:store.contextGeneration,data:detail})', fixture['detail'])
+    expect(page.locator('#sidebar-actions').get_by_role('button', name='Systemd migration complete', exact=True)).to_be_visible()
+    expect(page.locator('#vps-remote-services-panel')).to_contain_text('Systemd migration complete')
+    assert page.evaluate('location.hash') == '#vps/test-host'
+    preview = {'hostname': 'test-host', 'migration_complete': True, 'migration_needed': False,
+               'can_migrate': False, 'units': migration['units'],
+               'actions': [{'label': 'Install/enable/start required systemd units', 'needed': False, 'detail': 'pbgui-pbdata.service'}]}
+    page.evaluate('data => handleMessage({type:"vps_systemd_migration_preview",data})', preview)
+    expect(page.locator('#alertModalBody')).to_contain_text('Systemd migration is complete.')
+    expect(page.locator('#alertModalBody')).to_contain_text('disabled')
+    expect(page.locator('#alertModalBody')).not_to_contain_text('Will change')
+    expect(page.locator('#systemd-migrate-confirm')).to_have_count(0)
+    page.locator('#alertModalBtnRow').get_by_role('button', name='Close', exact=True).click()

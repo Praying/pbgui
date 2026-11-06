@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 
 import pytest
-from playwright.sync_api import sync_playwright
+from browser_driver import sync_browser
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -25,11 +25,12 @@ def test_editors_share_overwrite_and_calendar(filename, renderer):
     """Both editors and re-backtest dialogs load and use the same input code."""
     source = (ROOT / 'frontend' / filename).read_text()
     assert re.search(r'<script[^>]+src="/app/js/date_overwrite.js\?v=2"', source)
-    with sync_playwright() as pw:
+    with sync_browser() as pw:
         browser = pw.chromium.launch()
         page = browser.new_page()
         page.set_content('<main></main><input id="other">')
         page.add_script_tag(path=str(ROOT / 'frontend/js/date_overwrite.js'))
+        page.add_script_tag(path=str(ROOT / 'frontend/js/ohlcv_start_dates.js'))
         page.evaluate('''() => {
             window.fmtGroupSpan = (id, label, input) => input;
             window.__dp = {show(id, button) { window.calendarTarget = [id, button.dataset.dp]; }};
@@ -58,11 +59,12 @@ def test_editors_share_overwrite_and_calendar(filename, renderer):
 
 def test_shared_renderer_escapes_values_and_ids():
     """Rendering untrusted attributes cannot inject event handlers or markup."""
-    with sync_playwright() as pw:
+    with sync_browser() as pw:
         browser = pw.chromium.launch()
         page = browser.new_page()
         page.set_content('<main></main>')
         page.add_script_tag(path=str(ROOT / 'frontend/js/date_overwrite.js'))
+        page.add_script_tag(path=str(ROOT / 'frontend/js/ohlcv_start_dates.js'))
         value = '\"><img src=x onerror="window.injected=true">'
         page.evaluate('value => document.querySelector("main").innerHTML = PBGuiDateInput.render(value, value)', value)
         assert page.locator('img').count() == 0

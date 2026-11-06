@@ -1,5 +1,9 @@
 # PBv8 Backtest
 
+With **Include page context** enabled, select a result and ask PBGui AI to backtest its executed config again over specified dates and separate exchanges. One approval queues one job per exchange, preserving strategy, risk, coins and override files. For “the full available period”, the assistant reads candle inventory first. The review shows exact dates, exchanges, source and autostart state. These standalone runs do not change the original result or an AI Loop's windows.
+
+Results appear progressively while later pages load. One browser load shares a single file-discovery pass across its pages; later pages do not rescan the complete result tree. New loads and automatic updates discover current files. If a page sequence expires, PBGui retries it once automatically while retaining the selected filter and requested Loop comparison.
+
 AI Loop result links load their filtered results before unrelated saved panels or archives. **Results** shows **Opening…** while checking the owned native job, and comparison shows loading feedback while equity data is read. **Back to AI Loop** restores the originating round/tab, expansion, selection and scroll position; current Loop data then updates automatically. If the Loop is no longer available, PBGui explains this in the original Queue/Results context. A request deadline reports an error rather than leaving navigation busy indefinitely.
 
 If an equity file fails to load, the other available curves remain visible with a count of the affected selected results. The selection is retained. If no selected equity file can be loaded, the comparison displays an error instead of an empty chart.
@@ -59,6 +63,8 @@ Migration stops if unsupported or manual-review fields remain. Resolve the repor
 
 ## Editor
 
+**Start-date shortcuts:** PB8 Backtest uses the same **1st** and **All** controls as Optimize. **1st** selects the earliest selected market with OHLCV coverage; **All** selects the first date available for every selected exchange and coin. Both include PB8 warmup and change the base start date, not the end date or Suite scenario dates. Progress and **Stop** use the same lookup workflow. This is a market-inception lookup and can fetch exchange metadata; it does not select a full local data range.
+
 The visual controls and JSON synchronization are shared directly with PBv7. For canonical V8 configs the adapter reads and writes exposure and position controls below `bot.<side>.risk`; the Long/Short and Raw JSON editors retain all nested V8 sections such as `risk`, `strategy`, `forager`, `hsl`, and `unstuck`. Imports and saves are prepared by the installed PB8 loader, and invalid JSON blocks saving. PBGui-owned metadata below the top-level `pbgui` object remains unchanged even when the installed PB8 version does not know those fields.
 
 The common capital and execution fields remain visible for quick editing. Fee overrides, `market_order_slippage_pct`, `filter_by_min_effective_cost`, `hsl_signal_mode`, and `logging_level` are grouped under **Advanced execution settings**.
@@ -78,6 +84,8 @@ Frequently used PB8-specific backtest fields have structured controls:
 **Additional Parameters** contains Result Metrics, the PBGui-managed `base_dir` as read-only, and the expert-only `hlcvs_data_dir` and `hlcvs_data_override_mode` fields. Prepared-dataset replay requires a server-side PB8 dataset path with a valid manifest and is normally left at `null`; PB8 then resolves datasets automatically. Future unknown top-level backtest fields also appear in this fallback section.
 
 ## Queue
+
+Automatic queue inspection runs in the background so retained completed jobs do not block navigation. Changed queue entries and live runner states are checked automatically.
 
 The V8 queue is stored separately under `data/bt_v8_queue`. **Start** launches `<venv_pb8>/bin/passivbot backtest <snapshot>`. **Stop**, **Restart**, **Delete**, and **Clear Finished** affect only V8 queue items. Live queue updates use the version-specific `/api/backtest-v8/ws/bt8` WebSocket; the historical `/ws/bt7` route remains an authenticated compatibility alias.
 

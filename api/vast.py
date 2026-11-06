@@ -13,12 +13,12 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from functools import lru_cache
 from pathlib import Path
 from threading import RLock
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
 from api.auth import SessionToken, require_auth
 from api.page_templates import render_page_urls
@@ -27,10 +27,12 @@ from logging_helpers import human_log as _log
 from vast_credentials import VastCredentialStore
 from vast_provider import REFERRAL_URL, VastClient, VastError, gpu_name_matches, positive_id
 from vast_jobs import JobStore, config_name, digest, services_available, job_id, _warn_unreadable
+from vast_config_validation import MAX_ITERATIONS
 from vast_queue import CloudQueue, can_remove_job, blocked_machine_ids, offer_host_allowed
 from vast_hosts import host_history, set_host_preference, search_host_offers, offer_priority
 from file_lock import advisory_file_lock
 from secure_files import ensure_private_directory
+from vast_worker_capabilities import maximum_rental_hours
 
 SERVICE = "Vast"
 router = APIRouter()
@@ -46,6 +48,8 @@ _PERFORMANCE_COLLECTOR = None
 def startup() -> None:
     """Start the bounded local input-preparation owner for this API lifespan."""
     global _PREPARATION_EXECUTOR, _PREPARATION_STOPPING, _PERFORMANCE_COLLECTOR, _DELETION_EXECUTOR
+    from vast_collect import startup as collect_startup
+    collect_startup()
     with _PREPARATION_LOCK:
         _PREPARATION_STOPPING = False
         if _PREPARATION_EXECUTOR is None:
@@ -134,7 +138,8 @@ async def shutdown() -> None:
         executor, _PREPARATION_EXECUTOR = _PREPARATION_EXECUTOR, None
         deletion_executor, _DELETION_EXECUTOR = _DELETION_EXECUTOR, None
         collector, _PERFORMANCE_COLLECTOR = _PERFORMANCE_COLLECTOR, None
-    pending = []
+    from vast_collect import shutdown as collect_shutdown
+    pending = [collect_shutdown()]
     if collector is not None:
         collector.stop()
         pending.append(asyncio.to_thread(collector.join))
@@ -256,7 +261,7 @@ class PrepareJobRequest(BaseModel):
     """A fresh job snapshot, with an explicit optional objective adjustment."""
     model_config = ConfigDict(extra="forbid")
     config_name: str = Field(min_length=1, max_length=160)
-    iterations: int = Field(default=512, ge=256, le=10_000_000)
+    iterations: int = Field(default=512, ge=256, le=MAX_ITERATIONS)
     workers: int = Field(default=4, ge=1, le=64)
     use_adg: bool = False
 
@@ -276,9 +281,20 @@ class GpuPreferences(BaseModel):
     verified_only: bool = True
 
 
+def validate_rental_hours(hours: float, info: ValidationInfo) -> float:
+    """Reject unsupported new authorizations while keeping stored settings editable."""
+    maximum = maximum_rental_hours()
+    if maximum is not None and hours > maximum and not (info.context or {}).get('stored_preferences'):
+        raise ValueError(f'The active worker image supports at most {maximum:g} rental hours')
+    return hours
+
+
+RentalHours = Annotated[float, AfterValidator(validate_rental_hours)]
+
+
 class RentalPreferences(GpuPreferences):
     """Persist the shared rental limits alongside marketplace requirements."""
-    hours: float = Field(default=1, ge=.25, le=24)
+    hours: RentalHours = Field(default=1, ge=.25, allow_inf_nan=False)
     budget: float = Field(default=1, ge=.1, le=100)
     idle_seconds: int = Field(default=-1, ge=-1, strict=True)
     max_rentals: int = Field(default=1, ge=1, le=16, strict=True)
@@ -313,7 +329,7 @@ class CalibrationStartRequest(BaseModel):
     """Bind paid calibration consent to PBGui's canonical workload and exact offer."""
     model_config = ConfigDict(extra='forbid')
     offer: CalibrationOfferRequest
-    hours: float = Field(ge=.25, le=24, allow_inf_nan=False)
+    hours: RentalHours = Field(ge=.25, allow_inf_nan=False)
     budget: float = Field(ge=.1, le=100, allow_inf_nan=False)
     allow_32768: bool = False
     accept_rental_and_cleanup: bool = False
@@ -322,7 +338,7 @@ class ConfigurableCalibrationRequest(BaseModel):
     """Authorize one explicit paid preset or immutable queued-job measurement."""
     model_config = ConfigDict(extra='forbid')
     offer: CalibrationOfferRequest
-    hours: float = Field(ge=.75, le=24, allow_inf_nan=False)
+    hours: RentalHours = Field(ge=.75, allow_inf_nan=False)
     budget: float = Field(ge=.1, le=100, allow_inf_nan=False)
     preset: Literal['small', 'medium', 'large'] = 'small'
     source_job_id: str | None = None
@@ -349,7 +365,7 @@ class CalibrationWatchRequest(BaseModel):
     """Authorize one future paid test for frozen requirements until cancellation."""
     model_config = ConfigDict(extra='forbid')
     preferences: GpuPreferences
-    hours: float = Field(ge=.75, le=24, allow_inf_nan=False)
+    hours: RentalHours = Field(ge=.75, allow_inf_nan=False)
     budget: float = Field(ge=.1, le=100, allow_inf_nan=False)
     accept_rental_and_cleanup: bool = False
 
@@ -392,10 +408,18 @@ class StartJobRequest(BaseModel):
     gpu_profile_override: RentalGpuProfile | None = None
     gpu_job_profile_overrides: dict[str, RentalGpuProfile] = Field(default_factory=dict)
     offer_id: int | None = Field(default=None, gt=0)
-    hours: float = Field(default=1, ge=.25, le=24)
+    hours: RentalHours = Field(default=1, ge=.25, allow_inf_nan=False)
     budget: float = Field(default=1, ge=.1, le=100)
     accept_rental_and_cleanup: bool = False
     idle_seconds: int = Field(default=-1, ge=-1, strict=True)
+
+
+class SingleJobStartRequest(BaseModel):
+    """Confirm the exact owner-bound manual review for one frozen optimizer."""
+    model_config = ConfigDict(extra='forbid')
+    review_id: str = Field(pattern=r'^[a-f0-9]{32}$')
+    payload_digest: str = Field(pattern=r'^[a-f0-9]{64}$')
+    accept_rental_and_cleanup: bool = False
 
 
 @router.get("/gpu-preferences")
@@ -403,7 +427,8 @@ def gpu_preferences(response: Response, session: SessionToken = Depends(require_
     """Return durable GPU requirements without consulting the marketplace."""
     response.headers["Cache-Control"] = "no-store"
     try:
-        return RentalPreferences.model_validate(CloudQueue().read().get("gpu_preferences", {})).model_dump()
+        return RentalPreferences.model_validate(CloudQueue().read().get("gpu_preferences", {}),
+                                               context={'stored_preferences': True}).model_dump()
     except VastError as exc:
         raise _error(exc) from None
     except ValueError:
@@ -495,7 +520,8 @@ def settings(response: Response, session: SessionToken = Depends(require_auth)) 
     """Expose flags and the explicit account-registration referral link."""
     response.headers["Cache-Control"] = "no-store"
     try:
-        return {**VastCredentialStore().metadata(), "referral_url": REFERRAL_URL}
+        return {**VastCredentialStore().metadata(), "referral_url": REFERRAL_URL,
+                "maximum_rental_hours": maximum_rental_hours()}
     except VastError as exc:
         raise _error(exc) from None
 
@@ -544,7 +570,7 @@ def offers(response: Response, max_price: float = Query(1, gt=0, le=100),
            min_reliability_pct: float = Query(0, ge=0, le=100),
            disk_gb: int = Query(40, ge=10, le=2000),
            verified_only: bool = True, gpu_name: str = Query("", max_length=80),
-           include_incompatible: bool = False, rental_hours: float = Query(1, ge=.25, le=24),
+           include_incompatible: bool = False, rental_hours: float = Query(1, ge=.25, allow_inf_nan=False),
            session: SessionToken = Depends(require_auth)) -> dict:
     """List live offers without renting or changing any provider resources."""
     response.headers["Cache-Control"] = "no-store"
@@ -1127,6 +1153,8 @@ def jobs(response: Response, session: SessionToken = Depends(require_auth)) -> d
         if worker:
             provider_log = CLOUD_LOG_ROOT / ('vast_' + job_id(worker['id']) + '_provider.log')
             worker = dict(worker, has_provider_log=provider_log.is_file() and not provider_log.is_symlink())
+        from vast_collect import availability
+        collect_owners = {}
         rows = []
         rentals = {}
         active_job_ids = {
@@ -1174,6 +1202,7 @@ def jobs(response: Response, session: SessionToken = Depends(require_auth)) -> d
                         estimate = current
             row = dict(row, estimated_coin_candles=estimate, exchange=', '.join(queue.store.exchanges(row)),
                        has_log=log.is_file() and not log.is_symlink(), can_delete=can_remove_job(row, worker_by_id.get(row.get('lease_id'), worker)))
+            row.update(availability(queue.store, row, collect_owners))
             is_terminal = row.get('status') in _TERMINAL_JOB_STATES
             # Stop requests are moot once a job has finished; skip the control file read.
             control_exists = not is_terminal and (queue.store.directory(row['id']) / 'control.json').exists()
@@ -1354,6 +1383,32 @@ def _resume_auto_pool_after_requeue(queue: CloudQueue) -> None:
     except VastError as exc:
         queue.update(paused=True, pool_error=str(exc))
         _log(SERVICE, 'Requeued job is ready, but automatic GPU scheduling could not resume: ' + str(exc), level='WARNING')
+
+
+@router.post('/jobs/{identifier}/start-preview')
+def preview_single_job_start(identifier: str, response: Response,
+                             session: SessionToken = Depends(require_auth)) -> dict:
+    """Review one ready optimizer and its saved limits without renting or using AI."""
+    from vast_single_job import preview
+    response.headers['Cache-Control'] = 'no-store'
+    try:
+        return preview(CloudQueue(), job_id(identifier), session.user_id)
+    except VastError as exc:
+        raise _error(exc) from None
+
+
+@router.post('/jobs/{identifier}/start', status_code=202)
+def start_single_job(identifier: str, body: SingleJobStartRequest, response: Response,
+                     session: SessionToken = Depends(require_auth)) -> dict:
+    """Authorize one normal optimizer only after the concrete manual review."""
+    from vast_single_job import start
+    response.headers['Cache-Control'] = 'no-store'
+    try:
+        if not body.accept_rental_and_cleanup:
+            raise VastError('Confirm this job rental and automatic cleanup first', 422)
+        return start(CloudQueue(), job_id(identifier), session.user_id, body.review_id, body.payload_digest)
+    except VastError as exc:
+        raise _error(exc) from None
 
 
 @router.post("/queue/start", status_code=202)
@@ -1609,6 +1664,22 @@ def queue_action(action: str, body: EndRentalAck | None = None, session: Session
         return result
     except VastError as exc:
         raise _error(exc) from None
+
+
+@router.post("/jobs/{identifier}/collect")
+def collect_job(identifier: str, session: SessionToken = Depends(require_auth)) -> dict:
+    """Publish Pareto without requesting Stop, cleanup or lifecycle finalization."""
+    from vast_collect import collect_results
+    try:
+        return collect_results(JobStore(), identifier)
+    except HTTPException:
+        raise
+    except VastError as exc:
+        _log(SERVICE, str(exc), level='WARNING')
+        raise _error(exc) from None
+    except Exception as exc:
+        _log(SERVICE, 'Pareto collection failed: ' + type(exc).__name__, level='ERROR')
+        raise HTTPException(status_code=502, detail='Pareto collection could not finish; previous results are retained. Check the connection and retry.') from None
 
 
 @router.post("/jobs/{identifier}/stop")

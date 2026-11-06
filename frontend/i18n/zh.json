@@ -2610,6 +2610,7 @@
   "nav.page.system_api_keys": "API 密钥",
   "nav.page.system_cluster": "集群同步",
   "nav.page.system_db_tools": "数据库工具",
+  "nav.page.system_storage": "存储",
   "nav.page.system_logging": "日志",
   "nav.page.system_profit_sweep": "利润划转",
   "nav.page.system_transfers": "内部划转",

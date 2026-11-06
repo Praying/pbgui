@@ -22,6 +22,10 @@ The default **Overview** section summarizes the current local state:
 - **Identity**: the current host role and configured bot name
 - **Runtime Status**: detailed readiness checks grouped into Security, PB7, optional PB8, and Node sections
 - **Login security**: active login blocks and retained brute-force lockout history
+- **CPU, Memory, Disk, Uptime** (after login): live system values, updated every 10 seconds. Memory also shows how much RAM PBGui's own processes use. Click a tile to open **System -> Storage**.
+- **Storage line**: free disk space and how much can be cleaned safely, from the latest background scan. It opens the Storage overview.
+
+When the disk is at least 85% full (critical from 95%), available memory falls below 10% or more than half of the swap is used, the issue list shows a warning with a link to Storage.
 
 When PB7 is not ready, use **Configure PB7** in the PB7 summary card to open the Setup section directly. PB8 remains visually neutral when it is optional and unconfigured on a Slave.
 

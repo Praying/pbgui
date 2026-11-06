@@ -11,6 +11,8 @@ from pathlib import Path
 
 import pytest
 
+
+
 from ai_chat import (
     AICredentialStore,
     AIChatError,
@@ -137,6 +139,93 @@ def test_owner_key_is_stable_and_opaque() -> None:
     assert first != owner_key("other@example.test")
     assert len(first) == 32
     assert "admin" not in first
+
+
+@pytest.fixture
+def isolated_claude_service(tmp_path, monkeypatch):
+    """Keep all history and capability state in private synthetic test directories."""
+    import ai_capabilities
+    caps = ai_capabilities.AICapabilityService(tmp_path / 'capabilities')
+    monkeypatch.setattr('ai_chat.get_ai_capability_service', lambda: caps)
+    service = AIChatService(tmp_path / 'ai')
+    return service
+
+
+def test_claude_missing_runtime_never_uses_legacy_credentials(isolated_claude_service, monkeypatch):
+    """Missing native dependencies never fall back to legacy API keys or providers."""
+    from unittest.mock import AsyncMock
+    from ai_claude_code import ClaudeRuntime
+    service=isolated_claude_service
+    owner='a'*32
+    legacy=service.credentials.root/(owner+'.claude-code.json')
+    legacy.write_bytes(b'synthetic legacy credential')
+    monkeypatch.setattr(ClaudeRuntime,'available',staticmethod(lambda:False))
+    spawn=AsyncMock(side_effect=AssertionError('Missing runtime must not spawn'))
+    monkeypatch.setattr(asyncio,'create_subprocess_exec',spawn)
+    async def scenario():
+        """Keep status and model requests on the disconnected subscription path."""
+        try:
+            status=(await service.status(owner))['providers']['claude-code']
+            assert not status['available'] and not status['connected']
+            with pytest.raises(AIChatError,match='not connected'):
+                await service.models(owner,'claude-code')
+            assert not spawn.called and legacy.read_bytes()==b'synthetic legacy credential'
+            assert not hasattr(service.credentials,'load_claude_key')
+        finally:
+            await service.shutdown()
+            await service.capabilities.shutdown()
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('internal',[False,True])
+def test_disconnected_claude_turns_are_rejected_before_mutation(isolated_claude_service,monkeypatch,internal):
+    """Disconnected subscriptions cannot mutate an existing conversation or proposals."""
+    from unittest.mock import AsyncMock
+    from ai_chat import Conversation
+    service=isolated_claude_service
+    owner='a'*32
+    conversation=Conversation('b'*32,owner,'claude-code','claude-historical')
+    conversation.messages=[{'role':'assistant','content':'Synthetic historical reply'}]
+    service.conversations[conversation.id]=conversation
+    service.loaded_owners.add(owner)
+    monkeypatch.setattr(service,'models',AsyncMock(side_effect=AIChatError('Claude subscription is not connected')))
+    reject=AsyncMock(side_effect=AssertionError('Proposal state changed'))
+    monkeypatch.setattr(service.capabilities,'reject_conversation',reject)
+    async def scenario():
+        """Check same-model turns, including hidden post-approval continuations."""
+        try:
+            with pytest.raises(AIChatError,match='not connected'):
+                await service.start_turn(owner,conversation.id,'Synthetic follow-up',internal=internal)
+            assert conversation.messages==[{'role':'assistant','content':'Synthetic historical reply'}]
+            assert not conversation.busy and not reject.called
+        finally:
+            await service.shutdown()
+            await service.capabilities.shutdown()
+    asyncio.run(scenario())
+
+
+def test_claude_historical_conversation_reloads_without_fallback(isolated_claude_service, monkeypatch):
+    """Durable historical identity and transcript remain readable without a runtime."""
+    from ai_chat import Conversation
+    service = isolated_claude_service
+    owner = 'a'*32
+    conversation = Conversation('c'*32, owner, 'claude-code', 'claude-historical')
+    conversation.messages = [{'role':'assistant','content':'Synthetic historical reply'}]
+    service._persist_conversation(conversation)
+    service.conversations.clear()
+    async def scenario():
+        """Read saved state and reject continuation without replacing its model."""
+        try:
+            result = await service.get_conversation(owner, conversation.id)
+            assert result['provider'] == 'claude-code' and result['model'] == 'claude-historical'
+            assert result['messages'] == conversation.messages
+            with pytest.raises(AIChatError, match='not connected'):
+                await service.start_turn(owner, conversation.id, 'Synthetic follow-up')
+            assert (await service.get_conversation(owner, conversation.id))['messages'] == result['messages']
+        finally:
+            await service.shutdown()
+            await service.capabilities.shutdown()
+    asyncio.run(scenario())
 
 
 def test_go_key_store_is_private_atomic_and_never_returned_as_metadata(tmp_path: Path) -> None:
@@ -438,7 +527,7 @@ def test_reasoning_variant_uses_protocol_correct_wire_shape(protocol, expected) 
         (400, "Model is unavailable.", "Selected AI model is currently unavailable"),
         (429, "Rate limit exceeded.", "AI provider rate limit reached"),
         (429, "Monthly limit reached.", "AI provider usage limit reached"),
-        (429, "Insufficient balance.", "OpenCode billing or spending limit prevents this request"),
+        (429, "Insufficient balance.", "AI provider billing or spending limit prevents this request"),
         (429, "Invalid API key", "AI provider authentication failed"),
         (403, "Invalid API key", "AI provider authentication failed"),
         (400, "Region not allowed", "Selected AI model is not available in this region"),
@@ -2960,14 +3049,15 @@ def test_health_refresh_and_disconnect_share_one_credential_boundary(
     asyncio.run(scenario())
 
 
-def test_clarification_blocks_review_tools_for_all_provider_paths(tmp_path, monkeypatch):
+@pytest.mark.parametrize('provider',['chatgpt'])
+def test_clarification_blocks_review_tools_for_all_provider_paths(tmp_path, monkeypatch, provider):
     """Neither provider path can create or replay a review before an answer arrives."""
     from ai_chat import CodexRuntime
 
     async def scenario():
         """Keep reads available and allow proposals again after the question clears."""
         service = AIChatService(tmp_path / "ai")
-        conversation = await service._conversation("a" * 32, "chatgpt", "test", None)
+        conversation = await service._conversation("a" * 32, provider, "test", None)
         runtime = CodexRuntime("a" * 32, tmp_path / "codex")
         runtime.active_turn_id = "turn-1"
         conversation.codex_thread_id = "thread-1"
@@ -3070,3 +3160,16 @@ def test_page_action_timeout_retains_unconfirmed_action(tmp_path, monkeypatch):
         assert len(conversation.ui_actions) == 1
         await service.shutdown()
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('version', ['v7', 'v8'])
+def test_page_context_retains_exact_selected_backtest_resource(version):
+    """Selected results keep a validated opaque identity through every provider's context boundary."""
+    entity = {'kind': 'backtest_result', 'version': version, 'name': 'Same display name',
+              'resource': f'pbgui://backtest/{version}/' + 'a' * 32}
+    assert AIChatService._validate_page_context({'entities': [entity]})['entities'] == [entity]
+    for bad in ('/private/result', 'pbgui://backtest/v6/' + 'a' * 32,
+                'pbgui://backtest/' + ('v8' if version == 'v7' else 'v7') + '/' + 'a' * 32,
+                entity['resource'] + '?token=fixture', None):
+        with pytest.raises(AIChatError, match='Invalid page context'):
+            AIChatService._validate_page_context({'entities': [{**entity, 'resource': bad}]})

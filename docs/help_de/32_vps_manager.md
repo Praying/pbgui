@@ -1,5 +1,10 @@
 # VPS Manager
 
+Installierte systemd-Dienste gelten auch dann als migriert, wenn sie gestoppt sind oder ihr Autostart deaktiviert ist. Diese Zustände werden über die vorhandenen Start/Stop- und Enable/Disable-Aktionen unter Services verwaltet und erfordern keine erneute Migration. Fehlende erforderliche Units oder verbliebene alte Startdateien erfordern weiterhin eine Migration.
+
+Update Linux und andere VPS-Befehle speichern benötigte Einstellungen vorher nur lokal. Dabei werden weder Firewall noch Swap automatisch geändert. Apply VPS Config darf nur über die ausdrückliche Aktion zum Anwenden/Speichern der VPS-Konfiguration starten.
+
+
 **Guide** öffnet die Hilfe über VPS Manager, ohne die aktuelle Ansicht oder ungespeicherte Eingaben zu ändern. Schlägt das Laden der Themen oder Inhalte fehl, ersetzt eine sichtbare Fehlermeldung den Ladezustand; Details stehen in der Browserkonsole. Nach Behebung der Verbindung ein Thema erneut auswählen oder Guide schließen und wieder öffnen.
 
 Unter **System → VPS Manager → Settings → VPS Logging** speichert **Save Log Settings** lokal in PBGui. Bis zur Antwort ist der Button deaktiviert und zeigt **Saving...**, auch nach einem Ansichtswechsel und der Rückkehr. Nicht gespeicherte Größenänderungen bleiben bei Live-Updates und während des Speicherns erhalten; nach dem Versand geänderte Werte erfordern einen weiteren Speichervorgang. Fehler, Verbindungsabbrüche und ein Antworttimeout nach 30 Sekunden geben den Button ohne automatische Wiederholung frei. Bei Timeout oder Verbindungsabbruch bleibt das Speicherergebnis unbekannt; das Backend kann die Speicherung noch abschließen. Diese Aktion überträgt keine Einstellungen auf VPS-Hosts.

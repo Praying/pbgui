@@ -8,7 +8,7 @@ import traceback
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
 from ai_chat import AIChatError, get_ai_chat_service, owner_key
 from ai_capabilities import AICapabilityError, get_ai_capability_service
@@ -16,6 +16,7 @@ from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
 from logging_helpers import human_log as _log
 from ai_setup import ModelTestRequest
 from ai_chat_images import ChatImage
+from ai_claude_code import ClaudeCodeError
 
 
 SERVICE = "AIChat"
@@ -91,6 +92,14 @@ class AIPreferencesRequest(BaseModel):
     drawer_pinned: bool | None = None
     jev_max_cost_usd: float | None = Field(default=None, ge=0.000001, le=1.0)
     selection: dict[str, str] | None = Field(default=None, max_length=5)
+
+
+class OpenRouterPrivacyRequest(BaseModel):
+    """Explicit consent or revocation for one OpenRouter chat model."""
+
+    model_config = ConfigDict(extra="forbid")
+    model: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+    allow_data_collection: StrictBool
 
 
 class ConversationRewindRequest(BaseModel):
@@ -226,6 +235,47 @@ async def save_preferences(
         raise _provider_error("save_preferences", exc) from exc
 
 
+@router.post("/providers/claude-code/connect")
+async def connect_claude(session: SessionToken = Depends(require_auth)) -> JSONResponse:
+    """Start Anthropic's native subscription sign-in for the authenticated owner."""
+    try:
+        return _json(await get_ai_chat_service().claude.start_login(_owner(session)))
+    except ClaudeCodeError as exc:
+        raise _provider_error("connect_claude", AIChatError(str(exc))) from exc
+
+
+@router.post("/providers/claude-code/login-code")
+async def claude_login_code(request: Request, session: SessionToken = Depends(require_auth)) -> JSONResponse:
+    """Pass a one-time code in an authenticated body, never a URL or log."""
+    try:
+        if len(await request.body()) > 4096:
+            raise AIChatError("Invalid Claude sign-in code")
+        body = await request.json()
+        if not isinstance(body, dict):
+            raise AIChatError("Invalid Claude sign-in code")
+        await get_ai_chat_service().claude.login_code(_owner(session), body.get("code"), body.get("login_id"))
+        return _json({"submitted": True})
+    except (ClaudeCodeError, ValueError, AIChatError) as exc:
+        raise _provider_error("claude_login_code", AIChatError("Claude sign-in code could not be submitted")) from exc
+
+
+@router.delete("/providers/claude-code/login")
+async def cancel_claude_login(session: SessionToken = Depends(require_auth)) -> JSONResponse:
+    """Cancel the selected owner's pending native login."""
+    await get_ai_chat_service().claude.cancel_login(_owner(session))
+    return _json({"cancelled": True})
+
+
+@router.delete("/providers/claude-code/connection")
+async def disconnect_claude(session: SessionToken = Depends(require_auth)) -> JSONResponse:
+    """Stop owned Claude operations and sign out through the native runtime."""
+    try:
+        await get_ai_chat_service().disconnect_claude(_owner(session))
+        return _json({"connected": False})
+    except Exception as exc:
+        raise _provider_error("disconnect_claude", exc) from exc
+
+
 @router.post("/providers/opencode-go/connect")
 async def connect_go(
     body: GoConnectRequest,
@@ -330,6 +380,41 @@ async def test_custom_model(body: CustomModelRequest, session: SessionToken = De
             body.config(), body.api_key, body.original, body.effort))
     except Exception as exc:
         raise _provider_error("test_custom_model", exc) from exc
+
+@router.put("/providers/openrouter/privacy")
+async def save_openrouter_privacy(
+    body: OpenRouterPrivacyRequest,
+    session: SessionToken = Depends(require_auth),
+) -> JSONResponse:
+    """Bind one model's data collection consent to the authenticated owner's connection."""
+    try:
+        return _json(await get_ai_chat_service().set_openrouter_privacy(
+            _owner(session), body.model, body.allow_data_collection))
+    except Exception as exc:
+        raise _provider_error("save_openrouter_privacy", exc) from exc
+
+
+@router.post("/providers/deepseek/connect")
+async def connect_deepseek(
+    body: GoConnectRequest,
+    session: SessionToken = Depends(require_auth),
+) -> JSONResponse:
+    """Verify and privately store the current user's DeepSeek API key."""
+    try:
+        await get_ai_chat_service().connect_deepseek(_owner(session), body.api_key)
+        return _json({"success": True})
+    except Exception as exc:
+        raise _provider_error("connect_deepseek", exc) from exc
+
+
+@router.delete("/providers/deepseek/connection")
+async def disconnect_deepseek(session: SessionToken = Depends(require_auth)) -> JSONResponse:
+    """Remove only the current user's DeepSeek connection."""
+    try:
+        await get_ai_chat_service().disconnect_deepseek(_owner(session))
+        return _json({"success": True})
+    except Exception as exc:
+        raise _provider_error("disconnect_deepseek", exc) from exc
 
 
 @router.post("/providers/chatgpt/device-login")
@@ -476,9 +561,10 @@ async def get_conversation(
 
 
 class JevPreviewRequest(BaseModel):
-    """Explicit message and model for one PBGui data-transfer preview."""
+    """Explicit message, connection and model for one PBGui data-transfer preview."""
 
     message: str = Field(min_length=1, max_length=12_000)
+    provider: str = Field(default="openrouter", min_length=1, max_length=32)
     model: str = Field(min_length=1, max_length=128)
 
 
@@ -491,7 +577,7 @@ async def preview_jev_transfer(
     """Show the bounded provider payload before a Jev transfer."""
     try:
         result = await get_ai_chat_service().preview_jev_transfer(
-            _owner(session), conversation_id, body.message, body.model
+            _owner(session), conversation_id, body.message, body.model, body.provider
         )
         return _json(result)
     except Exception as exc:

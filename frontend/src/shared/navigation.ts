@@ -111,6 +111,13 @@ export const WORKBENCH_NAVIGATION = [
         groupId: 'system',
       },
       {
+        pageKey: 'system_storage',
+        labelKey: 'nav.page.system_storage',
+        href: '/api/storage/main_page',
+        icon: PhDatabase,
+        groupId: 'system',
+      },
+      {
         pageKey: 'system_vps_manager_fastapi',
         labelKey: 'nav.page.system_vps_manager_fastapi',
         href: '/api/vps-manager/main_page',

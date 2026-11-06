@@ -40,7 +40,7 @@ LogViewerPanel = class extends Issue420Viewer {
 @pytest.fixture
 def nav(request):
     """Serve only repository assets and synthetic API replies; hold viewer script delivery."""
-    playwright = pytest.importorskip("playwright.sync_api")
+    browser_api = __import__('browser_driver')
     parameters = getattr(
         request, "param", ("", "info_balance_calc", "/api/balance-calc/main_page")
     )
@@ -62,7 +62,7 @@ def nav(request):
         +
         '<script src="' + prefix + '/app/pbgui_nav.js?v=test"></script>'
     )
-    with playwright.sync_playwright() as driver:
+    with browser_api.sync_browser() as driver:
         browser = driver.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1280, "height": 800})
         page.add_init_script(SOCKET_FIXTURE)
@@ -126,7 +126,7 @@ def nav(request):
         page.goto("http://notify.test" + prefix + destination)
         yield SimpleNamespace(
             page=page, begin=begin, release=release, viewer_requests=viewer_requests,
-            requests=requests, prefix=prefix, expect=playwright.expect,
+            requests=requests, prefix=prefix, expect=browser_api.expect,
         )
         browser.close()
         assert not errors, errors
@@ -322,7 +322,7 @@ def test_notification_on_help_through_real_menu(nav):
     page.locator('.nav-group-btn[data-group="information"]').click()
     page.locator('.nav-item[data-page="help"]').click()
     nav.expect(page).to_have_url(re.compile(
-        re.escape("http://notify.test" + nav.prefix + "/app/help.html?v=1779") + r"(?:&.*)?$"
+        re.escape("http://notify.test" + nav.prefix + "/app/help.html?v=1781") + r"(?:&.*)?$"
     ))
     nav.expect(page.locator("#help-content")).to_contain_text("Isolated guide content")
     destination = page.url

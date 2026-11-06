@@ -20,6 +20,7 @@ const EXPECTED_NAVIGATION_ROUTES = {
   system_transfers: '/api/profit-sweep/transfers/main_page',
   system_cluster: '/api/cluster/main_page',
   system_db_tools: '/api/db-tools/main_page',
+  system_storage: '/api/storage/main_page',
   system_logging: '/api/logging/main_page',
   system_services: '/api/services/main_page',
   system_vps_manager_fastapi: '/api/vps-manager/main_page',

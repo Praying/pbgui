@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from ai_chat import AIChatError, AIChatService, CodexRuntime
+from ai_jev import JEV_MODEL
 from ai_chat_images import ChatImageStore
 from api.ai import TurnCreateRequest
 
@@ -15,6 +16,26 @@ PNG = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4
 OWNER = 'a' * 32
 CONVERSATION = 'b' * 32
 IMAGE = {'media_type': 'image/png', 'data_base64': base64.b64encode(PNG).decode()}
+
+
+def test_claude_receives_saved_images_from_owned_history(tmp_path, monkeypatch):
+    """Claude gets image bytes for saved conversation turns through the private store."""
+    async def scenario():
+        service = AIChatService(tmp_path / 'ai')
+        references = service.image_store.save(OWNER, CONVERSATION, [IMAGE])
+        captured = []
+        async def reply(owner, model, history, instructions, **kwargs):
+            captured.extend(history)
+            return 'Seen'
+        monkeypatch.setattr(service, '_claude_reply', reply)
+        try:
+            history = [{'role': 'user', 'content': 'Look', 'images': references}]
+            assert await service._claude_chat(OWNER, 'fixture', history, CONVERSATION) == 'Seen'
+            assert captured[0]['content'][1]['source']['data'] == IMAGE['data_base64']
+            assert history[0]['images'] == references
+        finally:
+            await service.shutdown()
+    asyncio.run(scenario())
 
 
 @pytest.mark.parametrize('protocol,kind', [('responses', 'input_image'), ('chat', 'image_url'), ('messages', 'image')])
@@ -104,7 +125,7 @@ def test_images_survive_turn_reload_retry_and_delete(tmp_path, monkeypatch):
         with pytest.raises(AIChatError):
             await restored.get_conversation('c' * 32, conversation.id)
         with pytest.raises(AIChatError, match='Jev does not accept images'):
-            await restored.start_turn(OWNER, conversation.id, 'Choose', provider='openrouter', model='jev', images=[IMAGE])
+            await restored.start_turn(OWNER, conversation.id, 'Choose', provider='openrouter', model=JEV_MODEL, images=[IMAGE])
         await restored.delete_conversation(OWNER, conversation.id)
         assert not path.exists()
         await restored.shutdown()

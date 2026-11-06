@@ -103,6 +103,29 @@ def test_missing_text_model_does_not_fallback():
         asyncio.run(ai.generate_draft(chat_fixture('openrouter'), 'owner', ai.IssueDraftRequest(description='Text')))
 
 
+def test_claude_isolated_transport_never_uses_other_providers(monkeypatch):
+    """Claude support requests stay tool-free and never use another transport."""
+    chat=chat_fixture('claude-code')
+    chat._validate_provider_model=AsyncMock(return_value={})
+    chat._claude_reply=AsyncMock(return_value='Synthetic reply')
+    monkeypatch.setattr(ai,'CodexRuntime',Mock(side_effect=AssertionError('Wrong provider')))
+    result=asyncio.run(ai.provider_reply(chat,'fixture-owner',ai.IssueDraftRequest(description='Synthetic issue')))
+    assert result[0]=='Synthetic reply' and result[1]=='claude-code'
+    assert not chat._claude_reply.call_args.kwargs.get('tools')
+
+
+def test_claude_issue_draft_sends_screenshot():
+    """Issue screenshots are sent to Claude as image content without tools."""
+    from test_ai_chat_images import IMAGE
+    chat = chat_fixture('claude-code')
+    chat._claude_reply = AsyncMock(return_value='Synthetic reply')
+    body = ai.IssueDraftRequest(description='Issue', screenshots=[IMAGE])
+    asyncio.run(ai.provider_reply(chat, 'owner', body))
+    blocks = chat._claude_reply.call_args.args[2][0]['content']
+    assert blocks[1]['source']['data'] == IMAGE['data_base64']
+    assert not chat._claude_reply.call_args.kwargs.get('tools')
+
+
 @pytest.mark.parametrize('ending', ['success','disconnect','timeout','shutdown'])
 def test_request_ownership_and_cleanup(monkeypatch, ending):
     """Disconnect, timeout and service cancellation deterministically release provider work."""

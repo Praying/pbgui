@@ -1,8 +1,9 @@
 """Static and executable frontend contracts for the shared PB7/PB8 Strategy Explorer."""
 
+from javascript_checks import run_javascript
+
 from pathlib import Path
 import re
-import subprocess
 import textwrap
 
 from tests.i18n_helpers import NODE_I18N_STUB, assert_text_present
@@ -74,7 +75,7 @@ def test_dynamic_metadata_reads_and_writes_nested_canonical_paths() -> None:
     )
     script = textwrap.dedent(
         f"""
-        const assert = require('node:assert/strict');
+        const assert = browserAssert;
         let PARAM_FIELD_META = {{
           'entry_distance': {{type: 'number', path: 'bot.long.strategy.ema.entry_distance', min: -2, max: 3, step: 0.25}}
         }};
@@ -108,7 +109,7 @@ def test_dynamic_metadata_reads_and_writes_nested_canonical_paths() -> None:
         assert.equal(paramNearBound('long', 'entry_distance', 0), '');
         """
     )
-    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    completed = run_javascript(["-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
     assert completed.returncode == 0, completed.stderr or completed.stdout
 
 
@@ -221,7 +222,7 @@ def test_pb8_market_selection_preserves_config_and_simulation_uses_replay_candle
     )
     script = textwrap.dedent(
         f"""
-        const assert = require('node:assert/strict');
+        const assert = browserAssert;
         const IS_V8 = true;
         let invalidations = 0;
         function invalidateConfigRequests() {{ invalidations += 1; }}
@@ -246,7 +247,7 @@ def test_pb8_market_selection_preserves_config_and_simulation_uses_replay_candle
         assert.equal(plotted.market.metadata.ohlcv.selected_start, '1970-01-01T00:01:00.000Z');
         """
     )
-    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    completed = run_javascript(["-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
     assert completed.returncode == 0, completed.stderr or completed.stdout
 
 
@@ -314,7 +315,7 @@ def test_movie_grid_hover_and_paused_arrow_key_stepping() -> None:
     function = _extract_function(source, "stepMovieFrame")
     script = textwrap.dedent(
         f"""
-        const assert = require('node:assert/strict');
+        const assert = browserAssert;
         const plot = {{}};
         const calls = [];
         const document = {{getElementById: () => plot}};
@@ -337,7 +338,7 @@ def test_movie_grid_hover_and_paused_arrow_key_stepping() -> None:
         assert.equal(movieCurrentFrame, 2);
         """
     )
-    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    completed = run_javascript(["-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     assert "Price: %{y:.8f}" in source
@@ -366,7 +367,7 @@ def test_pb8_refresh_cache_rejects_secrets_and_restores_expired_drafts() -> None
     )
     script = textwrap.dedent(
         f"""
-        const assert = require('node:assert/strict');
+        const assert = browserAssert;
         const IS_V8 = true;
         {functions}
         const sourceConfig = {{
@@ -385,13 +386,13 @@ def test_pb8_refresh_cache_rejects_secrets_and_restores_expired_drafts() -> None
         assert.equal(refreshCacheConfig({{live: {{private_key: 'forbidden'}}}}), null);
         """
     )
-    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    completed = run_javascript(["-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     load_session = "\n".join(_extract_function(source, name) for name in ("createStrategyRefreshRestore", "loadSession"))
     recovery_script = NODE_I18N_STUB + textwrap.dedent(
         f"""
-        const assert = require('node:assert/strict');
+        const assert = browserAssert;
         let sessionRequestGeneration = 0;
         let snapshotRequestGeneration = 0;
         let DRAFT_ID = 'expired-draft';
@@ -424,10 +425,10 @@ def test_pb8_refresh_cache_rejects_secrets_and_restores_expired_drafts() -> None
           assert.equal(applied.restored, cached);
           assert.equal(applied.snapshot.source, 'refresh-cache');
           assert.match(applied.warning, /restored the non-sensitive Strategy Explorer/);
-        }})().catch((error) => {{ console.error(error); process.exitCode = 1; }});
+        }})().catch((error) => {{ console.error(error); testResult.exitCode = 1; }});
         """
     )
-    recovered = subprocess.run(["node", "-e", recovery_script], cwd=ROOT, text=True, capture_output=True, check=False)
+    recovered = run_javascript(["-e", recovery_script], cwd=ROOT, text=True, capture_output=True, check=False)
     assert recovered.returncode == 0, recovered.stderr or recovered.stdout
     assert "window.sessionStorage.setItem(STRATEGY_REFRESH_CACHE_KEY" in source
     assert "window.localStorage.setItem(STRATEGY_REFRESH_CACHE_KEY" not in source
@@ -452,8 +453,8 @@ def test_all_inline_scripts_parse_as_javascript() -> None:
 
     assert scripts
     for script in scripts:
-        completed = subprocess.run(
-            ["node", "--check", "-"],
+        completed = run_javascript(
+            ["--check", "-"],
             cwd=ROOT,
             input=script,
             text=True,
@@ -464,8 +465,8 @@ def test_all_inline_scripts_parse_as_javascript() -> None:
 
 
 def _run_js(script):
-    """Execute production functions in Node via the offline Python test wrapper."""
-    result = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False, timeout=15)
+    """Execute production functions in the browser via the offline Python test wrapper."""
+    result = run_javascript(["-e", script], cwd=ROOT, text=True, capture_output=True, check=False, timeout=15)
     assert result.returncode == 0, result.stderr or result.stdout
 
 
@@ -474,7 +475,7 @@ def test_endpoint_timeouts_controller_timer_cleanup_and_pb7_behavior():
     source = PAGE_PATH.read_text()
     functions = "\n".join(_extract_function(source, name) for name in ("apiFetch", "disposeExplorerRequests"))
     _run_js("""
-      const assert = require('node:assert/strict');
+      const assert = browserAssert;
       let IS_V8 = true;
       const API_BASE = '/prefix/api/strategy-explorer-v8';
       const explorerRequests = {};
@@ -537,7 +538,7 @@ def test_endpoint_timeouts_controller_timer_cleanup_and_pb7_behavior():
         assert.equal(requests.at(-1).opts.signal, undefined);
         requests.at(-1).resolve({ok:true, json:()=>Promise.resolve({pb7:true})});
         assert.deepEqual(await pb7, {pb7:true});
-      })().catch(e => { console.error(e); process.exitCode = 1; });
+      })().catch(e => { console.error(e); testResult.exitCode = 1; });
     """)
 
 
@@ -546,7 +547,7 @@ def test_restore_failure_never_persists_defaults_and_stale_session_starts_no_fol
     source = PAGE_PATH.read_text()
     functions = "\n".join(_extract_function(source, name) for name in ("createStrategyRefreshRestore", "loadSession", "persistStrategyRefreshState"))
     _run_js("""
-      const assert = require('node:assert/strict');
+      const assert = browserAssert;
       let IS_V8 = true;
       let sessionRequestGeneration = 0, snapshotRequestGeneration = 0;
       let strategyRefreshRecoveryPending = false;
@@ -610,7 +611,7 @@ def test_restore_failure_never_persists_defaults_and_stale_session_starts_no_fol
         deferred = null; sessionError = null; snapshotFails = true; IS_V8 = false;
         await loadSession();
         assert.equal(bootstraps, 2);
-      })().catch(e => { console.error(e); process.exitCode = 1; });
+      })().catch(e => { console.error(e); testResult.exitCode = 1; });
     """)
 
 
@@ -619,7 +620,7 @@ def test_stale_recovery_and_bootstrap_cannot_mutate_context_or_start_markets():
     source = PAGE_PATH.read_text()
     functions = "\n".join(_extract_function(source, name) for name in ("createStrategyRefreshRestore", "loadSession", "applySessionBootstrap"))
     _run_js("""
-      const assert = require('node:assert/strict');
+      const assert = browserAssert;
       let sessionRequestGeneration = 0, snapshotRequestGeneration = 0;
       let strategyRefreshRecoveryPending = false;
       let IS_V8 = true, DRAFT_ID = 'expired'; const RESULT_PATH = '';
@@ -647,7 +648,7 @@ def test_stale_recovery_and_bootstrap_cannot_mutate_context_or_start_markets():
         assert.equal(DRAFT_ID, 'expired');
         assert.equal(state.snapshot, null);
         assert.equal(await applySessionBootstrap({}, {}, cached, '', 0, 0), null);
-      })().catch(e => { console.error(e); process.exitCode = 1; });
+      })().catch(e => { console.error(e); testResult.exitCode = 1; });
     """)
 
 
@@ -655,7 +656,7 @@ def test_restore_merges_edits_and_ignores_programmatic_control_changes():
     """Only edits made during waits replace cached values, with no mutation of saved data."""
     function = _extract_function(PAGE_PATH.read_text(), 'createStrategyRefreshRestore')
     _run_js("""
-      const assert = require('node:assert/strict');
+      const assert = browserAssert;
       let IS_V8 = true;
       const cached = {config:{backtest:{starting_balance:4321}}, controls:{stage:'raw', movie_frames:'37', balance:'4321', movie_visible:'60'}};
       const original = JSON.stringify(cached);
@@ -702,7 +703,7 @@ def test_movie_followup_uses_initialized_generation_and_rejects_later_edits():
     )))
     assert handlers.count("addEventListener") == 2
     _run_js("""
-      const assert = require('node:assert/strict');
+      const assert = browserAssert;
       let sessionRequestGeneration = 1, snapshotRequestGeneration = 1, movieRequestGeneration = 0;
       let strategyRefreshRecoveryPending = true;
       let movieAbortController = null, movieProgressId = '', lastMovieData = null;
@@ -774,5 +775,5 @@ def test_movie_followup_uses_initialized_generation_and_rejects_later_edits():
         sessionRequestGeneration++;
         pending.shift()();
         assert.equal(requests.length, 2);
-      })().catch(e => {console.error(e);process.exitCode=1;});
+      })().catch(e => {console.error(e);testResult.exitCode=1;});
     """)

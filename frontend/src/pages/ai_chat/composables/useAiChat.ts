@@ -217,6 +217,7 @@ export function useAiChat(t: Translate) {
   const includeContext = ref(true);
   const chatgptUsage = ref<ProviderUsage>({ email: '', limits: [] });
   const openrouterKey = ref('');
+  const deepseekKey = ref('');
   const customModels = ref<CustomModel[]>([]);
   const openrouterUsage = ref<ProviderUsageSummary | null>(null);
   const goUsage = ref<ProviderUsageSummary | null>(null);
@@ -238,7 +239,9 @@ export function useAiChat(t: Translate) {
     ['chatgpt', 'ChatGPT'],
     ['opencode-zen', 'OpenCode Zen'],
     ['opencode-go', 'OpenCode Go'],
+    ['claude-code', 'Claude Agent'],
     ['openrouter', 'OpenRouter'],
+    ['deepseek', 'DeepSeek'],
     ['custom', t('ai.chat.customProvider')],
   ];
 
@@ -246,6 +249,8 @@ export function useAiChat(t: Translate) {
   const chatgptProfiles = computed(() => chatgpt.value.profiles || [{ id: 'default', name: 'Default' }]);
   const go = computed(() => providers.value['opencode-go'] || {});
   const openrouter = computed(() => providers.value.openrouter || {});
+  const claude = computed(() => providers.value['claude-code'] || {});
+  const deepseek = computed(() => providers.value.deepseek || {});
   const selectedModel = computed<ModelInfo>(() => modelsById.value[modelId.value] || ({} as ModelInfo));
   const effortVariants = computed(() =>
     Array.isArray(selectedModel.value.reasoning_variants) ? selectedModel.value.reasoning_variants : [],
@@ -1109,6 +1114,65 @@ async function sendMessage(retryText?: string): Promise<void> {
     }
   }
 
+  async function connectClaude(): Promise<void> {
+    transitioning.value = true;
+    try {
+      await api('/providers/claude-code/connect', { method: 'POST' });
+      setNotice('Claude sign-in started. Complete the sign-in flow shown by the server.');
+      await refreshStatus();
+    } catch (error) {
+      setNotice((error as Error).message, true);
+    } finally {
+      transitioning.value = false;
+    }
+  }
+
+  async function disconnectClaude(): Promise<void> {
+    transitioning.value = true;
+    try {
+      await newChat(true);
+      await api('/providers/claude-code/connection', { method: 'DELETE' });
+      await refreshStatus();
+    } catch (error) {
+      setNotice((error as Error).message, true);
+    } finally {
+      transitioning.value = false;
+    }
+  }
+
+  async function connectDeepseek(): Promise<void> {
+    const key = deepseekKey.value.trim();
+    if (!key) {
+      setNotice('Enter a DeepSeek API key.', true);
+      return;
+    }
+    transitioning.value = true;
+    try {
+      await api('/providers/deepseek/connect', { method: 'POST', body: JSON.stringify({ api_key: key }) });
+      deepseekKey.value = '';
+      setNotice('DeepSeek connected.');
+      await refreshStatus();
+    } catch (error) {
+      deepseekKey.value = '';
+      setNotice((error as Error).message, true);
+    } finally {
+      transitioning.value = false;
+    }
+  }
+
+  async function disconnectDeepseek(): Promise<void> {
+    transitioning.value = true;
+    try {
+      await newChat(true);
+      await api('/providers/deepseek/connection', { method: 'DELETE' });
+      await refreshStatus();
+    } catch (error) {
+      setNotice((error as Error).message, true);
+    } finally {
+      transitioning.value = false;
+    }
+  }
+
   onBeforeUnmount(() => {
     stopLoginPolling();
     stopActivityPolling();
@@ -1130,7 +1194,10 @@ async function sendMessage(retryText?: string): Promise<void> {
     go,
     goUsage,
     openrouter,
+    claude,
+    deepseek,
     openrouterKey,
+    deepseekKey,
     customModels,
     saveCustomModel,
     deleteCustomModel,
@@ -1187,6 +1254,10 @@ async function sendMessage(retryText?: string): Promise<void> {
     disconnectGo,
     connectOpenrouter,
     disconnectOpenrouter,
+    connectClaude,
+    disconnectClaude,
+    connectDeepseek,
+    disconnectDeepseek,
     refreshModelHealth,
     onProviderChange,
     onChatgptProfileChange,
